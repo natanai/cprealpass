@@ -13,9 +13,11 @@ Check (-not [CRRuntimePolicyModel]::AnySimulation($null)) 'Null flags activated 
 $f = [CRRuntimeFeatureFlags]::new()
 # Public-intent defaults are on, but every development acceptance gate defaults shut.
 Check ($f.bodyEnabled -and $f.injuryEnabled -and $f.combatEnabled -and $f.armorEnabled -and $f.cyberwarePhysiologyEnabled -and $f.presentationEnabled) 'Intended release module defaults changed.'
+Check (-not $f.traditionalHealthBarsEnabled) 'Traditional health bars must default off for realpass presentation.'
 Check (-not $f.diagnosticsEnabled) 'Diagnostics player intent must default off.'
 Check (-not [CRRuntimePolicyModel]::AnySimulation($f)) 'Player defaults bypassed closed acceptance gates.'
 Check (-not [CRRuntimePolicyModel]::Presentation($f)) 'Presentation bypassed its acceptance gate.'
+Check (-not [CRRuntimePolicyModel]::TraditionalHealthBars($f)) 'Health bars bypassed presentation acceptance.'
 Check (-not [CRRuntimePolicyModel]::Diagnostics($f)) 'Diagnostics bypassed its acceptance gate.'
 
 $f.bodyAccepted = $true
@@ -51,8 +53,12 @@ Check (-not [CRRuntimePolicyModel]::CyberwarePhysiology($f)) 'Cyberware physiolo
 
 $f.presentationAccepted = $true
 Check ([CRRuntimePolicyModel]::Presentation($f) -and [CRRuntimePolicyModel]::Nameplates($f) -and [CRRuntimePolicyModel]::StatusCues($f)) 'Presentation subtoggles did not compose.'
+Check (-not [CRRuntimePolicyModel]::TraditionalHealthBars($f)) 'Accepted presentation ignored the authored no-healthbar default.'
+$f.traditionalHealthBarsEnabled = $true
+Check ([CRRuntimePolicyModel]::TraditionalHealthBars($f) -and [CRRuntimePolicyModel]::Nameplates($f)) 'Accessibility healthbar choice disabled unrelated presentation.'
+$f.traditionalHealthBarsEnabled = $false
 $f.nameplatesEnabled = $false
-Check (-not [CRRuntimePolicyModel]::Nameplates($f) -and [CRRuntimePolicyModel]::StatusCues($f)) 'Nameplate toggle affected unrelated presentation.'
+Check (-not [CRRuntimePolicyModel]::Nameplates($f) -and [CRRuntimePolicyModel]::StatusCues($f) -and -not [CRRuntimePolicyModel]::TraditionalHealthBars($f)) 'Nameplate toggle affected unrelated presentation.'
 # Presentation never makes AnySimulation true by itself.
 $onlyPresentation = [CRRuntimeFeatureFlags]::new()
 $onlyPresentation.presentationAccepted = $true
