@@ -35,7 +35,7 @@
       "id": "body-native-integration",
       "area": "body",
       "status": "partial",
-      "evidence": ["src/redscript/CyberpunkRealism/BodyRuntime.reds", "src/redscript/CyberpunkRealism/DarkFutureBridge.reds", "tools/Build-BodyAttended.ps1"],
+      "evidence": ["src/redscript/CyberpunkRealism/BodyRuntime.reds", "src/redscript/CyberpunkRealism/DarkFutureBridge.reds", "tools/Build-BodyAttended.ps1", "tools/Build-AttendedAcceptance.ps1", "docs/ATTENDED-ACCEPTANCE.md"],
       "remaining": "Attended consumption, wait/sleep, exertion, bathroom/washing, lifecycle and save/reload acceptance; calibrate actual game time."
     },
     {
@@ -49,7 +49,7 @@
       "id": "wound-injury-blood-treatment-model",
       "area": "combat",
       "status": "passed",
-      "evidence": ["src/redscript/CyberpunkRealism/WoundModel.reds", "src/redscript/CyberpunkRealism/InjuryModel.reds", "src/redscript/CyberpunkRealism/BloodLossModel.reds", "tests/Test-WoundPipeline.ps1", "tests/Test-InjuryBody.ps1", "tests/Test-FieldCare.ps1"],
+      "evidence": ["src/redscript/CyberpunkRealism/WoundModel.reds", "src/redscript/CyberpunkRealism/InjuryModel.reds", "src/redscript/CyberpunkRealism/BloodLossModel.reds", "tests/Test-WoundPipeline.ps1", "tests/Test-InjuryBody.ps1", "tests/Test-FieldCare.ps1", "tests/Test-BloodLoss.ps1", "tests/Test-InjuryEffects.ps1", "tests/Test-FieldCareTimed.ps1"],
       "remaining": "Anatomy/bleeding coefficients are provisional game abstractions; native hit shapes, treatment UX and outcome calibration remain open."
     },
     {
@@ -63,14 +63,14 @@
       "id": "combat-native-activation",
       "area": "combat",
       "status": "pending",
-      "evidence": ["src/redscript/CyberpunkRealism/CombatNativeBridge.reds", "src/redscript/CyberpunkRealism/CombatWoundsNative.reds"],
-      "remaining": "Combat is intentionally disabled. Complete combined native impact/armor/wound/bleed/impairment/treatment acceptance before promotion."
+      "evidence": ["src/redscript/CyberpunkRealism/CombatNativeBridge.reds", "src/redscript/CyberpunkRealism/CombatWoundsNative.reds", "tools/Build-AttendedAcceptance.ps1", "tests/Test-AttendedBuilder.ps1", "docs/ATTENDED-ACCEPTANCE.md"],
+      "remaining": "Canonical combat is intentionally disabled. Compile and play the generated body+combat attended candidate, then complete impact/armor/wound/bleed/impairment/treatment acceptance before promotion."
     },
     {
       "id": "player-npc-symmetry",
       "area": "combat",
       "status": "partial",
-      "evidence": ["src/redscript/CyberpunkRealism/NPCBodyModel.reds", "tests/Test-NPCProgression.ps1", "tests/Test-WoundPipeline.ps1"],
+      "evidence": ["src/redscript/CyberpunkRealism/NPCBodyModel.reds", "tests/Test-NPCProgression.ps1", "tests/Test-WoundPipeline.ps1", "docs/ATTENDED-ACCEPTANCE.md"],
       "remaining": "Native human NPC identity, persistence, AI effects, bosses/MaxTac, authored immunity, nonlethal outcomes and performance."
     },
     {
@@ -79,6 +79,13 @@
       "status": "passed",
       "evidence": ["docs/presentation-nameplates.md", "docs/presentation-scanner.md", "commit:cba7659"],
       "remaining": "Preserve behavior while replacing E3-dependent distribution path."
+    },
+    {
+      "id": "no-traditional-healthbars",
+      "area": "presentation",
+      "status": "partial",
+      "evidence": ["src/redscript/CyberpunkRealism/NoHealthbars.reds", "manifest/settings.json", "manifest/runtime-modules.json", "tests/Test-NoHealthbars.ps1", "tools/Build-AttendedAcceptance.ps1", "docs/ATTENDED-ACCEPTANCE.md"],
+      "remaining": "Compile against the local Cyberpunk 2.31 + E3 integration bundle, then verify V, ordinary NPC and boss/MaxTac HP bars remain hidden while RAM/buffs/names/scanner behavior remain usable."
     },
     {
       "id": "modern-scanner-native-acceptance",
@@ -106,7 +113,7 @@
       "area": "distribution",
       "status": "partial",
       "evidence": [".github/workflows/ci.yml", "tests/Run-CI.ps1"],
-      "remaining": "Keep latest branch run green; this CI builds a non-playable development/source artifact, not a public gameplay package."
+      "remaining": "Keep latest branch run green as the expanded combat-consequence/no-healthbar checks land; CI builds a non-playable development/source artifact, not a public gameplay package."
     },
     {
       "id": "dependency-redistribution-audit",
@@ -133,14 +140,14 @@
       "id": "phantom-liberty-quest-compatibility",
       "area": "compatibility",
       "status": "pending",
-      "evidence": ["REALISM-SPEC.md", "docs/ROADMAP.md"],
+      "evidence": ["REALISM-SPEC.md", "docs/ROADMAP.md", "docs/ATTENDED-ACCEPTANCE.md"],
       "remaining": "Test critical Phantom Liberty sequences and authored combat/immortality exceptions with body and combat enabled."
     },
     {
       "id": "performance-and-script-latency",
       "area": "compatibility",
       "status": "pending",
-      "evidence": ["REALISM-SPEC.md"],
+      "evidence": ["REALISM-SPEC.md", "docs/ATTENDED-ACCEPTANCE.md"],
       "remaining": "Measure live script cost with body/NPC/combat systems enabled; no unattended profilers or background recorders."
     }
   ]
