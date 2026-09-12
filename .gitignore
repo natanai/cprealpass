@@ -7,6 +7,7 @@
 /ReferenceMods/
 /reports/
 /manifest/*.deployment.json
+/manifest/deployment.json
 /manifest/baseline.json
 /manifest/current-deployment.json
 /config/local.psd1
