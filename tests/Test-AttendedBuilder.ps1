@@ -25,12 +25,34 @@ Check ($builder.Contains("Replace-PolicyOnce `$combatText 'CRCombatRuntimePolicy
 Check ($builder.Contains("Replace-PolicyOnce `$bodyText 'CRBodyTestPolicy' 'Diagnostics' `$false")) 'Default attended build does not explicitly preserve diagnostics-off.'
 Check ($builder.Contains('[switch]$Diagnostics')) 'Diagnostics cannot be explicitly opted into for attended debugging.'
 
+# A broad acceptance candidate must contain the causal chain the player is being
+# asked to judge. Missing consequences should fail preflight rather than masquerade
+# as a balance result.
+foreach ($destination in @(
+    'BodyRuntime.reds',
+    'BodyInteractionRuntime.reds',
+    'CombatNativeBridge.reds',
+    'CombatProfilesNative.reds',
+    'CombatWoundsNative.reds',
+    'ArmorWearNative.reds',
+    'InjuryEffectsNative.reds',
+    'BloodLossNative.reds',
+    'FieldCareRuntime.reds',
+    'FieldCareActionRuntime.reds',
+    'FieldCareItemUse.reds',
+    'FieldCareUI.reds'
+)) {
+    Check ($builder.Contains('/' + $destination + "'")) "Broad attended prerequisite missing from builder: $destination"
+}
+Check ($builder.Contains('Source manifest is not a broad realpass acceptance profile')) 'Missing broad-profile files do not fail with an actionable preflight error.'
+
 # The broad acceptance profile requested for combat defaults to information-sparse
 # play: no traditional HP bars, while source offers an explicit comparison switch.
 Check ($builder.Contains("`$healthbarDestination = 'r6/scripts/CyberpunkRealism/NoHealthbars.reds'")) 'No-healthbar presentation is not part of the attended candidate.'
 Check ($builder.Contains('if (-not $ShowTraditionalHealthBars)')) 'Traditional health bars are not hidden by default.'
 Check ($builder.Contains('[switch]$ShowTraditionalHealthBars')) 'No explicit comparison path exists for healthbars-on debugging.'
 Check ($health.Contains('return false;')) 'No-healthbar source default changed.'
+Check ($builder.Contains("component -notlike 'realpass*'")) 'Builder could overwrite a non-realpass healthbar destination.'
 
 # Builder must verify every inherited payload hash, compile exact output, and stop.
 Check ($builder.Contains('Source profile hash mismatch')) 'Inherited source profile is not hash-validated.'
@@ -43,5 +65,6 @@ foreach ($danger in @('Deploy.ps1','Upgrade.ps1','Start-Process','Cyberpunk2077.
 # Generated output is immutable-by-id and local deployment manifests remain ignored.
 Check ($builder.Contains('Build ID already exists; attended acceptance profiles are immutable')) 'Attended profile IDs can overwrite evidence.'
 Check ($builder.Contains("'manifest/' + `$BuildId + '.deployment.json'")) 'Builder does not use the established deployment-manifest format.'
+Check ($builder.Contains('requiredRuntimeDestinations')) 'Attended report does not preserve the required runtime inventory.'
 
-Write-Host "PASS: $script:checks attended-builder safety checks; canonical gates stay closed and generated combat testing defaults to no health bars."
+Write-Host "PASS: $script:checks attended-builder safety checks; canonical gates stay closed and generated broad combat testing defaults to no health bars."
