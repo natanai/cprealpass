@@ -17,19 +17,24 @@ public class CRUseToilet extends ActionBool {
 
   public func SetProperties() -> Void {
     this.actionName = n"CRUseToilet";
-    this.prop = DeviceActionPropertyFunctions.SetUpProperty_Bool(n"CRUseToilet", true, n"Use toilet", n"Use toilet");
+    this.prop = DeviceActionPropertyFunctions.SetUpProperty_Bool(n"CRUseToilet", true, n"RealpassUseToiletCaption", n"RealpassUseToiletCaption");
   }
 
   public func GetTweakDBChoiceRecord() -> String {
-    return "Flush";
+    return "RealpassUseToilet";
+  }
+
+  public func GetTweakDBChoiceID() -> TweakDBID {
+    return t"Interactions.RealpassUseToilet";
   }
 
   public func SetBodyCaption() -> Void {
-    this.interactionChoice.caption = "Use toilet";
-    // GetInteractionChoice generates Flush text from the borrowed record when
-    // captionParts is empty. The HUD renders those parts ahead of caption.
+    let caption: String = GetLocalizedTextByKey(n"RealpassUseToiletCaption");
+    this.interactionChoice.caption = caption;
+    // Native and E3 menus also read the interaction record's localizedName.
+    // Both that record and these caption parts resolve the same realpass key.
     InteractionChoiceCaption.Clear(this.interactionChoice.captionParts);
-    InteractionChoiceCaption.AddTextPart(this.interactionChoice.captionParts, "Use toilet");
+    InteractionChoiceCaption.AddTextPart(this.interactionChoice.captionParts, caption);
   }
 }
 

@@ -13,6 +13,12 @@ foreach($name in @('RealpassLocalization','FieldCareItemUse','BloodLossModel','B
   $component=if($name -eq 'RealpassLocalization'){'darkfuture'}else{'cyberpunk-realism-body'}
   $m.files += [pscustomobject]@{source=$relative;destination="r6/scripts/CyberpunkRealism/$name.reds";component=$component;sha256=$hash}
 }
+# The distinct toilet choice needs its own record; E3 resolves its visible label from metadata.
+$source=Join-Path $project 'src/tweaks/realpass-interactions.yaml'
+$relative="$stage\realpass-interactions.yaml"
+$hash=Get-Sha256 $source
+Copy-VerifiedPayload $source (Resolve-SafeChildPath $project $relative) $hash
+$m.files += [pscustomobject]@{source=$relative;destination='r6/tweaks/realpass/realpass-interactions.yaml';component='cyberpunk-realism-body';sha256=$hash}
 $relativeManifest='manifest/m3-body-runtime-prototype.deployment.json'
 Write-JsonFile $m (Join-Path $project $relativeManifest)
 & "$PSScriptRoot\Apply-SourcePatch.ps1" -ManifestPath $relativeManifest -PatchPath 'config/patches/darkfuture-body-tick.json'

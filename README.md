@@ -6,13 +6,13 @@ A consolidated Cyberpunk 2077 + Phantom Liberty realism overhaul in development,
 
 The current presentation/body candidate combines realpass settings and UI naming, corrected backpack needs placement, a clear toilet action, recoverable exertion fatigue and a restrained E3 HUD integration. NPC nameplates retain the game's authored hiding and scan rules. Regional injury, armor, NPC progression, blood loss and treatment modules are present; combat activation remains deferred until its integration and gameplay checks are ready.
 
-The combined candidate compiles 114 scripts. The quiet body bundle passed 429 installation/recovery checks; E3 staging passed 65 checks; the exact 224-file combined upgrade and rollback was verified in an isolated installation. These checks do not establish native rendering, save behavior, combat or quest compatibility. The next milestone is one combined presentation/body gameplay test, followed by the treatment/combat batch.
+The first native E3 session exposed empty scanned-NPC nameplates and a duplicate Flush caption. The next quiet candidate corrects the visibility/name fallback and gives Use toilet its own localized interaction record. It compiles 115 scripts; 69 presentation staging, 63 nameplate behavior and 31 interaction checks pass. This 226-file candidate passed an exact upgrade/rollback and is installed locally for the next launch; native rendering still needs verification. The body bundle previously passed 429 installation/recovery checks. Those results do not establish native rendering, save behavior, combat or quest compatibility.
 
 Weather control is not a release requirement.
 
 ## Source layout
 
-- src/redscript: physiology, timing, integration, injury and presentation modules.
+- src/redscript and src/tweaks: physiology, timing, integration, injury and presentation modules plus interaction records.
 - config: authored presets, hash-pinned reference inventory and adaptation recipes.
 - tools: component acquisition, staging, compilation, packaging and reversible deployment.
 - tests: model, integration and file-transaction checks.

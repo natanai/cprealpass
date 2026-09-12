@@ -15,6 +15,7 @@ public class CRRealpassLocalization extends ModLocalizationProvider {
 
 public class CRRealpassEnglish extends ModLocalizationPackage {
   protected func DefineTexts() {
+    this.Text("RealpassUseToiletCaption", "Use toilet");
     this.Text("DarkFutureDummyEffectDesc", "Toggling realpass status icons...");
     this.Text("DarkFutureSettingsModName", "realpass");
     this.Text("DarkFutureSettingTutorialsEnabledDesc", "Show one-time tutorials of each mechanic of realpass. These appear contextually during gameplay.");

@@ -97,6 +97,28 @@ foreach ($file in $config.files) {
     if ($null -ne $content -and $file.path.EndsWith('.reds')) { $content = $notice + $content }
     $prepared += [pscustomobject]@{destination=$file.path;source=$source;before=$file.sha256;content=$content;component='project-e3-hud-local';reason=$reason;entry=$null}
 }
+# Apply the pinned follow-up to the rc2 visual adaptation, before publishing any manifest.
+$nameplateRecipeRelative = 'config/patches/realpass-e3-nameplates.json'
+$nameplateRecipePath = Resolve-SafeChildPath $project $nameplateRecipeRelative
+$nameplateRecipeHash = Get-Sha256 $nameplateRecipePath
+$nameplateRecipe = Get-Content -Raw -LiteralPath $nameplateRecipePath | ConvertFrom-Json
+if ($nameplateRecipe.schemaVersion -ne 1 -or $nameplateRecipe.component -ne 'project-e3-hud-local' -or $nameplateRecipe.distribution -ne 'local-integration-only' -or @($nameplateRecipe.patches).Count -ne 1) { throw 'Unexpected nameplate recipe.' }
+foreach ($patch in $nameplateRecipe.patches) {
+    $matches = @($prepared | Where-Object destination -eq $patch.destination)
+    if ($matches.Count -ne 1 -or $null -eq $matches[0].content) { throw 'Missing prepared E3 nameplate source.' }
+    $item = $matches[0]
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try { $preparedHash = [Convert]::ToHexString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($item.content))) } finally { $sha.Dispose() }
+    if ($preparedHash -ne $patch.expectedSha256) { throw 'Prepared nameplate source differs from pinned rc2 adaptation.' }
+    foreach ($edit in $patch.edits) { $item.content = Replace-Exact $item.content $edit.find $edit.replace $edit.expectedOccurrences }
+    $item.reason = 'Permit public names for scanned generic crowd; suppress empty E3 frame/background and preserve authored identity rules.'
+}
+$supportSource = Resolve-SafeChildPath $project $nameplateRecipe.supportSource
+$supportDestination = Resolve-SafeChildPath $project $nameplateRecipe.supportDestination
+if ($destinations.ContainsKey($supportDestination) -or [IO.Path]::GetExtension($supportSource) -ne '.reds') { throw 'Invalid or colliding nameplate support source.' }
+$destinations[$supportDestination] = $true
+$supportHash = Get-Sha256 $supportSource
+$prepared += [pscustomobject]@{destination=$nameplateRecipe.supportDestination;source=$supportSource;before=$supportHash;content=$null;component='project-e3-hud-local';reason='Synchronize E3 name decorations with native projection and narrowly allow permitted scanned crowd names.';entry=$null}
 # E3 compatibility is a property of this complete profile, independent of a previously saved false toggle.
 $dfDestination = 'r6/scripts/Dark Future/Settings/DFSettings.reds'
 $dfMatches = @($manifest.files | Where-Object destination -eq $dfDestination)
@@ -141,13 +163,13 @@ foreach ($item in $prepared) {
     if ($null -eq $item.entry) { $manifest.files += [pscustomobject]@{source=$relative;destination=$item.destination;component=$item.component;sha256=$hash} } else { $item.entry.source=$relative; $item.entry.sha256=$hash }
     $changes += [ordered]@{destination=$item.destination;originalSha256=$item.before;stagedSha256=$hash;changed=($hash -ne $item.before);reason=$item.reason}
 }
-if ((Get-Sha256 $basePath) -ne $baseHash -or (Get-Sha256 $configFull) -ne $configHash) { throw 'Build inputs changed during staging.' }
+if ((Get-Sha256 $basePath) -ne $baseHash -or (Get-Sha256 $configFull) -ne $configHash -or (Get-Sha256 $nameplateRecipePath) -ne $nameplateRecipeHash) { throw 'Build inputs changed during staging.' }
 $manifest.buildId = $BuildId
 $manifest | Add-Member -Force NoteProperty realpassE3 ([ordered]@{preset=$config.id;distribution='local-integration-only';includesRestrictedThirdPartyAssets=$true;originalDependency=$config.sourceUrl;author=$config.author;provenance=$reportRelative})
-$report = [ordered]@{buildId=$BuildId;builtAtUtc=[DateTime]::UtcNow.ToString('o');baseManifest=$ManifestPath;baseManifestSha256=$baseHash;preset=$ConfigPath;presetSha256=$configHash;dialogueRecipe=$dialogueRecipeRelative;dialogueRecipeSha256=$dialogueRecipeHash;sourceVersion=$config.sourceVersion;sourceUrl=$config.sourceUrl;author=$config.author;permission=$config.permission;distribution='local-integration-only';referenceRoot=$config.referenceRoot;referenceFiles=36;scriptFilesAdded=22;files=$changes;compiled=$false;installed=$false;nativeVisibilityVerified=$false;persistedSettingsFilesChanged=$false}
+$report = [ordered]@{buildId=$BuildId;builtAtUtc=[DateTime]::UtcNow.ToString('o');baseManifest=$ManifestPath;baseManifestSha256=$baseHash;preset=$ConfigPath;presetSha256=$configHash;dialogueRecipe=$dialogueRecipeRelative;dialogueRecipeSha256=$dialogueRecipeHash;nameplateRecipe=$nameplateRecipeRelative;nameplateRecipeSha256=$nameplateRecipeHash;nameplateSupportSha256=$supportHash;sourceVersion=$config.sourceVersion;sourceUrl=$config.sourceUrl;author=$config.author;permission=$config.permission;distribution='local-integration-only';referenceRoot=$config.referenceRoot;referenceFiles=36;supportFilesAdded=1;scriptFilesAdded=23;files=$changes;compiled=$false;installed=$false;nativeVisibilityVerified=$false;persistedSettingsFilesChanged=$false}
 Write-JsonFile $report $reportPath
 New-Item -ItemType Directory -Force -Path (Split-Path -Parent $output) | Out-Null
 $bytes = [Text.UTF8Encoding]::new($false).GetBytes(($manifest | ConvertTo-Json -Depth 20) + $nl)
 $stream = [IO.File]::Open($output,[IO.FileMode]::CreateNew,[IO.FileAccess]::Write,[IO.FileShare]::None)
 try { $stream.Write($bytes,0,$bytes.Length) } finally { $stream.Dispose() }
-Write-Host "Staged $BuildId with 36 local-only E3 files, source-derived compatibility and guarded dialogue captions. No compilation or live deployment performed."
+Write-Host "Staged $BuildId with 36 local-only E3 files plus scanned-nameplate support, source-derived compatibility and guarded dialogue captions. No compilation or live deployment performed."

@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "id": "realpass-e3-scanned-nameplates-v1",
+  "component": "project-e3-hud-local",
+  "sourceUrl": "https://www.nexusmods.com/cyberpunk2077/mods/8800",
+  "author": "Virtuoso75",
+  "distribution": "local-integration-only",
+  "description": "Show scanned ordinary crowd names through the entity display-name API; synchronize E3 decorations with native name visibility while preserving hidden/quest policies.",
+  "supportSource": "patches/project-e3-hud/realpassNameplates.reds",
+  "supportDestination": "r6/scripts/realpass/Presentation/realpassNameplates.reds",
+  "patches": [
+    {
+      "destination": "r6/scripts/Project E3 - HUD/cyberpunk/widgets/healthbar/nameplateVisuals.reds",
+      "expectedSha256": "792A9BE253328163809DCB2F12E4BEE063A47762E5F8C9EE272F6CE6B45EB969",
+      "edits": [
+        {
+          "find": "    // Use the name supplied by native focus data; do not discover hidden names from records.\n    return data.name;",
+          "replace": "    if IsStringValid(data.name) { return data.name; }\n    return this.RealpassScannedCrowdName(data.npc);",
+          "expectedOccurrences": 1
+        },
+        {
+          "find": "let showNameplate: Bool = !isTurret;",
+          "replace": "let showNameplate: Bool = !isTurret && this.m_npcNamesEnabled && IsStringValid(this.GetCustomNPCName(data.npc as gamePuppetBase, data));",
+          "expectedOccurrences": 1
+        },
+        {
+          "find": "if ((IsDefined(npc) && npc.IsVendor()) || (Equals(data.attitude, EAIAttitude.AIA_Friendly) && !isTurret)) {",
+          "replace": "if (showNameplate && ((IsDefined(npc) && npc.IsVendor()) || (Equals(data.attitude, EAIAttitude.AIA_Friendly) && !isTurret))) {",
+          "expectedOccurrences": 1
+        }
+      ]
+    }
+  ]
+}

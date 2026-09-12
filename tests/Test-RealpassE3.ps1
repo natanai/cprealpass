@@ -28,6 +28,10 @@ $dialogue = @($base.files | Where-Object destination -eq 'r6/scripts/Dark Future
 Copy-VerifiedPayload (Resolve-SafeChildPath $project $dialogue.source) (Join-Path $fixture 'source/DFInteractionSystem.reds') $dialogue.sha256
 New-Item -ItemType Directory -Force (Join-Path $fixture 'config/patches') | Out-Null
 Copy-Item -LiteralPath (Join-Path $project 'config/patches/darkfuture-e3-dialogue.json') -Destination (Join-Path $fixture 'config/patches/darkfuture-e3-dialogue.json')
+foreach ($path in @('config/patches/realpass-e3-nameplates.json','patches/project-e3-hud/realpassNameplates.reds')) {
+    $source = Resolve-SafeChildPath $project $path
+    Copy-VerifiedPayload $source (Resolve-SafeChildPath $fixture $path) (Get-Sha256 $source)
+}
 $fixtureManifest = [ordered]@{schemaVersion=1;buildId='fixture-base';gameVersion='2.31';files=@([ordered]@{source='source/DFSettings.reds';destination=$df.destination;component='darkfuture';sha256=$df.sha256})}
 $fixtureManifest.files += [ordered]@{source='source/DFInteractionSystem.reds';destination=$dialogue.destination;component='darkfuture';sha256=$dialogue.sha256}
 $fixtureManifestPath = Join-Path $fixture 'manifest/base.json'
@@ -38,7 +42,7 @@ $builder = Join-Path $fixture 'tools/Build-RealpassPresentation.ps1'
 $outputPath = Join-Path $fixture 'manifest/fixture-e3.deployment.json'
 $output = Get-Content -Raw -LiteralPath $outputPath | ConvertFrom-Json
 $report = Get-Content -Raw -LiteralPath (Join-Path $fixture 'reports/presentation-fixture-e3.json') | ConvertFrom-Json
-Check (@($output.files).Count -eq 38) 'Expected unchanged base membership plus 36 E3 files'
+Check (@($output.files).Count -eq 39) 'Expected unchanged base membership plus 36 E3 files and one support script'
 Check ($output.realpassE3.includesRestrictedThirdPartyAssets -and $output.realpassE3.distribution -eq 'local-integration-only') 'Restricted third-party metadata missing'
 Check (-not $report.compiled -and -not $report.installed -and -not $report.persistedSettingsFilesChanged) 'Stager falsely claimed runtime work'
 Check ((Get-Sha256 $fixtureManifestPath) -eq $fixtureBaseHash) 'Base manifest mutated'
@@ -62,6 +66,10 @@ Check (-not $text.Contains('@wrapMethod(NpcNameplateGameController)') -and $text
 $entry = @($output.files | Where-Object destination -like '*healthbar/nameplateVisuals.reds')[0]
 $text = [IO.File]::ReadAllText((Resolve-SafeChildPath $fixture $entry.source))
 Check ($text.Contains('return data.name;') -and -not $text.Contains('record.FullDisplayName()')) 'Name discovery bypasses native-provided data'
+Check ($text.Contains('return this.RealpassScannedCrowdName(data.npc);') -and $text.Contains('let showNameplate: Bool = !isTurret && this.m_npcNamesEnabled && IsStringValid')) 'Scanned fallback or empty-frame guard missing'
+$support = @($output.files | Where-Object destination -eq 'r6/scripts/realpass/Presentation/realpassNameplates.reds')
+Check ($support.Count -eq 1 -and $report.scriptFilesAdded -eq 23) 'Nameplate support absent from staged payload'
+Check ($support[0].sha256 -eq (Get-Sha256 (Join-Path $project 'patches/project-e3-hud/realpassNameplates.reds'))) 'Support source altered during staging'
 $entry = @($output.files | Where-Object destination -eq $df.destination)[0]
 $text = [IO.File]::ReadAllText((Resolve-SafeChildPath $fixture $entry.source))
 Check ($text.Contains('instance.compatibilityProjectE3HUD = true;') -and [regex]::Matches($text,'this\.compatibilityProjectE3HUD = true;').Count -eq 2) 'Runtime compatibility gates absent'
