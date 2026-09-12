@@ -1,8 +1,10 @@
-# realpass — development package 0.1.0-dev.17
+# realpass — development package 0.1.0-dev.18
 
-This redistribution-safe **development/source artifact** contains nineteen simulation/data modules and the authored stock-protection recipe. It exists for offline model review, CI packaging and source handoff. It is deliberately not the finished drag-and-drop gameplay mod.
+This redistribution-safe **development/source artifact** contains the project-original runtime policy model, nineteen simulation/data modules and the authored stock-protection recipe. It exists for offline model review, CI packaging and source handoff. It is deliberately not the finished drag-and-drop gameplay mod.
 
-It includes body resources, ordered intake, servings, clock policy, meter migration, sleep accounting, forecasts, physical impacts, contact selection, projectile profiles, localized injuries, field-care plans, wound conversion, a stock equipment resolver, regional armor-wear arithmetic, injury-to-ability projection and NPC progression through the shared body solver.
+The runtime policy model is the first code-level consolidation step toward one realpass settings authority. It separates intended player defaults from build/native acceptance gates, so a future public default of “realism on” cannot accidentally activate an unaccepted development bridge. It also defines independent master/subtoggle semantics without depending on Mod Settings or the game engine. The current native body/combat adapters are not yet wired to this model.
+
+The package also includes body resources, ordered intake, servings, clock policy, meter migration, sleep accounting, forecasts, physical impacts, contact selection, projectile profiles, localized injuries, field-care plans, wound conversion, a stock equipment resolver, regional armor-wear arithmetic, injury-to-ability projection and NPC progression through the shared body solver.
 
 It does not contain the native gameplay adapters, Dark Future integration patches or UI bridges and does not activate gameplay. The separately installed quiet body profile is a different local integration build. Keep this archive separate; do not manually extract it over the installed body profile.
 
