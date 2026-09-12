@@ -1,6 +1,9 @@
 $ErrorActionPreference = 'Stop'
 if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'Run-CI.ps1 requires PowerShell 7 or newer.' }
 
+# Only tests reproducible from the public source tree belong here. Tests that
+# intentionally exercise acquired third-party source, generated deployment
+# manifests, the installed game, or live deployment state remain local-only.
 $tests = @(
     'Test-ModuleContract.ps1',
     'Test-SettingsContract.ps1',
@@ -20,17 +23,14 @@ $tests = @(
     'Test-BodyPresentation.ps1',
     'Test-BodyForecast.ps1',
     'Test-BodyInteractions.ps1',
-    'Test-SleepClamp.ps1',
     'Test-SleepFatigue.ps1',
     'Test-ClockModel.ps1',
     'Test-CombatCore.ps1',
     'Test-BallisticProfiles.ps1',
     'Test-InjuryBody.ps1',
-    'Test-InjuryAuthority.ps1',
     'Test-WoundPipeline.ps1',
     'Test-ArmorWear.ps1',
     'Test-FieldCare.ps1',
-    'Test-FieldCareConsume.ps1',
     'Test-FieldCareTimed.ps1',
     'Test-FieldCareUI.ps1',
     'Test-BloodLoss.ps1',
