@@ -10,6 +10,8 @@ The current presentation/body candidate combines realpass settings and UI naming
 
 Regional injury, armor, NPC progression, blood loss and treatment modules are present. Combat activation remains deliberately gated until the impact -> armor/cyberware -> tissue injury -> blood loss/impairment -> treatment pipeline is ready for coherent native gameplay testing.
 
+The project now also contains a pure `RuntimePolicyModel` that encodes the intended independent module/subtoggle semantics while keeping player intent separate from native acceptance. It is packaged in the redistribution-safe development/source artifact, but the live body/combat adapters are **not yet wired to it**; their existing safety gates remain closed until local compile/native acceptance work is ready.
+
 ## Project status
 
 The repository contains a durable progress ledger so work can continue cleanly across agents and long conversations:
@@ -18,8 +20,11 @@ The repository contains a durable progress ledger so work can continue cleanly a
 - [Chronological worklog](docs/WORKLOG.md)
 - [Realism specification](REALISM-SPEC.md)
 - [Modular runtime architecture](docs/MODULAR-ARCHITECTURE.md)
+- [Unified settings architecture](docs/SETTINGS-ARCHITECTURE.md)
+- [Combat calibration plan](docs/COMBAT-CALIBRATION.md)
 - [Roadmap](docs/ROADMAP.md)
 - [Release / one-download architecture](docs/RELEASE-ARCHITECTURE.md)
+- Machine-readable acceptance gates: `manifest/acceptance.json`
 
 The status ledger records a conservative percentage toward a gameplay-validated, safely distributable 1.0. Offline code or compilation alone does not count as full completion.
 
@@ -29,17 +34,17 @@ The finished player experience should be one download: extract/copy realpass int
 
 GitHub source does not modify an installed game by itself. Runtime files must first be assembled into the paths Cyberpunk and its mod frameworks load. `manifest/distribution.json` records the machine-readable packaging policy and release gates. Public playable artifacts remain gated until dependency redistribution, native gameplay acceptance, save/update safety and artifact verification are complete.
 
-A cloud-safe GitHub Actions workflow now runs offline model/contract checks and builds a clearly labeled redistribution-safe **development source package**. That artifact is not yet the finished drag-and-drop gameplay mod.
+A cloud-safe GitHub Actions workflow now runs offline model/contract checks, verifies the exact built ZIP against the artifact deny/block policy, and uploads a clearly labeled redistribution-safe **development source package**. That artifact is not yet the finished drag-and-drop gameplay mod.
 
 ## Source layout
 
 - `src/redscript` and `src/tweaks`: physiology, timing, integration, injury, combat and presentation modules plus interaction records.
 - `config`: authored presets, hash-pinned reference inventories and adaptation recipes.
-- `manifest`: dependency, runtime-module, reuse and distribution contracts.
-- `tools`: component acquisition, staging, compilation, packaging and reversible deployment.
-- `tests`: model, integration, contract and file-transaction checks.
+- `manifest`: dependency, settings, runtime-module, feature-inventory, acceptance and distribution contracts.
+- `tools`: component acquisition, staging, compilation, packaging, artifact policy and reversible deployment.
+- `tests`: model, integration, contract, policy and file-transaction checks.
 - `package` and `LICENSES`: package documentation and dependency notices.
-- `docs`: architecture, acceptance notes, roadmap, status and worklog.
+- `docs`: architecture, calibration, acceptance notes, roadmap, status and worklog.
 
 ## Third-party/reference material
 
