@@ -1,0 +1,36 @@
+# Local acquired dependencies, generated builds, game evidence and recovery state
+/vendor/
+/staging/
+/snapshots/
+/logs/
+/dist/
+/ReferenceMods/
+/reports/
+/manifest/*.deployment.json
+/manifest/baseline.json
+/manifest/current-deployment.json
+/config/local.psd1
+
+# Machine-local development notes retained in the local history
+/STATUS.md
+/GOALS-1-4.md
+/PROJECT.md
+/ARCHITECTURE.md
+/CHANGELOG.md
+/TESTING.md
+
+*.zip
+*.7z
+*.rar
+*.exe
+*.dll
+*.archive
+*.xl
+.env
+.env.*
+*.pem
+*.key
+.vs/
+.vscode/
+Thumbs.db
+Desktop.ini

@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "profiles": {
+    "m1-base": [
+      "red4ext",
+      "redscript"
+    ],
+    "m1-support": [
+      "red4ext",
+      "redscript",
+      "archivexl",
+      "tweakxl",
+      "codeware",
+      "mod-settings",
+      "input-loader"
+    ],
+    "m3-body-alpha1": [
+      "red4ext",
+      "redscript",
+      "archivexl",
+      "tweakxl",
+      "codeware",
+      "mod-settings",
+      "input-loader",
+      "darkfuture"
+    ],
+    "m3-body-alpha2": [
+      "red4ext",
+      "redscript",
+      "archivexl",
+      "tweakxl",
+      "codeware",
+      "mod-settings",
+      "input-loader",
+      "darkfuture"
+    ]
+  }
+}

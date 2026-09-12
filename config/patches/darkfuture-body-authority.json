@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "id": "darkfuture-body-authority-v1",
+  "component": "darkfuture",
+  "sourceVersion": "2.0-release",
+  "license": "CC-BY-SA-4.0",
+  "sourceUrl": "https://github.com/DarkFortuneTeller/DarkFuture/tree/2.0-release",
+  "description": "Make hydration, nutrition and fatigue meters views of shared body state when the project runtime owns them; preserve Nerve and unrelated upstream behavior.",
+  "patches": [
+    {
+      "destination": "r6/scripts/Dark Future/Needs/DFNeedSystemBase.reds",
+      "expectedSha256": "BA5EFB1D3AE4B4B15ACD4D110AD1A156A6E86FA3ED0B337A5263306EBF5B1A88",
+      "edits": [
+        {
+          "find": "if this.needValue < 10.0 {",
+          "replace": "if this.needValue < 10.0 && !CROwnsBodyNeed(this.GetNeedType()) {",
+          "expectedOccurrences": 1
+        },
+        {
+          "find": "this.OnUpdateActual();",
+          "replace": "if !CROwnsBodyNeed(this.GetNeedType()) {\n                this.OnUpdateActual();\n            }",
+          "expectedOccurrences": 1
+        },
+        {
+          "find": "this.OnItemConsumedActual(itemRecord, animateUI);",
+          "replace": "if !CROwnsBodyNeed(this.GetNeedType()) {\n                this.OnItemConsumedActual(itemRecord, animateUI);\n            }",
+          "expectedOccurrences": 1
+        },
+        {
+          "find": "DFLog(this, \"ChangeNeedValue: amount = \" + ToString(amount) + \", changeValueProps = \" + ToString(changeValueProps));",
+          "replace": "amount = CRBodyNeedDelta(this.GetNeedType(), this.needValue, amount);\n        DFLog(this, \"ChangeNeedValue: amount = \" + ToString(amount) + \", changeValueProps = \" + ToString(changeValueProps));",
+          "expectedOccurrences": 1
+        },
+        {
+          "find": "DFLog(this, \"QueueContextuallyDelayedNeedValueChange value: \" + ToString(value));",
+          "replace": "if CROwnsBodyNeed(this.GetNeedType()) { return; }\n        DFLog(this, \"QueueContextuallyDelayedNeedValueChange value: \" + ToString(value));",
+          "expectedOccurrences": 1
+        },
+        {
+          "find": "    public func ChangeNeedValue(amount: Float, opt changeValueProps: DFChangeNeedValueProps) -> Void {",
+          "replace": "    // Project handover: discard obsolete delayed percentage changes/effects.\n    public final func CRPrepareBodyHandover() -> Void {\n        this.UnregisterContextuallyDelayedNeedValueChange();\n        this.ResetContextuallyDelayedNeedValueChange();\n    }\n    public func ChangeNeedValue(amount: Float, opt changeValueProps: DFChangeNeedValueProps) -> Void {",
+          "expectedOccurrences": 1
+        }
+      ]
+    },
+    {
+      "destination": "r6/scripts/Dark Future/Main/DFMainSystem.reds",
+      "expectedSha256": "108C941A9B65476E493D458964CCFC733014BCFD12BF62B7CD945F9C84AA65EA",
+      "edits": [
+        {
+          "find": "GameInstance.GetCallbackSystem().DispatchEvent(MainSystemTimeSkipFinishedEvent.Create(data));",
+          "replace": "CRForwardBodySkipFinished(data);\n        GameInstance.GetCallbackSystem().DispatchEvent(MainSystemTimeSkipFinishedEvent.Create(data));",
+          "expectedOccurrences": 1
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "id": "darkfuture-body-tick-v1",
+  "component": "darkfuture",
+  "sourceVersion": "2.0-release",
+  "license": "CC-BY-SA-4.0",
+  "sourceUrl": "https://github.com/DarkFortuneTeller/DarkFuture/tree/2.0-release",
+  "description": "Forward existing needs ticks, menu boundaries and central consumption dispatch to the optional Cyberpunk Realism body adapter.",
+  "patches": [
+    {
+      "destination": "r6/scripts/Dark Future/Needs/DFNeedSystemBase.reds",
+      "expectedSha256": "91502ABA367DC9CE10D13FAF1F506DA3F18DC68649DD0C14C6B1BB42927766DD",
+      "find": "DFLog(this, \"OnUpdate\");",
+      "replace": "DFLog(this, \"OnUpdate\");\n\t\tCRObserveBodyTick();",
+      "expectedOccurrences": 1
+    },
+    {
+      "destination": "r6/scripts/Dark Future/Services/DFGameStateService.reds",
+      "expectedSha256": "83078795C8947689B93907226E431C7A3CAE614BC5715926277F79BAE359FFBF",
+      "find": "this.isInMenu = value;",
+      "replace": "CRBeforeBodyMenuBoundary();\n        this.isInMenu = value;\n        CRAfterBodyMenuBoundary();",
+      "expectedOccurrences": 1
+    },
+    {
+      "destination": "r6/scripts/Dark Future/Main/DFMainSystem.reds",
+      "expectedSha256": "A88613B0BF3937E8B63AED0FA1197E06FF1F86E5328310111C7B09FFEE049A17",
+      "find": "GameInstance.GetCallbackSystem().DispatchEvent(MainSystemItemConsumedEvent.Create(itemRecord, animateUI, noAnimation));",
+      "replace": "CRForwardBodyConsumption(itemRecord);\n        GameInstance.GetCallbackSystem().DispatchEvent(MainSystemItemConsumedEvent.Create(itemRecord, animateUI, noAnimation));",
+      "expectedOccurrences": 1
+    }
+  ]
+}

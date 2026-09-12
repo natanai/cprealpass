@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "tools": [
+    {
+      "id": "redscript-cli",
+      "version": "0.5.31",
+      "sourceUrl": "https://github.com/jac3km4/redscript/releases/tag/v0.5.31",
+      "assetUrl": "https://github.com/jac3km4/redscript/releases/download/v0.5.31/redscript-cli.exe",
+      "localPath": "vendor/redscript/redscript-cli.exe",
+      "sha256": "CDCBED2E0C943322BBCBBAC4A9C62EF29ADC5620E4B0934F0D2A31A8282B5B62",
+      "purpose": "Offline source compilation against the local vanilla scripts bundle",
+      "license": "MIT"
+    }
+  ]
+}
