@@ -1,0 +1,147 @@
+{
+  "schemaVersion": 1,
+  "product": "realpass",
+  "statusValues": ["passed", "partial", "pending", "blocked", "not-applicable"],
+  "gates": [
+    {
+      "id": "scope-and-module-architecture",
+      "area": "architecture",
+      "status": "passed",
+      "evidence": ["REALISM-SPEC.md", "docs/MODULAR-ARCHITECTURE.md", "manifest/runtime-modules.json", "tests/Test-ModuleContract.ps1"],
+      "remaining": "Keep contracts synchronized as runtime code is consolidated."
+    },
+    {
+      "id": "source-feature-consolidation-plan",
+      "area": "architecture",
+      "status": "passed",
+      "evidence": ["manifest/feature-inventory.json", "tests/Test-FeatureInventory.ps1"],
+      "remaining": "Execute removals/replacements in final runtime packaging; current local integration still carries upstream host material."
+    },
+    {
+      "id": "unified-settings-contract",
+      "area": "settings",
+      "status": "partial",
+      "evidence": ["manifest/settings.json", "tests/Test-SettingsContract.ps1", "docs/SETTINGS-ARCHITECTURE.md"],
+      "remaining": "Implement and locally compile the realpass-owned ScriptableSystem/Mod Settings surface, then validate live toggle and save/reload semantics."
+    },
+    {
+      "id": "body-pure-model",
+      "area": "body",
+      "status": "passed",
+      "evidence": ["src/redscript/CyberpunkRealism/BodyModel.reds", "src/redscript/CyberpunkRealism/SleepModel.reds", "tests/Test-BodyModel.ps1", "tests/Test-ClockModel.ps1"],
+      "remaining": "Offline model invariants do not establish native clock, save or interaction behavior."
+    },
+    {
+      "id": "body-native-integration",
+      "area": "body",
+      "status": "partial",
+      "evidence": ["src/redscript/CyberpunkRealism/BodyRuntime.reds", "src/redscript/CyberpunkRealism/DarkFutureBridge.reds", "tools/Build-BodyAttended.ps1"],
+      "remaining": "Attended consumption, wait/sleep, exertion, bathroom/washing, lifecycle and save/reload acceptance; calibrate actual game time."
+    },
+    {
+      "id": "combat-impact-and-ballistics-model",
+      "area": "combat",
+      "status": "passed",
+      "evidence": ["src/redscript/CyberpunkRealism/ImpactModel.reds", "src/redscript/CyberpunkRealism/BallisticProfiles.reds", "tests/Test-CombatCore.ps1", "tests/Test-BallisticProfiles.ps1"],
+      "remaining": "Projectile family coefficients and actual weapon/ammunition mappings remain provisional until native sampling/calibration."
+    },
+    {
+      "id": "wound-injury-blood-treatment-model",
+      "area": "combat",
+      "status": "passed",
+      "evidence": ["src/redscript/CyberpunkRealism/WoundModel.reds", "src/redscript/CyberpunkRealism/InjuryModel.reds", "src/redscript/CyberpunkRealism/BloodLossModel.reds", "tests/Test-WoundPipeline.ps1", "tests/Test-InjuryBody.ps1", "tests/Test-FieldCare.ps1"],
+      "remaining": "Anatomy/bleeding coefficients are provisional game abstractions; native hit shapes, treatment UX and outcome calibration remain open."
+    },
+    {
+      "id": "armor-coverage-and-wear-model",
+      "area": "combat",
+      "status": "partial",
+      "evidence": ["src/redscript/CyberpunkRealism/ArmorWearModel.reds", "src/redscript/CyberpunkRealism/StockProtectionCatalog.reds", "tests/Test-ArmorWear.ps1", "tests/Test-BallisticProfiles.ps1"],
+      "remaining": "Validate actual equipped item identity, visual/regional coverage and protection coefficients in game."
+    },
+    {
+      "id": "combat-native-activation",
+      "area": "combat",
+      "status": "pending",
+      "evidence": ["src/redscript/CyberpunkRealism/CombatNativeBridge.reds", "src/redscript/CyberpunkRealism/CombatWoundsNative.reds"],
+      "remaining": "Combat is intentionally disabled. Complete combined native impact/armor/wound/bleed/impairment/treatment acceptance before promotion."
+    },
+    {
+      "id": "player-npc-symmetry",
+      "area": "combat",
+      "status": "partial",
+      "evidence": ["src/redscript/CyberpunkRealism/NPCBodyModel.reds", "tests/Test-NPCProgression.ps1", "tests/Test-WoundPipeline.ps1"],
+      "remaining": "Native human NPC identity, persistence, AI effects, bosses/MaxTac, authored immunity, nonlethal outcomes and performance."
+    },
+    {
+      "id": "nameplates-and-toilet-presentation",
+      "area": "presentation",
+      "status": "passed",
+      "evidence": ["docs/presentation-nameplates.md", "docs/presentation-scanner.md", "commit:cba7659"],
+      "remaining": "Preserve behavior while replacing E3-dependent distribution path."
+    },
+    {
+      "id": "modern-scanner-native-acceptance",
+      "area": "presentation",
+      "status": "pending",
+      "evidence": ["docs/presentation-scanner.md", "commit:938c8b9"],
+      "remaining": "Verify scanner open/close, NPC/device targeting, quickhack panels and transitions in native gameplay."
+    },
+    {
+      "id": "e3-independent-standalone-presentation",
+      "area": "presentation",
+      "status": "blocked",
+      "evidence": ["THIRD_PARTY.md", "manifest/distribution.json"],
+      "remaining": "Reimplement selected E3-inspired presentation with independently distributable realpass assets/code or obtain new permission."
+    },
+    {
+      "id": "distribution-contract-and-deny-policy",
+      "area": "distribution",
+      "status": "passed",
+      "evidence": ["manifest/distribution.json", "tests/Test-DistributionContract.ps1", "tools/Test-ArtifactPolicy.ps1", "tests/Test-ArtifactPolicy.ps1"],
+      "remaining": "Apply policy to every future candidate/public artifact and update dependency dispositions only after audit."
+    },
+    {
+      "id": "cloud-safe-ci",
+      "area": "distribution",
+      "status": "partial",
+      "evidence": [".github/workflows/ci.yml", "tests/Run-CI.ps1"],
+      "remaining": "Keep latest branch run green; this CI builds a non-playable development/source artifact, not a public gameplay package."
+    },
+    {
+      "id": "dependency-redistribution-audit",
+      "area": "distribution",
+      "status": "partial",
+      "evidence": ["manifest/components.json", "THIRD_PARTY.md", "LICENSES/"],
+      "remaining": "Finish transitive notice review for bundleable frameworks and final disposition for Dark Future-derived runtime material."
+    },
+    {
+      "id": "one-download-playable-package",
+      "area": "distribution",
+      "status": "blocked",
+      "evidence": ["docs/RELEASE-ARCHITECTURE.md", "manifest/distribution.json"],
+      "remaining": "Requires redistribution-cleared runtime, E3-independent presentation, native acceptance, release build and install/uninstall verification."
+    },
+    {
+      "id": "save-reload-upgrade-uninstall",
+      "area": "compatibility",
+      "status": "partial",
+      "evidence": ["tools/Deploy.ps1", "tools/Upgrade.ps1", "tools/Rollback.ps1", "tools/Backup-Saves.ps1", "tests/Test-RealpassDelivery.ps1"],
+      "remaining": "File transaction logic is strong; native script state migration, live module toggles and versioned uninstall/save compatibility remain open."
+    },
+    {
+      "id": "phantom-liberty-quest-compatibility",
+      "area": "compatibility",
+      "status": "pending",
+      "evidence": ["REALISM-SPEC.md", "docs/ROADMAP.md"],
+      "remaining": "Test critical Phantom Liberty sequences and authored combat/immortality exceptions with body and combat enabled."
+    },
+    {
+      "id": "performance-and-script-latency",
+      "area": "compatibility",
+      "status": "pending",
+      "evidence": ["REALISM-SPEC.md"],
+      "remaining": "Measure live script cost with body/NPC/combat systems enabled; no unattended profilers or background recorders."
+    }
+  ]
+}
