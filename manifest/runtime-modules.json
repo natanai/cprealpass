@@ -76,9 +76,9 @@
       "currentActivation": "partial-local-candidate",
       "requires": ["core"],
       "reads": ["body", "injury", "armor", "combat"],
-      "owns": ["realpass-status-presentation", "npc-nameplates", "selected-e3-inspired-hud-presentation", "scanner-integration"],
-      "subtoggles": ["nameplates", "statusCues"],
-      "disableContract": "Disabling presentation removes realpass-specific presentation without changing simulation state or disabling useful native scanner/quickhack functionality."
+      "owns": ["realpass-status-presentation", "npc-nameplates", "healthbar-suppression", "selected-e3-inspired-hud-presentation", "scanner-integration"],
+      "subtoggles": ["nameplates", "statusCues", "traditionalHealthBars"],
+      "disableContract": "Disabling presentation removes realpass-specific presentation without changing simulation state or disabling useful native scanner/quickhack functionality. Traditional health bars default hidden, but that presentation choice never changes simulation or damage state."
     },
     {
       "id": "diagnostics",
