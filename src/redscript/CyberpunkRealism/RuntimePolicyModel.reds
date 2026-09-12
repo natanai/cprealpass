@@ -31,6 +31,9 @@ public class CRRuntimeFeatureFlags extends IScriptable {
   public let presentationEnabled: Bool = true;
   public let nameplatesEnabled: Bool = true;
   public let statusCuesEnabled: Bool = true;
+  // realpass' authored presentation default is no continuous traditional HP bars.
+  // This remains an accessibility/player-choice setting, not a combat authority.
+  public let traditionalHealthBarsEnabled: Bool = false;
 
   // Diagnostics are intentionally opt-in even when an attended build allows them.
   public let diagnosticsEnabled: Bool = false;
@@ -130,6 +133,10 @@ public class CRRuntimePolicyModel extends IScriptable {
 
   public static func StatusCues(flags: ref<CRRuntimeFeatureFlags>) -> Bool {
     return CRRuntimePolicyModel.Presentation(flags) && flags.statusCuesEnabled;
+  }
+
+  public static func TraditionalHealthBars(flags: ref<CRRuntimeFeatureFlags>) -> Bool {
+    return CRRuntimePolicyModel.Presentation(flags) && flags.traditionalHealthBarsEnabled;
   }
 
   public static func Diagnostics(flags: ref<CRRuntimeFeatureFlags>) -> Bool {
