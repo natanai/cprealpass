@@ -39,7 +39,7 @@ foreach ($entry in @($plan.files)) {
     if ($planByPath.ContainsKey($path)) { throw "Duplicate planned package path: $path" }
     if ([string]::IsNullOrWhiteSpace($entry.component)) { throw "Missing component for planned path: $path" }
     if ([string]::IsNullOrWhiteSpace($entry.owner)) { throw "Missing owner for planned path: $path" }
-    if ($allowedPolicies -notcontains $entry.replacePolicy) { throw "Invalid replacePolicy for $path: $($entry.replacePolicy)" }
+    if ($allowedPolicies -notcontains $entry.replacePolicy) { throw "Invalid replacePolicy for ${path}: $($entry.replacePolicy)" }
     if ($blocked.ContainsKey($entry.component)) { throw "Blocked component in player package plan: $($entry.component) ($path)" }
     $planByPath[$path] = $entry
 }
