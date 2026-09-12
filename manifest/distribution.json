@@ -1,0 +1,141 @@
+{
+  "schemaVersion": 1,
+  "product": "realpass",
+  "target": {
+    "experience": "one-download-normal-launch",
+    "preferredInstall": "game-root-shaped-zip",
+    "fallbackInstall": "single-bootstrap-installer-only-if-licensing-or-update-safety-requires-it",
+    "normalLaunch": "Steam / normal Cyberpunk 2077 executable",
+    "specialLauncherRequiredAfterInstall": false
+  },
+  "releaseGate": {
+    "publicPlayableArtifactReady": false,
+    "reason": "Current source/local integration relies on third-party integration material whose public redistribution and standalone replacement are not fully resolved; native gameplay acceptance is also incomplete.",
+    "mustPass": [
+      "runtime-module-contract",
+      "scope-audit",
+      "dependency-license-and-transitive-notice-audit",
+      "no-blocked-assets-in-artifact",
+      "offline-tests-and-script-compilation",
+      "native-body-acceptance",
+      "native-combat-injury-acceptance",
+      "save-reload-and-upgrade-acceptance",
+      "phantom-liberty-critical-path-acceptance",
+      "artifact-hash-and-content-verification"
+    ]
+  },
+  "components": [
+    {
+      "id": "realpass-project-original",
+      "source": "repository",
+      "licenseClass": "project-original",
+      "artifactPolicy": "bundle",
+      "status": "allowed",
+      "notes": "Only runtime files needed by the selected build belong in the player artifact; tests, reports, staging state and source-only tooling stay out."
+    },
+    {
+      "id": "red4ext",
+      "source": "manifest/components.json",
+      "licenseClass": "MIT-plus-third-party-notices",
+      "artifactPolicy": "candidate-bundle-after-transitive-notice-audit",
+      "status": "conditional",
+      "notes": "Recorded license permits redistribution with notices; bundled third-party notices still require release audit."
+    },
+    {
+      "id": "redscript",
+      "source": "manifest/components.json",
+      "licenseClass": "MIT",
+      "artifactPolicy": "candidate-bundle-after-notice-audit",
+      "status": "conditional",
+      "notes": "Prefer pinned, hash-verified official archive contents if bundling is approved."
+    },
+    {
+      "id": "archivexl",
+      "source": "manifest/components.json",
+      "licenseClass": "MIT-plus-third-party-notices",
+      "artifactPolicy": "candidate-bundle-after-transitive-notice-audit",
+      "status": "conditional",
+      "notes": "Do not include unrelated framework extras merely because they ship in the upstream archive unless they are required by the framework."
+    },
+    {
+      "id": "tweakxl",
+      "source": "manifest/components.json",
+      "licenseClass": "MIT-plus-third-party-notices",
+      "artifactPolicy": "candidate-bundle-after-transitive-notice-audit",
+      "status": "conditional",
+      "notes": "Bundle only if required by the final realpass runtime."
+    },
+    {
+      "id": "codeware",
+      "source": "manifest/components.json",
+      "licenseClass": "MIT-plus-third-party-notices",
+      "artifactPolicy": "candidate-bundle-after-transitive-notice-audit",
+      "status": "conditional",
+      "notes": "If the final settings/UI no longer requires it, remove rather than carrying it as baggage."
+    },
+    {
+      "id": "mod-settings",
+      "source": "manifest/components.json",
+      "licenseClass": "MIT",
+      "artifactPolicy": "candidate-bundle-after-notice-audit",
+      "status": "conditional",
+      "notes": "Currently expected to support one realpass settings surface; reassess if a smaller native settings implementation replaces it."
+    },
+    {
+      "id": "input-loader",
+      "source": "manifest/components.json",
+      "licenseClass": "MIT",
+      "artifactPolicy": "candidate-bundle-after-notice-audit",
+      "status": "conditional",
+      "notes": "Retain only if final realpass controls require it. Never package the user's live inputUserMappings.xml."
+    },
+    {
+      "id": "darkfuture",
+      "source": "Dark Future 2.0 adaptations",
+      "licenseClass": "CC-BY-SA-4.0-for-recorded-adaptations",
+      "artifactPolicy": "adapt-or-replace; do-not-assume-full-upstream-archive-is-cleared",
+      "status": "conditional",
+      "notes": "Current body integration uses Dark Future as a host. Final single-mod work should retain only in-scope adapted material with required attribution/share-alike compliance or replace it with realpass-owned equivalents."
+    },
+    {
+      "id": "project-e3-hud",
+      "source": "Virtuoso75 / Project E3 - HUD",
+      "licenseClass": "author-specific-permissions",
+      "artifactPolicy": "do-not-bundle-under-current-recorded-terms",
+      "status": "blocked",
+      "notes": "Current recorded permission model requires the original mod and prohibits standalone redistribution of modified assets. Final one-download realpass therefore needs a realpass-owned/recreated presentation path or separately obtained permission."
+    },
+    {
+      "id": "cyberpunk-game-files",
+      "source": "installed game",
+      "licenseClass": "proprietary-game-content",
+      "artifactPolicy": "never-bundle",
+      "status": "blocked",
+      "notes": "No Cyberpunk executable, stock archives, compiled cache, saves or user settings enter the release artifact."
+    }
+  ],
+  "forbiddenArtifactPatterns": [
+    "Cyberpunk2077.exe",
+    "final.redscripts",
+    "UserSettings.json",
+    "*.sav",
+    "snapshots/**",
+    "staging/**",
+    "reports/**",
+    "vendor/**",
+    "ReferenceMods/**",
+    "manifest/deployment.json",
+    "config/local.psd1",
+    ".env*",
+    "*.pem",
+    "*.key"
+  ],
+  "artifactRequirements": [
+    "Game-root-relative paths only for runtime payload.",
+    "A short INSTALL.txt at the archive root explains where to extract and how to launch normally.",
+    "A VERSION/BUILD identifier and SHA-256 checksum are generated by CI.",
+    "Required license and attribution notices are included without development-only files.",
+    "The artifact content list is generated and verified before upload.",
+    "Blocked dependencies cause the public-playable release job to fail closed rather than silently producing a partial mod."
+  ]
+}
