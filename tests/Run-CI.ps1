@@ -13,6 +13,7 @@ $tests = @(
     'Test-PlayerPackageFinalizer.ps1',
     'Test-PackageMetadata.ps1',
     'Test-RuntimePolicyModel.ps1',
+    'Test-NoHealthbars.ps1',
     'Test-BodyModel.ps1',
     'Test-ClockModel.ps1',
     'Test-CombatCore.ps1',
@@ -21,6 +22,9 @@ $tests = @(
     'Test-WoundPipeline.ps1',
     'Test-ArmorWear.ps1',
     'Test-FieldCare.ps1',
+    'Test-BloodLoss.ps1',
+    'Test-InjuryEffects.ps1',
+    'Test-FieldCareTimed.ps1',
     'Test-NPCProgression.ps1'
 )
 
