@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "product": "realpass",
+  "purpose": "Single source of truth for player-facing realism authorities and their intended release toggles. Current development activation remains separately gated until native acceptance.",
+  "internalCore": {
+    "id": "core",
+    "playerToggle": false,
+    "reason": "Lifecycle, serialization and shared utility substrate; it must not itself impose gameplay effects."
+  },
+  "modules": [
+    {
+      "id": "body",
+      "settingsKey": "body.enabled",
+      "playerFacing": true,
+      "releaseDefault": true,
+      "currentActivation": "staged-disabled",
+      "requires": ["core"],
+      "reads": [],
+      "owns": ["nutrition", "hydration", "wake-time", "sleep-pressure", "sleep-debt", "exertion", "recovery", "digestion", "elimination", "minimal-hygiene"],
+      "subtoggles": ["nutrition", "hydration", "sleep", "exertion", "elimination", "hygiene"],
+      "disableContract": "Disabling body stops new body progression and body-derived penalties without deleting saved state. Re-enable resumes from retained state under an explicit migration/version policy."
+    },
+    {
+      "id": "injury",
+      "settingsKey": "injury.enabled",
+      "playerFacing": true,
+      "releaseDefault": true,
+      "currentActivation": "staged-disabled",
+      "requires": ["core"],
+      "reads": ["combat", "armor", "cyberwarePhysiology"],
+      "owns": ["regional-wounds", "blood-loss", "regional-impairment", "stabilization", "field-care", "treatment", "injury-recovery"],
+      "subtoggles": ["bloodLoss", "impairment", "fieldCare", "recovery"],
+      "disableContract": "Combat must fall back safely when injury is disabled. No bleeding, impairment or treatment listener may remain half-active. Existing injury state is retained but must not continue applying penalties while disabled."
+    },
+    {
+      "id": "combat",
+      "settingsKey": "combat.enabled",
+      "playerFacing": true,
+      "releaseDefault": true,
+      "currentActivation": "staged-disabled",
+      "requires": ["core"],
+      "reads": ["armor", "cyberwarePhysiology"],
+      "owns": ["weapon-projectile-profiles", "ammunition-profiles", "hit-region-routing", "penetration", "terminal-impact-result", "player-npc-physical-symmetry"],
+      "subtoggles": [],
+      "disableContract": "When disabled, realpass must not rewrite native damage or create wounds. Vanilla/authored combat behavior remains authoritative."
+    },
+    {
+      "id": "armor",
+      "settingsKey": "armor.enabled",
+      "playerFacing": true,
+      "releaseDefault": true,
+      "currentActivation": "staged-disabled",
+      "requires": ["core"],
+      "reads": [],
+      "owns": ["protective-item-classification", "regional-coverage", "projectile-dependent-protection", "armor-wear"],
+      "subtoggles": ["wear"],
+      "disableContract": "When disabled, realpass adds no physical armor interception or armor wear. Ordinary clothing never becomes ballistic armor merely because the armor module is disabled."
+    },
+    {
+      "id": "cyberwarePhysiology",
+      "settingsKey": "cyberwarePhysiology.enabled",
+      "playerFacing": true,
+      "releaseDefault": true,
+      "currentActivation": "partial-model-only",
+      "requires": ["core"],
+      "reads": [],
+      "owns": ["cybernetic-protection", "cybernetic-structural-injury", "physiology-relevant-cyberware-effects"],
+      "subtoggles": [],
+      "disableContract": "When disabled, realpass does not add structural/physiological cyberware consequences. It must not become a generic cyberware balance module."
+    },
+    {
+      "id": "presentation",
+      "settingsKey": "presentation.enabled",
+      "playerFacing": true,
+      "releaseDefault": true,
+      "currentActivation": "partial-local-candidate",
+      "requires": ["core"],
+      "reads": ["body", "injury", "armor", "combat"],
+      "owns": ["realpass-status-presentation", "npc-nameplates", "selected-e3-inspired-hud-presentation", "scanner-integration"],
+      "subtoggles": ["nameplates", "statusCues"],
+      "disableContract": "Disabling presentation removes realpass-specific presentation without changing simulation state or disabling useful native scanner/quickhack functionality."
+    },
+    {
+      "id": "diagnostics",
+      "settingsKey": "diagnostics.enabled",
+      "playerFacing": false,
+      "releaseDefault": false,
+      "currentActivation": "disabled",
+      "requires": ["core"],
+      "reads": ["body", "injury", "combat", "armor", "cyberwarePhysiology", "presentation"],
+      "owns": ["development-status-output", "calibration-observability"],
+      "subtoggles": [],
+      "disableContract": "Off by default. No background watcher, logger, recorder, scheduled task or helper service may remain when diagnostics are disabled."
+    }
+  ],
+  "outOfScope": [
+    "weather-control",
+    "economy-rebalance",
+    "arbitrary-scarcity",
+    "added-random-encounters",
+    "fast-travel-restrictions",
+    "vehicle-summon-currency-or-limits",
+    "generic-cyberware-rebalance",
+    "added-outfit-or-transmog-system",
+    "generic-difficulty-penalties"
+  ],
+  "releaseRules": [
+    "One realpass settings surface owns public toggles.",
+    "A source-mod setting is not automatically a realpass feature.",
+    "Every retained gameplay feature maps to exactly one owning realpass module.",
+    "Disabling one module must not require disabling unrelated modules.",
+    "Presentation may read simulation state but must not become a simulation authority.",
+    "Out-of-scope inherited features are removed from the distributed runtime rather than merely hidden behind disabled defaults.",
+    "Development activation gates stay closed until the corresponding native acceptance gate is satisfied."
+  ]
+}
