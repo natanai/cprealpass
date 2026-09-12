@@ -18,6 +18,7 @@ foreach ($required in @(
     'body-native-integration',
     'combat-impact-and-ballistics-model',
     'combat-native-activation',
+    'no-traditional-healthbars',
     'modern-scanner-native-acceptance',
     'e3-independent-standalone-presentation',
     'one-download-playable-package',
@@ -28,6 +29,7 @@ foreach ($required in @(
 }
 
 if ($ids['combat-native-activation'].status -eq 'passed') { throw 'Combat activation cannot be passed without native acceptance evidence.' }
+if ($ids['no-traditional-healthbars'].status -eq 'passed') { throw 'No-healthbar presentation cannot be passed before native UI acceptance.' }
 if ($ids['one-download-playable-package'].status -eq 'passed') { throw 'Playable one-download package cannot be passed while public release remains gated.' }
 if ($ids['e3-independent-standalone-presentation'].status -ne 'blocked') { throw 'E3-independent presentation blocker must remain explicit until resolved.' }
 
