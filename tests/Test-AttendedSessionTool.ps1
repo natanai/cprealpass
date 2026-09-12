@@ -22,8 +22,8 @@ Check ($source.Contains('saveBackup')) 'Session evidence does not preserve save-
 
 # The ordinary path should need only a new build ID: recover the exact active build
 # manifest from the verified deployment pointer unless the local agent overrides it.
-Check ($source.Contains("$SourceManifestPath = 'manifest/' + $current.buildId + '.deployment.json'")) 'Session tool cannot derive the active source manifest.'
-Check ($source.Contains("$current.status -ne 'deployed'")) 'Auto-discovery does not reject incomplete deployment state.'
+Check ($source.Contains('$SourceManifestPath = ''manifest/'' + $current.buildId + ''.deployment.json''')) 'Session tool cannot derive the active source manifest.'
+Check ($source.Contains('$current.status -ne ''deployed''')) 'Auto-discovery does not reject incomplete deployment state.'
 Check ($source.Contains('Current deployed build is')) 'Missing local source manifest is not explained clearly.'
 Check ($source.Contains('stateRoot = $StateRoot')) 'Session evidence does not preserve the deployment-state root.'
 
