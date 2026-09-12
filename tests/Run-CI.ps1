@@ -6,6 +6,7 @@ $tests = @(
     'Test-SettingsContract.ps1',
     'Test-DistributionContract.ps1',
     'Test-FeatureInventory.ps1',
+    'Test-AcceptanceLedger.ps1',
     'Test-ArtifactPolicy.ps1',
     'Test-PackageMetadata.ps1',
     'Test-BodyModel.ps1',
