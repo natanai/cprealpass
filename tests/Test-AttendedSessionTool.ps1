@@ -20,6 +20,13 @@ Check ($source.Contains("status = 'deployed-and-verified'")) 'Verified deploymen
 Check ($source.Contains('deploymentReceipt')) 'Session evidence does not preserve rollback receipt.'
 Check ($source.Contains('saveBackup')) 'Session evidence does not preserve save-backup location.'
 
+# The ordinary path should need only a new build ID: recover the exact active build
+# manifest from the verified deployment pointer unless the local agent overrides it.
+Check ($source.Contains("$SourceManifestPath = 'manifest/' + $current.buildId + '.deployment.json'")) 'Session tool cannot derive the active source manifest.'
+Check ($source.Contains("$current.status -ne 'deployed'")) 'Auto-discovery does not reject incomplete deployment state.'
+Check ($source.Contains('Current deployed build is')) 'Missing local source manifest is not explained clearly.'
+Check ($source.Contains('stateRoot = $StateRoot')) 'Session evidence does not preserve the deployment-state root.'
+
 # Preparation may write only project-local generated state/reports. It must never
 # start the game or create an unattended helper environment.
 foreach ($danger in @('Start-Process','Cyberpunk2077.exe"','Invoke-WebRequest','Register-ScheduledTask','New-Service','Start-Job','Register-ObjectEvent')) {
@@ -28,4 +35,4 @@ foreach ($danger in @('Start-Process','Cyberpunk2077.exe"','Invoke-WebRequest','
 Check ($source.Contains('This tool does not start Cyberpunk')) 'Tool does not state its launch boundary.'
 Check ($source.Contains('rerun the same command with -Deploy')) 'Preflight does not give a deterministic promotion path.'
 
-Write-Host "PASS: $script:checks attended-session orchestration checks; build/preflight are default and live install requires explicit deploy + verified save backup."
+Write-Host "PASS: $script:checks attended-session orchestration checks; active build is auto-based, preflight is default, and live install requires explicit deploy + verified save backup."
