@@ -20,10 +20,11 @@ Check ($combat -match 'public class CRCombatRuntimePolicy extends IScriptable \{
 
 Check ($builder.Contains("Stage-Replacement `$bodyDestination")) 'Builder does not stage the body source independently.'
 Check ($builder.Contains("Stage-Replacement `$combatDestination")) 'Builder does not stage the combat source independently.'
-Check ($builder.Contains("Replace-PolicyOnce `$bodyText 'CRBodyRuntimePolicy' 'Enabled' `$true")) 'Builder does not explicitly open body only in staged content.'
-Check ($builder.Contains("Replace-PolicyOnce `$combatText 'CRCombatRuntimePolicy' 'Enabled' `$true")) 'Builder does not explicitly open combat only in staged content.'
-Check ($builder.Contains("Replace-PolicyOnce `$bodyText 'CRBodyTestPolicy' 'Diagnostics' `$false")) 'Default attended build does not explicitly preserve diagnostics-off.'
+Check ($builder.Contains("Set-PolicyOnce `$bodyText 'CRBodyRuntimePolicy' 'Enabled' `$true")) 'Builder does not make staged body active.'
+Check ($builder.Contains("Set-PolicyOnce `$combatText 'CRCombatRuntimePolicy' 'Enabled' `$true 'false'")) 'Builder does not require closed combat before opening staged combat.'
+Check ($builder.Contains("Set-PolicyOnce `$bodyText 'CRBodyTestPolicy' 'Diagnostics' ([bool]`$Diagnostics) 'false'")) 'Builder does not require diagnostics closed before applying explicit attended choice.'
 Check ($builder.Contains('[switch]$Diagnostics')) 'Diagnostics cannot be explicitly opted into for attended debugging.'
+Check ($builder.Contains('current known-good deployment may already be a body-enabled quiet profile')) 'Builder no longer documents body-enabled current-build compatibility.'
 
 # A broad acceptance candidate must contain the causal chain the player is being
 # asked to judge. Missing consequences should fail preflight rather than masquerade
@@ -67,4 +68,4 @@ Check ($builder.Contains('Build ID already exists; attended acceptance profiles 
 Check ($builder.Contains("'manifest/' + `$BuildId + '.deployment.json'")) 'Builder does not use the established deployment-manifest format.'
 Check ($builder.Contains('requiredRuntimeDestinations')) 'Attended report does not preserve the required runtime inventory.'
 
-Write-Host "PASS: $script:checks attended-builder safety checks; canonical gates stay closed and generated broad combat testing defaults to no health bars."
+Write-Host "PASS: $script:checks attended-builder safety checks; current body-enabled builds are valid bases, canonical combat stays closed, and generated broad combat testing defaults to no health bars."
