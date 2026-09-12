@@ -21,18 +21,40 @@ Default broad attended candidate:
 
 The no-healthbar rule is presentation only. It must not change health, damage, one-shot protection, boss logic, quest immunity, wound calculation or treatment state.
 
+## Preferred operator path
+
+`tools/Prepare-AttendedSession.ps1` is the preferred entry point once the PC is available. It is intentionally safe to run before the player is ready to launch the game.
+
+With no source-manifest argument, it reads the verified current deployment pointer and automatically uses `manifest/<current buildId>.deployment.json` as the base. This preserves the exact currently installed/presented candidate instead of asking the player to remember internal manifest names. The base may already have body enabled, but it must still have combat and diagnostics closed.
+
+A local agent should first create a unique build ID and run:
+
+```powershell
+pwsh ./tools/Prepare-AttendedSession.ps1 -BuildId realpass-attended-<unique-id>
+```
+
+That command does **not** alter the game. It validates the current source manifest and every source hash, requires the full body -> combat -> armor -> wound -> blood loss -> impairment -> field-care chain, generates the immutable candidate, compiles the exact candidate against the installed Cyberpunk 2077 scripts, and runs the real upgrade planner in `-WhatIf` mode.
+
+Only after that preflight passes, while the player is present and the game is stopped, rerun the same build preparation with a **new** unique build ID and `-Deploy`. The deployment path establishes a verified save backup first, runs the reversible upgrade, verifies the deployment receipt and then stops. It does **not** launch Cyberpunk.
+
+```powershell
+pwsh ./tools/Prepare-AttendedSession.ps1 -BuildId realpass-attended-<new-unique-id> -Deploy
+```
+
+Do not reuse the preflight build ID because generated attended profiles/evidence are immutable. `-Diagnostics` is an explicit second-pass troubleshooting mode, not the ordinary feel-test default. `-ShowTraditionalHealthBars` exists only as a comparison/debug build; the authored realpass default is health bars hidden.
+
+If auto-discovery reports that the current build manifest is missing, recover/reconstruct that local manifest rather than guessing. If it reports that the current manifest lacks any required broad-runtime file, rebuild a coherent combined base before testing; do not interpret a partial profile as combat balance evidence.
+
 ## Before the session
 
-1. Sync the working branch and verify the current GitHub CI head is green.
+1. Sync `chatgpt-continuation` and verify the current GitHub CI head is green.
 2. Confirm Cyberpunk 2077 is fully stopped.
-3. Back up the save set with the existing project save-backup tool.
-4. Start from the current known-good combined local deployment manifest, not from an old body-only prototype.
-5. Generate a unique immutable attended build ID with `Build-AttendedAcceptance.ps1`. Do not reuse a historical build ID.
-6. The builder must compile the exact generated manifest successfully before deployment.
-7. Verify the generated manifest before upgrading the installed profile. If verification or compilation fails, stop; do not force deployment.
-8. Use a save where ordinary open-world combat can be tested without immediately entering a critical quest sequence.
+3. Use `Prepare-AttendedSession.ps1` to compile/preflight the current deployed build as described above.
+4. For the live candidate, use its explicit `-Deploy` path so a verified save backup and reversible receipt exist before any file changes.
+5. Use a save where ordinary open-world combat can be tested without immediately entering a critical quest sequence.
+6. Keep diagnostics off for the first feel pass.
 
-A future agent operating on the user's PC should perform these setup steps directly rather than asking the player to manually edit files.
+A future agent operating on the user's PC should perform these setup steps directly rather than asking the player to manually edit files or assemble manifests.
 
 ## Session A — presentation and baseline body state
 
