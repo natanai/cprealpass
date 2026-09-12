@@ -13,8 +13,10 @@ New-Item -ItemType Directory -Force -Path (Join-Path $blocked 'realpass/provenan
 [IO.File]::WriteAllText((Join-Path $bad 'vendor/red4ext/forbidden.dll'),'forbidden fixture')
 [IO.File]::WriteAllText((Join-Path $blocked 'realpass/provenance/components.json'),'{"components":[{"id":"project-e3-hud"}]}')
 
+# Direct PowerShell script invocation communicates failure by throwing under
+# ErrorActionPreference=Stop; LASTEXITCODE is reserved for native processes and
+# may be unset on a clean runner.
 & $scanner -Root $safe
-if ($LASTEXITCODE -ne 0) { throw 'Safe artifact fixture was rejected.' }
 
 $rejectedForbidden = $false
 try { & $scanner -Root $bad } catch { $rejectedForbidden = $_.Exception.Message -match 'forbidden-path' }
