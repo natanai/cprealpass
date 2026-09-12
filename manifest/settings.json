@@ -73,7 +73,8 @@
       "settings": [
         {"key":"presentation.enabled","displayName":"realpass presentation","type":"bool","default":true,"restartRequired":false},
         {"key":"presentation.nameplates","displayName":"NPC nameplates","type":"bool","default":true,"dependency":"presentation.enabled","restartRequired":false},
-        {"key":"presentation.statusCues","displayName":"Contextual body and injury cues","type":"bool","default":true,"dependency":"presentation.enabled","restartRequired":false}
+        {"key":"presentation.statusCues","displayName":"Contextual body and injury cues","type":"bool","default":true,"dependency":"presentation.enabled","restartRequired":false},
+        {"key":"presentation.traditionalHealthBars","displayName":"Traditional health bars","type":"bool","default":false,"dependency":"presentation.enabled","restartRequired":false}
       ]
     },
     {
