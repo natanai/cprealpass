@@ -60,11 +60,17 @@ $stage = Resolve-SafeChildPath $project $stageRelative
 New-Item -ItemType Directory -Force -Path $stage | Out-Null
 $changes = [Collections.Generic.List[object]]::new()
 
-function Replace-PolicyOnce([string]$text,[string]$className,[string]$methodName,[bool]$enable) {
-    $pattern = '(public class ' + [regex]::Escape($className) + ' extends IScriptable \{\s+public static func ' + [regex]::Escape($methodName) + '\(\) -> Bool \{\s+)return false;'
-    if ([regex]::Matches($text,$pattern).Count -ne 1) { throw "Expected one closed policy gate: $className.$methodName" }
-    if (-not $enable) { return $text }
-    return [regex]::Replace($text,$pattern,'${1}return true;')
+function Set-PolicyOnce([string]$text,[string]$className,[string]$methodName,[bool]$desired,[string]$requiredCurrent='') {
+    $pattern = '(public class ' + [regex]::Escape($className) + ' extends IScriptable \{\s+public static func ' + [regex]::Escape($methodName) + '\(\) -> Bool \{\s+)return (?<value>true|false);'
+    $matches = [regex]::Matches($text,$pattern)
+    if ($matches.Count -ne 1) { throw "Expected one policy gate: $className.$methodName" }
+    $current = $matches[0].Groups['value'].Value
+    if ($requiredCurrent -in @('true','false') -and $current -ne $requiredCurrent) {
+        throw "Unexpected current policy for $className.$methodName: $current; required $requiredCurrent"
+    }
+    $desiredText = $desired.ToString().ToLowerInvariant()
+    if ($current -eq $desiredText) { return $text }
+    return [regex]::Replace($text,$pattern,('${1}return ' + $desiredText + ';'))
 }
 
 function Stage-Replacement([string]$destination,[string]$text,[string]$label) {
@@ -80,29 +86,26 @@ function Stage-Replacement([string]$destination,[string]$text,[string]$label) {
     $changes.Add([ordered]@{destination=$destination;purpose=$label;beforeSha256=$before;afterSha256=$entry.sha256})
 }
 
-# Body must run for V's localized wound/bleeding/recovery path to be observable.
+# The current known-good deployment may already be a body-enabled quiet profile.
+# Accept either canonical-disabled or already-body-enabled input, but make the
+# generated result unambiguously body-enabled. Diagnostics must arrive closed so a
+# prior diagnostic build cannot silently leak into an ordinary feel test.
 $bodyDestination = 'r6/scripts/CyberpunkRealism/BodyRuntime.reds'
 $bodyEntry = $destinations[$bodyDestination]
 $bodySource = Resolve-SafeChildPath $project $bodyEntry.source
 $bodyText = [IO.File]::ReadAllText($bodySource).Replace("`r`n","`n")
-$bodyText = Replace-PolicyOnce $bodyText 'CRBodyRuntimePolicy' 'Enabled' $true
-if ($Diagnostics) {
-    $bodyText = Replace-PolicyOnce $bodyText 'CRBodyTestPolicy' 'Diagnostics' $true
-} else {
-    # Fail closed: diagnostics must still exist and remain false in an ordinary
-    # attended gameplay build.
-    $bodyText = Replace-PolicyOnce $bodyText 'CRBodyTestPolicy' 'Diagnostics' $false
-}
+$bodyText = Set-PolicyOnce $bodyText 'CRBodyRuntimePolicy' 'Enabled' $true
+$bodyText = Set-PolicyOnce $bodyText 'CRBodyTestPolicy' 'Diagnostics' ([bool]$Diagnostics) 'false'
 Stage-Replacement $bodyDestination $bodyText ('body enabled; diagnostics=' + [bool]$Diagnostics)
 
-# Combat is deliberately opened only in this generated profile; repository source
-# remains closed. All existing native injury/armor/blood-loss safety checks still
-# decide whether an individual hit is eligible.
+# Combat is deliberately opened only in this generated profile. Require the base
+# to still have combat closed; otherwise we would be accepting an unknown already-
+# active combat build as the source of truth without an attended acceptance record.
 $combatDestination = 'r6/scripts/CyberpunkRealism/CombatNativeBridge.reds'
 $combatEntry = $destinations[$combatDestination]
 $combatSource = Resolve-SafeChildPath $project $combatEntry.source
 $combatText = [IO.File]::ReadAllText($combatSource).Replace("`r`n","`n")
-$combatText = Replace-PolicyOnce $combatText 'CRCombatRuntimePolicy' 'Enabled' $true
+$combatText = Set-PolicyOnce $combatText 'CRCombatRuntimePolicy' 'Enabled' $true 'false'
 Stage-Replacement $combatDestination $combatText 'combat native bridge enabled for attended acceptance'
 
 # Add the project-original no-healthbar presentation to the test candidate by
