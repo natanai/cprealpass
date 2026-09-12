@@ -47,13 +47,6 @@ protected cb func OnUpdateHealthBarVisibility() -> Bool {
   return result;
 }
 
-@wrapMethod(healthbarWidgetGameController)
-protected cb func OnStatsChanged(value: Variant) -> Bool {
-  let result: Bool = wrappedMethod(value);
-  this.CRHideTraditionalPlayerHealth();
-  return result;
-}
-
 @addMethod(NameplateVisualsLogicController)
 private func CRHideTraditionalNPCHealth() -> Void {
   if CRHealthbarPresentationPolicy.ShowTraditionalHealthBars() {
