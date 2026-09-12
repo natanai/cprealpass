@@ -1,0 +1,47 @@
+realpass — Cyberpunk 2077 + Phantom Liberty realism pass
+
+THIS TEMPLATE IS FOR THE FUTURE PLAYER PACKAGE.
+A release builder must replace every {{PLACEHOLDER}} and must not ship this
+wording until the package actually contains or safely obtains every required
+runtime dependency.
+
+Build: {{VERSION}}
+Supported Cyberpunk 2077 version: {{GAME_VERSION}}
+Source revision: {{SOURCE_REVISION}}
+
+INSTALL
+1. Close Cyberpunk 2077.
+2. In Steam, open Cyberpunk 2077 > Manage > Browse local files. You should be
+   in the folder that contains "bin", "archive", and "r6".
+3. Extract everything from the realpass ZIP into that Cyberpunk 2077 folder.
+   Allow Windows to merge folders. Do not extract the ZIP into a new nested
+   "realpass" folder beside the game.
+4. Launch Cyberpunk 2077 normally through Steam. No separate realpass launcher
+   is required for ordinary play.
+5. Open the realpass section in Mod Settings if you want to change individual
+   realism systems.
+
+VERIFY
+The release includes SHA256SUMS.txt and realpass/build-manifest.json. If an
+installer/helper reports a hash, game-version, blocked-component, or unknown
+file-collision error, stop rather than forcing the install.
+
+UPDATING
+1. Close the game.
+2. Read the release notes for save/schema migration warnings.
+3. Back up saves when the release notes identify a save-affecting migration.
+4. Extract the newer realpass ZIP over the same game folder, or use the
+   release's finite update helper if one is supplied for that version.
+5. Never delete broad shared mod folders to update realpass.
+
+IMPORTANT
+- File rollback is not save rollback. A save written by a newer script schema
+  may require its matching pre-update save backup when reverting code.
+- realpass does not install a background service, watcher, scheduled task, or
+  permanent launcher.
+- Do not install Project E3 HUD files from a realpass archive. Under the
+  currently recorded permissions, those assets are not part of the standalone
+  realpass package.
+
+For exact file ownership and credits, see realpass/build-manifest.json and
+realpass/provenance.json.
