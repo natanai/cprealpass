@@ -4,6 +4,7 @@ if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'Run-CI.ps1 requires PowerShe
 $tests = @(
     'Test-ModuleContract.ps1',
     'Test-DistributionContract.ps1',
+    'Test-FeatureInventory.ps1',
     'Test-BodyModel.ps1',
     'Test-ClockModel.ps1',
     'Test-CombatCore.ps1',
