@@ -8,6 +8,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: realpass-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   offline-validation:
     name: Offline models, contracts, and safe package
@@ -32,6 +36,16 @@ jobs:
       - name: Build redistribution-safe development source package
         shell: pwsh
         run: ./tools/Build-Package.ps1
+
+      - name: Reject forbidden or blocked artifact content
+        shell: pwsh
+        run: |
+          $archives = @(Get-ChildItem -LiteralPath ./dist -Filter '*.zip' -File)
+          if ($archives.Count -ne 1) { throw "Expected exactly one development package, found $($archives.Count)." }
+          $scanRoot = Join-Path $env:RUNNER_TEMP 'realpass-artifact-scan'
+          if (Test-Path -LiteralPath $scanRoot) { Remove-Item -LiteralPath $scanRoot -Recurse -Force }
+          Expand-Archive -LiteralPath $archives[0].FullName -DestinationPath $scanRoot
+          ./tools/Test-ArtifactPolicy.ps1 -Root $scanRoot
 
       - name: Upload development source package
         uses: actions/upload-artifact@v4
