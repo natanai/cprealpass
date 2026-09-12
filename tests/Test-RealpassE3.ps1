@@ -38,7 +38,7 @@ $fixtureManifestPath = Join-Path $fixture 'manifest/base.json'
 Write-JsonFile $fixtureManifest $fixtureManifestPath
 $fixtureBaseHash = Get-Sha256 $fixtureManifestPath
 $builder = Join-Path $fixture 'tools/Build-RealpassPresentation.ps1'
-& $builder -BuildId 'fixture-e3' -ManifestPath 'manifest/base.json'
+& $builder -BuildId 'fixture-e3' -ManifestPath 'manifest/base.json' -ScannerMode E3
 $outputPath = Join-Path $fixture 'manifest/fixture-e3.deployment.json'
 $output = Get-Content -Raw -LiteralPath $outputPath | ConvertFrom-Json
 $report = Get-Content -Raw -LiteralPath (Join-Path $fixture 'reports/presentation-fixture-e3.json') | ConvertFrom-Json
@@ -80,24 +80,24 @@ Check ($text.Contains('this.m_humanityLossHolder.GetParentWidget() as inkCompoun
 Check ($text.Contains('while IsDefined(hubWidget) && depth < 4') -and $text.Contains('IsDefined(hubVert) && hubVert.GetNumChildren()')) 'Caption hierarchy remains unsafe'
 Check ((Get-Sha256 (Join-Path $fixture 'source/DFInteractionSystem.reds')) -eq $dialogue.sha256) 'Original dialogue source mutated'
 $publishedHash = Get-Sha256 $outputPath
-Reject { & $builder -BuildId 'fixture-e3' -ManifestPath 'manifest/base.json' } 'Existing build ID was overwritten'
+Reject { & $builder -BuildId 'fixture-e3' -ManifestPath 'manifest/base.json' -ScannerMode E3 } 'Existing build ID was overwritten'
 Check ((Get-Sha256 $outputPath) -eq $publishedHash) 'Rejected reuse mutated the published build'
 $first = @($config.files | Where-Object path -like '*.reds')[0]
 $tamperPath = Resolve-SafeChildPath $fixture ($config.referenceRoot+'/'+$first.path)
 $originalBytes = [IO.File]::ReadAllBytes($tamperPath)
 try {
     [IO.File]::AppendAllText($tamperPath,'// tamper')
-    Reject { & $builder -BuildId 'fixture-tampered' -ManifestPath 'manifest/base.json' } 'Changed reference bytes accepted'
+    Reject { & $builder -BuildId 'fixture-tampered' -ManifestPath 'manifest/base.json' -ScannerMode E3 } 'Changed reference bytes accepted'
     Check (-not (Test-Path -LiteralPath (Join-Path $fixture 'manifest/fixture-tampered.deployment.json'))) 'Failed reference validation published a manifest'
 } finally { [IO.File]::WriteAllBytes($tamperPath,$originalBytes) }
 $extraPath = Resolve-SafeChildPath $fixture ($config.referenceRoot+'/extra.reds')
 [IO.File]::WriteAllText($extraPath,'// unexpected reference file')
-try { Reject { & $builder -BuildId 'fixture-extra' -ManifestPath 'manifest/base.json' } 'Unindexed reference payload accepted' } finally { Remove-Item -LiteralPath $extraPath }
+try { Reject { & $builder -BuildId 'fixture-extra' -ManifestPath 'manifest/base.json' -ScannerMode E3 } 'Unindexed reference payload accepted' } finally { Remove-Item -LiteralPath $extraPath }
 $collision = $fixtureManifest | ConvertTo-Json -Depth 8 | ConvertFrom-Json
 $collision.files += [pscustomobject]@{source='source/DFSettings.reds';destination=$first.path;component='other';sha256=$df.sha256}
 Write-JsonFile $collision (Join-Path $fixture 'manifest/collision.json')
-Reject { & $builder -BuildId 'fixture-collision' -ManifestPath 'manifest/collision.json' } 'Destination collision accepted'
-Reject { & $builder -BuildId 'fixture-path' -ManifestPath '../manifest/base.json' } 'Unsafe base path accepted'
+Reject { & $builder -BuildId 'fixture-collision' -ManifestPath 'manifest/collision.json' -ScannerMode E3 } 'Destination collision accepted'
+Reject { & $builder -BuildId 'fixture-path' -ManifestPath '../manifest/base.json' -ScannerMode E3 } 'Unsafe base path accepted'
 Check ((Get-Sha256 $basePath) -eq $baseHash) 'Real base profile mutated by fixture'
 if ($null -ne $liveHash) { Check ((Get-Sha256 $livePointer) -eq $liveHash) 'Live receipt changed' }
 Write-JsonFile ([ordered]@{passed=$true;checks=$script:checks;fixture=$fixtureRelative;baseManifest=$ManifestPath;builderSha256=(Get-Sha256 (Join-Path $project 'tools/Build-RealpassPresentation.ps1'));configSha256=(Get-Sha256 $configPath);scope='Actual staging/immutability/hash/collision/name-policy checks in an isolated fixture. No native UI, full compilation, game or deployment.'}) (Join-Path $project 'reports/realpass-e3-tests.json')

@@ -1,7 +1,8 @@
 param(
     [Parameter(Mandatory=$true)][ValidatePattern('^[a-zA-Z0-9][a-zA-Z0-9._-]*$')][string]$BuildId,
     [Parameter(Mandatory=$true)][string]$ManifestPath,
-    [string]$ConfigPath = 'config/realpass-e3.json'
+    [string]$ConfigPath = 'config/realpass-e3.json',
+    [ValidateSet('Modern','E3')][string]$ScannerMode = 'Modern'
 )
 . "$PSScriptRoot/Common.ps1"
 $project = Get-ProjectRoot
@@ -59,6 +60,18 @@ function Replace-OnePattern([string]$Content,[string]$Pattern,[string]$Replaceme
 $nl = [string][char]10
 $stage = 'staging/realpass-presentation-' + [guid]::NewGuid().ToString('N')
 $notice = '// realpass local presentation adaptation. Original Project E3 - HUD by Virtuoso75.' + $nl + '// https://www.nexusmods.com/cyberpunk2077/mods/8800 ; published changes require the original mod.' + $nl
+$scannerArchive=$null
+$scannerRecipe=$null
+$scannerRecipeHash=$null
+if($ScannerMode -eq 'Modern'){
+    $scannerRecipePath=Resolve-SafeChildPath $project 'config/patches/realpass-modern-scanner.json'
+    $scannerRecipeHash=Get-Sha256 $scannerRecipePath
+    $scannerRecipe=Get-Content -Raw -LiteralPath $scannerRecipePath|ConvertFrom-Json
+    $scannerSource=@($config.files|Where-Object path -eq $scannerRecipe.omittedScript)
+    if($scannerSource.Count -ne 1 -or $scannerSource[0].sha256 -ne $scannerRecipe.expectedScriptSha256){throw 'Modern scanner requires the pinned E3 script'}
+    $archiveSource=$config.referenceRoot+'/'+$scannerRecipe.sourceArchive
+    $scannerArchive=& "$PSScriptRoot/Build-RealpassArchive.ps1" -ArchivePath $archiveSource
+}
 $prepared = @()
 $settingsPath = 'r6/scripts/Project E3 - HUD/core/ModSettings.reds'
 $nameplatePath = 'r6/scripts/Project E3 - HUD/cyberpunk/widgets/healthbar/npcNamePlate.reds'
@@ -66,6 +79,11 @@ $visualPath = 'r6/scripts/Project E3 - HUD/cyberpunk/widgets/healthbar/nameplate
 foreach ($file in $config.files) {
     $source = Resolve-SafeChildPath $reference $file.path
     $content = $null
+    if($ScannerMode -eq 'Modern' -and $file.path -eq $scannerRecipe.omittedScript){continue}
+    if($ScannerMode -eq 'Modern' -and $file.path -eq $scannerRecipe.sourceArchive){
+        $prepared += [pscustomobject]@{destination=$file.path;source=$scannerArchive.archivePath;before=$scannerArchive.sha256;content=$null;component='project-e3-hud-local';reason='Modern scanner: omit E3 scanner/quickhack/focus resources; retain other assets byte identical.';entry=$null}
+        continue
+    }
     $reason = 'Original E3 reference bytes; local dependency only.'
     if ($file.path -eq $settingsPath) {
         $content = [IO.File]::ReadAllText($source).Replace([string][char]13,'')
@@ -165,11 +183,11 @@ foreach ($item in $prepared) {
 }
 if ((Get-Sha256 $basePath) -ne $baseHash -or (Get-Sha256 $configFull) -ne $configHash -or (Get-Sha256 $nameplateRecipePath) -ne $nameplateRecipeHash) { throw 'Build inputs changed during staging.' }
 $manifest.buildId = $BuildId
-$manifest | Add-Member -Force NoteProperty realpassE3 ([ordered]@{preset=$config.id;distribution='local-integration-only';includesRestrictedThirdPartyAssets=$true;originalDependency=$config.sourceUrl;author=$config.author;provenance=$reportRelative})
-$report = [ordered]@{buildId=$BuildId;builtAtUtc=[DateTime]::UtcNow.ToString('o');baseManifest=$ManifestPath;baseManifestSha256=$baseHash;preset=$ConfigPath;presetSha256=$configHash;dialogueRecipe=$dialogueRecipeRelative;dialogueRecipeSha256=$dialogueRecipeHash;nameplateRecipe=$nameplateRecipeRelative;nameplateRecipeSha256=$nameplateRecipeHash;nameplateSupportSha256=$supportHash;sourceVersion=$config.sourceVersion;sourceUrl=$config.sourceUrl;author=$config.author;permission=$config.permission;distribution='local-integration-only';referenceRoot=$config.referenceRoot;referenceFiles=36;supportFilesAdded=1;scriptFilesAdded=23;files=$changes;compiled=$false;installed=$false;nativeVisibilityVerified=$false;persistedSettingsFilesChanged=$false}
+$manifest | Add-Member -Force NoteProperty realpassE3 ([ordered]@{preset=$config.id;distribution='local-integration-only';includesRestrictedThirdPartyAssets=$true;originalDependency=$config.sourceUrl;scannerMode=$ScannerMode;author=$config.author;provenance=$reportRelative})
+$report = [ordered]@{buildId=$BuildId;builtAtUtc=[DateTime]::UtcNow.ToString('o');baseManifest=$ManifestPath;baseManifestSha256=$baseHash;preset=$ConfigPath;presetSha256=$configHash;dialogueRecipe=$dialogueRecipeRelative;dialogueRecipeSha256=$dialogueRecipeHash;nameplateRecipe=$nameplateRecipeRelative;nameplateRecipeSha256=$nameplateRecipeHash;nameplateSupportSha256=$supportHash;sourceVersion=$config.sourceVersion;sourceUrl=$config.sourceUrl;author=$config.author;permission=$config.permission;distribution='local-integration-only';referenceRoot=$config.referenceRoot;referenceFiles=36;supportFilesAdded=1;scriptFilesAdded=$(if($ScannerMode -eq 'Modern'){22}else{23});scannerMode=$ScannerMode;scannerArchiveReport=$(if($null -ne $scannerArchive){$scannerArchive.reportPath}else{$null});scannerRecipeSha256=$scannerRecipeHash;files=$changes;compiled=$false;installed=$false;nativeVisibilityVerified=$false;persistedSettingsFilesChanged=$false}
 Write-JsonFile $report $reportPath
 New-Item -ItemType Directory -Force -Path (Split-Path -Parent $output) | Out-Null
 $bytes = [Text.UTF8Encoding]::new($false).GetBytes(($manifest | ConvertTo-Json -Depth 20) + $nl)
 $stream = [IO.File]::Open($output,[IO.FileMode]::CreateNew,[IO.FileAccess]::Write,[IO.FileShare]::None)
 try { $stream.Write($bytes,0,$bytes.Length) } finally { $stream.Dispose() }
-Write-Host "Staged $BuildId with 36 local-only E3 files plus scanned-nameplate support, source-derived compatibility and guarded dialogue captions. No compilation or live deployment performed."
+Write-Host "Staged $BuildId with $ScannerMode scanner, local-only E3 presentation, scanned-nameplate support and guarded dialogue captions. No compilation or live deployment performed."

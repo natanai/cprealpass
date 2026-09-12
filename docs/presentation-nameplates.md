@@ -41,11 +41,11 @@ These source facts explain two failure paths consistent with the screenshot. The
 6. Include the patch source and recipe in local bundle provenance. Preserve the required-original/local-only status of the E3-containing bundle.
 7. Update E3 staging tests: the new wrapper lives in its own support file; the GetCustom method retains native-data precedence but now has a scanned-crowd fallback. Total E3 additions become 37 files / 23 scripts.
 
-Do not overwrite old candidates or the running installation. The final combined candidate is realpass-presentation-rc3-quiet, with 226 payload files and 115 scripts. Its exact upgrade/rollback passed, and it is installed locally for the next launch after a verified save backup. The earlier nameplate-only manifest is a separate compile fixture.
+Do not overwrite old candidates or the running installation. The nameplate correction entered realpass-presentation-rc3-quiet, with 226 payload files and 115 scripts. A subsequent screenshot confirmed the readable scanned name Carolyn Veranes. The current rc4 modern-scanner candidate retains the same nameplate sources and assets. The earlier nameplate-only manifest is a separate compile fixture.
 
 ## Verification
 
 - tests/Test-RealpassNameplates.ps1: 63 checks execute the actual resolver replacement, added helpers and projection wrapper using controlled native API/widget fixtures. Both separate native display-name references and references that alias the text widget are covered.
 - Complete candidate compilation: 115 sources, zero errors, the same nine existing dependency warnings.
-- No in-game asset rendering, actual crowd record assignment, save state, or scanning behavior is claimed by these offline checks.
+- Offline tests alone do not validate game rendering, actual crowd record assignment or saves. A later user screenshot confirms a readable scanned civilian name in one native case; other identity restrictions and dialogue transitions still need native acceptance.
 - The next combined test should scan an ordinary civilian, release the scanner and focus them, then look away/back. Check a friendly/quest NPC too, and confirm that dialogue still hides the overhead name.

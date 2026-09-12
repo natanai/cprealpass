@@ -10,6 +10,16 @@
       "sha256": "CDCBED2E0C943322BBCBBAC4A9C62EF29ADC5620E4B0934F0D2A31A8282B5B62",
       "purpose": "Offline source compilation against the local vanilla scripts bundle",
       "license": "MIT"
+    },
+    {
+      "id": "wolvenkit-cli",
+      "version": "9.0.1",
+      "sourceUrl": "https://github.com/WolvenKit/WolvenKit/releases/tag/9.0.1",
+      "assetUrl": "https://github.com/WolvenKit/WolvenKit/releases/download/9.0.1/WolvenKit.Console-9.0.1.zip",
+      "localPath": "vendor/wolvenkit/WolvenKit.Console-9.0.1.zip",
+      "sha256": "364427384C0F4EBB6B157FA9ABD01595258AF1B7993C7B3A7EDD2920F2016E92",
+      "purpose": "Finite offline archive inspection and selective local presentation repacking",
+      "license": "Repository LICENSE: GPL-3.0; CLI PackageLicenseExpression: MIT. Tool remains local and is not redistributed."
     }
   ]
 }
