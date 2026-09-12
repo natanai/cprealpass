@@ -5,6 +5,7 @@ $tests = @(
     'Test-ModuleContract.ps1',
     'Test-SettingsContract.ps1',
     'Test-DistributionContract.ps1',
+    'Test-InstallContract.ps1',
     'Test-FeatureInventory.ps1',
     'Test-AcceptanceLedger.ps1',
     'Test-ActivationGates.ps1',
