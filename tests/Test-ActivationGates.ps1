@@ -40,11 +40,12 @@ if ($bodyAttended -match '(?i)(Start-Process|Cyberpunk2077\.exe|scheduled task|R
 }
 
 # Broad builder is the only project helper allowed to open BOTH body and combat,
-# and only in a new immutable generated manifest that is compiled before use. It
-# deliberately stops before deployment; deployment is a separate explicit step.
+# and only in a new immutable generated manifest that is compiled before use. The
+# base may already have accepted body enabled, but combat must arrive closed.
 foreach ($needle in @(
-    "Replace-PolicyOnce `$bodyText 'CRBodyRuntimePolicy' 'Enabled' `$true",
-    "Replace-PolicyOnce `$combatText 'CRCombatRuntimePolicy' 'Enabled' `$true",
+    "Set-PolicyOnce `$bodyText 'CRBodyRuntimePolicy' 'Enabled' `$true",
+    "Set-PolicyOnce `$combatText 'CRCombatRuntimePolicy' 'Enabled' `$true 'false'",
+    "Set-PolicyOnce `$bodyText 'CRBodyTestPolicy' 'Diagnostics' ([bool]`$Diagnostics) 'false'",
     'Build ID already exists; attended acceptance profiles are immutable',
     'Compile-Profile.ps1',
     'No live deployment performed.'
@@ -64,4 +65,4 @@ if ($session -match '(?i)(Start-Process|Register-ScheduledTask|New-Service)') {
     throw 'Attended session tool must not launch the game or install background automation.'
 }
 
-Write-Host 'PASS: canonical body/combat/diagnostic gates remain closed; only explicit immutable attended builders may open staged gates, and live installation requires explicit deploy + save/receipt verification.'
+Write-Host 'PASS: canonical body/combat/diagnostic gates remain closed; current body-enabled builds may seed immutable attended candidates, staged combat requires an explicitly closed base, and live installation requires explicit deploy + save/receipt verification.'
