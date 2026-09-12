@@ -20,11 +20,14 @@ function Normalize-Relative([string]$full) {
 }
 
 function Matches-PolicyPattern([string]$relative, [string]$pattern) {
-    $candidate = $relative.Replace('\','/').TrimStart('/')
-    $rule = $pattern.Replace('\','/').TrimStart('/')
-    # PowerShell wildcard matching is case-insensitive on Windows; force the same
-    # behavior explicitly so CI policy does not depend on runner filesystem rules.
-    return $candidate.ToLowerInvariant() -like $rule.ToLowerInvariant()
+    $candidate = $relative.Replace('\','/').TrimStart('/').ToLowerInvariant()
+    $rule = $pattern.Replace('\','/').TrimStart('/').ToLowerInvariant()
+    # Rules without a slash are filename rules and must catch the file anywhere
+    # in the artifact (for example Cyberpunk2077.exe, *.sav or .env*).
+    if (-not $rule.Contains('/')) {
+        return [IO.Path]::GetFileName($candidate) -like $rule
+    }
+    return $candidate -like $rule
 }
 
 $files = @(Get-ChildItem -LiteralPath $rootFull -Recurse -File -Force)
