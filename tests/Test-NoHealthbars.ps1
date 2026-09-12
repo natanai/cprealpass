@@ -9,12 +9,14 @@ $checks = 0
 function Check($condition,[string]$message) { if (-not $condition) { throw $message }; $script:checks++ }
 function Count([string]$needle) { return [regex]::Matches($source,[regex]::Escape($needle)).Count }
 
-Check ((Count '@wrapMethod(healthbarWidgetGameController)') -eq 3) 'Expected three player-health lifecycle/visibility hooks.'
+Check ((Count '@wrapMethod(healthbarWidgetGameController)') -eq 2) 'Expected two verified player-health lifecycle/visibility hooks.'
 Check ((Count '@wrapMethod(NameplateVisualsLogicController)') -eq 2) 'Expected two NPC-health visibility hooks.'
 Check ((Count '@wrapMethod(BossHealthBarGameController)') -eq 1) 'Expected one boss-health visibility hook.'
 Check ($source.Contains('private final func UpdateHealthbarVisibility() -> Void')) 'NPC health visibility hook signature missing.'
 Check ($source.Contains('private final func ShowBossHealthBar(puppet: ref<NPCPuppet>, useSilentUpdate: Bool) -> Void')) 'Boss health hook signature missing.'
+Check ($source.Contains('protected cb func OnInitialize() -> Bool')) 'Player health initialize hook signature missing.'
 Check ($source.Contains('protected cb func OnUpdateHealthBarVisibility() -> Bool')) 'Player health visibility hook signature missing.'
+Check (-not $source.Contains('OnStatsChanged')) 'Unnecessary player stat callback hook reintroduced compile risk.'
 Check ($source.Contains('return false;')) 'Authored no-healthbar default is not closed.'
 
 foreach ($field in @('m_healthBar','m_overshieldBarRef','m_lostHealthAggregationBar','m_damegePreview','m_fullBar','m_healthTextPath','m_maxHealthTextPath')) {
