@@ -1,0 +1,43 @@
+realpass — uninstall template
+
+THIS TEMPLATE IS FOR THE FUTURE PLAYER PACKAGE.
+The release builder/maintainer must replace {{PLACEHOLDERS}} and verify the
+exact version's owned-file manifest before publication.
+
+Build: {{VERSION}}
+Supported Cyberpunk 2077 version: {{GAME_VERSION}}
+
+BEFORE UNINSTALLING
+1. Close Cyberpunk 2077.
+2. Read the release notes for this exact realpass version.
+3. If this version introduced or migrated persistent gameplay state, keep the
+   matching pre-install/pre-update save backup before removing code.
+
+UNINSTALL RULE
+Remove only files owned by this realpass build as listed in:
+
+    realpass/build-manifest.json
+
+Do NOT delete broad shared directories such as r6/scripts, red4ext/plugins,
+archive/pc/mod, or r6/tweaks. Other mods may use them.
+
+FRAMEWORK DEPENDENCIES
+A framework file marked "approved-dependency-owned" in the build manifest may
+also be used by another installed mod. Do not blindly remove shared framework
+files just because realpass bundled them. The final release helper must either:
+
+- detect that the dependency is still shared/needed and leave it in place; or
+- explain that manual dependency removal is optional and separate from removing
+  realpass-owned gameplay files.
+
+SAVE STATE
+Removing files does not rewind a save. If a save was written with persistent
+realpass script state, follow the exact release's migration/uninstall procedure.
+Restoring an older code build may require restoring the corresponding earlier
+save. Never assume deleting a script makes its saved state harmless.
+
+SAFE HELPER
+If this release contains an uninstall helper, it must be finite and
+user-invoked. It may delete only paths/hashes owned by the exact build manifest
+and must fail closed if a supposedly owned file has drifted. It must not install
+or use a background service, watcher, scheduled task, or permanent launcher.
