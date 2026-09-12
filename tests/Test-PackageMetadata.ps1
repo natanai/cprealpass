@@ -33,8 +33,11 @@ foreach ($file in @($manifest.files)) {
 }
 
 if (@($manifest.files).Count -lt 10) { throw 'Development package unexpectedly lost most original modules.' }
-if (-not $modules.ContainsKey('body-core') -or -not $modules.ContainsKey('combat-core') -or -not $modules.ContainsKey('injury-body')) {
-    throw 'Development package no longer covers the expected original model families.'
+foreach ($requiredModule in @('runtime-policy-model','body-core','combat-core','injury-body')) {
+    if (-not $modules.ContainsKey($requiredModule)) { throw "Development package lost required original module family: $requiredModule" }
+}
+if (-not $destinations.ContainsKey('r6/scripts/CyberpunkRealism/RuntimePolicyModel.reds')) {
+    throw 'Development package does not contain the code-level runtime policy model.'
 }
 
 Write-Host "PASS: development package metadata matches $($manifest.version), $(@($manifest.files).Count) project-original files, and remains non-playable by contract."
