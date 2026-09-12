@@ -33,6 +33,28 @@ foreach ($file in @($manifest.files)) {
     }
 }
 
+# A broad combat-feel session is useful only when the whole causal chain is in the
+# candidate. Fail early with an actionable list rather than silently testing body +
+# one bridge while armor, injury consequences, blood loss or field care are absent.
+$requiredDestinations = @(
+    'r6/scripts/CyberpunkRealism/BodyRuntime.reds',
+    'r6/scripts/CyberpunkRealism/BodyInteractionRuntime.reds',
+    'r6/scripts/CyberpunkRealism/CombatNativeBridge.reds',
+    'r6/scripts/CyberpunkRealism/CombatProfilesNative.reds',
+    'r6/scripts/CyberpunkRealism/CombatWoundsNative.reds',
+    'r6/scripts/CyberpunkRealism/ArmorWearNative.reds',
+    'r6/scripts/CyberpunkRealism/InjuryEffectsNative.reds',
+    'r6/scripts/CyberpunkRealism/BloodLossNative.reds',
+    'r6/scripts/CyberpunkRealism/FieldCareRuntime.reds',
+    'r6/scripts/CyberpunkRealism/FieldCareActionRuntime.reds',
+    'r6/scripts/CyberpunkRealism/FieldCareItemUse.reds',
+    'r6/scripts/CyberpunkRealism/FieldCareUI.reds'
+)
+$missing = @($requiredDestinations | Where-Object { -not $destinations.ContainsKey($_) })
+if ($missing.Count -gt 0) {
+    throw "Source manifest is not a broad realpass acceptance profile. Missing:`n - $($missing -join "`n - ")"
+}
+
 $stageRelative = 'staging/attended-' + [guid]::NewGuid().ToString('N')
 $stage = Resolve-SafeChildPath $project $stageRelative
 New-Item -ItemType Directory -Force -Path $stage | Out-Null
@@ -60,7 +82,6 @@ function Stage-Replacement([string]$destination,[string]$text,[string]$label) {
 
 # Body must run for V's localized wound/bleeding/recovery path to be observable.
 $bodyDestination = 'r6/scripts/CyberpunkRealism/BodyRuntime.reds'
-if (-not $destinations.ContainsKey($bodyDestination)) { throw 'Attended profile requires BodyRuntime.reds.' }
 $bodyEntry = $destinations[$bodyDestination]
 $bodySource = Resolve-SafeChildPath $project $bodyEntry.source
 $bodyText = [IO.File]::ReadAllText($bodySource).Replace("`r`n","`n")
@@ -78,15 +99,14 @@ Stage-Replacement $bodyDestination $bodyText ('body enabled; diagnostics=' + [bo
 # remains closed. All existing native injury/armor/blood-loss safety checks still
 # decide whether an individual hit is eligible.
 $combatDestination = 'r6/scripts/CyberpunkRealism/CombatNativeBridge.reds'
-if (-not $destinations.ContainsKey($combatDestination)) { throw 'Attended profile requires CombatNativeBridge.reds.' }
 $combatEntry = $destinations[$combatDestination]
 $combatSource = Resolve-SafeChildPath $project $combatEntry.source
 $combatText = [IO.File]::ReadAllText($combatSource).Replace("`r`n","`n")
 $combatText = Replace-PolicyOnce $combatText 'CRCombatRuntimePolicy' 'Enabled' $true
 Stage-Replacement $combatDestination $combatText 'combat native bridge enabled for attended acceptance'
 
-# Add project-original no-healthbar presentation to the test candidate by default.
-# It hides HP UI only; it does not change the damage/stat-pool simulation.
+# Add the project-original no-healthbar presentation to the test candidate by
+# default. It hides HP UI only; it does not change the damage/stat-pool simulation.
 $healthbarDestination = 'r6/scripts/CyberpunkRealism/NoHealthbars.reds'
 $healthbarSourceRelative = 'src/redscript/CyberpunkRealism/NoHealthbars.reds'
 $healthbarSource = Resolve-SafeChildPath $project $healthbarSourceRelative
@@ -94,7 +114,15 @@ $healthbarHash = Get-Sha256 $healthbarSource
 if (-not $ShowTraditionalHealthBars) {
     if ($destinations.ContainsKey($healthbarDestination)) {
         $existing = $destinations[$healthbarDestination]
-        if ($existing.sha256 -ne $healthbarHash) { throw 'Profile already owns NoHealthbars.reds with a different hash.' }
+        $component = [string]$existing.component
+        if (-not ([string]::IsNullOrWhiteSpace($component)) -and $component -notlike 'realpass*') {
+            throw "NoHealthbars destination is owned by a non-realpass component: $component"
+        }
+        $before = $existing.sha256
+        $existing.source = $healthbarSourceRelative
+        $existing.sha256 = $healthbarHash
+        if ([string]::IsNullOrWhiteSpace($component)) { $existing.component = 'realpass-presentation' }
+        $changes.Add([ordered]@{destination=$healthbarDestination;purpose='refresh project-original traditional healthbar suppression';beforeSha256=$before;afterSha256=$healthbarHash})
     } else {
         $entry = [pscustomobject][ordered]@{
             source = $healthbarSourceRelative
@@ -128,6 +156,7 @@ $record = [ordered]@{
     diagnosticsEnabled = [bool]$Diagnostics
     traditionalHealthBars = [bool]$ShowTraditionalHealthBars
     noTraditionalHealthBars = -not [bool]$ShowTraditionalHealthBars
+    requiredRuntimeDestinations = @($requiredDestinations)
     changes = @($changes.ToArray())
     manifestPath = $outputRelative
     scope = 'Attended compile candidate only. Build does not deploy or launch Cyberpunk. Native combat feel, UI rendering, saves, quests, bosses and Phantom Liberty still require player-attended acceptance.'
