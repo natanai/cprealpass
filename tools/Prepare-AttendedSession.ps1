@@ -1,6 +1,6 @@
 param(
     [Parameter(Mandatory=$true)][ValidatePattern('^[a-zA-Z0-9][a-zA-Z0-9._-]*$')][string]$BuildId,
-    [Parameter(Mandatory=$true)][string]$SourceManifestPath,
+    [string]$SourceManifestPath,
     [string]$GameRoot = 'C:\Games\Steam\steamapps\common\Cyberpunk 2077',
     [string]$SaveRoot,
     [string]$StateRoot,
@@ -13,6 +13,29 @@ $ErrorActionPreference = 'Stop'
 $project = Get-ProjectRoot
 $GameRoot = Assert-GameRoot $GameRoot
 Assert-GameStopped
+
+if (-not $StateRoot) { $StateRoot = Join-Path $project 'snapshots\deployment-state' }
+$StateRoot = [IO.Path]::GetFullPath($StateRoot)
+
+# Default to the exact manifest behind the currently deployed build so the player
+# does not have to know internal manifest names. This keeps the current accepted
+# presentation/dependency payload and layers the attended gates on top of it.
+if ([string]::IsNullOrWhiteSpace($SourceManifestPath)) {
+    $currentPath = Join-Path $StateRoot 'current.json'
+    if (-not (Test-Path -LiteralPath $currentPath -PathType Leaf)) {
+        throw 'No current deployment state was found. Supply -SourceManifestPath explicitly.'
+    }
+    $current = Get-Content -Raw -LiteralPath $currentPath | ConvertFrom-Json
+    if ($current.status -ne 'deployed' -or $current.buildId -notmatch '^[a-zA-Z0-9][a-zA-Z0-9._-]*$') {
+        throw 'Current deployment is not in a clean deployed state. Recover it before preparing an attended session.'
+    }
+    $SourceManifestPath = 'manifest/' + $current.buildId + '.deployment.json'
+    $sourceFull = Resolve-SafeChildPath $project $SourceManifestPath
+    if (-not (Test-Path -LiteralPath $sourceFull -PathType Leaf)) {
+        throw "Current deployed build is $($current.buildId), but its local source manifest is unavailable: $SourceManifestPath"
+    }
+    Write-Host "Using current deployed build as attended base: $($current.buildId)"
+}
 
 # Build-AttendedAcceptance verifies every inherited source hash and compiles the
 # exact generated profile against the installed game before this script considers
@@ -29,8 +52,7 @@ if ($ShowTraditionalHealthBars) { $builderArgs.ShowTraditionalHealthBars = $true
 $manifest = Resolve-SafeChildPath $project ('manifest/' + $BuildId + '.deployment.json')
 if (-not (Test-Path -LiteralPath $manifest -PathType Leaf)) { throw 'Attended builder did not emit the expected manifest.' }
 
-$upgradeArgs = @{ GameRoot = $GameRoot; ManifestPath = $manifest }
-if ($StateRoot) { $upgradeArgs.StateRoot = $StateRoot }
+$upgradeArgs = @{ GameRoot = $GameRoot; ManifestPath = $manifest; StateRoot = $StateRoot }
 # Use the real upgrade planner as preflight. This verifies the current receipt
 # chain, owned-file hashes, collisions, rollback backups and exact candidate plan
 # without writing to the game.
@@ -44,6 +66,7 @@ $preflight = [ordered]@{
     sourceManifest = $SourceManifestPath
     candidateManifest = $manifest
     gameRoot = $GameRoot
+    stateRoot = $StateRoot
     diagnosticsEnabled = [bool]$Diagnostics
     traditionalHealthBars = [bool]$ShowTraditionalHealthBars
     deployRequested = [bool]$Deploy
