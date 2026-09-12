@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "product": "realpass",
+  "installModel": "game-root-relative",
+  "gameRootEvidence": [
+    "bin/x64/Cyberpunk2077.exe",
+    "archive/pc",
+    "r6"
+  ],
+  "playerFlow": {
+    "firstInstall": "close-game_then_merge-release-root-into-game-root",
+    "normalLaunch": "Steam",
+    "permanentLauncher": false,
+    "update": "close-game_then_merge-newer-release_after-reading-migration-note",
+    "uninstall": "remove-only-files-listed-by-installed-realpass-owner-manifest"
+  },
+  "releaseRootFiles": [
+    "INSTALL.txt",
+    "UNINSTALL.txt",
+    "REALPASS-VERSION.txt",
+    "SHA256SUMS.txt",
+    "realpass/build-manifest.json",
+    "realpass/provenance.json"
+  ],
+  "ownerManifest": {
+    "path": "realpass/build-manifest.json",
+    "schemaVersion": 1,
+    "requiredFileProperties": ["path", "sha256", "owner", "component", "replacePolicy"],
+    "ownerValue": "realpass",
+    "allowedReplacePolicies": ["realpass-owned", "approved-dependency-owned"],
+    "rule": "Every runtime file installed by a public realpass package must appear exactly once. No broad directory deletion is permitted during uninstall."
+  },
+  "stateAndSaves": {
+    "saveDataIsNeverInArtifact": true,
+    "saveBackupOnRiskyMigration": true,
+    "fileRollbackIsNotSaveRollback": true,
+    "settingsPreservedAcrossUpdate": true,
+    "destructiveStateResetByToggle": false
+  },
+  "preflight": [
+    "game-must-be-closed-for-installer-assisted-writes",
+    "supported-game-version-must-match-release-metadata",
+    "artifact-sha256-and-file-manifest-must-verify",
+    "unknown-collision-must-fail-closed-for-installer-assisted-updates",
+    "blocked-component-must-not-be-present"
+  ],
+  "runtimeRoots": [
+    "archive/pc/mod",
+    "bin/x64/plugins/cyber_engine_tweaks",
+    "r6/scripts",
+    "r6/tweaks",
+    "red4ext/plugins",
+    "realpass",
+    "LICENSES"
+  ],
+  "notes": [
+    "runtimeRoots are allowed locations, not a claim that every final release uses every root",
+    "the player-facing ZIP should contain only roots actually needed by that build",
+    "framework files may be present only after the distribution contract marks their exact release disposition bundleable",
+    "the public archive must never include a developer's local deployment receipts, saves, game executable, stock game archives, ReferenceMods or staging folders"
+  ]
+}
