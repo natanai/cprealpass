@@ -133,11 +133,14 @@ $combatText = [IO.File]::ReadAllText($combatSource).Replace("`r`n","`n")
 $combatText = Set-PolicyOnce $combatText 'CRCombatRuntimePolicy' 'Enabled' $true 'false'
 Stage-Replacement $combatDestination $combatText 'combat native bridge enabled for attended acceptance'
 
-# Always compile the current project-owned settings surface into the attended
-# candidate. It records player intent only and cannot open body/combat acceptance
-# gates. Refreshing here lets an older known-good deployed base test the new surface
+# Always compile the current project-owned policy model + settings surface into the
+# attended candidate. Settings translate player intent into policy flags, but their
+# acceptance booleans remain false; this source cannot open gameplay gates itself.
+# Refresh here so an older known-good deployed base can test the new settings UI
 # without requiring the player to rebuild that base by hand first.
+$policyDestination = 'r6/scripts/CyberpunkRealism/RuntimePolicyModel.reds'
 $settingsDestination = 'r6/scripts/CyberpunkRealism/RealpassSettings.reds'
+Sync-ProjectSource 'src/redscript/CyberpunkRealism/RuntimePolicyModel.reds' $policyDestination 'realpass-core' 'refresh engine-independent accepted-and-intent policy model'
 Sync-ProjectSource 'src/redscript/CyberpunkRealism/RealpassSettings.reds' $settingsDestination 'realpass-settings' 'refresh passive realpass-owned Mod Settings surface'
 
 # Add the project-original no-healthbar presentation to the test candidate by
@@ -167,6 +170,7 @@ $record = [ordered]@{
     diagnosticsEnabled = [bool]$Diagnostics
     traditionalHealthBars = [bool]$ShowTraditionalHealthBars
     noTraditionalHealthBars = -not [bool]$ShowTraditionalHealthBars
+    runtimePolicyModel = $policyDestination
     settingsSurface = $settingsDestination
     requiredRuntimeDestinations = @($requiredDestinations)
     changes = @($changes.ToArray())
