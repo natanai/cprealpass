@@ -22,10 +22,14 @@ public partial class GameInstance {
     public static CareBlackboardSystem GetBlackboardSystem(GameInstance game) {return new CareBlackboardSystem();}
 }
 public struct SimpleScreenMessage { public bool isShown; public float duration; public string message; }
-public class CareBlackboardSystem { public CareBlackboard Get(object def) { return new CareBlackboard();} }
-public class CareBlackboard { public void SetVariant(string key, SimpleScreenMessage message, bool notify) {CareTimedFixture.messages.Add(message.message);} }
+public class CareBlackboardSystem { public IBlackboard Get(object def) { return new IBlackboard();} }
 public class CareNotifications { public string WarningMessage = "warning"; }
-public class CareDefs { public CareNotifications UI_Notifications = new CareNotifications(); public CarePSM PlayerStateMachine=new CarePSM(); }
+public class CareUISystem { public string IsInMenu = "isInMenu"; }
+public class CareDefs {
+    public CareNotifications UI_Notifications = new CareNotifications();
+    public CareUISystem UI_System = new CareUISystem();
+    public CarePSM PlayerStateMachine=new CarePSM();
+}
 public class CareDelaySystem {
     private int next;
     public int scheduled, cancelled;
@@ -43,19 +47,9 @@ public class CareDelaySystem {
         var callback=callbacks[id]; callbacks.Remove(id); callback.Call(); return callback;
     }
 }
-public class DFGameStateService {
-    public static bool inMenu=true, valid=true;
-    public static DFGameStateService Get(){return new DFGameStateService();}
-    public bool IsInAnyMenu(){return inMenu;}
-    public bool IsValidGameState(object owner){return valid;}
-}
-public class DFInjuryConditionSystem {
-    public static DFInjuryConditionSystem Get(){return new DFInjuryConditionSystem();}
-    public bool CRIsClearForHandover(){return true;}
-}
 public static class CRCombatRuntimePolicy {public static bool Enabled(){return true;}}
 public static class VehicleComponent { public static bool IsMountedToVehicle(GameInstance game,PlayerPuppet player){return player.mounted;} }
-public static class CRInjuryEffectsBridge {public static bool Allowed(PlayerPuppet player,bool enabled){return enabled && !player.scene;}}
+public static class CRInjuryEffectsBridge {public static bool Allowed(PlayerPuppet player,bool enabled){return enabled && player!=null && !player.scene && !player.dead;}}
 public partial class CRBodyRuntime {
     public bool running=true, localizedInjuryHandover=true, fieldCareBusy;
     public CRBodyInputQueue inputs=new CRBodyInputQueue();
@@ -67,6 +61,8 @@ public partial class CRBodyRuntime {
     public bool OwnsNeeds(){return true;}
     public bool OwnsLocalizedInjuries(){return localizedInjuryHandover;}
     public CRBodyState GetBodySnapshot(){return body;}
+    public PlayerPuppet Player(){return CareTimedFixture.player;}
+    public bool NativeStateAllowed(bool allowMenu){return running && CRInjuryEffectsBridge.Allowed(CareTimedFixture.player,true) && (allowMenu || !CareTimedFixture.inMenu);}
     public void Observe(){CRBodyModel.Advance(body,config,pendingHours,0,false);pendingHours=0;}
     public void Publish(){publications++;}
 }
@@ -78,12 +74,13 @@ public static class CareTimedFixture {
     public static CareDelaySystem delays;
     public static CareDefs defs=new CareDefs();
     public static float sim;
+    public static bool inMenu;
     public static System.Collections.Generic.List<string> messages;
     public static void Reset() {
         player=new PlayerPuppet(); game=player.game; body=new CRBodyRuntime(); body.body=CRBodyModel.Create(body.config);
         CRInjuryModel.Wound(body.body.injuries,5,0.4f,0.5f,0.6f,100,40);
         runtime=new CRFieldCareActionRuntime();delays=new CareDelaySystem();sim=0;messages=new System.Collections.Generic.List<string>();
-        DFGameStateService.inMenu=true;DFGameStateService.valid=true;
+        inMenu=true;
     }
     public static void Sample(float seconds=0.25f){sim+=seconds;delays.Fire();}
 }
@@ -93,4 +90,6 @@ public class CarePSM {public string Weapon="weapon",MeleeWeapon="melee",Consumab
 public class IBlackboard {
     public System.Collections.Generic.Dictionary<string,int> values=new System.Collections.Generic.Dictionary<string,int>();
     public int GetInt(string key){return values.ContainsKey(key)?values[key]:0;}
+    public bool GetBool(string key){return key=="isInMenu" && CareTimedFixture.inMenu;}
+    public void SetVariant(string key, SimpleScreenMessage message, bool notify){CareTimedFixture.messages.Add(message.message);}
 }
