@@ -3,9 +3,13 @@ $ErrorActionPreference = 'Stop'
 $project = Get-ProjectRoot
 $builderPath = Join-Path $project 'tools/Build-OwnedRuntimeProfile.ps1'
 $sessionPath = Join-Path $project 'tools/Prepare-OwnedSession.ps1'
+$installerPath = Join-Path $project 'tools/Install-OwnedRuntime.ps1'
+$removerPath = Join-Path $project 'tools/Remove-OwnedRuntime.ps1'
 $acquirePath = Join-Path $project 'tools/Acquire-Components.ps1'
 $builder = Get-Content -Raw -LiteralPath $builderPath
 $session = Get-Content -Raw -LiteralPath $sessionPath
+$installer = Get-Content -Raw -LiteralPath $installerPath
+$remover = Get-Content -Raw -LiteralPath $removerPath
 $acquire = Get-Content -Raw -LiteralPath $acquirePath
 $script:checks = 0
 function Check($condition,[string]$message) { if (-not $condition) { throw $message }; $script:checks++ }
@@ -41,20 +45,39 @@ Check ($session.Contains('tests\Run-CI.ps1')) 'Owned session does not establish 
 Check ($session.Contains('Owned-path offline checks failed; candidate build/deployment aborted.')) 'Owned session does not fail closed when offline checks fail.'
 Check ($session.Contains('offlineChecksPassed = $true')) 'Owned session report does not record the offline-check gate.'
 Check ($session.Contains('Build-OwnedRuntimeProfile.ps1')) 'Owned session does not build the explicit owned profile.'
-Check ($session.Contains('Upgrade.ps1') -and $session.Contains('-WhatIf')) 'Owned upgrade path does not use the real transaction planner as preflight.'
-Check ($session.Contains('Deploy.ps1') -and $session.Contains('-WhatIf')) 'Owned initial-deploy path does not use the real transaction planner as preflight.'
-Check ($session.Contains('Backup-Saves.ps1')) 'Owned deployment lost the default verified save-backup path.'
-Check ($session.Contains('[switch]$SkipSaveBackup')) 'Owned deployment has no explicit operator-controlled save-backup opt-out.'
-Check ($session.Contains('if ($SkipSaveBackup)') -and $session.Contains('saveBackupSkipped = [bool]$SkipSaveBackup')) 'Save-backup opt-out is not explicit/auditable in the session report.'
-Check ($session.Contains("throw '-SkipSaveBackup is only valid with -Deploy.'")) 'Save-backup opt-out can be used outside a live deployment request.'
-Check ($session.Contains('game-file rollback remains enabled')) 'Save-backup opt-out does not clearly preserve transaction rollback.'
-Check ($session.Contains('Verify-Deployment.ps1')) 'Live owned deployment does not hash-verify its receipt.'
+Check ($session.Contains('Install-OwnedRuntime.ps1') -and $session.Contains('-WhatIf')) 'Owned session does not use the flat installer for preflight.'
+Check ($session.Contains('Install-OwnedRuntime.ps1') -and $session.Contains("'[4/5] Installing the owned runtime directly...'")) 'Owned session does not use the flat installer for live deployment.'
+Check (-not $session.Contains('Backup-Saves.ps1')) 'Owned session still performs redundant local save backups.'
+Check (-not $session.Contains('Upgrade.ps1')) 'Owned session still traverses legacy upgrade chains.'
+Check (-not $session.Contains('Rollback.ps1')) 'Owned session still depends on legacy automatic rollback.'
+Check ($session.Contains('Steam Verify Files') -and $session.Contains('Remove-OwnedRuntime.ps1')) 'Owned session does not document the simple external recovery path.'
 Check ($session.Contains('Get-ForbiddenOwnedAcceptanceResidue')) 'Owned session does not verify source-mod runtime isolation.'
 Check ($session.Contains('r6/scripts/Dark Future') -and $session.Contains('r6/scripts/Project E3 - HUD')) 'Owned session does not check known source-mod script residue.'
-Check ($session.Contains('Rollback.ps1')) 'Owned session cannot recover automatically after post-deploy isolation failure.'
-Check ($session.Contains('source-mod-residue-free')) 'Owned session success message does not state the ownership boundary it verified.'
-foreach ($danger in @('Start-Process','Cyberpunk2077.exe','Register-ScheduledTask','New-Service')) {
-    Check (-not $session.Contains($danger)) "Owned session contains unattended launch/background behavior: $danger"
+Check ($session.Contains('source-mod runtime residue is absent')) 'Owned session success message does not state the ownership boundary it verified.'
+
+foreach ($needle in @(
+    "mode = 'flat-owned-development-install'",
+    "status = 'installing'",
+    "`$state.status = 'installed'",
+    'Copy-VerifiedPayload',
+    'Remove-KnownRetiredRuntime',
+    'r6/scripts/CyberpunkRealism',
+    'r6/scripts/Dark Future',
+    'r6/scripts/Project E3 - HUD',
+    'owned-current.json'
+)) {
+    Check ($installer.Contains($needle)) "Fast owned installer invariant missing: $needle"
+}
+Check (-not $installer.Contains('Get-ReceiptChain')) 'Fast owned installer unexpectedly traverses rollback receipts.'
+Check (-not $installer.Contains('Backup-Saves.ps1')) 'Fast owned installer unexpectedly backs up saves.'
+Check (-not $installer.Contains('Upgrade.ps1')) 'Fast owned installer unexpectedly invokes legacy upgrade tooling.'
+Check ($remover.Contains('owned-current.json')) 'Owned cleanup tool does not use the flat install state.'
+Check ($remover.Contains('Steam Verify Files')) 'Owned cleanup tool does not document stock-game repair.'
+
+foreach ($text in @($session,$installer,$remover)) {
+    foreach ($danger in @('Start-Process','Register-ScheduledTask','New-Service')) {
+        Check (-not $text.Contains($danger)) "Owned deployment tooling contains unattended/background behavior: $danger"
+    }
 }
 
-Write-Host "PASS: $script:checks owned runtime build/session orchestration checks."
+Write-Host "PASS: $script:checks fast owned runtime build/install orchestration checks."
