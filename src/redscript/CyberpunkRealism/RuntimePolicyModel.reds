@@ -1,14 +1,14 @@
 // Project-original, engine-independent runtime policy model.
 //
-// This deliberately separates player intent from build/native acceptance. Public
-// settings can default to the intended realpass experience without activating an
-// unaccepted native bridge in a development build. Engine/Mod Settings adapters
-// should translate their state into CRRuntimeFeatureFlags rather than duplicating
-// dependency logic in every hook.
+// realpass ships one authored experience. These booleans are development/build
+// isolation gates, never player preferences. Native acceptance remains a separate
+// fail-closed dimension so an unvalidated adapter cannot run merely because the
+// desired release profile includes that authority.
 module CyberpunkRealism.Core
 
 public class CRRuntimeFeatureFlags extends IScriptable {
-  // Player intent / authored defaults.
+  // Development profile gates. Release tooling fixes the accepted gameplay and
+  // presentation authorities on; these exist so developers can isolate faults.
   public let bodyEnabled: Bool = true;
   public let nutritionEnabled: Bool = true;
   public let hydrationEnabled: Bool = true;
@@ -31,11 +31,8 @@ public class CRRuntimeFeatureFlags extends IScriptable {
   public let presentationEnabled: Bool = true;
   public let nameplatesEnabled: Bool = true;
   public let statusCuesEnabled: Bool = true;
-  // realpass' authored presentation default is no continuous traditional HP bars.
-  // This remains an accessibility/player-choice setting, not a combat authority.
-  public let traditionalHealthBarsEnabled: Bool = false;
 
-  // Diagnostics are intentionally opt-in even when an attended build allows them.
+  // Diagnostics are development-only and never part of the locked release profile.
   public let diagnosticsEnabled: Bool = false;
 
   // Build/native acceptance gates. Development defaults remain closed.
@@ -101,8 +98,6 @@ public class CRRuntimePolicyModel extends IScriptable {
     return IsDefined(flags) && flags.combatAccepted && flags.combatEnabled;
   }
 
-  // Combat may remain active when injury is disabled. The native adapter must then
-  // use its documented non-injury fallback instead of leaving half-active wounds.
   public static func CombatInjury(flags: ref<CRRuntimeFeatureFlags>) -> Bool {
     return CRRuntimePolicyModel.Combat(flags) && CRRuntimePolicyModel.Injury(flags);
   }
@@ -135,17 +130,16 @@ public class CRRuntimePolicyModel extends IScriptable {
     return CRRuntimePolicyModel.Presentation(flags) && flags.statusCuesEnabled;
   }
 
+  // Fixed product decision. Development healthbar comparison builds are produced
+  // by omitting the presentation source entirely rather than persisting a setting.
   public static func TraditionalHealthBars(flags: ref<CRRuntimeFeatureFlags>) -> Bool {
-    return CRRuntimePolicyModel.Presentation(flags) && flags.traditionalHealthBarsEnabled;
+    return false;
   }
 
   public static func Diagnostics(flags: ref<CRRuntimeFeatureFlags>) -> Bool {
     return IsDefined(flags) && flags.diagnosticsAccepted && flags.diagnosticsEnabled;
   }
 
-  // Presentation and diagnostics intentionally do not count as simulation
-  // authorities. This is useful for lifecycle adapters deciding whether any
-  // physical state mutator should be scheduled at all.
   public static func AnySimulation(flags: ref<CRRuntimeFeatureFlags>) -> Bool {
     return CRRuntimePolicyModel.Body(flags) || CRRuntimePolicyModel.Injury(flags) || CRRuntimePolicyModel.Combat(flags) || CRRuntimePolicyModel.Armor(flags) || CRRuntimePolicyModel.CyberwarePhysiology(flags);
   }
