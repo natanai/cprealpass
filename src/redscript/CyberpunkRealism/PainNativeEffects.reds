@@ -114,14 +114,10 @@ public class CRPainNativeEffects extends IScriptable {
   }
 }
 
-// Body/injury refresh is already the canonical transient-effects reconstruction
-// point. Piggyback on it rather than creating a second polling timer.
-@wrapMethod(CRInjuryEffectsRuntime)
-public func Refresh(body: ref<CRBodyState>, config: ref<CRBodyConfig>, enabled: Bool) -> Void {
-  wrappedMethod(body, config, enabled);
-  let player: ref<PlayerPuppet> = GameInstance.GetPlayerSystem(GetGameInstance()).GetLocalPlayerMainGameObject() as PlayerPuppet;
-  CRPainNativeEffects.Refresh(player, CRBodyRuntime.Get().OwnsNeeds() && CRInjuryEffectsBridge.Allowed(player, true));
-}
+// CRInjuryEffectsRuntime owns the transient-effects reconstruction point and calls
+// CRPainNativeEffects.Refresh directly. Keeping that call inside the owned runtime
+// avoids trying to @wrapMethod another project-defined class, which REDscript 2.31
+// does not expose as a native wrapping target.
 
 @wrapMethod(PlayerPuppet)
 protected cb func OnDetach() -> Bool {
