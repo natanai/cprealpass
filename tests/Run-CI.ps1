@@ -7,6 +7,7 @@ if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'Run-CI.ps1 requires PowerShe
 # release-path exclusions. Historical integration tests that require local acquired
 # source/game state remain outside this cloud tier.
 $tests = @(
+    'Test-PowerShellSyntax.ps1',
     'Test-ModuleContract.ps1',
     'Test-SettingsContract.ps1',
     'Test-SettingsRuntimeSurface.ps1',
