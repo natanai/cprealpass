@@ -13,15 +13,17 @@ realpass has two deliberately different test tiers. Future agents must not confu
 - acquired Dark Future / Project E3 source that is intentionally excluded from the public tree;
 - network acquisition, unattended game launch, services, watchers, recorders or scheduled jobs.
 
-Tier 1 covers model invariants, contract integrity, runtime-policy composition, no-healthbar ownership, safe-package policy, packaging metadata, and source-level orchestration safety. A green Tier 1 run means the public source is internally coherent enough to proceed to the local gates. It is **not** evidence that redscript compiles against the installed game or that a feature renders/plays correctly.
+Tier 1 covers model invariants, contract integrity, runtime-origin/vanilla-identity policy, native-seam confinement, no-healthbar ownership, safe-package policy, packaging metadata, and source-level orchestration safety. A green Tier 1 run means the public source is internally coherent enough to proceed to the local gates. It is **not** evidence that redscript compiles against the installed game or that a feature renders/plays correctly.
 
 ## Tier 2 — local integration / native acceptance
 
-Local tests are allowed to consume the user's hash-pinned acquired dependencies, generated deployment manifests, Cyberpunk 2077 2.31 script bundle and reversible deployment state. Examples include tests such as `Test-SleepClamp.ps1`, `Test-InjuryAuthority.ps1`, `Test-FieldCareConsume.ps1`, `Test-BodyAttendedProfile.ps1`, native-profile mapping tests and exact compile/deploy/rollback checks.
+Local tests are allowed to consume the user's hash-pinned generic runtime dependencies, generated deployment manifests, Cyberpunk 2077 2.31 script bundle and reversible deployment state. Historical source-mod integration tests may remain useful as reference evidence, but they are not the current production path and must never make Dark Future or Project E3 runtime prerequisites of an owned candidate.
 
-A local-only test stays local-only when its purpose is to validate the actual transformed/upstream integration rather than a project-original pure model. Do **not** solve a missing CI dependency by committing third-party source, game files, generated deployment manifests or machine-specific state.
+A local-only test stays local-only when its purpose is to validate the actual installed-game binding rather than a project-original pure model. Do **not** solve a missing CI dependency by committing third-party source, game files, generated deployment manifests or machine-specific state.
 
-The broad attended gameplay gate is documented in `../docs/ATTENDED-ACCEPTANCE.md`. `../tools/Prepare-AttendedSession.ps1` is the preferred orchestration entry point: by default it builds the generated body+combat candidate, compiles it against the installed game and runs the real upgrade planner in `-WhatIf` mode. Actual deployment requires explicit `-Deploy`, creates a verified save backup first, verifies the resulting deployment receipt, and still does not launch the game.
+The broad attended gameplay gate is documented in `../docs/ATTENDED-ACCEPTANCE.md`. `../tools/Prepare-OwnedSession.ps1` is the current orchestration entry point. With no `-Deploy`, it builds the complete current project-original REDscript candidate, opens only the immutable test gates, exact-compiles against the installed game and runs a deployment transaction preflight without modifying Cyberpunk. Actual deployment requires explicit `-Deploy`, creates a verified save backup first, verifies the resulting deployment receipt, rejects Dark Future/Project E3 executing residue, and still does not launch the game.
+
+The owned builder deliberately compiles the complete current production REDscript tree. Superseded bridge/popup/localization sources are removed from production rather than silently excluded from the candidate. `manifest/native-seams.json` and `Test-NativeSeamPolicy.ps1` additionally keep Cyberpunk-version-sensitive hook annotations confined to explicit boundary adapters so pure simulation models do not gradually become patch-coupled.
 
 ## Evidence rule
 
