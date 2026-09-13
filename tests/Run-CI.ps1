@@ -38,6 +38,7 @@ $tests = @(
     'Test-FieldCareUI.ps1',
     'Test-BloodLoss.ps1',
     'Test-InjuryEffects.ps1',
+    'Test-BarlessFeedbackEnvelope.ps1',
     'Test-NPCProgression.ps1'
 )
 
