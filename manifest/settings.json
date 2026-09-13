@@ -1,93 +1,47 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "product": "realpass",
   "surface": {
-    "provider": "Mod Settings",
-    "modName": "realpass",
-    "singlePublicSurface": true,
+    "provider": "none",
+    "publicGameplaySettings": false,
+    "publicBalanceSettings": false,
     "persistenceOwner": "realpass",
-    "notes": "The final settings class should be a realpass-owned ScriptableSystem registered as a Mod Settings listener. Upstream settings remain implementation detail and must not appear as parallel player-facing authorities."
+    "notes": "The release is one authored simulation. Internal build gates remain available only to development tooling."
   },
-  "safety": {
-    "principle": "Player intent and development acceptance are separate gates.",
-    "rule": "A module can run only when its player setting is enabled AND its native acceptance/safety gate has been promoted for that build.",
-    "currentAcceptedForAutomaticActivation": [],
-    "reason": "Current source remains in controlled integration development; body/combat activation requires attended native validation."
+  "releaseProfile": {
+    "body": true,
+    "injury": true,
+    "combat": true,
+    "armor": true,
+    "cyberwarePhysiology": true,
+    "presentation": true,
+    "diagnostics": false,
+    "traditionalActorHealthBars": false,
+    "nativeModernScanner": true
   },
-  "categories": [
-    {
-      "id": "body",
-      "displayName": "Body",
-      "order": 10,
-      "settings": [
-        {"key":"body.enabled","displayName":"Body simulation","type":"bool","default":true,"restartRequired":false},
-        {"key":"body.nutrition","displayName":"Nutrition","type":"bool","default":true,"dependency":"body.enabled","restartRequired":false},
-        {"key":"body.hydration","displayName":"Hydration","type":"bool","default":true,"dependency":"body.enabled","restartRequired":false},
-        {"key":"body.sleep","displayName":"Sleep and fatigue","type":"bool","default":true,"dependency":"body.enabled","restartRequired":false},
-        {"key":"body.exertion","displayName":"Exertion","type":"bool","default":true,"dependency":"body.enabled","restartRequired":false},
-        {"key":"body.elimination","displayName":"Bathroom needs","type":"bool","default":true,"dependency":"body.enabled","restartRequired":false},
-        {"key":"body.hygiene","displayName":"Hygiene","type":"bool","default":true,"dependency":"body.enabled","restartRequired":false}
-      ]
-    },
-    {
-      "id": "injury",
-      "displayName": "Injury and treatment",
-      "order": 20,
-      "settings": [
-        {"key":"injury.enabled","displayName":"Localized injuries","type":"bool","default":true,"restartRequired":false},
-        {"key":"injury.bloodLoss","displayName":"Blood loss","type":"bool","default":true,"dependency":"injury.enabled","restartRequired":false},
-        {"key":"injury.impairment","displayName":"Regional impairment","type":"bool","default":true,"dependency":"injury.enabled","restartRequired":false},
-        {"key":"injury.fieldCare","displayName":"Field treatment","type":"bool","default":true,"dependency":"injury.enabled","restartRequired":false},
-        {"key":"injury.recovery","displayName":"Injury recovery","type":"bool","default":true,"dependency":"injury.enabled","restartRequired":false}
-      ]
-    },
-    {
-      "id": "combat",
-      "displayName": "Combat",
-      "order": 30,
-      "settings": [
-        {"key":"combat.enabled","displayName":"Physical ballistics and damage","type":"bool","default":true,"restartRequired":false}
-      ]
-    },
-    {
-      "id": "armor",
-      "displayName": "Armor",
-      "order": 40,
-      "settings": [
-        {"key":"armor.enabled","displayName":"Physical armor coverage","type":"bool","default":true,"restartRequired":false},
-        {"key":"armor.wear","displayName":"Armor wear","type":"bool","default":true,"dependency":"armor.enabled","restartRequired":false}
-      ]
-    },
-    {
-      "id": "cyberwarePhysiology",
-      "displayName": "Cyberware physiology",
-      "order": 50,
-      "settings": [
-        {"key":"cyberwarePhysiology.enabled","displayName":"Physical cyberware consequences","type":"bool","default":true,"restartRequired":false}
-      ]
-    },
-    {
-      "id": "presentation",
-      "displayName": "Presentation",
-      "order": 60,
-      "settings": [
-        {"key":"presentation.enabled","displayName":"realpass presentation","type":"bool","default":true,"restartRequired":false},
-        {"key":"presentation.nameplates","displayName":"NPC nameplates","type":"bool","default":true,"dependency":"presentation.enabled","restartRequired":false},
-        {"key":"presentation.statusCues","displayName":"Contextual body and injury cues","type":"bool","default":true,"dependency":"presentation.enabled","restartRequired":false},
-        {"key":"presentation.traditionalHealthBars","displayName":"Traditional health bars","type":"bool","default":false,"dependency":"presentation.enabled","restartRequired":false}
-      ]
-    },
-    {
-      "id": "diagnostics",
-      "displayName": "Diagnostics",
-      "order": 90,
-      "developmentOnly": true,
-      "settings": [
-        {"key":"diagnostics.enabled","displayName":"Attended diagnostics","type":"bool","default":false,"restartRequired":false}
-      ]
-    }
+  "developmentProfileKeys": [
+    "body",
+    "injury",
+    "combat",
+    "armor",
+    "cyberwarePhysiology",
+    "presentation",
+    "diagnostics"
+  ],
+  "developmentRules": [
+    "Development profile keys exist only to isolate authorities during compilation, calibration and attended diagnosis.",
+    "A release builder fixes gameplay/presentation authority keys to the release profile and diagnostics off.",
+    "No development gate is persisted as a normal player preference.",
+    "A development comparison may temporarily alter presentation only when the build is clearly labeled non-release evidence."
   ],
   "forbiddenPublicSettings": [
+    "body.enabled",
+    "injury.enabled",
+    "combat.enabled",
+    "armor.enabled",
+    "cyberwarePhysiology.enabled",
+    "presentation.enabled",
+    "presentation.traditionalHealthBars",
     "weather",
     "economy",
     "carry-weight-difficulty",
@@ -98,12 +52,9 @@
     "addictions",
     "outfit-or-transmog-system"
   ],
-  "disableSemantics": [
-    "Toggling a module off stops that module from applying new progression/effects immediately when technically safe.",
-    "Persistent simulation state is retained rather than destructively erased merely because a toggle is off.",
-    "A disabled module must remove or suspend its owned modifiers/listeners so hidden penalties do not continue.",
-    "Re-enabling uses explicit schema/version migration and retained state; it must not silently refill, heal, or reset the player.",
-    "If a setting cannot be changed safely during a loaded game, it must be marked restartRequired and applied only at a documented lifecycle boundary.",
-    "Diagnostics never install background services, watchers, scheduled tasks or unattended loggers."
-  ]
+  "accessibilityPolicy": {
+    "allowedInFuture": true,
+    "rule": "An accessibility control may be public only when it does not disable/rebalance simulation authority or reveal exact hidden state contrary to the authored presentation.",
+    "currentPublicControls": []
+  }
 }
