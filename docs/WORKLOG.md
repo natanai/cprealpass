@@ -2,7 +2,7 @@
 
 This is the durable chronological ledger for repo work. It is intentionally concise enough for a new agent to scan before touching the project, while retaining the decisions that would otherwise be trapped in chat history.
 
-For current percentages and blockers, read `docs/PROJECT-STATUS.md`. For design rules, read `REALISM-SPEC.md` and `docs/MODULAR-ARCHITECTURE.md`.
+For canonical product intent, read `AGREED-GOALS.md` first. For current percentages and blockers, read `docs/PROJECT-STATUS.md`. For implementation architecture, read `REALISM-SPEC.md`, `docs/MODULAR-ARCHITECTURE.md` and `docs/SETTINGS-ARCHITECTURE.md`.
 
 ## Logging convention
 
@@ -147,3 +147,64 @@ Not claimed: `CRRealpassSettings` has not yet been compiled against Nat's exact 
 Completion estimate remains **50%** rather than taking speculative credit for an uncompiled runtime adapter. A successful exact local compile/menu check will close enough of the settings gate to justify revisiting the weighted percentage.
 
 Next: exact local compile/preflight, confirm the realpass settings menu/default/dependency behavior, then introduce a narrow accepted-build+lifecycle policy facade before migrating any native module to these preferences.
+
+---
+
+## 2026-09-13 — product ownership and release philosophy corrected
+
+Branch: `chatgpt-continuation`
+Key commits/files: source changes through `3ade43e`; `docs/MODULAR-ARCHITECTURE.md`, `docs/SETTINGS-ARCHITECTURE.md`, `manifest/runtime-origin-policy.json`, `src/redscript/CyberpunkRealism/BodyRuntime.reds`, `BodyNativeHooks.reds`, `BodyStatusPresentation.reds`
+
+The user clarified two governing requirements that supersede the earlier settings/mod-stack direction:
+
+1. everything executing as realpass gameplay/presentation should be physically realpass-owned code/data; Dark Future and Project E3 are inspiration/reference only, not hidden runtime hosts;
+2. final releases are one authored all-or-nothing simulation. Internal modular switches remain useful for development but are not a normal player-facing way to create different versions of realpass.
+
+The configuration architecture was rewritten accordingly and the prior Mod Settings gameplay-preference surface was retired from the intended production path. The body runtime began moving to direct native Cyberpunk lifecycle/consumable/time-skip hooks, and active Dark Future tick/intake/menu/preview bridge files were removed from production source.
+
+Not claimed: owned-runtime separation is not complete. `FieldCareActionRuntime.reds` still imports `DarkFuture.Services.DFGameStateService`, and the owned candidate/build path has not yet been exact-compiled against the user's game.
+
+The previous 50% readiness estimate was therefore no longer defensible under the stricter ownership requirement. The reopened integration/presentation gates are reflected in the 2026-09-13 status refresh.
+
+Next: remove every remaining source-mod runtime dependency and construct an explicit owned-runtime candidate rather than inheriting the legacy integrated deployment.
+
+---
+
+## 2026-09-13 — Cyberware/body Condition interface chosen as canonical injury UX
+
+Branch: `chatgpt-continuation`
+Design decision; implementation pending
+
+The user identified the stock Cyberware screen's body visualization and per-system paper-doll zoom as the desired foundation for injury inspection/treatment. The final direction is now:
+
+- normal **Cyberware** mode preserves the screen's vanilla purpose;
+- **Condition** mode replaces/dims cyberware-slot content with realpass condition entries associated with the body;
+- active conditions, not six always-visible `OK` body-part tiles, are the selectable objects;
+- selecting a condition/body region should reuse CDPR's existing anatomical zoom/drill-down language where technically possible;
+- the zoomed view explains condition type, severity, functional consequence, biological vs chrome damage, external/internal bleeding, likely cause/how it occurred, protection/penetration context where useful, field treatment and professional-care requirements;
+- ordinary context exposes plausible field care; ripperdoc/clinical context exposes professional biological care and mechanical cyberware repair;
+- the current backpack Field Care popup becomes a prototype to retire after the Condition interface works.
+
+This requires a new bounded injury-provenance/history record so the UI can explain how a condition arose. The regional injury model remains authoritative; event history is explanatory metadata, not a second injury system.
+
+Evidence: public Cyberpunk scripts confirm the current cyberware/ripperdoc controller already owns anatomical slot anchors and paper-doll selection/zoom behavior, so this direction can target the native UI shell rather than copying another mod's menu.
+
+Not claimed: no native Condition-mode implementation has yet been compiled/rendered. Exact mapping of left/right limb conditions onto the stock combined Arms/Legs zoom remains an implementation detail to test.
+
+Next: document the canonical UI contract, add injury provenance to the realpass model/native wound commit path, then implement the smallest realpass-owned Condition-mode screen adapter that can compile against the installed game.
+
+---
+
+## 2026-09-13 — canonical agreed-goals ledger added; readiness reset to 45%
+
+Branch: `chatgpt-continuation`
+Commits: `1b52114`, `c0f18d0`
+Files: `AGREED-GOALS.md`, `docs/PROJECT-STATUS.md`, this worklog
+
+Added `AGREED-GOALS.md` at repository root as the canonical user-intent ledger with stable `G-###` identifiers and an explicit precedence rule. It records the fixed authored release, runtime ownership requirement, scope/exclusions, physical combat rules, no-healthbar requirement, Cyberware/Condition injury UI, treatment/recovery philosophy, one-package distribution target, patch-resilience architecture and testing safety rules.
+
+`docs/PROJECT-STATUS.md` was refreshed so new/local agents are told to read the goal ledger first and no longer treat the earlier source-mod-integrated attended build or player-toggle settings architecture as the immediate target. The official conservative release-readiness estimate is now **45%**: the original models still count, but Dark Future/E3-dependent integration no longer counts as completed release integration.
+
+Not claimed: adding a goal ledger does not implement the Condition UI or complete owned-runtime cleanup. Those remain active engineering work.
+
+Next: keep every newly agreed product decision synchronized into `AGREED-GOALS.md`, then continue owned-runtime cleanup and Condition-mode implementation before the next user deployment/test.
