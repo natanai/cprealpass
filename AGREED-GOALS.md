@@ -59,7 +59,7 @@ not:
 The core product includes:
 
 - body/needs and physiology;
-- injury, bleeding, impairment, treatment and recovery;
+- injury, bleeding, pain, impairment, treatment and recovery;
 - realistic combat/ballistics/impact consequences;
 - physical armor/clothing coverage and armor wear;
 - relevant cyberware physiology/structural injury;
@@ -116,7 +116,7 @@ The model may use exact internal values. Normal player presentation should trans
 Examples: minor/moderate/severe trauma, external bleeding, suspected internal injury, impaired function, supported fracture, damaged chrome.
 
 ### G-042 — Physical consequences communicate injury during combat — LOCKED
-During a fight the player should mostly learn that something is wrong through believable consequences: movement impairment, stamina loss, degraded weapon handling/reload, bleeding/weakness and similar effects—not through an exact HP readout.
+During a fight the player should mostly learn that something is wrong through believable consequences: movement impairment, stamina loss, degraded weapon handling/reload, pain, bleeding/weakness and similar effects—not through an exact HP readout.
 
 ### G-043 — Cyberware/body screen becomes the canonical condition interface — LOCKED
 The final injury UI belongs in the game's existing **Cyberware/body screen**, using CDPR's body visualization as the shell. The current backpack Field Care popup is a development prototype and should be retired once the Condition interface replaces it.
@@ -160,7 +160,7 @@ When opened normally, the Condition view exposes only plausible field care. In a
 
 ---
 
-## Treatment and recovery
+## Treatment, pain and recovery
 
 ### G-050 — No magic universal heal — LOCKED
 A generic item should not instantly erase the physical injury model. Treatment changes the condition it can plausibly address; recovery continues through the body clock.
@@ -181,12 +181,30 @@ Internal bleeding/serious biological care belongs in clinical/ripperdoc-like pro
 ### G-053 — Healing is time/body-state dependent — LOCKED
 Tissue/bone/blood recovery progresses through the same authored body clock and should interact with relevant rest/resources rather than resolve because a menu was closed.
 
+### G-054 — Trauma kits are analgesia only — LOCKED
+The item realpass presents as a **Trauma Kit** is not a wound-healing item and must not dress bleeding, splint fractures, replace blood, heal tissue/bone, repair chrome or refill native HP. Its authored physiological purpose is to **numb/reduce perceived pain only**.
+
+Dressing and limb support therefore require their own appropriate field supplies rather than consuming Trauma Kits.
+
+### G-055 — Pain is a realpass body state/consequence — LOCKED
+Pain is part of the authored physiology/injury experience. Physical injury generates pain independently of native HP. Pain relief changes perception/functional pain response; it does **not** repair the underlying injury, restore structural function or erase blood loss.
+
+### G-056 — Analgesia has diminishing returns and overuse consequences — LOCKED
+Repeated Trauma Kit use within a short enough physiological window has diminishing pain-relief benefit. Excess concurrent analgesic load produces an overdose/intoxication state rather than unlimited relief.
+
+For player-facing presentation, reuse Cyberpunk's native dizzy/drunk visual language where technically safe instead of inventing a permanent custom meter. The exact dose curve, decay window and overdose thresholds remain calibration values, not clinical claims.
+
+### G-057 — Pain should be felt through play, not a pain bar — LOCKED
+Normal play should communicate significant pain through restrained embodied feedback rather than a permanent numerical pain meter. Intended channels include pain-related weapon/aim instability or sway, contextual visual effects, and appropriately throttled existing V pain/grunt vocalizations where safe native events can be identified.
+
+Structural impairment remains distinct: numbing pain may reduce pain-induced wobble, but it must not make a fractured/damaged limb mechanically healthy.
+
 ---
 
 ## Body / needs
 
 ### G-060 — One shared physiological body — LOCKED
-Hydration, energy/nutrition, sleep/fatigue, exertion, digestion/elimination, hygiene where retained, injury and recovery belong to one coherent body state/clock rather than independent survival meters that can contradict one another.
+Hydration, energy/nutrition, sleep/fatigue, exertion, digestion/elimination, hygiene where retained, injury, pain/analgesia and recovery belong to one coherent body state/clock rather than independent survival meters that can contradict one another.
 
 ### G-061 — Needs should create believable behavior, not chores for their own sake — LOCKED
 Needs exist to make V feel embodied and to interact with recovery/performance. Remove mechanics that amount only to repetitive punishment or another mod's survival checklist.
@@ -234,7 +252,7 @@ Even if installation is simple, development/release tooling should preserve coll
 The exact candidate should compile/preflight against the installed game/framework environment before deployment. A Cyberpunk patch that changes a hooked signature should preferably produce a compile/preflight failure rather than silently installing a broken runtime.
 
 ### G-091 — Broad attended testing beats tiny disconnected tests — LOCKED
-Once a coherent owned-runtime candidate exists, prefer broad attended sessions that exercise scanner/presentation, body, combat, armor, injury, bleeding, impairment, treatment, save/reload and time progression together. Narrow diagnostic profiles remain available only to isolate failures.
+Once a coherent owned-runtime candidate exists, prefer broad attended sessions that exercise scanner/presentation, body, combat, armor, injury, bleeding, pain/analgesia, impairment, treatment, save/reload and time progression together. Narrow diagnostic profiles remain available only to isolate failures.
 
 ### G-092 — Save safety; no unattended game automation — LOCKED
 Before live development deployment, maintain verified save backup/rollback practices. Do not add unattended game launching, background watchers/loggers/services or scheduled tasks.
@@ -245,7 +263,10 @@ Before live development deployment, maintain verified save backup/rollback pract
 
 These are **not** permission to change the locked goals above. They are implementation details still open:
 
-- exact balance/calibration values for projectile/wound/body/recovery models;
+- exact balance/calibration values for projectile/wound/body/pain/analgesia/recovery models;
+- exact Trauma Kit analgesic load decay, diminishing-return curve and overdose thresholds;
+- exact native pain/grunt VO events and throttling policy after local verification;
+- exact field-supply item/data implementation for dressings and limb supports now that Trauma Kits are analgesia-only;
 - exact Condition-mode typography, colors, widget positions and animation timing;
 - whether all condition UI can be mounted dynamically without shipping a custom `.inkwidget` asset;
 - the minimal set of generic frameworks actually required by the final owned runtime;
