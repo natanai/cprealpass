@@ -34,6 +34,8 @@ Check ($conditionDoc.Contains('bounded provenance')) 'Condition UI contract does
 
 Check ($provenance.Contains('private persistent let recent: array<ref<CRInjuryProvenance>>')) 'Provenance is not persistent/bounded runtime state.'
 Check ($provenance.Contains('while ArraySize(this.recent) > 16')) 'Provenance history has no hard bound.'
+Check ($provenance.Contains('ArrayErase(this.recent, i)') -and $provenance.Contains('ArrayErase(this.recent, 0)')) 'Provenance pruning is not using REDscript array helpers.'
+Check (-not $provenance.Contains('this.recent.Erase(')) 'Provenance reintroduced unsupported array member Erase calls.'
 Check ($provenance.Contains('sample.targetIsPlayer')) 'Player provenance is not gated to accepted player wounds.'
 Check (-not $provenance.Contains('CRInjuryModel.Wound(')) 'Provenance must not become a second injury authority.'
 Check (-not $provenance.Contains('CRInjuryModel.Treat(')) 'Provenance must not mutate treatment state.'
@@ -50,9 +52,10 @@ Check (-not $professional.Contains('CRInjuryModel.Treat(')) 'Professional-care e
 foreach ($forbiddenEconomyAuthority in @('GameInstance.GetTransactionSystem','GetMoney(','RemoveMoney(','AddMoney(','PriceService(','PurchaseService(')) {
     Check (-not $professional.Contains($forbiddenEconomyAuthority)) "Professional-care eligibility introduced economy authority: $forbiddenEconomyAuthority"
 }
-Check ($professionalRuntime.Contains('@addMethod(CRBodyRuntime)') -and $professionalRuntime.Contains('CompleteProfessionalCare')) 'Professional care has no realpass body-runtime boundary.'
+Check ($professionalRuntime.Contains('public class CRProfessionalCareRuntime') -and $professionalRuntime.Contains('CRBodyRuntime.Get()')) 'Professional care has no explicit realpass runtime boundary.'
+Check (-not $professionalRuntime.Contains('@addMethod(CRBodyRuntime)')) 'Professional care reintroduced an unresolved custom-class @addMethod target.'
 Check ($professionalRuntime.Contains('CRProfessionalCareModel.CanHelp')) 'Professional runtime does not revalidate current condition before commit.'
-Check ($professionalRuntime.Contains('this.CompleteTreatment(region, kind, 1.0)')) 'Professional runtime does not enter the shared ordered treatment authority.'
+Check ($professionalRuntime.Contains('.CompleteTreatment(region, kind, 1.0)')) 'Professional runtime does not enter the shared ordered treatment authority.'
 Check (-not $professionalRuntime.Contains('CRInjuryModel.Treat(')) 'Professional runtime bypasses the shared body treatment authority.'
 
 Check ($presentation.Contains('public class CRConditionDescriptor')) 'Condition presentation descriptor is missing.'
@@ -71,11 +74,13 @@ Check ($nativeUi.Contains('@wrapMethod(RipperDocGameController)')) 'Condition UI
 Check ($nativeUi.Contains('CRConditionCyberwareTab') -and $nativeUi.Contains('CRConditionConditionTab')) 'CYBERWARE/CONDITION mode controls are missing.'
 Check ($nativeUi.Contains('CRConditionPresentation.Current')) 'Native Condition UI does not read the qualitative projection.'
 Check ($nativeUi.Contains('this.DollHover(area)') -and $nativeUi.Contains('this.DollSelect(true)')) 'Native Condition UI does not reuse stock anatomical paper-doll selection.'
+Check ($nativeUi.Contains('SetWrappingAtPosition(width)') -and -not $nativeUi.Contains('.SetWrapping(true')) 'Condition text wrapping is not using the stock inkText API.'
+Check ($nativeUi.Contains('ArrayClear(this.crConditionRegionWidgets)') -and -not $nativeUi.Contains('crConditionRegionWidgets.Clear()')) 'Condition region arrays are not using REDscript array helpers.'
 Check ($nativeUi.Contains('descriptor.canDress') -and $nativeUi.Contains('descriptor.canSupport')) 'Condition UI does not gate field actions through model-derived applicability.'
 Check ($nativeUi.Contains('CRBodyRuntime.Get().UseFieldCare')) 'Condition UI does not dispatch field treatment through the authoritative timed-care runtime.'
 Check ($nativeUi.Contains('descriptor.canClinical') -and $nativeUi.Contains('descriptor.canMechanical')) 'Condition UI does not gate distinct professional actions through model-derived applicability.'
 Check ($nativeUi.Contains('CRConditionClinical') -and $nativeUi.Contains('CRConditionMechanical')) 'Condition UI is missing separate clinical/mechanical controls.'
-Check ($nativeUi.Contains('CRBodyRuntime.Get().CompleteProfessionalCare')) 'Professional Condition actions do not use the revalidating body-runtime boundary.'
+Check ($nativeUi.Contains('CRProfessionalCareRuntime.Complete')) 'Professional Condition actions do not use the revalidating runtime boundary.'
 Check ($nativeUi.Contains('Equals(this.m_screen, CyberwareScreenType.Ripperdoc)')) 'Condition UI does not distinguish ordinary field-care context from ripperdoc context.'
 Check ($nativeUi.Contains('Biological recovery still takes time')) 'Professional UI implies clinical care is an instant biological heal.'
 Check (-not $nativeUi.Contains('SetStatPoolValue') -and -not $nativeUi.Contains('ApplyDamage') -and -not $nativeUi.Contains('CRInjuryModel.Treat(')) 'Condition UI became a simulation/damage authority.'
