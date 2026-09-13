@@ -28,8 +28,8 @@
       "id": "owned-runtime-isolation",
       "area": "architecture",
       "status": "partial",
-      "evidence": ["manifest/runtime-origin-policy.json", "tests/Test-RuntimeOriginPolicy.ps1", "tools/Build-OwnedAcceptance.ps1", "tools/Build-OwnedRuntimeProfile.ps1", "tools/Prepare-OwnedSession.ps1", "tests/Test-OwnedAcceptanceBuilder.ps1", "tests/Test-OwnedSessionTool.ps1", "local-preflight:realpass-owned-preflight-20260913-201539-52d9961b"],
-      "remaining": "Exact local 2.31 compilation/preflight is clean. Deploy an attended owned candidate through the save-backed transaction and verify no Dark Future or Project E3 executing residue remains before gameplay acceptance."
+      "evidence": ["manifest/runtime-origin-policy.json", "tests/Test-RuntimeOriginPolicy.ps1", "tools/Build-OwnedAcceptance.ps1", "tools/Build-OwnedRuntimeProfile.ps1", "tools/Install-OwnedRuntime.ps1", "tools/Remove-OwnedRuntime.ps1", "tools/Prepare-OwnedSession.ps1", "tests/Test-OwnedAcceptanceBuilder.ps1", "tests/Test-OwnedSessionTool.ps1", "local-preflight:realpass-owned-preflight-20260913-201539-52d9961b"],
+      "remaining": "Exact local 2.31 compilation/preflight is clean. Fast-install an attended owned candidate, verify no Dark Future or Project E3 executing residue remains, and then begin gameplay acceptance. Historical rollback-chain validation is no longer required for local development."
     },
     {
       "id": "vanilla-first-native-integration",
@@ -161,8 +161,8 @@
       "id": "save-reload-upgrade-uninstall",
       "area": "compatibility",
       "status": "partial",
-      "evidence": ["tools/Deploy.ps1", "tools/Upgrade.ps1", "tools/Rollback.ps1", "tools/Backup-Saves.ps1", "tools/Prepare-OwnedSession.ps1", "tests/Test-RealpassDelivery.ps1"],
-      "remaining": "File transactions and rollback are strong; validate native realpass persistent-state migration, save/reload after combat injuries/body progression, and owned-runtime upgrade/uninstall behavior."
+      "evidence": ["AGREED-GOALS.md", "tools/Install-OwnedRuntime.ps1", "tools/Remove-OwnedRuntime.ps1", "tools/Prepare-OwnedSession.ps1", "tests/Test-OwnedSessionTool.ps1"],
+      "remaining": "Validate native realpass persistent-state save/reload after body/combat changes and confirm the flat owned-file cleanup path across iterative installs. Multi-generation rollback receipts and redundant local save backups are intentionally no longer part of the normal owned development flow; Steam Verify Files/reinstall is the stock-game repair path when needed."
     },
     {
       "id": "phantom-liberty-quest-compatibility",
