@@ -352,8 +352,12 @@ public class CRBodyRuntime extends ScriptableSystem {
     return accepted;
   }
 
+  // Field care is selected from a menu (Condition mode), so initiation must allow
+  // a paused/menu state. The timed action itself only advances after the menu is
+  // closed; CanContinueFieldCare remains the stricter gameplay gate.
   public func CanUseFieldCare() -> Bool {
-    return !this.fieldCareBusy && this.CanContinueFieldCare();
+    let player: ref<PlayerPuppet> = this.Player();
+    return !this.fieldCareBusy && this.OwnsLocalizedInjuries() && this.NativeStateAllowed(true) && IsDefined(this.inputs) && !this.inputs.faulted && IsDefined(player) && !player.IsInCombat() && !VehicleComponent.IsMountedToVehicle(GetGameInstance(), player);
   }
 
   public func CanContinueFieldCare() -> Bool {
