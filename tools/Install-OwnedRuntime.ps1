@@ -82,6 +82,20 @@ if ($WhatIf) {
 $lock = Open-StateLock $StateRoot
 try {
     Assert-GameStopped
+    $statePath = Join-Path $StateRoot 'owned-current.json'
+    $state = [ordered]@{
+        schemaVersion = 1
+        mode = 'flat-owned-development-install'
+        status = 'installing'
+        buildId = [string]$manifest.buildId
+        gameVersion = [string]$manifest.gameVersion
+        gameRoot = $GameRoot
+        installedAtUtc = $null
+        files = @($plan | ForEach-Object { [ordered]@{ destination=$_.destination; component=$_.component; sha256=$_.deployedSha256 } })
+        recovery = 'Remove-OwnedRuntime.ps1 removes matching realpass-owned payload files. Steam Verify Files or reinstall is the authoritative stock-game repair path if needed.'
+    }
+    Write-JsonFile $state $statePath
+
     Write-Host 'Fast install: clearing only realpass-owned script namespaces and retired Dark Future/Project E3 runtime residue...'
     Remove-KnownRetiredRuntime $GameRoot
 
@@ -98,20 +112,14 @@ try {
     }
     Write-Progress -Activity 'Installing owned realpass runtime' -Completed
 
-    $state = [ordered]@{
-        schemaVersion = 1
-        mode = 'flat-owned-development-install'
-        buildId = [string]$manifest.buildId
-        gameVersion = [string]$manifest.gameVersion
-        gameRoot = $GameRoot
-        installedAtUtc = [DateTime]::UtcNow.ToString('o')
-        files = @($plan | ForEach-Object { [ordered]@{ destination=$_.destination; component=$_.component; sha256=$_.deployedSha256 } })
-        recovery = 'Remove-OwnedRuntime.ps1 removes the recorded owned payload. Steam Verify Files or reinstall is the authoritative stock-game repair path if needed.'
-    }
-    $statePath = Join-Path $StateRoot 'owned-current.json'
+    $state.status = 'installed'
+    $state.installedAtUtc = [DateTime]::UtcNow.ToString('o')
     Write-JsonFile $state $statePath
     Write-Host "Fast owned-runtime install verified: $($plan.Count) files. State: $statePath"
     return $statePath
+} catch {
+    Write-Warning 'Fast install did not complete. The flat state file was kept so Remove-OwnedRuntime.ps1 can clean any matching files that were already written.'
+    throw
 } finally {
     Write-Progress -Activity 'Installing owned realpass runtime' -Completed -ErrorAction SilentlyContinue
     $lock.Dispose()
