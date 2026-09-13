@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "product": "realpass",
-  "purpose": "Defines what may execute as part of realpass. Gameplay and presentation behavior must be authored and owned by realpass; source mods are reference material only. Generic modding frameworks may provide plumbing but may not own realpass gameplay or presentation policy.",
+  "purpose": "Defines what may execute as part of realpass. Gameplay and presentation behavior must be authored and owned by realpass; source mods are reference material only. realpass is vanilla-first: preserve CDPR identities/surfaces where useful and substitute project-original mechanics beneath them.",
   "releaseExperience": {
     "mode": "locked-authored-experience",
     "allOrNothing": true,
@@ -10,6 +10,21 @@
     "traditionalActorHealthBars": false,
     "diagnostics": "development-only",
     "note": "Internal module gates may exist during development and acceptance, but a release build enables the complete accepted realpass experience as one product."
+  },
+  "vanillaFirst": {
+    "preserveUsefulIdentity": true,
+    "preserveUsefulNativeShells": true,
+    "preferSemanticNativeHooks": true,
+    "rule": "Keep vanilla item/system names, identities, animations, screens/assets and interaction language where they can host the realism model. Replace mechanics underneath instead of importing source-mod renames or duplicating the vanilla surface.",
+    "medicalIdentityExamples": [
+      "MaxDoc remains MaxDoc / ConsumableBaseName.FirstAidWhiff",
+      "Bounce Back remains Bounce Back",
+      "Health Booster remains Health Booster"
+    ],
+    "forbiddenOwnedSourceIdentityPatterns": [
+      "Trauma Kit",
+      "UseTraumaKit"
+    ]
   },
   "runtimeOwnership": {
     "gameplayAndPresentationRequiredOrigin": "project-original",
@@ -40,6 +55,7 @@
     "Internal modules may be independently gated to isolate faults and calibrate systems.",
     "Development gates are not player preferences and must not become a release configuration menu.",
     "A development candidate advertised as owned-runtime must fail closed if Dark Future or Project E3 is present in its deployment manifest.",
+    "A development candidate advertised as owned-runtime must preserve vanilla item/system identity and reject inherited source-mod item renames.",
     "Reference recipes may remain in the repository for historical provenance but may not feed the owned-runtime builder.",
     "No source-mod save state may be required to initialize a clean realpass save/runtime."
   ],
@@ -48,6 +64,7 @@
     "The release has one authored balance rather than exposing subsystem disable switches.",
     "Accessibility controls may exist only when they do not change simulation authority or balance; traditional actor health bars are intentionally not part of the authored realpass presentation.",
     "External gameplay/presentation mods are optional user choices outside realpass and are not prerequisites, bundled payloads or hidden runtime hosts.",
+    "Vanilla item/system identities are preserved unless a future explicit product goal authorizes a replacement identity.",
     "Every runtime file in the realpass-owned payload must have explicit provenance."
   ]
 }
