@@ -35,7 +35,7 @@ $candidateFiles = @($sourceFiles | Where-Object { $_.Name -notin $excluded })
 
 # Fail closed on source-mod/runtime-host imports. Generic frameworks may eventually
 # be allowed by an explicit dependency contract, but the first owned acceptance
-# candidate intentionally requires only the normal redscript loader at runtime.
+# source candidate intentionally has no gameplay/UI framework import of its own.
 $forbiddenRuntimePatterns = @(
     '(?m)^\s*(?:module|import)\s+DarkFuture(?:\.|\b)',
     '(?im)Project\s*E3',
@@ -57,14 +57,15 @@ New-Item -ItemType Directory -Force -Path $stage | Out-Null
 
 function Set-PolicyOnce([string]$text,[string]$className,[string]$methodName,[bool]$desired,[string]$requiredCurrent='false') {
     $pattern = '(?s)(public class ' + [regex]::Escape($className) + ' extends IScriptable\s*\{.*?public static func ' + [regex]::Escape($methodName) + '\(\) -> Bool\s*\{\s*)return (?<value>true|false);'
-    $matches = [regex]::Matches($text,$pattern)
+    $regex = [regex]::new($pattern)
+    $matches = $regex.Matches($text)
     if ($matches.Count -ne 1) { throw "Expected exactly one policy gate: $className.$methodName" }
     $current = $matches[0].Groups['value'].Value
     if ($requiredCurrent -in @('true','false') -and $current -ne $requiredCurrent) {
         throw "Unexpected canonical policy for $className.$methodName: $current; required $requiredCurrent"
     }
     $desiredText = $desired.ToString().ToLowerInvariant()
-    return [regex]::Replace($text,$pattern,('${1}return ' + $desiredText + ';'),1)
+    return $regex.Replace($text,('${1}return ' + $desiredText + ';'),1)
 }
 
 $entries = [Collections.Generic.List[object]]::new()
@@ -135,7 +136,7 @@ $record = [ordered]@{
     ownedRuntime = $true
     sourceCount = $entries.Count
     excludedPrototypeSources = @($excluded)
-    genericRuntimeRequirement = 'redscript loader/toolchain already installed for development; final bundling/licensing remains a release task'
+    genericRuntimeRequirement = 'Generic loader/toolchain requirements are audited separately before deployment; this source candidate inherits no gameplay or presentation mod runtime.'
     stagedGates = @($stagedGates.ToArray())
     manifestPath = $outputRelative
     traditionalActorHealthBars = $false
