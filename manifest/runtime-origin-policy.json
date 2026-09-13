@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "product": "realpass",
+  "purpose": "Defines what may execute as part of realpass. Gameplay and presentation behavior must be authored and owned by realpass; source mods are reference material only. Generic modding frameworks may provide plumbing but may not own realpass gameplay or presentation policy.",
+  "releaseExperience": {
+    "mode": "locked-authored-experience",
+    "allOrNothing": true,
+    "publicGameplayToggles": false,
+    "publicBalanceSliders": false,
+    "traditionalActorHealthBars": false,
+    "diagnostics": "development-only",
+    "note": "Internal module gates may exist during development and acceptance, but a release build enables the complete accepted realpass experience as one product."
+  },
+  "runtimeOwnership": {
+    "gameplayAndPresentationRequiredOrigin": "project-original",
+    "allowedInfrastructureClass": "generic-framework",
+    "frameworkRule": "A framework may expose APIs, script loading, data loading, UI primitives or input plumbing. It may not supply the body, combat, injury, armor, presentation or progression behavior that defines realpass.",
+    "referenceRule": "Third-party gameplay/presentation mods may be studied and retained as provenance/reference records, but their scripts, archives, tweak payloads and assets may not be executed or packaged by an owned-runtime test or release build."
+  },
+  "forbiddenRuntimeComponents": [
+    "darkfuture",
+    "project-e3-hud"
+  ],
+  "forbiddenRuntimePathFragments": [
+    "/Dark Future/",
+    "Project E3 - HUD",
+    "basegame_3e_demo_hud.archive"
+  ],
+  "forbiddenProductionSourceNamespaces": [
+    "module DarkFuture.",
+    "import DarkFuture."
+  ],
+  "legacyReferenceSourcePatterns": [
+    "config/patches/darkfuture-*",
+    "config/patches/realpass-e3-*",
+    "config/realpass-e3.json",
+    "patches/project-e3-hud/**"
+  ],
+  "developmentRules": [
+    "Internal modules may be independently gated to isolate faults and calibrate systems.",
+    "Development gates are not player preferences and must not become a release configuration menu.",
+    "A development candidate advertised as owned-runtime must fail closed if Dark Future or Project E3 is present in its deployment manifest.",
+    "Reference recipes may remain in the repository for historical provenance but may not feed the owned-runtime builder.",
+    "No source-mod save state may be required to initialize a clean realpass save/runtime."
+  ],
+  "releaseRules": [
+    "The accepted body, injury, combat, armor, cyberware-physiology and presentation authorities ship together.",
+    "The release has one authored balance rather than exposing subsystem disable switches.",
+    "Accessibility controls may exist only when they do not change simulation authority or balance; traditional actor health bars are intentionally not part of the authored realpass presentation.",
+    "External gameplay/presentation mods are optional user choices outside realpass and are not prerequisites, bundled payloads or hidden runtime hosts.",
+    "Every runtime file in the realpass-owned payload must have explicit provenance."
+  ]
+}
