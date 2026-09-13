@@ -28,6 +28,13 @@ Diagnostics remain development-only and off in a normal release.
 ### G-003 — Physical/physiological realism, not difficulty for difficulty's sake — LOCKED
 The target is plausible cause/effect. A mechanic belongs only when it supports the physical body, injury, equipment, combat or presentation model. Added friction is not a goal by itself.
 
+### G-004 — Vanilla-first mechanic replacement; preserve game identity — LOCKED
+realpass starts from the **vanilla Cyberpunk game** and makes its existing systems behave more plausibly. Preserve CDPR item names, item identities, animations, screens, assets and interaction language whenever they remain useful; replace or reinterpret the underlying mechanics only where realism requires it.
+
+Do **not** import Dark Future/E3 renames or other source-mod nomenclature as realpass features. In particular, do not rename one vanilla medical item into another concept. MaxDoc remains MaxDoc, Bounce Back remains Bounce Back, Health Booster remains Health Booster, and any future realpass role for each is authored against that vanilla identity.
+
+For stability, prefer narrow hooks at semantic native boundaries and realpass-owned models behind them over wholesale asset/resource replacement, duplicated vanilla state, or variant-by-variant patches.
+
 ---
 
 ## Runtime ownership
@@ -181,16 +188,16 @@ Internal bleeding/serious biological care belongs in clinical/ripperdoc-like pro
 ### G-053 — Healing is time/body-state dependent — LOCKED
 Tissue/bone/blood recovery progresses through the same authored body clock and should interact with relevant rest/resources rather than resolve because a menu was closed.
 
-### G-054 — Trauma kits are analgesia only — LOCKED
-The item realpass presents as a **Trauma Kit** is not a wound-healing item and must not dress bleeding, splint fractures, replace blood, heal tissue/bone, repair chrome or refill native HP. Its authored physiological purpose is to **numb/reduce perceived pain only**.
+### G-054 — Vanilla MaxDoc inhaler is analgesia only — LOCKED
+**MaxDoc remains MaxDoc.** realpass keeps the vanilla inhaler item identity/animation/quick-slot behavior but replaces its magical HP-regeneration role with **analgesia only**: it reduces perceived pain.
 
-Dressing and limb support therefore require their own appropriate field supplies rather than consuming Trauma Kits.
+MaxDoc must not dress bleeding, splint fractures, replace blood, heal tissue/bone, repair chrome or refill native HP. Dressing and limb support require their own appropriate supplies. Health Booster and Bounce Back remain separately named vanilla items and must not be silently treated as MaxDoc or renamed into another mod's concepts.
 
 ### G-055 — Pain is a realpass body state/consequence — LOCKED
 Pain is part of the authored physiology/injury experience. Physical injury generates pain independently of native HP. Pain relief changes perception/functional pain response; it does **not** repair the underlying injury, restore structural function or erase blood loss.
 
-### G-056 — Analgesia has diminishing returns and overuse consequences — LOCKED
-Repeated Trauma Kit use within a short enough physiological window has diminishing pain-relief benefit. Excess concurrent analgesic load produces an overdose/intoxication state rather than unlimited relief.
+### G-056 — MaxDoc analgesia has diminishing returns and overuse consequences — LOCKED
+Repeated MaxDoc inhaler use within a short enough physiological window has diminishing pain-relief benefit. Excess concurrent analgesic load produces an overdose/intoxication state rather than unlimited relief.
 
 For player-facing presentation, reuse Cyberpunk's native dizzy/drunk visual language where technically safe instead of inventing a permanent custom meter. The exact dose curve, decay window and overdose thresholds remain calibration values, not clinical claims.
 
@@ -264,9 +271,10 @@ Before live development deployment, maintain verified save backup/rollback pract
 These are **not** permission to change the locked goals above. They are implementation details still open:
 
 - exact balance/calibration values for projectile/wound/body/pain/analgesia/recovery models;
-- exact Trauma Kit analgesic load decay, diminishing-return curve and overdose thresholds;
+- exact MaxDoc analgesic-load decay, diminishing-return curve and overdose thresholds;
 - exact native pain/grunt VO events and throttling policy after local verification;
-- exact field-supply item/data implementation for dressings and limb supports now that Trauma Kits are analgesia-only;
+- exact realistic realpass mechanics for vanilla Bounce Back and Health Booster; preserve their vanilla names/identity while these remain unresolved;
+- exact field-supply item/data implementation for dressings and limb supports;
 - exact Condition-mode typography, colors, widget positions and animation timing;
 - whether all condition UI can be mounted dynamically without shipping a custom `.inkwidget` asset;
 - the minimal set of generic frameworks actually required by the final owned runtime;
@@ -285,3 +293,4 @@ These are **not** permission to change the locked goals above. They are implemen
 5. Record implementation progress separately in `docs/WORKLOG.md`; do not confuse “goal agreed” with “goal implemented.”
 6. Do not mark an owned-runtime milestone complete while Dark Future/Project E3 executing content remains required.
 7. Do not present a release as all-in-one while the user still has to understand/install a manual dependency stack.
+8. Preserve vanilla item/system identity unless a new explicit product decision says otherwise; prefer swapping realistic realpass mechanics beneath CDPR's existing names/assets/interactions over importing another mod's renames.
