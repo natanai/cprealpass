@@ -5,7 +5,7 @@ $path = Join-Path $project 'src/redscript/CyberpunkRealism/NoHealthbars.reds'
 $source = Get-Content -Raw -LiteralPath $path
 $settings = Get-Content -Raw -LiteralPath (Join-Path $project 'manifest/settings.json') | ConvertFrom-Json
 $modules = Get-Content -Raw -LiteralPath (Join-Path $project 'manifest/runtime-modules.json') | ConvertFrom-Json
-$checks = 0
+$script:checks = 0
 function Check($condition,[string]$message) { if (-not $condition) { throw $message }; $script:checks++ }
 function Count([string]$needle) { return [regex]::Matches($source,[regex]::Escape($needle)).Count }
 
@@ -40,19 +40,19 @@ foreach ($method in @('OnInitialize','OnUpdateHealthBarVisibility','EvaluateHeal
     Check ($body.Contains('this.CRHideTraditionalPlayerHealth();')) "Player visibility path does not reapply suppression: $method"
 }
 
-# Player suppression deliberately hides children, not the entire biomonitor root, so
-# RAM/buffs and contextual condition indicators can remain available even while HP
-# is unknown. Dark Future keys its conditions HUD off the native moduleShown state,
-# so realpass must not falsify that controller state merely to hide HP pixels.
+# Player suppression deliberately hides HP children, not the entire biomonitor root,
+# so RAM/buffs and realpass contextual condition cues can remain available while
+# exact remaining HP is unknown. Do not falsify the shared native module state just
+# to hide HP pixels.
 $playerHelper = [regex]::Match($source,'(?s)private func CRHideTraditionalPlayerHealth\(\) -> Void \{(.*?)\n\}').Groups[1].Value
 Check (-not $playerHelper.Contains('GetRootWidget().SetVisible(false)')) 'Player helper hides RAM/buffs with the whole biomonitor root.'
 Check (-not $playerHelper.Contains('m_quickhacksContainer')) 'Player helper hides quickhack/RAM information.'
-Check (-not $source.Contains('m_moduleShown = false')) 'Healthbar suppression disables the shared HUD module state used by contextual condition cues.'
-Check (-not $source.Contains('DarkFutureHUDSystem = null')) 'Healthbar suppression severs Dark Future contextual HUD integration.'
+Check (-not $source.Contains('m_moduleShown = false')) 'Healthbar suppression disables shared HUD module state used by contextual cues.'
+Check (-not $source.Contains('DarkFuture')) 'Healthbar presentation contains a source-mod runtime dependency.'
 
 # Companion is an actor-health readout and is intentionally hidden. Do not expand
 # this policy into generic objective/vehicle durability HUDs without a separate,
-# explicit acceptance decision.
+# explicit product decision.
 $companion = [regex]::Match($source,'(?s)protected cb func OnFlatheadStatusChanged\(value: Bool\) -> Bool \{(.*?)\n\}').Groups[1].Value
 Check ($companion.Contains('wrappedMethod(value)') -and $companion.Contains('GetRootWidget().SetVisible(false)')) 'Companion actor HP is not suppressed after native state handling.'
 Check (-not $source.Contains('@wrapMethod(vehicle')) 'No-healthbar presentation unexpectedly wraps vehicle UI.'
@@ -63,11 +63,13 @@ foreach ($forbidden in @('SetStatPoolValue','ApplyDamage','ProcessLocalizedDamag
     Check (-not $source.Contains($forbidden)) "Healthbar presentation mutates combat/health state: $forbidden"
 }
 
-$presentation = @($settings.categories | Where-Object id -eq 'presentation')
-Check ($presentation.Count -eq 1) 'Presentation settings category missing.'
-$healthSetting = @($presentation[0].settings | Where-Object key -eq 'presentation.traditionalHealthBars')
-Check ($healthSetting.Count -eq 1 -and $healthSetting[0].default -eq $false -and $healthSetting[0].dependency -eq 'presentation.enabled') 'Traditional healthbar setting must exist and default off under presentation.'
+# This is a fixed release decision now, not a public setting/subtoggle.
+Check ($settings.schemaVersion -eq 2) 'Locked release settings contract missing.'
+Check ($settings.releaseProfile.presentation -eq $true) 'Presentation authority is not enabled in the release profile.'
+Check ($settings.releaseProfile.traditionalActorHealthBars -eq $false) 'Authored release profile re-enabled traditional actor HP bars.'
+Check (@($settings.forbiddenPublicSettings) -contains 'presentation.traditionalHealthBars') 'Traditional healthbars are not explicitly forbidden as a normal player setting.'
 $module = @($modules.modules | Where-Object id -eq 'presentation')
-Check ($module.Count -eq 1 -and @($module[0].subtoggles) -contains 'traditionalHealthBars' -and @($module[0].owns) -contains 'healthbar-suppression') 'Presentation module does not own healthbar suppression.'
+Check ($module.Count -eq 1 -and $module[0].releaseEnabled -eq $true -and @($module[0].owns) -contains 'healthbar-suppression') 'Presentation module does not own release healthbar suppression.'
+Check ($module[0].fixedReleaseChoices.traditionalActorHealthBars -eq $false) 'Presentation module does not lock actor healthbars off.'
 
-Write-Host "PASS: $checks no-healthbar presentation contract checks; actor HP stays hidden while shared non-health HUD/condition state remains available and presentation never becomes damage authority."
+Write-Host "PASS: $script:checks no-healthbar presentation contract checks; actor HP stays hidden while non-health/condition state remains available and presentation never becomes damage authority."
