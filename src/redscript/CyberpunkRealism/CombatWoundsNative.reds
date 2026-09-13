@@ -175,6 +175,11 @@ public class CRNativeWoundBridge extends IScriptable {
     }
     if sample.targetIsPlayer {
       plan.committed = CRBodyRuntime.Get().RecordInjury(wound.region, wound.tissueDamage, wound.boneDamage, wound.cyberwareDamage, wound.externalBleedMlPerHour, wound.internalBleedMlPerHour);
+      if plan.committed {
+        // Provenance is explanatory metadata only. A metadata failure must never
+        // roll back or veto an already accepted physical wound.
+        CRInjuryProvenanceRuntime.Get().Record(sample, wound);
+      }
     } else {
       plan.committed = CRNPCInjuryBridge.Commit(hit.target as NPCPuppet, wound);
     }
