@@ -248,8 +248,12 @@ Ordinary play must not require a custom realpass launcher/background process. Sk
 ### G-082 — Reproducible GitHub build/release path — LOCKED
 When the runtime is ready, GitHub Actions should be able to build/test/assemble a deterministic player artifact, enforce provenance/forbidden-file rules, produce hashes/notices and publish the release artifact where licensing permits.
 
-### G-083 — Safe upgrades and rollback underneath simple UX — LOCKED
-Even if installation is simple, development/release tooling should preserve collision checks, ownership manifests, verified save backup where appropriate, rollback data and fail-closed verification.
+### G-083 — Keep development installation lightweight; use external game repair — LOCKED
+Local development iteration should **not** spend significant time maintaining multi-generation rollback chains, repeated game-file backups or local save snapshots that duplicate recovery already provided elsewhere.
+
+The owned development installer should stay small and fast: exact-compile before install, keep a flat manifest of files realpass wrote, replace the current realpass-owned payload directly, remove known retired realpass/Dark Future/Project E3 runtime residue, and hash-check the bytes it actually installs.
+
+If a development install damages the stock game, the accepted recovery path is: remove recorded realpass-owned extra files first, then use **Steam Verify Files** or reinstall Cyberpunk as needed. Steam verification is not assumed to remove arbitrary extra mod files, which is why a small realpass ownership/removal record remains useful. Public release tooling may provide a similarly simple uninstall path, but preserving a historical rollback chain is not a product requirement.
 
 ---
 
@@ -261,10 +265,10 @@ The exact candidate should compile/preflight against the installed game/framewor
 ### G-091 — Broad attended testing beats tiny disconnected tests — LOCKED
 Once a coherent owned-runtime candidate exists, prefer broad attended sessions that exercise scanner/presentation, body, combat, armor, injury, bleeding, pain/analgesia, impairment, treatment, save/reload and time progression together. Narrow diagnostic profiles remain available only to isolate failures.
 
-### G-092 — Save safety is operator-controlled; no unattended game automation — LOCKED
-The local attended deployment path should keep verified save backup **on by default**, but the project owner may explicitly skip the extra local save copy when they already consider their saves adequately protected by external/cloud backups. Skipping the save copy must be an explicit, auditable operator choice and must **not** disable game-file transaction rollback, collision checks, hash verification or fail-closed deployment behavior.
+### G-092 — Existing external/cloud save protection is sufficient for local development; no unattended game automation — LOCKED
+Do **not** require an additional realpass-managed local save backup during ordinary attended development deployment. The project owner already considers their saves adequately protected by existing cloud/external backup mechanisms and does not want deployment time spent duplicating that protection.
 
-Do not add unattended game launching, background watchers/loggers/services or scheduled tasks.
+This does not relax exact compile/preflight, owned-file tracking, installed-byte verification or source-mod isolation. Do not add unattended game launching, background watchers/loggers/services or scheduled tasks.
 
 ---
 
