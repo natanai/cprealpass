@@ -8,13 +8,15 @@ $goals = Get-Content -Raw -LiteralPath (Join-Path $project 'AGREED-GOALS.md')
 $conditionDoc = Get-Content -Raw -LiteralPath (Join-Path $project 'docs/CONDITION-UI.md')
 $provenancePath = Join-Path $project 'src/redscript/CyberpunkRealism/InjuryProvenance.reds'
 $presentationPath = Join-Path $project 'src/redscript/CyberpunkRealism/ConditionPresentation.reds'
+$nativeUiPath = Join-Path $project 'src/redscript/CyberpunkRealism/ConditionNativeUI.reds'
 $woundsPath = Join-Path $project 'src/redscript/CyberpunkRealism/CombatWoundsNative.reds'
 $fieldCarePath = Join-Path $project 'src/redscript/CyberpunkRealism/FieldCareActionRuntime.reds'
-foreach ($path in @($provenancePath,$presentationPath,$woundsPath,$fieldCarePath)) {
+foreach ($path in @($provenancePath,$presentationPath,$nativeUiPath,$woundsPath,$fieldCarePath)) {
     Check (Test-Path -LiteralPath $path) "Missing Condition architecture source: $path"
 }
 $provenance = Get-Content -Raw -LiteralPath $provenancePath
 $presentation = Get-Content -Raw -LiteralPath $presentationPath
+$nativeUi = Get-Content -Raw -LiteralPath $nativeUiPath
 $wounds = Get-Content -Raw -LiteralPath $woundsPath
 $fieldCare = Get-Content -Raw -LiteralPath $fieldCarePath
 
@@ -44,7 +46,21 @@ Check ($presentation.Contains('Internal bleeding suspected')) 'Internal bleeding
 Check ($presentation.Contains('Cyberware structural damage')) 'Cyberware injury is not distinguished in Condition text.'
 Check (-not $presentation.Contains('gamedataStatType.Health')) 'Condition presentation must not derive state from native HP.'
 
+# The first native UI slice must live on the stock Cyberware/ripperdoc controller,
+# stay qualitative, reuse the stock paper-doll select animation, and dispatch only
+# model-approved field care. Exact native compilation/rendering is still local-only.
+Check ($nativeUi.Contains('@wrapMethod(RipperDocGameController)')) 'Condition UI is not mounted on the stock Cyberware/ripperdoc controller.'
+Check ($nativeUi.Contains('CRConditionCyberwareTab') -and $nativeUi.Contains('CRConditionConditionTab')) 'CYBERWARE/CONDITION mode controls are missing.'
+Check ($nativeUi.Contains('CRConditionPresentation.Current')) 'Native Condition UI does not read the qualitative projection.'
+Check ($nativeUi.Contains('this.DollHover(area)') -and $nativeUi.Contains('this.DollSelect(true)')) 'Native Condition UI does not reuse stock anatomical paper-doll selection.'
+Check ($nativeUi.Contains('descriptor.canDress') -and $nativeUi.Contains('descriptor.canSupport')) 'Condition UI does not gate field actions through model-derived applicability.'
+Check ($nativeUi.Contains('CRBodyRuntime.Get().UseFieldCare')) 'Condition UI does not dispatch treatment through the authoritative timed-care runtime.'
+Check ($nativeUi.Contains('Equals(this.m_screen, CyberwareScreenType.Ripperdoc)')) 'Condition UI does not distinguish ordinary field-care context from ripperdoc context.'
+Check (-not $nativeUi.Contains('SetStatPoolValue') -and -not $nativeUi.Contains('ApplyDamage') -and -not $nativeUi.Contains('CRInjuryModel.Treat(')) 'Condition UI became a simulation/damage authority.'
+Check (-not $nativeUi.Contains('DarkFuture') -and -not $nativeUi.Contains('Project E3')) 'Condition UI depends on a source mod runtime.'
+Check (-not $nativeUi.Contains('gamedataStatType.Health')) 'Condition UI exposes/derives native HP.'
+
 Check (-not $fieldCare.Contains('DarkFuture.')) 'Field-care action runtime still depends on Dark Future.'
 Check ($fieldCare.Contains('GetAllBlackboardDefs().UI_System.IsInMenu')) 'Field-care menu boundary is not using the native realpass-owned path.'
 
-Write-Host "PASS: $script:checks Condition/provenance architecture checks."
+Write-Host "PASS: $script:checks Condition/provenance/native-UI architecture checks."
