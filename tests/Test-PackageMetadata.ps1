@@ -30,25 +30,21 @@ foreach ($file in @($manifest.files)) {
     if ($destination -match '(?i)(Cyberpunk2077\.exe$|final\.redscripts$|UserSettings\.json$|\.sav$)') {
         throw "Game/user file entered development package manifest: $destination"
     }
+    if ($destination -match '(?i)(Dark Future|Project E3)') { throw "Reference-mod runtime entered source package: $destination" }
 }
 
 if (@($manifest.files).Count -lt 10) { throw 'Development package unexpectedly lost most original modules.' }
-foreach ($requiredModule in @('runtime-policy-model','settings-surface','body-core','combat-core','injury-body')) {
+foreach ($requiredModule in @('runtime-policy-model','body-core','combat-core','injury-body')) {
     if (-not $modules.ContainsKey($requiredModule)) { throw "Development package lost required original module family: $requiredModule" }
 }
 if (-not $destinations.ContainsKey('r6/scripts/CyberpunkRealism/RuntimePolicyModel.reds')) {
     throw 'Development package does not contain the code-level runtime policy model.'
 }
-if (-not $destinations.ContainsKey('r6/scripts/CyberpunkRealism/RealpassSettings.reds')) {
-    throw 'Development package does not contain the realpass-owned settings surface.'
+if ($destinations.ContainsKey('r6/scripts/CyberpunkRealism/RealpassSettings.reds')) {
+    throw 'Retired public gameplay-settings prototype re-entered the active package.'
 }
 $requirements = @($manifest.requiredExternalComponents)
 if (-not ($requirements -contains 'redscript 0.5.31')) { throw 'Development source package lost pinned redscript prerequisite.' }
-if (@($requirements | Where-Object { $_ -match '^Mod Settings 0\.2\.21' }).Count -ne 1) { throw 'Settings source package does not declare its pinned Mod Settings prerequisite.' }
+if (@($requirements | Where-Object { $_ -match '(?i)Mod Settings' }).Count -ne 0) { throw 'Retired Mod Settings dependency remains in active package metadata.' }
 
-$settingsSource = Get-Content -Raw -LiteralPath (Join-Path $project 'src/redscript/CyberpunkRealism/RealpassSettings.reds')
-if ($settingsSource.Contains('CRBodyRuntimePolicy') -or $settingsSource.Contains('CRCombatRuntimePolicy')) {
-    throw 'Development settings source can directly open staged runtime gates.'
-}
-
-Write-Host "PASS: development package metadata matches $($manifest.version), $(@($manifest.files).Count) project-original files, includes passive settings source, and remains non-playable by contract."
+Write-Host "PASS: development package metadata matches $($manifest.version), $(@($manifest.files).Count) project-original files, has no gameplay-settings/source-mod dependency, and remains non-playable by contract."
