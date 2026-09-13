@@ -65,13 +65,13 @@ public class CRPainRuntime extends ScriptableSystem {
     return CRPainModel.Read(body.injuries, this.state);
   }
 
-  public func UseTraumaKit() -> Bool {
+  public func UseMaxDoc() -> Bool {
     if !IsDefined(this.Sync()) {
       return false;
     }
     // Deliberately touches only analgesia. Underlying injury/blood/chrome are not
-    // arguments to this mutation and therefore cannot be repaired by the kit.
-    return CRPainModel.UseTraumaKit(this.state);
+    // arguments to this mutation and therefore cannot be repaired by MaxDoc.
+    return CRPainModel.UseMaxDoc(this.state);
   }
 
   public func AnalgesicLoad() -> Float {
