@@ -1,9 +1,10 @@
 $ErrorActionPreference = 'Stop'
 if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'Run-CI.ps1 requires PowerShell 7 or newer.' }
 
-# Only tests reproducible from the public source tree belong here. Tests that
-# intentionally exercise acquired third-party source, generated deployment
-# manifests, the installed game, or live deployment state remain local-only.
+# Only tests reproducible from the public source tree and relevant to the current
+# owned-runtime product path belong here. Historical tests for the source-mod-
+# integrated attended builder and the backpack Field Care popup remain in the repo
+# as prototype evidence but are deliberately not release-path CI targets.
 $tests = @(
     'Test-ModuleContract.ps1',
     'Test-SettingsContract.ps1',
@@ -15,7 +16,6 @@ $tests = @(
     'Test-FeatureInventory.ps1',
     'Test-AcceptanceLedger.ps1',
     'Test-ActivationGates.ps1',
-    'Test-AttendedBuilder.ps1',
     'Test-AttendedSessionTool.ps1',
     'Test-ArtifactPolicy.ps1',
     'Test-PlayerPackageFinalizer.ps1',
@@ -37,7 +37,6 @@ $tests = @(
     'Test-ArmorWear.ps1',
     'Test-FieldCare.ps1',
     'Test-FieldCareTimed.ps1',
-    'Test-FieldCareUI.ps1',
     'Test-BloodLoss.ps1',
     'Test-InjuryEffects.ps1',
     'Test-BarlessFeedbackEnvelope.ps1',
@@ -61,4 +60,4 @@ $elapsed = [DateTime]::UtcNow - $started
 if ($failed.Count -gt 0) {
     throw "CI failed: $($failed -join ', ')"
 }
-Write-Host "`nPASS: $($tests.Count) cloud-safe realpass checks in $([Math]::Round($elapsed.TotalSeconds,1)) seconds."
+Write-Host "`nPASS: $($tests.Count) cloud-safe owned-path realpass checks in $([Math]::Round($elapsed.TotalSeconds,1)) seconds."
