@@ -4,6 +4,7 @@
 // development/native acceptance gate and does not apply gameplay effects. Runtime
 // activation remains: accepted build gate AND player intent AND safe lifecycle.
 module CyberpunkRealism.Settings
+import CyberpunkRealism.Core.*
 
 public class CRRealpassSettings extends ScriptableSystem {
   // BODY
@@ -153,6 +154,38 @@ public class CRRealpassSettings extends ScriptableSystem {
 
   public static func Get() -> ref<CRRealpassSettings> {
     return GameInstance.GetScriptableSystemsContainer(GetGameInstance()).Get(NameOf<CRRealpassSettings>()) as CRRealpassSettings;
+  }
+
+  // Translate UI/persisted player preferences into the engine-independent policy
+  // model. Acceptance flags intentionally remain their false defaults here; only a
+  // future build-acceptance adapter may supply those.
+  public func IntentSnapshot() -> ref<CRRuntimeFeatureFlags> {
+    let flags = new CRRuntimeFeatureFlags();
+    flags.bodyEnabled = this.bodyEnabled;
+    flags.nutritionEnabled = this.bodyNutrition;
+    flags.hydrationEnabled = this.bodyHydration;
+    flags.sleepEnabled = this.bodySleep;
+    flags.exertionEnabled = this.bodyExertion;
+    flags.eliminationEnabled = this.bodyElimination;
+    flags.hygieneEnabled = this.bodyHygiene;
+
+    flags.injuryEnabled = this.injuryEnabled;
+    flags.bloodLossEnabled = this.injuryBloodLoss;
+    flags.impairmentEnabled = this.injuryImpairment;
+    flags.fieldCareEnabled = this.injuryFieldCare;
+    flags.injuryRecoveryEnabled = this.injuryRecovery;
+
+    flags.combatEnabled = this.combatEnabled;
+    flags.armorEnabled = this.armorEnabled;
+    flags.armorWearEnabled = this.armorWear;
+    flags.cyberwarePhysiologyEnabled = this.cyberwarePhysiologyEnabled;
+
+    flags.presentationEnabled = this.presentationEnabled;
+    flags.nameplatesEnabled = this.presentationNameplates;
+    flags.statusCuesEnabled = this.presentationStatusCues;
+    flags.traditionalHealthBarsEnabled = this.presentationTraditionalHealthBars;
+    flags.diagnosticsEnabled = this.diagnosticsEnabled;
+    return flags;
   }
 
   private func OnAttach() -> Void {
