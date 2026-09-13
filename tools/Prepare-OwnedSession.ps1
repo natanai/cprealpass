@@ -4,13 +4,18 @@ param(
     [string]$SaveRoot,
     [string]$StateRoot,
     [switch]$Diagnostics,
-    [switch]$Deploy
+    [switch]$Deploy,
+    [switch]$SkipSaveBackup
 )
 $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot\Common.ps1"
 $project = Get-ProjectRoot
 $GameRoot = Assert-GameRoot $GameRoot
 Assert-GameStopped
+
+if ($SkipSaveBackup -and -not $Deploy) {
+    throw '-SkipSaveBackup is only valid with -Deploy.'
+}
 
 if ([string]::IsNullOrWhiteSpace($BuildId)) {
     $mode = if ($Deploy) { 'deploy' } else { 'preflight' }
@@ -100,6 +105,7 @@ $preflight = [ordered]@{
     actions = @($plan | Group-Object action | Sort-Object Name | ForEach-Object { [ordered]@{action=$_.Name;count=$_.Count} })
     preexistingForbiddenResidue = @(Get-ForbiddenOwnedAcceptanceResidue $GameRoot)
     saveBackup = $null
+    saveBackupSkipped = [bool]$SkipSaveBackup
     deploymentReceipt = $null
     status = 'compiled-and-preflight-passed'
 }
@@ -114,12 +120,16 @@ if (-not $Deploy) {
     return $reportPath
 }
 
-Write-Host '[4/6] Creating and verifying a save backup before any game files are changed...'
-$backupArgs = @{}
-if ($SaveRoot) { $backupArgs.SaveRoot = $SaveRoot }
-$backup = & "$PSScriptRoot\Backup-Saves.ps1" @backupArgs
-if ([string]::IsNullOrWhiteSpace([string]$backup)) { throw 'Verified save backup was not established; deployment aborted.' }
-$preflight.saveBackup = [string]$backup
+if ($SkipSaveBackup) {
+    Write-Host '[4/6] Local save backup explicitly skipped by operator; game-file rollback remains enabled.'
+} else {
+    Write-Host '[4/6] Creating and verifying a save backup before any game files are changed...'
+    $backupArgs = @{}
+    if ($SaveRoot) { $backupArgs.SaveRoot = $SaveRoot }
+    $backup = & "$PSScriptRoot\Backup-Saves.ps1" @backupArgs
+    if ([string]::IsNullOrWhiteSpace([string]$backup)) { throw 'Verified save backup was not established; deployment aborted.' }
+    $preflight.saveBackup = [string]$backup
+}
 Assert-GameStopped
 
 Write-Host "[5/6] Applying the $deploymentMode transaction..."
@@ -156,7 +166,11 @@ $preflight.deploymentReceipt = [string]$receipt
 $preflight.status = 'owned-runtime-deployed-and-verified'
 $preflight.postDeployForbiddenResidue = @()
 Write-JsonFile $preflight $reportPath
-Write-Host "READY: owned runtime $BuildId passed offline checks and is deployed, hash-verified, source-mod-residue-free, and protected by a verified save backup."
+if ($SkipSaveBackup) {
+    Write-Host "READY: owned runtime $BuildId passed offline checks and is deployed, hash-verified, source-mod-residue-free, with game-file rollback preserved. Local save backup was skipped by explicit operator request."
+} else {
+    Write-Host "READY: owned runtime $BuildId passed offline checks and is deployed, hash-verified, source-mod-residue-free, and protected by a verified save backup."
+}
 Write-Host 'This tool does not launch Cyberpunk, create background services, or enable diagnostics unless explicitly requested.'
 Write-Host "Rollback receipt: $receipt"
 return $reportPath
