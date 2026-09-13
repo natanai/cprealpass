@@ -33,7 +33,10 @@ foreach ($required in @(
 }
 
 if ($ids['owned-runtime-isolation'].status -eq 'passed') { throw 'Owned-runtime isolation cannot be passed before exact local compile/deploy residue verification.' }
-if ($ids['vanilla-first-native-integration'].status -eq 'passed') { throw 'Vanilla-first native integration cannot be passed before exact local native acceptance.' }
+$vanillaNative = $ids['vanilla-first-native-integration']
+if ($vanillaNative.status -eq 'passed' -and (($vanillaNative.evidence -join ' ') -notmatch 'local-preflight:realpass-owned-preflight-')) {
+    throw 'Vanilla-first native integration cannot be passed without recorded exact local compile/preflight evidence.'
+}
 if ($ids['combat-native-activation'].status -eq 'passed') { throw 'Combat activation cannot be passed without native acceptance evidence.' }
 if ($ids['pain-and-maxdoc-model'].status -eq 'passed') { throw 'MaxDoc/pain integration cannot be passed before native MaxDoc action and gameplay acceptance.' }
 if ($ids['condition-ui-and-treatment'].status -eq 'passed') { throw 'Condition/treatment UI cannot be passed before native body-screen acceptance.' }
