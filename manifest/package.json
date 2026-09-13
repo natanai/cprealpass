@@ -2,11 +2,12 @@
   "schemaVersion": 1,
   "id": "realpass",
   "name": "realpass",
-  "version": "0.1.0-dev.18",
-  "status": "Original runtime policy, body/NPC progression, combat, blood-loss demand, impairment and timed-care models; native/UI bridges excluded; no gameplay activation",
+  "version": "0.1.0-dev.19",
+  "status": "Original runtime policy + passive realpass settings surface, body/NPC progression, combat, blood-loss demand, impairment and timed-care models; native gameplay/UI bridges excluded; no gameplay activation",
   "gameVersion": "2.31",
   "requiredExternalComponents": [
-    "redscript 0.5.31"
+    "redscript 0.5.31",
+    "Mod Settings 0.2.21 (only for RealpassSettings.reds)"
   ],
   "files": [
     {
@@ -14,6 +15,12 @@
       "destination": "r6/scripts/CyberpunkRealism/RuntimePolicyModel.reds",
       "origin": "project-original",
       "module": "runtime-policy-model"
+    },
+    {
+      "source": "src/redscript/CyberpunkRealism/RealpassSettings.reds",
+      "destination": "r6/scripts/CyberpunkRealism/RealpassSettings.reds",
+      "origin": "project-original",
+      "module": "settings-surface"
     },
     {
       "source": "src/redscript/CyberpunkRealism/BodyModel.reds",
