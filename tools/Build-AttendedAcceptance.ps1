@@ -89,15 +89,20 @@ function Stage-Replacement([string]$destination,[string]$text,[string]$label) {
     $changes.Add([ordered]@{destination=$destination;purpose=$label;beforeSha256=$before;afterSha256=$entry.sha256})
 }
 
+function Assert-ProjectOwnedDestination([string]$destination,[object]$entry) {
+    $owner = [string]$entry.component
+    if (-not [string]::IsNullOrWhiteSpace($owner) -and $owner -notlike 'realpass*' -and $owner -ne 'cyberpunk-realism-body') {
+        throw "$destination is owned by a non-realpass component: $owner"
+    }
+    return $owner
+}
+
 function Sync-ProjectSource([string]$sourceRelative,[string]$destination,[string]$component,[string]$label) {
     $source = Resolve-SafeChildPath $project $sourceRelative
     $hash = Get-Sha256 $source
     if ($destinations.ContainsKey($destination)) {
         $existing = $destinations[$destination]
-        $owner = [string]$existing.component
-        if (-not [string]::IsNullOrWhiteSpace($owner) -and $owner -notlike 'realpass*' -and $owner -ne 'cyberpunk-realism-body') {
-            throw "$destination is owned by a non-realpass component: $owner"
-        }
+        $owner = Assert-ProjectOwnedDestination $destination $existing
         $before = $existing.sha256
         $existing.source = $sourceRelative
         $existing.sha256 = $hash
@@ -109,6 +114,16 @@ function Sync-ProjectSource([string]$sourceRelative,[string]$destination,[string
         $destinations[$destination] = $entry
         $changes.Add([ordered]@{destination=$destination;purpose=$label;beforeSha256=$null;afterSha256=$hash})
     }
+}
+
+function Remove-ProjectSource([string]$destination,[string]$label) {
+    if (-not $destinations.ContainsKey($destination)) { return }
+    $existing = $destinations[$destination]
+    Assert-ProjectOwnedDestination $destination $existing | Out-Null
+    $before = $existing.sha256
+    $manifest.files = @($manifest.files | Where-Object { ([string]$_.destination).Replace('\','/') -ne $destination })
+    $destinations.Remove($destination)
+    $changes.Add([ordered]@{destination=$destination;purpose=$label;beforeSha256=$before;afterSha256=$null})
 }
 
 # The current known-good deployment may already be a body-enabled quiet profile.
@@ -143,10 +158,14 @@ $settingsDestination = 'r6/scripts/CyberpunkRealism/RealpassSettings.reds'
 Sync-ProjectSource 'src/redscript/CyberpunkRealism/RuntimePolicyModel.reds' $policyDestination 'realpass-core' 'refresh engine-independent accepted-and-intent policy model'
 Sync-ProjectSource 'src/redscript/CyberpunkRealism/RealpassSettings.reds' $settingsDestination 'realpass-settings' 'refresh passive realpass-owned Mod Settings surface'
 
-# Add the project-original no-healthbar presentation to the test candidate by
-# default. It hides HP UI only; it does not change the damage/stat-pool simulation.
+# Default broad gameplay has no traditional actor HP bars. The comparison switch
+# is exact in both directions: if the active base is already a barless attended
+# build, -ShowTraditionalHealthBars removes realpass' suppression source rather than
+# silently inheriting it and producing a false comparison result.
 $healthbarDestination = 'r6/scripts/CyberpunkRealism/NoHealthbars.reds'
-if (-not $ShowTraditionalHealthBars) {
+if ($ShowTraditionalHealthBars) {
+    Remove-ProjectSource $healthbarDestination 'explicit comparison build: restore traditional healthbar presentation by omitting realpass suppression source'
+} else {
     Sync-ProjectSource 'src/redscript/CyberpunkRealism/NoHealthbars.reds' $healthbarDestination 'realpass-presentation' 'traditional player/NPC/boss/companion actor health bars hidden'
 }
 
