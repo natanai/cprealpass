@@ -1,191 +1,226 @@
-# realpass attended acceptance batch
+# realpass owned attended acceptance batch
 
-This is the primary player-attended test plan for the first broad realpass candidate. It is intentionally larger than the earlier micro-tests: the goal is to experience body simulation, presentation, combat, localized injury, armor, blood loss, impairment and field care together while still collecting enough structure to identify which authority failed.
+Status: canonical local test plan for the first broad owned-runtime candidate
+Last updated: 2026-09-13
+Governing goals: `AGREED-GOALS.md`
 
-The test is **not** permission to promote the source activation gates. `BodyRuntime.reds` and `CombatNativeBridge.reds` stay disabled in canonical source. `tools/Build-AttendedAcceptance.ps1` creates a new immutable local manifest with body and combat enabled, compiles that exact profile, adds the no-traditional-healthbar presentation by default, and stops before live deployment.
+This is the primary player-attended test plan for the first broad **owned** realpass candidate. The goal is to experience the vanilla game with realpass mechanics substituted underneath it: body simulation, physical combat, localized injury, armor, blood loss, impairment, pain/MaxDoc, Condition inspection, field treatment and professional repair should behave as one causal system.
+
+This document supersedes the earlier Dark Future/E3-based attended workflow. Do not use the legacy `Prepare-AttendedSession.ps1` path for product acceptance.
 
 ## Candidate contract
 
-Default broad attended candidate:
+The ordinary broad owned candidate should have:
 
-- body simulation: **on**
-- combat physical bridge: **on**
-- localized injury / blood loss / impairment / armor / treatment: active only through their existing native safety and eligibility gates
-- traditional player health/overshield bars and HP numbers: **hidden**
-- ordinary NPC health bars and damage-preview bars: **hidden**
-- dedicated boss / MaxTac health bar: **hidden**
-- dedicated companion/Flathead actor health bar: **hidden**
-- generic objective/vehicle durability UI: **not intentionally hidden**; those can communicate mission state rather than an actor's HP
-- NPC names / scanner presentation: retained according to authored/native visibility rules
-- RAM, buffs and other non-health player biomonitor information: not intentionally hidden by the no-healthbar module
-- diagnostics: **off** unless the tester explicitly requests a diagnostic build
-- no background logger, watcher, recorder, service or scheduled task
+- realpass body simulation enabled;
+- realpass combat/ballistics/wound routing enabled;
+- localized injury, blood loss, impairment, armor wear, pain and treatment enabled through their native safety/eligibility gates;
+- traditional V/NPC/boss/companion actor health bars hidden;
+- generic objective/vehicle durability UI left intact where it communicates mission state;
+- native modern scanner/quickhack behavior authoritative;
+- vanilla item identities preserved;
+- MaxDoc still presented/used as MaxDoc, with realpass replacing its HP-regeneration effect with analgesia only;
+- Bounce Back and Health Booster kept distinct from MaxDoc and not silently renamed;
+- `CYBERWARE | CONDITION` mounted onto the stock Cyberware/ripperdoc body screen;
+- no Dark Future or Project E3 executing content;
+- diagnostics off unless explicitly requested for a second-pass investigation;
+- no background logger, watcher, recorder, service, launcher or scheduled task.
 
-The no-healthbar rule is presentation only. It must not change health, overshield state, damage, one-shot protection, boss logic, quest immunity, wound calculation or treatment state.
+Canonical source gates remain fail-closed. The owned builder opens body/combat only in immutable staged copies for this exact candidate.
 
 ## Preferred operator path
 
-`tools/Prepare-AttendedSession.ps1` is the preferred entry point once the PC is available. It is intentionally safe to run before the player is ready to launch the game. The ordinary path no longer requires the player or local agent to invent a build ID or remember a manifest name.
-
-With no source-manifest argument, it reads the verified current deployment pointer and automatically uses `manifest/<current buildId>.deployment.json` as the base. With no build ID, it creates a unique immutable ID containing the mode, UTC timestamp and a random suffix.
-
-First run the one-command compile/preflight:
+The only normal acceptance entry point is:
 
 ```powershell
-pwsh ./tools/Prepare-AttendedSession.ps1
+pwsh ./tools/Prepare-OwnedSession.ps1
 ```
 
-That command does **not** alter the game. It validates the current source manifest and every source hash, requires the full body -> combat -> armor -> wound -> blood loss -> impairment -> field-care chain, generates an immutable candidate, compiles the exact candidate against the installed Cyberpunk 2077 scripts, and runs the real upgrade planner in `-WhatIf` mode.
+Run that **first** with Cyberpunk fully stopped. It:
 
-Only after that preflight passes, while the player is present and the game is stopped, run:
+1. creates a fresh immutable owned build ID;
+2. builds from the project-original realpass source tree rather than the currently installed gameplay-mod stack;
+3. rejects forbidden source-mod runtime dependencies;
+4. layers only the audited generic runtime base required by the owned profile;
+5. exact-compiles the candidate against the installed Cyberpunk 2077 environment;
+6. runs the real deployment/upgrade planner in `-WhatIf` mode;
+7. writes an attended preflight report and stops without changing game files.
+
+A successful first run must end with the equivalent of:
+
+`PASS: owned candidate ... exact-compiled and deployment preflight passed ... Nothing was deployed.`
+
+Do **not** infer gameplay success from this. It only establishes that the exact candidate can compile and can be transacted safely.
+
+Only after that preflight is clean should the attended deployment be run:
 
 ```powershell
-pwsh ./tools/Prepare-AttendedSession.ps1 -Deploy
+pwsh ./tools/Prepare-OwnedSession.ps1 -Deploy
 ```
 
-This creates a **new** immutable deployment ID automatically, repeats exact build/compile/preflight, establishes a verified save backup, performs the reversible upgrade, verifies the deployment receipt and then stops. It does **not** launch Cyberpunk. A local agent may supply `-BuildId` or `-SourceManifestPath` explicitly when diagnosing/reproducing a particular case, but the normal operator path should not need them.
+The deploy path creates another immutable build, redoes exact compilation/preflight, establishes a verified save backup, deploys/replaces the runtime, hash-verifies the receipt, checks that Dark Future/Project E3 executing residue is absent, and rolls back automatically if owned-runtime isolation fails. It does not launch Cyberpunk.
 
-`-Diagnostics` is an explicit second-pass troubleshooting mode, not the ordinary feel-test default. `-ShowTraditionalHealthBars` exists only as a comparison/debug build; the authored realpass default is health bars hidden.
+The successful deploy marker is:
 
-If auto-discovery reports that the current build manifest is missing, recover/reconstruct that local manifest rather than guessing. If it reports that the current manifest lacks any required broad-runtime file, rebuild a coherent combined base before testing; do not interpret a partial profile as combat balance evidence.
+`READY: owned runtime ... is deployed, hash-verified, source-mod-residue-free, and protected by a verified save backup.`
 
-## Before the session
+After that, launch Cyberpunk normally through Steam.
 
-1. Sync `chatgpt-continuation` and verify the current GitHub CI head is green.
-2. Confirm Cyberpunk 2077 is fully stopped.
-3. Run `pwsh ./tools/Prepare-AttendedSession.ps1` and require the exact compile + upgrade preflight to pass.
-4. For the live candidate, run `pwsh ./tools/Prepare-AttendedSession.ps1 -Deploy` so a verified save backup and reversible receipt exist before any game-file changes.
-5. Use a save where ordinary open-world combat can be tested without immediately entering a critical quest sequence.
-6. Keep diagnostics off for the first feel pass.
+## Stop-before-gameplay conditions
 
-A future agent operating on the user's PC should perform these setup steps directly rather than asking the player to manually edit files or assemble manifests.
+Do not launch the candidate for acceptance if any of these occur:
 
-## Session A — presentation and baseline body state
+- redscript/native compilation error;
+- unresolved deployment collision;
+- source-mod residue remains after deployment;
+- save backup cannot be verified;
+- candidate manifest is incomplete;
+- exact MaxDoc/`UseHealChargeAction` hook does not compile;
+- Condition/Cyberware controller hook does not compile;
+- no-healthbar controller hook does not compile.
 
-Before firing a weapon, establish that the test build is behaving as one coherent profile.
+Fix the adapter/profile first. Do not loosen the physical model or reintroduce Dark Future/E3 to make compilation pass.
 
-- Load normally and remain idle for a minute.
-- Confirm no traditional player HP bar, HP number or overshield bar is visible, including after drawing a weapon and entering ordinary combat readiness.
-- If Overclock is available, activate/deactivate it and confirm the direct Overclock visibility path does not re-show HP while RAM/Overclock information still behaves normally.
-- If an overshield effect is available, gain/lose it and confirm the dedicated overshield evaluator does not re-show a continuous bar while the underlying effect still functions.
-- Confirm RAM/quickhack information still works when appropriate; hiding HP must not blank the whole biomonitor root.
-- Scan an ordinary civilian. Confirm the permitted public/display name behavior still works and no empty nameplate rectangle appears.
-- Scan or focus an ordinary hostile. Confirm no NPC HP bar or damage-preview bar appears before or after damage.
-- If a reproducible companion/Flathead health HUD is available, confirm the actor HP bar stays hidden without breaking companion/mission behavior.
-- Confirm objective/vehicle durability indicators still appear when a mission genuinely uses them; realpass must not remove required non-actor mission feedback merely because it resembles a bar.
-- Confirm minimap/compass/interaction presentation has not regressed from the current accepted local candidate.
-- Eat/drink once, perform the toilet interaction once, and observe that body state continues without duplicate interactions or labels.
-- Sprint or otherwise exert V enough to observe recovery behavior. Exertion should recover; it must not become a permanent generic debuff.
+## Session A — vanilla identity and baseline presentation
 
-If the HUD root disappears entirely, RAM disappears unexpectedly, names become empty rectangles, objective UI is lost, or the game reports script compilation errors, stop the batch before combat conclusions are drawn.
+Before combat, establish that realpass feels like modified vanilla Cyberpunk rather than a parallel mod UI stack.
 
-## Session B — ordinary unarmored combat
+- Open the normal menus, scanner and Cyberware screen. Confirm the game still presents CDPR's ordinary item/system identities.
+- Confirm MaxDoc is still named/presented as MaxDoc; Bounce Back and Health Booster retain their own vanilla identities.
+- Confirm the native modern scanner/quickhack flow opens, targets and closes normally.
+- Confirm no traditional V HP/HP-number/overshield bar is continuously visible.
+- If Overclock or an overshield is available, exercise it and verify those direct visibility paths do not resurrect the HP bar while RAM/status feedback remains usable.
+- Scan/focus ordinary civilians and hostiles. Names/identity information may remain, but ordinary actor HP/damage-preview bars should not appear.
+- Confirm mission/objective or vehicle durability UI still appears where genuinely required.
+- Eat/drink once and verify body intake does not duplicate or rename stock consumables.
+- Exercise V enough to observe that exertion can recover instead of becoming a permanent generic penalty.
 
-Use ordinary non-quest human enemies first. Do not start with bosses, MaxTac, drones or scripted invulnerable actors.
+Stop before combat conclusions if the whole biomonitor disappears, the scanner breaks, vanilla item names are unexpectedly rewritten, or unrelated mission UI vanishes.
 
-Test both directions of damage.
+## Session B — ordinary physical combat, both directions
+
+Start with ordinary non-quest human enemies, not bosses/MaxTac/drones/scripted invulnerables.
 
 ### V attacks NPC
 
-- Fire a small number of controlled shots at torso, arm, leg and head across separate targets where practical.
-- Observe whether hits feel physical rather than level/HP-sponge driven.
-- Confirm no traditional enemy HP bar or damage-preview bar appears after the hit.
-- Confirm NPC name/affiliation presentation can remain visible independently of HP.
-- Watch for regional consequences: movement/function changes should correspond to the struck region rather than generic global slowdown.
-- A stopped or non-penetrating impact may cause blunt injury, but must not create an open projectile bleeding tract.
-- Mechanical/cyberware-only contact must not manufacture biological bleeding.
+- Use controlled torso, arm, leg and head shots across separate ordinary targets where practical.
+- Judge whether hits behave physically rather than as level/DPS-versus-HP arithmetic.
+- Confirm actor HP/damage-preview bars remain absent.
+- Compare regional consequences: arm/leg injury should not look identical to torso/head injury.
+- Verify stopped/nonpenetrating impacts can produce blunt consequences without inventing an open projectile tract.
+- Verify mechanical/cyberware-only contact does not manufacture biological bleeding.
 
 ### NPC attacks V
 
-- Allow a controlled ordinary enemy to hit V without immediately attempting a lethal stress test.
-- Confirm V receives the same physical injury model rather than a separate arcade-only path.
-- Confirm V's HP/overshield bars remain hidden throughout damage and recovery.
-- Look for physical consequences that can replace a bar as feedback: regional movement/handling impairment, blood-loss effects, contextual injury cues and treatment need.
-- Verify the absence of a bar does not make combat state itself malfunction (healing/treatment, death, native protections and save state remain functional).
+- Allow controlled ordinary hits rather than beginning with a lethal stress test.
+- Confirm V enters the same regional injury/protection logic.
+- Confirm no traditional V HP bar appears.
+- Observe embodied feedback: movement, stamina, handling, bleeding/weakness and pain should make injury legible without showing an exact HP reservoir.
 
-The desired feel is uncertainty about exact remaining HP, **not** uncertainty about whether V is injured. Injury feedback should come from consequences and contextual cues rather than a continuously exposed numerical reservoir.
+The desired uncertainty is about exact remaining reserve, not about whether V has been hurt.
 
-## Session C — armor and cyberware
+## Session C — pain and vanilla MaxDoc
 
-Use clearly different protection cases rather than judging armor from one outfit.
+Once V has a meaningful biological injury:
 
-- Hit a region with no mapped protective coverage and compare it to a mapped torso-protective item.
-- Confirm torso armor does not magically protect uncovered arms/legs.
-- Repeated impacts should be capable of wearing the impacted protection region without duplicating one impact into multiple wear commits.
-- Ordinary cosmetic clothing must not silently become ballistic armor.
-- Test at least one mapped mechanical/cyberware contact if a reliable target is available. Structural damage may occur; biological bleeding should not be created solely because the struck material is mechanical.
-- If a stock item cannot be mapped confidently, the safe behavior is unresolved/fallback—not invented protection.
+- Aim/handle a weapon before taking MaxDoc and judge the pain-driven instability separately from obvious structural limb impairment.
+- Use **MaxDoc** through its normal vanilla interaction/quick-slot path.
+- Confirm the MaxDoc animation/use/charge behavior remains recognizably vanilla.
+- Confirm MaxDoc does **not** visibly heal the underlying wound, stop bleeding, stabilize bone, replace blood or repair chrome.
+- Confirm perceived-pain/aim instability is reduced while structural impairment remains.
+- Use overlapping MaxDoc doses carefully to test diminishing relief. Later overlapping uses should help less than the first.
+- At the authored overuse threshold, confirm disorientation/dizzy-drunk presentation appears without alcohol-specific gameplay behavior becoming the treatment model.
+- Allow game/body time to pass and verify analgesia/disorientation clears while unresolved injury pain can return.
+- Confirm Health Booster and Bounce Back did not become aliases for the MaxDoc analgesia path.
 
-Do not use this session to tune final coefficients from one encounter. The immediate gate is causality, coverage and consistency.
+The initial dose/decay/overuse values are calibration targets, not clinical claims. Record whether the effect is too weak/strong/long/short rather than treating the first numbers as final.
 
-## Session D — bleeding, impairment and field care
+## Session D — Cyberware / Condition injury inspection
 
-Once a controlled injury is present:
+With a controlled injury present, open the normal Cyberware/body screen.
 
-- Wait long enough to establish whether external/internal bleeding progresses with game time rather than frame rate.
-- Verify dressing an external wound changes subsequent external bleeding but does not cure unrelated internal injury.
-- Verify limb support improves function without instantly healing bone damage.
-- Begin treatment and interrupt it by movement/combat/menu boundary where practical. Interrupted treatment must not consume supplies or apply the completed result.
-- Complete treatment normally. Item debit and treatment application should happen exactly once.
-- Confirm injury-related movement/weapon penalties clear or improve only when the underlying model says they should, and do not stack endlessly on refresh/weapon swap.
-- Save with a nontrivial injury, reload, and verify persistent state is neither duplicated nor silently healed/refilled.
+- Confirm **Cyberware** mode still performs its normal vanilla purpose.
+- Enter **Condition** mode and confirm healthy regions do not create a wall of `OK` entries.
+- Confirm the actual injured region appears as an active condition.
+- Select it and verify the stock paper-doll anatomical focus/zoom is reused where available.
+- For arms/legs, verify left/right condition identity remains clear even if vanilla supplies only a combined Arms/Legs camera framing.
+- Confirm the detail view qualitatively describes tissue/bone/bleeding/chrome/function state rather than native HP or raw simulation percentages.
+- Confirm likely-cause/protection text is plausible and tied to the actual accepted hit when provenance exists.
+- Confirm qualitative pain/MaxDoc text reflects the current body state.
+- Enter/exit Condition mode repeatedly and verify vanilla Cyberware screen state is not corrupted.
 
-## Session E — time, sleep and broad body integration
+## Session E — field treatment
 
-After combat, continue the same save rather than immediately resetting it.
+Use Condition mode to treat only what is physically field-treatable.
 
-- Eat/drink and allow ordinary game time to advance.
-- Sleep/wait once and verify the body clock advances coherently rather than double-counting time.
-- Observe recovery from exertion and injury across the time transition.
-- Confirm severe blood-loss consequences do not replay old accumulated exposure after load/restore.
-- Verify bathroom/washing interactions remain usable and do not become combat-owned systems.
-- Save/reload again after the time transition.
+- For external bleeding, verify `APPLY DRESSING` appears only when it can help and consumes the mapped dressing supply exactly once on successful completion.
+- For a supported limb injury, verify `SUPPORT LIMB` appears only when applicable and improves function without instantly healing bone damage.
+- Start a timed treatment and interrupt it by movement/combat/menu context where practical. It must not consume supplies or apply the result if cancelled.
+- Confirm dressing does not cure internal bleeding or unrelated injuries.
+- Confirm neither dressing nor limb support consumes MaxDoc.
 
-The point is to catch cross-system failures that isolated fixture tests cannot expose: duplicated clocks, stale listeners, repeated damage delivery, lost persistent state and source-mod systems fighting for the same authority.
+The rigid support-supply mapping is still provisional. The acceptance target here is causal treatment, transaction correctness and separation from MaxDoc—not final inventory art/economy polish.
 
-## Session F — protected and unusual actors
+## Session F — ripperdoc professional care
 
-Only after ordinary combat behaves coherently:
+At a context where the stock screen identifies a ripperdoc:
 
-- test a boss or MaxTac actor while confirming the dedicated boss health bar stays hidden;
-- test an authored quest-protected or one-shot-protected actor and verify realpass respects final native protection rather than bypassing it;
-- test a defeated/nonlethal outcome and confirm injury does not force an unintended kill;
-- test a drone/mechanical target and confirm unsupported biological wound routing is rejected;
-- test a companion actor if available and confirm healthbar suppression does not interfere with its scripted lifecycle;
-- test combat near a quest/dialogue transition and a Phantom Liberty encounter when a safe reproducible point is available.
+- Open the same Condition view rather than a separate medical UI.
+- Verify clinical care appears only for biological conditions it can help.
+- Verify mechanical repair appears only when chrome damage exists.
+- Clinical care may control bleeding and establish aftercare but must not instantly erase tissue/bone injury or replace lost blood.
+- Mechanical repair must affect chrome only and not heal biological trauma.
+- Recheck the region afterward and confirm the UI describes the new state accurately.
 
-A boss taking more punishment because of an explicitly authored protection rule is acceptable; a physically identical ordinary human becoming a sponge merely because of level/max-HP inflation is not the intended model.
+Professional price/time integration is not yet the acceptance authority; do not infer final economy design from this first slice.
 
-## What to record
+## Session G — armor, time, recovery and persistence
 
-The player should not need to run diagnostics for the first feel pass. Record observations in plain language first:
+Continue the same save rather than resetting immediately.
 
-- weapon / rough target type;
-- body region hit;
-- obvious armor/cyberware context;
-- what happened immediately;
-- what changed over the next several seconds/minutes;
-- whether the result felt too weak, too strong or physically implausible;
-- whether any traditional actor HP/overshield bar appeared and what caused it;
-- whether a nameplate, scanner, RAM or other unrelated UI element disappeared;
-- whether objective/vehicle mission feedback disappeared unexpectedly;
-- whether treatment/reload/save changed the result unexpectedly.
+- Compare an uncovered region with clearly mapped protective coverage.
+- Confirm torso protection does not protect uncovered limbs.
+- Repeat impacts enough to establish that armor wear is regional and not duplicated per hit.
+- Let bleeding/body time advance and verify consequences are driven by game/body time rather than frame rate.
+- Sleep/wait once and confirm body/injury/analgesia recovery does not double-count the time transition.
+- Save with nontrivial injury and/or active analgesia, reload, and verify state is neither duplicated nor silently reset/healed.
+- Verify bathroom/washing/body interactions continue to function independently of combat.
 
-Only if an observation cannot be explained should a second build enable the explicit attended diagnostics switch. Diagnostics are for resolving a concrete discrepancy, not for turning ordinary play into a telemetry session.
+## Session H — unusual/protected actors and Phantom Liberty
 
-## Promotion gates after the batch
+Only after ordinary cases are coherent:
 
-Do not call combat accepted just because the game launches. Promotion requires, at minimum:
+- test boss/MaxTac while the dedicated actor health bar stays hidden;
+- test authored quest/one-shot protection and ensure realpass does not bypass final native safeguards;
+- test nonlethal defeat where reproducible;
+- test a drone/mechanical target and reject unsupported biological wound routing;
+- test companion HUD/lifecycle if available;
+- test combat around dialogue/quest transitions;
+- test reproducible Phantom Liberty critical sequences.
 
-- exact candidate compiles and deploys/rolls back cleanly;
-- player and ordinary NPC physical hit paths work in both directions;
-- no traditional actor HP bars appear for V, ordinary NPCs, bosses or dedicated companion HUDs in the default presentation, including Overclock/overshield state changes;
-- healthbar suppression does not hide RAM/buffs/names or mutate health/overshield state;
-- objective/vehicle mission-state UI remains available where required;
-- regional armor coverage and mechanical-vs-biological routing behave coherently;
-- bleeding/impairment/treatment operate without duplicates or orphaned modifiers;
-- save/reload does not replay, duplicate or erase live injury state;
-- native quest/boss/nonlethal protections remain authoritative;
+An explicitly protected boss may legitimately take more punishment. A physically ordinary human should not become a sponge merely because level/max-HP is high.
+
+## What the player should report
+
+Plain-language observations are more useful than diagnostics on the first pass. Record weapon/target, body region, obvious protection, what happened immediately, what changed over time, whether the result felt implausible, any HP bar that appeared, any unrelated UI that vanished, how MaxDoc changed pain/handling, what Condition mode showed, and what treatment actually changed.
+
+Only after a concrete discrepancy exists should a second build enable `-Diagnostics`. Diagnostics are for explaining a specific failure, not for turning normal play into telemetry.
+
+## Promotion gates
+
+Do not call the owned combat/body candidate accepted merely because it launches. Promotion requires at minimum:
+
+- exact owned candidate compiles and preflights cleanly;
+- live deployment is save-backed, hash-verified and source-mod-residue-free;
+- vanilla item/screen identity remains coherent;
+- ordinary player/NPC physical hit paths work in both directions;
+- actor HP bars remain hidden without breaking unrelated HUD/mission state;
+- regional armor, biological/chrome routing, bleeding and impairment behave causally;
+- MaxDoc retains its vanilla identity while producing analgesia only, with believable diminishing returns/overuse and no magical wound healing;
+- Cyberware/Condition mode works, reuses safe stock body/zoom behavior, and explains the actual regional condition;
+- field and professional treatment remain distinct and transactionally correct;
+- save/reload/time progression do not duplicate, erase or replay injury/analgesia state;
+- native boss/quest/nonlethal protections remain authoritative;
 - no severe script errors, runaway callbacks, obvious performance degradation or quest blockers are observed.
 
-Failures should become specific acceptance-ledger entries. Do not compensate for a failed native binding by loosening the physical model or by reintroducing level-scaling/health-sponge behavior.
+Failures become specific acceptance-ledger items. Do not solve them by restoring source-mod ownership, renaming vanilla items, or reintroducing generic health-sponge scaling.
