@@ -266,7 +266,6 @@ private func CRConditionRefresh() -> Void {
     this.crConditionSupport.SetVisible(false);
     this.crConditionClinical.SetVisible(false);
     this.crConditionMechanical.SetVisible(false);
-    this.crConditionStatus.SetText("");
     return;
   }
 
@@ -280,9 +279,6 @@ private func CRConditionRefresh() -> Void {
   this.crConditionSupport.SetVisible(descriptor.canSupport && !atRipperdoc);
   this.crConditionClinical.SetVisible(descriptor.canClinical && atRipperdoc);
   this.crConditionMechanical.SetVisible(descriptor.canMechanical && atRipperdoc);
-  if !CRFieldCareActionRuntime.Get().Active() {
-    this.crConditionStatus.SetText("");
-  }
 }
 
 @addMethod(RipperDocGameController)
@@ -295,6 +291,7 @@ private func CRConditionSetMode(enabled: Bool) -> Void {
   this.crConditionCyberwareTab.SetOpacity(enabled ? 0.45 : 1.0);
   this.crConditionTab.SetOpacity(enabled ? 1.0 : 0.45);
   if enabled {
+    this.crConditionStatus.SetText("");
     this.crConditionSelectedRegion = this.CRConditionFirstActive();
     this.CRConditionRefresh();
     if this.crConditionSelectedRegion > 0 {
@@ -335,6 +332,7 @@ protected cb func OnCRConditionRegionReleased(evt: ref<inkPointerEvent>) -> Bool
   while i < ArraySize(this.crConditionRegionWidgets) {
     if Equals(evt.GetCurrentTarget(), this.crConditionRegionWidgets[i]) {
       this.crConditionSelectedRegion = i + 1;
+      this.crConditionStatus.SetText("");
       this.CRConditionFocusRegion(this.crConditionSelectedRegion);
       this.CRConditionRefresh();
       evt.Handle();
@@ -401,9 +399,10 @@ protected cb func OnCRConditionProfessionalReleased(evt: ref<inkPointerEvent>) -
   }
 
   // These are completed professional-service interactions, not portable kit care.
-  // Clinical care controls bleeding/establishes aftercare; biological tissue/bone
-  // still recover on the body clock. Mechanical repair affects chrome only.
-  accepted = CRBodyRuntime.Get().CompleteTreatment(this.crConditionSelectedRegion, kind, 1.0);
+  // The runtime re-checks service eligibility immediately before the shared body
+  // treatment commit. Biological recovery still takes body time; mechanical repair
+  // affects chrome only.
+  accepted = CRBodyRuntime.Get().CompleteProfessionalCare(this.crConditionSelectedRegion, kind);
   if accepted {
     if kind == 4 {
       this.crConditionStatus.SetText("Clinical care completed. Biological recovery still takes time.");
