@@ -4,8 +4,8 @@
 module CyberpunkRealism.Physiology
 
 public class CRPainState extends IScriptable {
-  // Concurrent authored analgesic load. One Trauma Kit contributes one unit; load
-  // decays through game time. This is not a pharmaceutical dose measurement.
+  // Concurrent authored analgesic load. One MaxDoc inhaler use contributes one unit;
+  // load decays through game time. This is not a pharmaceutical dose measurement.
   public persistent let analgesicLoad: Float = 0.0;
   public persistent let dosesTaken: Int32 = 0;
 }
@@ -57,8 +57,8 @@ public class CRPainModel extends IScriptable {
     return ClampF(0.75 * peak + 0.5 * mean, 0.0, 1.0);
   }
 
-  // Saturating response gives diminishing returns by construction. The first kit
-  // can meaningfully blunt pain; stacking more can never erase all perceived pain.
+  // Saturating response gives diminishing returns by construction. The first MaxDoc
+  // use can meaningfully blunt pain; stacking more can never erase all perceived pain.
   public static func AnalgesiaForLoad(load: Float) -> Float {
     if load <= 0.0 {
       return 0.0;
@@ -67,7 +67,7 @@ public class CRPainModel extends IScriptable {
   }
 
   // Overuse is intentionally nonlethal in this first authored model. Three or more
-  // overlapping kit-equivalents enter the intoxication envelope; exact calibration
+  // overlapping MaxDoc-equivalents enter the intoxication envelope; exact calibration
   // remains a playtest value. Native presentation may reuse CDPR's drunk/SFX path.
   public static func IntoxicationForLoad(load: Float) -> Float {
     return ClampF((load - 2.0) / 2.0, 0.0, 1.0);
@@ -105,7 +105,7 @@ public class CRPainModel extends IScriptable {
     return result;
   }
 
-  public static func UseTraumaKit(state: ref<CRPainState>) -> Bool {
+  public static func UseMaxDoc(state: ref<CRPainState>) -> Bool {
     if !CRPainModel.Valid(state) || state.analgesicLoad + 1.0 > 16.0 {
       return false;
     }
