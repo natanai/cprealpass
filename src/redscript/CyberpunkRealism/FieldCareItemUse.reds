@@ -1,6 +1,7 @@
-// Original pre-consumption routing for the regional-care trauma kit.
-// Condition mode will own treatment entry. Until that interface is native-accepted,
-// the item is preserved and the player is directed to the body/Condition screen.
+// Project-original pre-consumption routing for the regional-care trauma kit.
+// The final treatment entry point is CYBERWARE > CONDITION. Until that native UI
+// is mounted, this interceptor preserves the kit rather than silently falling back
+// to Cyberpunk's generic instant-heal behavior.
 module CyberpunkRealism.Integration
 
 public class CRFieldCareItemUse extends IScriptable {
@@ -18,12 +19,13 @@ public class CRFieldCareItemUse extends IScriptable {
     if !IsDefined(player) || !Equals(player, local) || !CRBodyRuntime.Get().OwnsLocalizedInjuries() {
       return false;
     }
+
     // Ownership persists while temporarily unavailable; never fall back to spending
-    // the kit as a generic instant heal while realpass owns localized injuries.
+    // the kit through vanilla healing while realpass owns these injuries.
     if !CRBodyRuntime.Get().CanUseFieldCare() {
       CRFieldCareItemUse.Notify("Field care is unavailable here. Trauma kit kept.");
     } else {
-      CRFieldCareItemUse.Notify("Trauma kit kept. Open CYBERWARE > CONDITION and select an injury to treat.");
+      CRFieldCareItemUse.Notify("Trauma kit kept. Open CYBERWARE > CONDITION to choose treatment.");
     }
     return true;
   }
