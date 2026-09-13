@@ -26,8 +26,12 @@ Check (-not $painModel.Contains('CRInjuryModel.Treat(') -and -not $painModel.Con
 Check ($painModel.Contains('UseMaxDoc') -and -not $painModel.Contains('UseTraumaKit')) 'Pain model does not preserve vanilla MaxDoc identity.'
 
 # Analgesia decays against CRBodyRuntime elapsed body time; no second timer or
-# Dark Future state may own the effect.
+# Dark Future state may own the effect. REDscript 2.31 does not accept a unary
+# negative expression as a persistent-field constant initializer, so anchoring is
+# represented explicitly rather than by a -1.0 sentinel.
 Check ($painRuntime.Contains('body.elapsedHours') -and $painRuntime.Contains('CRPainModel.Advance')) 'Analgesia is not synchronized to the shared body clock.'
+Check ($painRuntime.Contains('bodyClockAnchored') -and $painRuntime.Contains('lastBodyHours: Float = 0.0')) 'Pain clock does not use an explicit REDscript-compatible anchor state.'
+Check (-not ($painRuntime -match 'persistent\s+let\s+lastBodyHours\s*:\s*Float\s*=\s*-')) 'Pain runtime reintroduced an invalid negative persistent-field sentinel.'
 Check (-not $painRuntime.Contains('DelayCallback') -and -not $painRuntime.Contains('DelaySystem')) 'Pain runtime created an independent progression timer.'
 Check (-not $painRuntime.Contains('DarkFuture') -and -not $painRuntime.Contains('Project E3')) 'Pain runtime depends on a source mod.'
 Check ($painRuntime.Contains('CRPainModel.UseMaxDoc(this.state)')) 'MaxDoc does not enter the owned analgesia model.'
@@ -66,4 +70,4 @@ Check ($conditionPresentation.Contains('MaxDoc analgesia') -and -not $conditionP
 Check ($conditionUI.Contains('crConditionPain') -and $conditionUI.Contains('this.crConditionPain.SetText(descriptor.painText)')) 'Condition UI does not render qualitative pain state.'
 Check (-not $conditionUI.Contains('PAIN: ') -and -not $conditionUI.Contains('pain.perceivedPain')) 'Condition UI computes or exposes a raw pain meter instead of rendering the projection.'
 
-Write-Host "PASS: $script:checks vanilla-MaxDoc analgesia ownership, immediate feedback, and Condition rendering architecture checks."
+Write-Host "PASS: $script:checks vanilla-MaxDoc analgesia ownership, immediate feedback, REDscript-compatible clock anchoring, and Condition rendering architecture checks."
