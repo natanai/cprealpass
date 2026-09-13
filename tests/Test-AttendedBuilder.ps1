@@ -6,9 +6,11 @@ $builder = Get-Content -Raw -LiteralPath $builderPath
 $bodyPath = Join-Path $project 'src/redscript/CyberpunkRealism/BodyRuntime.reds'
 $combatPath = Join-Path $project 'src/redscript/CyberpunkRealism/CombatNativeBridge.reds'
 $healthPath = Join-Path $project 'src/redscript/CyberpunkRealism/NoHealthbars.reds'
+$settingsPath = Join-Path $project 'src/redscript/CyberpunkRealism/RealpassSettings.reds'
 $body = Get-Content -Raw -LiteralPath $bodyPath
 $combat = Get-Content -Raw -LiteralPath $combatPath
 $health = Get-Content -Raw -LiteralPath $healthPath
+$settings = Get-Content -Raw -LiteralPath $settingsPath
 $script:checks = 0
 function Check($condition,[string]$message) { if (-not $condition) { throw $message }; $script:checks++ }
 
@@ -47,13 +49,21 @@ foreach ($destination in @(
 }
 Check ($builder.Contains('Source manifest is not a broad realpass acceptance profile')) 'Missing broad-profile files do not fail with an actionable preflight error.'
 
+# The broad candidate also compiles the realpass-owned player preference surface.
+# It remains passive: settings cannot launder an unaccepted gameplay gate open.
+Check ($builder.Contains("`$settingsDestination = 'r6/scripts/CyberpunkRealism/RealpassSettings.reds'")) 'Attended candidate does not include the realpass settings surface.'
+Check ($builder.Contains("Sync-ProjectSource 'src/redscript/CyberpunkRealism/RealpassSettings.reds'")) 'Builder does not refresh settings source from the current project revision.'
+Check ($builder.Contains("Where-Object component -eq 'mod-settings'")) 'Builder does not require its pinned Mod Settings runtime dependency.'
+Check ($builder.Contains('settings=passive')) 'Builder output does not state the settings activation boundary.'
+Check (-not $settings.Contains('CRBodyRuntimePolicy') -and -not $settings.Contains('CRCombatRuntimePolicy')) 'Settings source directly controls development activation gates.'
+
 # The broad acceptance profile requested for combat defaults to information-sparse
 # play: no traditional HP bars, while source offers an explicit comparison switch.
 Check ($builder.Contains("`$healthbarDestination = 'r6/scripts/CyberpunkRealism/NoHealthbars.reds'")) 'No-healthbar presentation is not part of the attended candidate.'
 Check ($builder.Contains('if (-not $ShowTraditionalHealthBars)')) 'Traditional health bars are not hidden by default.'
 Check ($builder.Contains('[switch]$ShowTraditionalHealthBars')) 'No explicit comparison path exists for healthbars-on debugging.'
 Check ($health.Contains('return false;')) 'No-healthbar source default changed.'
-Check ($builder.Contains("component -notlike 'realpass*'")) 'Builder could overwrite a non-realpass healthbar destination.'
+Check ($builder.Contains("owner -notlike 'realpass*'")) 'Project-source refresh could overwrite an unrelated component.'
 
 # Builder must verify every inherited payload hash, compile exact output, and stop.
 Check ($builder.Contains('Source profile hash mismatch')) 'Inherited source profile is not hash-validated.'
@@ -67,5 +77,6 @@ foreach ($danger in @('Deploy.ps1','Upgrade.ps1','Start-Process','Cyberpunk2077.
 Check ($builder.Contains('Build ID already exists; attended acceptance profiles are immutable')) 'Attended profile IDs can overwrite evidence.'
 Check ($builder.Contains("'manifest/' + `$BuildId + '.deployment.json'")) 'Builder does not use the established deployment-manifest format.'
 Check ($builder.Contains('requiredRuntimeDestinations')) 'Attended report does not preserve the required runtime inventory.'
+Check ($builder.Contains('settingsSurface = $settingsDestination')) 'Attended report does not record the compiled settings surface.'
 
-Write-Host "PASS: $script:checks attended-builder safety checks; current body-enabled builds are valid bases, canonical combat stays closed, and generated broad combat testing defaults to no health bars."
+Write-Host "PASS: $script:checks attended-builder safety checks; current body-enabled builds are valid bases, settings remain passive, canonical combat stays closed, and generated broad combat testing defaults to no health bars."
