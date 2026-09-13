@@ -21,8 +21,8 @@
       "id": "unified-settings-contract",
       "area": "settings",
       "status": "partial",
-      "evidence": ["manifest/settings.json", "tests/Test-SettingsContract.ps1", "docs/SETTINGS-ARCHITECTURE.md"],
-      "remaining": "Implement and locally compile the realpass-owned ScriptableSystem/Mod Settings surface, then validate live toggle and save/reload semantics."
+      "evidence": ["manifest/settings.json", "src/redscript/CyberpunkRealism/RuntimePolicyModel.reds", "src/redscript/CyberpunkRealism/RealpassSettings.reds", "tests/Test-SettingsContract.ps1", "tests/Test-SettingsRuntimeSurface.ps1", "docs/SETTINGS-ARCHITECTURE.md"],
+      "remaining": "Exact-compile the passive realpass Mod Settings surface against the pinned local 2.31 framework/game bundle and verify menu/default/dependency persistence. Then add an accepted-build+lifecycle facade and validate live toggle/save-reload semantics before native modules consume player intent."
     },
     {
       "id": "body-pure-model",
@@ -85,7 +85,7 @@
       "area": "presentation",
       "status": "partial",
       "evidence": ["src/redscript/CyberpunkRealism/NoHealthbars.reds", "manifest/settings.json", "manifest/runtime-modules.json", "tests/Test-NoHealthbars.ps1", "tools/Build-AttendedAcceptance.ps1", "docs/ATTENDED-ACCEPTANCE.md"],
-      "remaining": "Compile against the local Cyberpunk 2.31 + E3 integration bundle, then verify V, ordinary NPC and boss/MaxTac HP bars remain hidden while RAM/buffs/names/scanner behavior remain usable."
+      "remaining": "Exact-compile against the local Cyberpunk 2.31 + E3 integration bundle, then verify V, ordinary NPC, boss/MaxTac and companion actor HP UI remains hidden through normal damage, Overclock and overshield visibility changes while RAM/buffs/names/scanner remain usable and required objective/vehicle durability UI remains intact."
     },
     {
       "id": "modern-scanner-native-acceptance",
@@ -113,7 +113,7 @@
       "area": "distribution",
       "status": "partial",
       "evidence": [".github/workflows/ci.yml", "tests/Run-CI.ps1"],
-      "remaining": "Keep latest branch run green as the expanded combat-consequence/no-healthbar checks land; CI builds a non-playable development/source artifact, not a public gameplay package."
+      "remaining": "Keep latest branch run green as settings/attended integration evolves; CI builds a non-playable development/source artifact, not a public gameplay package, and cannot replace exact local game compilation."
     },
     {
       "id": "dependency-redistribution-audit",
