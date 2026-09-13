@@ -1,113 +1,106 @@
-# realpass settings architecture
+# realpass configuration architecture
 
 ## Goal
 
-Expose one understandable **realpass** settings surface while keeping development safety gates separate from player preference. The final public UI should not expose the original source-mod menu structure or preserve unrelated source-mod features merely because they already have settings.
+realpass has one authored gameplay experience. Configuration exists to support development, diagnostics, accessibility where it does not change the simulation, and future migration—not to turn the release into a menu of independently optional mechanics.
 
-The machine-readable contract is `manifest/settings.json`; the module ownership contract is `manifest/runtime-modules.json`. The current passive runtime adapter is `src/redscript/CyberpunkRealism/RealpassSettings.reds`; the engine-independent decision model is `RuntimePolicyModel.reds`.
+The release contract is recorded in `manifest/runtime-origin-policy.json`. Internal module ownership remains in `manifest/runtime-modules.json`. `RuntimePolicyModel.reds` is retained as an engine-independent development/build gate model. The previous Mod Settings-based gameplay preference surface is retired from the production path.
 
-## Current implementation state
+## Release behavior
 
-The first two consolidation steps are now implemented in source:
-
-- `CRRealpassSettings` is one realpass-owned `ScriptableSystem` registered with Mod Settings.
-- Twenty player-facing Boolean preferences mirror the non-development categories in `manifest/settings.json`.
-- The diagnostics Boolean exists internally but is deliberately not annotated into the ordinary player menu; attended diagnostics remain an explicit build/session choice.
-- `IntentSnapshot()` maps those persisted/UI values into `CRRuntimeFeatureFlags`.
-- All acceptance flags in `CRRuntimeFeatureFlags` still default to `false`, and the settings class has no method that can assign them.
-- The settings class contains no gameplay callbacks, damage/stat-pool mutation, body/combat gate writes or Mod Settings modification listener. It records intent only.
-- The broad attended builder refreshes both `RuntimePolicyModel.reds` and `RealpassSettings.reds` into the generated candidate and requires the pinned Mod Settings component before exact local compilation.
-
-Cloud CI can prove those structural constraints, but it cannot prove Mod Settings reflection/registration or game-version compatibility. The next acceptance gate is the exact local Cyberpunk 2.31 compile followed by native menu rendering. Until that passes, the existing body/combat development gates remain authoritative.
-
-## Why player toggles and acceptance gates are different
-
-During development, a setting such as `combat.enabled = true` describes the intended default experience. It must **not** automatically mean that an unvalidated native combat bridge is allowed to run.
-
-The effective decision is:
+A normal release locks the accepted authorities together:
 
 ```text
-module may run = build/native acceptance gate AND player module setting AND valid lifecycle/state
+body = on
+injury = on
+combat = on
+armor = on
+cyberware physiology = on where implemented
+presentation = on
+diagnostics = off
+traditional actor health bars = off
 ```
 
-These three questions are intentionally separate:
+There is no player-facing switch for disabling a core authority and no balance slider matrix. Version-to-version changes are authored realpass balance changes and therefore reproducible for every player on that version.
 
-1. Has this implementation been accepted for the current build and game version?
-2. Does the player want the module enabled?
-3. Is the current game/save/lifecycle state safe for the module to run?
+## Development configuration
 
-Current source build scripts use hard-coded/staged policy gates for body and combat. They remain in place while the settings surface is compiled and accepted. Refactoring those gates before the local compile/native test would create risk without helping the player.
+Internal gates still matter. During development an engineer may need a body-only build, a combat-without-presentation comparison, diagnostics, or another narrow profile. These controls are allowed only in build/test tooling and are never evidence that the final product should expose the same choice.
 
-## Mod Settings integration
-
-The pinned local integration profile already includes Mod Settings 0.2.21. Its documented redscript API supports `@runtimeProperty` fields and class listeners, so `CRRealpassSettings` uses one direct dependency in attended/local runtime profiles:
+The decision model is therefore:
 
 ```text
-OnAttach -> ModSettings.RegisterListenerToClass(this)
-OnDetach -> ModSettings.UnregisterListenerToClass(this)
+development candidate may run authority = build acceptance gate AND development profile gate AND valid native lifecycle/state
 ```
 
-Reference API/project:
+For a release candidate, the development-profile side is fixed to the one accepted product configuration.
 
-- https://github.com/jackhumbert/mod_settings
+## Why the earlier Mod Settings surface was retired
 
-The current approach deliberately does **not** make Mod Settings optional inside the attended profile: the builder checks that the pinned component is present before adding the settings source. That is easier to reason about than relying on unproven module-detection behavior. A future standalone release can revisit whether Mod Settings remains a required bundled dependency or is replaced by a smaller realpass-owned UI, but that is a distribution decision rather than a reason to weaken the current compile contract.
+The repository briefly implemented a passive realpass Mod Settings surface to separate player intent from native acceptance. That architecture was safe, but it represented the wrong product goal: two players could disable different pieces of the physical model and still both call the result realpass.
 
-## Player-facing categories
+The product requirement is now explicit: modularity is for us while developing, not for the player after release. `RealpassSettings.reds` therefore becomes historical/transitional source and is removed from active package/build manifests. Mod Settings should not remain a realpass dependency merely because that prototype existed.
 
-The intended categories are deliberately small:
+If a future accessibility control is justified, it must meet all of these conditions:
 
-- **Body** — needs, sleep/fatigue, exertion, elimination and minimal hygiene.
-- **Injury and treatment** — localized wounds, blood loss, impairment, field care and recovery.
-- **Combat** — physical ballistics/damage authority.
-- **Armor** — physical protection and optional wear.
-- **Cyberware physiology** — only structural/physiological consequences.
-- **Presentation** — realpass cues/nameplates and healthbar preference, never simulation authority.
+- it does not disable or rebalance a simulation authority;
+- it does not expose exact hidden state that the authored presentation intentionally withholds;
+- it has a clear accessibility purpose rather than being a difficulty/balance switch;
+- it does not introduce another framework dependency unless that dependency is independently justified.
 
-**Diagnostics is not an ordinary player-facing category.** It is development-only, defaults off and is selected through the attended build/session tooling when a concrete discrepancy needs investigation.
+## Diagnostics
 
-The first contract intentionally uses Boolean controls only. Numeric tuning controls should not be exposed merely because coefficients exist internally. A player-facing slider needs a clear conceptual meaning, a safe range and evidence that changing it does not break model relationships. Until then, calibration belongs in authored presets/code rather than a wall of tuning knobs.
+Diagnostics are development-only and opt-in through attended build/session tooling. They remain off in normal play and must never become a background watcher, service or persistent telemetry system.
 
-## Toggle semantics
+Diagnostics may expose exact numerical state because their purpose is verification. Release presentation should communicate injury/body state through consequences and restrained status surfaces instead.
 
-A toggle must control an **authority**, not simply hide its UI. For example, turning injury off must suspend realpass-owned bleeding and impairment modifiers and make combat fall back safely; it cannot leave a hidden wound timer running while removing the status display.
+## Ownership and reference mods
 
-Persistent state should normally be retained while a module is disabled so a temporary preference change is not destructive. Re-enabling cannot silently refill needs, erase injuries or manufacture elapsed history. Schema/version migration remains explicit.
+There is no source-mod settings migration in the final architecture. Dark Future and Project E3 HUD are references, not runtime hosts. We may use historical configuration to understand which edge cases existed, but the final implementation is re-derived from native game signals and realpass-owned state.
 
-Where an engine hook cannot safely detach immediately, the setting must either suspend its effect while leaving the hook inert or be marked `restartRequired`. The settings contract currently marks all planned controls as live-changeable; native implementation must prove that assumption before 1.0. If proof fails for any control, update the contract rather than pretending hot toggling is safe.
-
-The current settings source is intentionally **not yet wired to runtime authorities**, so toggling it during the first attended compile/menu check is a persistence/UI test, not evidence that the corresponding gameplay module can hot-toggle safely.
-
-## Source-mod settings migration
-
-Upstream settings are treated as implementation inputs, not public product design. The migration rule is:
+The rule is:
 
 ```text
-source setting -> identify represented physical phenomenon -> map to one realpass owner
-    -> retain/adapt only if needed -> otherwise remove from final runtime
+reference observation -> identify the underlying problem -> implement a realpass-native solution
 ```
 
-Examples:
+not:
 
-- Dark Future hydration/nutrition callbacks can feed/host the realpass body authority during transition.
-- Dark Future fast-travel restrictions have no realpass owner and are removed.
-- Dark Future generic HP-derived injury is replaced by localized realpass injury ownership.
-- E3 scanner replacement is removed because the native modern scanner is preferred.
-- E3-style nameplate behavior is a presentation requirement, but the current E3 assets are not a viable standalone distribution dependency; the behavior must be independently implemented or newly permitted.
+```text
+source setting -> rename it -> expose it as realpass
+```
 
-`manifest/feature-inventory.json` tracks these decisions.
+## Build profiles
 
-## Integration sequence
+Development tooling may define immutable profiles such as:
 
-The source refactor proceeds in this order to minimize save/build risk:
+- model/offline validation;
+- owned-runtime compile candidate;
+- owned-runtime attended candidate;
+- temporary diagnostics candidate;
+- release candidate.
 
-1. **Done:** machine-readable settings/module contracts pass in cloud CI.
-2. **Done in source:** add the passive realpass settings `ScriptableSystem` without changing existing body/combat activation behavior.
-3. **Next local gate:** compile the policy + settings surface against the pinned Mod Settings/game environment and confirm the realpass menu renders with the expected defaults/dependencies.
-4. Add the native runtime policy facade that combines the already-implemented player-intent snapshot with explicit accepted-build flags and lifecycle checks; do not delete legacy gates in the same untested batch.
-5. Migrate presentation and body authority reads first; conduct off/on/save/reload and stale-modifier tests.
-6. Migrate injury/armor/combat authority reads only after the broad native pipeline has passed attended combat acceptance.
-7. Remove redundant source-mod public settings from the final runtime after realpass owns every retained phenomenon.
-8. Validate off -> on -> save -> reload and on -> off -> save -> reload for every live-changeable module before calling the toggle safe.
+An **owned-runtime** profile has an additional hard rule: it contains no Dark Future or Project E3 runtime scripts/assets/state. `manifest/runtime-origin-policy.json` is the machine-readable authority for that check.
 
-This ordering deliberately prevents a settings refactor from accidentally activating unaccepted combat or rewriting an existing save merely because the intended public default is `true`.
+The release profile may not inherit the currently installed legacy integration manifest. It must be constructed from an explicit realpass-owned runtime manifest so a source-mod dependency cannot be accidentally laundered into a “clean” build.
+
+## Runtime policy model
+
+`RuntimePolicyModel.reds` remains useful, but its booleans are development/build gates rather than player preferences. Before 1.0 it should be simplified to distinguish:
+
+- authority accepted for this game/build;
+- authority enabled in this development profile;
+- lifecycle/state safe right now.
+
+The release builder supplies the fixed accepted profile. Normal players never edit it.
+
+## Acceptance criteria
+
+Before configuration work is considered complete:
+
+1. the active package/build path has no Mod Settings dependency unless a non-gameplay accessibility feature proves it necessary;
+2. the owned-runtime audit rejects Dark Future/E3 payloads and namespace dependencies;
+3. a release candidate cannot disable body, injury, combat, armor or presentation independently;
+4. diagnostics are impossible to enable accidentally in the release artifact;
+5. healthbar suppression is part of the authored presentation rather than a normal player preference;
+6. all runtime authorities can still be isolated through development-only tooling for diagnosis and calibration.
