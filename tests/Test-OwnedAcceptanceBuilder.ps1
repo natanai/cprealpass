@@ -8,15 +8,17 @@ function Check($condition,[string]$message) { if (-not $condition) { throw $mess
 
 Check ($source.Contains("'src/redscript/CyberpunkRealism'")) 'Owned builder does not start from the realpass source tree.'
 Check ($source.Contains("Get-ChildItem -LiteralPath `$sourceRoot -File -Filter '*.reds'")) 'Owned builder does not discover the current owned REDscript tree.'
-Check ($source.Contains("`$excluded = @('FieldCareUI.reds')")) 'Legacy backpack Field Care prototype is not explicitly excluded.'
-Check (-not $source.Contains("'ConditionPresentation.reds',")) 'Condition presentation was accidentally added to the prototype exclusion list.'
-Check (-not $source.Contains("'InjuryProvenance.reds',")) 'Injury provenance was accidentally added to the prototype exclusion list.'
+Check ($source.Contains("`$retiredProductionSources = @('FieldCareUI.reds','RealpassLocalization.reds','FieldCareItemUse.reds')")) 'Retired source-mod/prototype sources are not explicitly prohibited from production.'
+Check ($source.Contains('Retired legacy/prototype production source reappeared')) 'Owned builder does not fail if retired production source reappears.'
+Check ($source.Contains('candidateFiles = @($sourceFiles)')) 'Owned builder is still silently excluding production REDscript instead of compiling the whole current source tree.'
+Check (-not $source.Contains("`$excluded = @('FieldCareUI.reds')")) 'Owned builder still treats the obsolete backpack prototype as acceptable production source.'
 
 foreach ($needle in @('DarkFuture','Project\s*E3','Codeware','ModSettings|Mod Settings')) {
     Check ($source.Contains($needle)) "Owned builder lost forbidden-runtime guard: $needle"
 }
 Check ($source.Contains('Trauma\s+Kit') -and $source.Contains('UseTraumaKit')) 'Owned builder no longer rejects Dark Future Trauma Kit identity leakage.'
 Check ($source.Contains('vanillaIdentityPolicy')) 'Owned acceptance report does not record vanilla-identity policy.'
+Check ($source.Contains('retiredProductionSources')) 'Owned acceptance report does not record retired production sources.'
 Check ($source.Contains("component = 'realpass-owned-runtime'")) 'Owned manifest does not label project runtime ownership.'
 Check ($source.Contains("origin = 'project-original'")) 'Owned manifest does not preserve source provenance.'
 Check ($source.Contains('ownedRuntime = $true')) 'Owned manifest/report does not assert the owned-runtime boundary.'
