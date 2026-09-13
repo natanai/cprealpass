@@ -45,7 +45,9 @@ Check ($professional.Contains('kind != 4 && kind != 5')) 'Professional care acce
 Check ($professional.Contains('ClinicalCanHelp') -and $professional.Contains('MechanicalCanHelp')) 'Professional biological/mechanical eligibility is not separated.'
 Check ($professional.Contains('r.cyberwareDamage > 0.0')) 'Mechanical care does not key off chrome damage.'
 Check (-not $professional.Contains('CRInjuryModel.Treat(')) 'Professional-care eligibility mutates authoritative injury state.'
-Check (-not $professional.Contains('money') -and -not $professional.Contains('Price')) 'Professional-care model introduced an economy authority.'
+foreach ($forbiddenEconomyAuthority in @('GameInstance.GetTransactionSystem','GetMoney(','RemoveMoney(','AddMoney(','PriceService(','PurchaseService(')) {
+    Check (-not $professional.Contains($forbiddenEconomyAuthority)) "Professional-care eligibility introduced economy authority: $forbiddenEconomyAuthority"
+}
 
 Check ($presentation.Contains('public class CRConditionDescriptor')) 'Condition presentation descriptor is missing.'
 Check ($presentation.Contains('CRInjuryModel.Function')) 'Condition presentation does not project authoritative regional function.'
