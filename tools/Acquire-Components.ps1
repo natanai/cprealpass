@@ -1,9 +1,38 @@
-param([string]$ManifestPath)
+param(
+    [string]$ManifestPath,
+    [string[]]$ComponentIds
+)
 . "$PSScriptRoot\Common.ps1"
 $project = Get-ProjectRoot
 if (-not $ManifestPath) { $ManifestPath = Join-Path $project 'manifest\components.json' }
 $catalog = Get-Content -Raw -LiteralPath $ManifestPath | ConvertFrom-Json
-foreach ($component in $catalog.components) {
+$all = @($catalog.components)
+$byId = @{}
+foreach ($component in $all) {
+    if ([string]::IsNullOrWhiteSpace([string]$component.id) -or $byId.ContainsKey([string]$component.id)) { throw 'Component catalog contains a missing or duplicate id.' }
+    $byId[[string]$component.id] = $component
+}
+
+$selected = @{}
+function Add-ComponentWithDependencies([string]$id) {
+    if ($selected.ContainsKey($id)) { return }
+    if (-not $byId.ContainsKey($id)) { throw "Unknown component id: $id" }
+    $component = $byId[$id]
+    foreach ($dependency in @($component.dependencies)) { Add-ComponentWithDependencies ([string]$dependency) }
+    $selected[$id] = $component
+}
+
+if (@($ComponentIds).Count -gt 0) {
+    foreach ($id in @($ComponentIds)) {
+        if ([string]::IsNullOrWhiteSpace($id)) { throw 'ComponentIds cannot contain an empty id.' }
+        Add-ComponentWithDependencies $id
+    }
+    $components = @($all | Where-Object { $selected.ContainsKey([string]$_.id) })
+} else {
+    $components = $all
+}
+
+foreach ($component in $components) {
     $archive = Resolve-SafeChildPath $project $component.archivePath
     if ($component.archiveSha256 -notmatch '^[A-Fa-f0-9]{64}$') { throw 'An archive hash is required.' }
     if (-not (Test-Path -LiteralPath $archive)) {
@@ -20,3 +49,5 @@ foreach ($component in $catalog.components) {
     if ((Get-Sha256 $archive) -ne $component.archiveSha256) { throw "Cached archive changed: $archive" }
     Write-Host "Verified $($component.id) $($component.pinnedVersion)"
 }
+
+Write-Host "Verified $($components.Count) selected component(s)."
