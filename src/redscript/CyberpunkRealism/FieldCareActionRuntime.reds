@@ -1,7 +1,6 @@
 // Original short-lived gameplay action. No external process or diagnostic output.
 module CyberpunkRealism.Integration
 import CyberpunkRealism.Physiology.*
-import DarkFuture.Services.DFGameStateService
 
 public class CRFieldCareActionCallback extends DelayCallback {
   public let owner: wref<CRFieldCareActionRuntime>;
@@ -35,6 +34,10 @@ public class CRFieldCareActionRuntime extends ScriptableSystem {
   public func Status() -> String {
     return this.status;
   }
+  private static func InMenu() -> Bool {
+    let board: ref<IBlackboard> = GameInstance.GetBlackboardSystem(GetGameInstance()).Get(GetAllBlackboardDefs().UI_System);
+    return IsDefined(board) && board.GetBool(GetAllBlackboardDefs().UI_System.IsInMenu);
+  }
   public static func HandsAvailable(player: ref<PlayerPuppet>) -> Bool {
     let board: ref<IBlackboard>;
     let weapon: gamePSMRangedWeaponStates;
@@ -50,7 +53,7 @@ public class CRFieldCareActionRuntime extends ScriptableSystem {
   }
   private func CompletionContext() -> Bool {
     let player: ref<PlayerPuppet> = GameInstance.GetPlayerSystem(GetGameInstance()).GetLocalPlayerMainGameObject() as PlayerPuppet;
-    return CRBodyRuntime.Get().CanContinueFieldCare() && !DFGameStateService.Get().IsInAnyMenu() && CRFieldCareActionRuntime.HandsAvailable(player) && Vector4.Length(player.GetVelocity()) <= 0.25 && Vector4.DistanceSquared(player.GetWorldPosition(), this.origin) <= 0.5625;
+    return CRBodyRuntime.Get().CanContinueFieldCare() && !CRFieldCareActionRuntime.InMenu() && CRFieldCareActionRuntime.HandsAvailable(player) && Vector4.Length(player.GetVelocity()) <= 0.25 && Vector4.DistanceSquared(player.GetWorldPosition(), this.origin) <= 0.5625;
   }
   public func IsCompleting(action: ref<CRFieldCareAction>) -> Bool {
     return this.completing && IsDefined(action) && Equals(this.action, action) && action.stage == 3 && this.CompletionContext();
@@ -85,7 +88,7 @@ public class CRFieldCareActionRuntime extends ScriptableSystem {
     this.pending = true;
   }
   public func OnMenuBoundary() -> Void {
-    if IsDefined(this.action) && this.action.stage == 2 && DFGameStateService.Get().IsInAnyMenu() {
+    if IsDefined(this.action) && this.action.stage == 2 && CRFieldCareActionRuntime.InMenu() {
       this.Cancel(false);
     }
   }
@@ -147,7 +150,7 @@ public class CRFieldCareActionRuntime extends ScriptableSystem {
         moving = true;
       }
     }
-    result = CRFieldCareActionModel.Sample(action, GameInstance.GetSimTime(GetGameInstance()).ToFloat(), CRBodyRuntime.Get().CanUseFieldCare() && CRFieldCareActionRuntime.HandsAvailable(player), DFGameStateService.Get().IsInAnyMenu(), moving);
+    result = CRFieldCareActionModel.Sample(action, GameInstance.GetSimTime(GetGameInstance()).ToFloat(), CRBodyRuntime.Get().CanUseFieldCare() && CRFieldCareActionRuntime.HandsAvailable(player), CRFieldCareActionRuntime.InMenu(), moving);
     if result == 0 {
       this.Cancel(true);
       return;
