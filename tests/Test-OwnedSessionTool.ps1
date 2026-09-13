@@ -37,6 +37,9 @@ foreach ($danger in @('Deploy.ps1','Upgrade.ps1','Start-Process','Register-Sched
     Check (-not $builder.Contains($danger)) "Owned profile builder gained live/unattended side effect: $danger"
 }
 
+Check ($session.Contains('tests\Run-CI.ps1')) 'Owned session does not establish cloud-safe/offline source coherence before local build.'
+Check ($session.Contains('Owned-path offline checks failed; candidate build/deployment aborted.')) 'Owned session does not fail closed when offline checks fail.'
+Check ($session.Contains('offlineChecksPassed = $true')) 'Owned session report does not record the offline-check gate.'
 Check ($session.Contains('Build-OwnedRuntimeProfile.ps1')) 'Owned session does not build the explicit owned profile.'
 Check ($session.Contains('Upgrade.ps1') -and $session.Contains('-WhatIf')) 'Owned upgrade path does not use the real transaction planner as preflight.'
 Check ($session.Contains('Deploy.ps1') -and $session.Contains('-WhatIf')) 'Owned initial-deploy path does not use the real transaction planner as preflight.'
