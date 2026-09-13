@@ -4,7 +4,7 @@ $project=Get-ProjectRoot
 $m=Get-Content -Raw (Join-Path $project 'manifest/m3-body-alpha2.deployment.json')|ConvertFrom-Json
 $m.buildId='m3-body-runtime-prototype'
 $stage='staging\body-runtime-'+[guid]::NewGuid().ToString('N')
-foreach($name in @('RealpassLocalization','RealpassSettings','FieldCareItemUse','BloodLossModel','BloodLossNative','FieldCareActionModel','FieldCareActionRuntime','NPCBodyModel','InjuryEffectsModel','InjuryEffectsNative','ArmorWearModel','ArmorWearNative','StockProtectionCatalog','WoundModel','CombatWoundsNative','FieldCareModel','FieldCareRuntime','FieldCareUI','InjuryModel','BallisticProfiles','CombatProfilesNative','ImpactModel','HitModel','CombatNativeBridge','SleepModel','BodyInteractionRuntime','BodyForecast','ItemServing','DarkFuturePreviewUIBridge','BodyModel','BodyInputs','ServingModel','BodyPresentation','ClockModel','BodyRuntime','DarkFutureBridge','DarkFutureMenuBridge','DarkFutureIntakeBridge','DarkFutureAuthorityBridge')) {
+foreach($name in @('RealpassLocalization','RuntimePolicyModel','RealpassSettings','FieldCareItemUse','BloodLossModel','BloodLossNative','FieldCareActionModel','FieldCareActionRuntime','NPCBodyModel','InjuryEffectsModel','InjuryEffectsNative','ArmorWearModel','ArmorWearNative','StockProtectionCatalog','WoundModel','CombatWoundsNative','FieldCareModel','FieldCareRuntime','FieldCareUI','InjuryModel','BallisticProfiles','CombatProfilesNative','ImpactModel','HitModel','CombatNativeBridge','SleepModel','BodyInteractionRuntime','BodyForecast','ItemServing','DarkFuturePreviewUIBridge','BodyModel','BodyInputs','ServingModel','BodyPresentation','ClockModel','BodyRuntime','DarkFutureBridge','DarkFutureMenuBridge','DarkFutureIntakeBridge','DarkFutureAuthorityBridge')) {
   $source=Join-Path $project "src/redscript/CyberpunkRealism/$name.reds"
   $relative="$stage\$name.reds"
   $target=Resolve-SafeChildPath $project $relative
@@ -30,4 +30,4 @@ Write-JsonFile $m (Join-Path $project $relativeManifest)
 & "$PSScriptRoot\Apply-SourcePatch.ps1" -ManifestPath $relativeManifest -PatchPath 'config/patches/darkfuture-injury-authority.json'
 & "$PSScriptRoot\Apply-SourcePatch.ps1" -ManifestPath $relativeManifest -PatchPath 'config/patches/darkfuture-realpass-presentation.json'
 & "$PSScriptRoot\Compile-Profile.ps1" -ManifestPath $relativeManifest
-Write-Host 'Runtime adapter staged with activation disabled; realpass settings record player intent only until acceptance policy wiring is validated locally.'
+Write-Host 'Runtime adapter staged with activation disabled; realpass settings map player intent into closed policy flags until acceptance wiring is validated locally.'
