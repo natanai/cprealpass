@@ -126,3 +126,24 @@ File: `docs/PROJECT-STATUS.md`
 Recomputed the weighted release-readiness ledger from the original 43% baseline to **50%**. Credit was added for architecture/contracts, cloud-safe regression coverage, artifact policy, broad immutable attended tooling, no-healthbar integration and durable operator documentation. Native gameplay/save/quest validation intentionally remains at 15%, so this increase does not assume the unplayed candidate works in-game.
 
 Next: the single highest-leverage gate is now local exact compile/preflight followed by one broad attended gameplay session rather than further speculative activation work.
+
+---
+
+## 2026-09-12 — passive unified realpass settings surface implemented
+
+Branch: `chatgpt-continuation`
+Key commits/files: `src/redscript/CyberpunkRealism/RealpassSettings.reds`, `src/redscript/CyberpunkRealism/RuntimePolicyModel.reds`, `tests/Test-SettingsRuntimeSurface.ps1`, `tools/Build-BodyRuntime.ps1`, `tools/Build-AttendedAcceptance.ps1`, `docs/SETTINGS-ARCHITECTURE.md`, `manifest/package.json`
+
+Added one realpass-owned Mod Settings `ScriptableSystem` for the twenty player-facing Boolean preferences already defined by the settings contract. Diagnostics remains internal/development-only. The settings source registers only for value persistence/update and has no gameplay callback or modification listener.
+
+`IntentSnapshot()` now translates persisted player choices into the existing engine-independent `CRRuntimeFeatureFlags`. Crucially, the settings class cannot assign any `*Accepted` flag, and those acceptance fields remain false by default. This preserves the distinction between “the player wants combat enabled” and “this exact native bridge has been accepted for this build.” Existing canonical body/combat gates therefore remain unchanged.
+
+The broad attended builder now refreshes both the policy model and settings source even when the player's current known-good deployed base predates them, requires the pinned Mod Settings component, and compiles the exact result before any optional deployment. The runtime prototype builder stages the same two files. Development source package metadata advanced to `0.1.0-dev.19` and records Mod Settings 0.2.21 as the dependency for the settings source only.
+
+Evidence obtained remotely: static contract tests cover all 21 contract keys, 20 public annotations, exact defaults/dependencies, player-intent-to-policy mapping, closed acceptance flags and absence of direct body/combat/damage side effects. The acceptance ledger and settings architecture were updated accordingly.
+
+Not claimed: `CRRealpassSettings` has not yet been compiled against Nat's exact local Cyberpunk 2.31 + pinned Mod Settings bundle or rendered in the live Mod Settings menu. The native modules do not consume these preferences yet; that wiring intentionally waits until local compilation and broad attended acceptance.
+
+Completion estimate remains **50%** rather than taking speculative credit for an uncompiled runtime adapter. A successful exact local compile/menu check will close enough of the settings gate to justify revisiting the weighted percentage.
+
+Next: exact local compile/preflight, confirm the realpass settings menu/default/dependency behavior, then introduce a narrow accepted-build+lifecycle policy facade before migrating any native module to these preferences.
