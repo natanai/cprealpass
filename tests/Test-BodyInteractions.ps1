@@ -68,5 +68,16 @@ Check ($f.ready -and $f.body.bladderMl -eq 0 -and $f.body.hygieneLoad -eq 0) 'Fo
 Check ($s.bladderMl -eq 250 -and $s.hygieneLoad -eq 30 -and $q.count -eq 2) 'Forecast performed real bathroom operations'
 $q.first.interactionKind=7
 Check ([CRBodyInputs]::Drain($q,$s,$c) -eq 0 -and $q.faulted -and $s.bladderMl -eq 250) 'Invalid retained interaction mutated body state'
-Write-JsonFile ([ordered]@{testedAtUtc=[DateTime]::UtcNow.ToString('o');passed=$true;assertions=$script:checks;sources=@($paths|ForEach-Object{[ordered]@{path=$_;sha256=(Get-Sha256 $_)}});scope='Actual original sleep/interaction sources translated to C# float32. Daily sleep balance, naps, reconstruction, validation, ordered wash/void operations, conservation and forecast isolation. Native device actions and shower events remain untested.'}) (Join-Path $project 'reports/body-interaction-tests.json')
+
+# Vanilla-first native boundary: the separate use-toilet action reuses the stock
+# Flush interaction record/icon and overrides only its displayed caption. It must
+# not require a custom TweakDB record or the retired localization provider.
+$nativePath=Join-Path $project 'src/redscript/CyberpunkRealism/BodyInteractionRuntime.reds'
+$native=Get-Content -Raw -LiteralPath $nativePath
+Check ($native.Contains('return t"Interactions.Flush";') -and $native.Contains('return "Flush";')) 'Use-toilet action no longer reuses the vanilla Flush interaction record.'
+Check ($native.Contains('let caption: String = "Use toilet";')) 'Use-toilet action does not provide its owned display caption.'
+Check (-not $native.Contains('Interactions.RealpassUseToilet') -and -not $native.Contains('RealpassUseToiletCaption')) 'Use-toilet action reintroduced a custom TweakDB/localization identity.'
+Check (-not (Test-Path -LiteralPath (Join-Path $project 'src/tweaks/realpass-interactions.yaml'))) 'Retired TweakXL toilet interaction record reappeared.'
+
+Write-JsonFile ([ordered]@{testedAtUtc=[DateTime]::UtcNow.ToString('o');passed=$true;assertions=$script:checks;sources=@($paths|ForEach-Object{[ordered]@{path=$_;sha256=(Get-Sha256 $_)}});nativeAdapter=[ordered]@{path=$nativePath;sha256=(Get-Sha256 $nativePath)};scope='Actual original sleep/interaction sources translated to C# float32 plus vanilla-first native toilet-boundary static checks. Daily sleep balance, naps, reconstruction, validation, ordered wash/void operations, conservation and forecast isolation are exercised; live device actions and shower events remain native-attended gates.'}) (Join-Path $project 'reports/body-interaction-tests.json')
 Write-Host "PASS: $script:checks sleep and body-interaction checks."
