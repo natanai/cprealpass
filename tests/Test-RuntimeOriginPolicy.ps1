@@ -39,25 +39,27 @@ foreach ($file in @($package.files)) {
     }
 }
 
-# Production code may not create source-mod namespace dependencies. The legacy
-# backpack FieldCareUI prototype is explicitly excluded from the owned candidate and
-# may retain historical copy until deleted; all other production candidate sources
-# must also obey the vanilla-identity rule.
+# Superseded source-mod-integrated/prototype files are removed from production, not
+# merely hidden from the owned builder. Git history is sufficient as reference.
 $sourceRoot = Join-Path $project 'src/redscript/CyberpunkRealism'
+foreach ($retired in @('FieldCareUI.reds','RealpassLocalization.reds','FieldCareItemUse.reds')) {
+    Check (-not (Test-Path -LiteralPath (Join-Path $sourceRoot $retired))) "Retired production source reappeared: $retired"
+}
+
+# Every remaining production REDscript must obey the same source-mod namespace and
+# vanilla-identity rules; there are no grandfathered runtime exceptions.
 $violations = [Collections.Generic.List[string]]::new()
 Get-ChildItem -LiteralPath $sourceRoot -Filter '*.reds' -File | ForEach-Object {
     $text = Get-Content -Raw -LiteralPath $_.FullName
     foreach ($needle in @($policy.forbiddenProductionSourceNamespaces)) {
         if ($text.Contains([string]$needle)) { $violations.Add($_.Name + ' -> ' + $needle) }
     }
-    if ($_.Name -ne 'FieldCareUI.reds') {
-        foreach ($needle in @($policy.vanillaFirst.forbiddenOwnedSourceIdentityPatterns)) {
-            if ($text.Contains([string]$needle)) { $violations.Add($_.Name + ' -> forbidden identity ' + $needle) }
-        }
+    foreach ($needle in @($policy.vanillaFirst.forbiddenOwnedSourceIdentityPatterns)) {
+        if ($text.Contains([string]$needle)) { $violations.Add($_.Name + ' -> forbidden identity ' + $needle) }
     }
 }
 if ($violations.Count -gt 0) {
     throw "Production candidate source violates owned-runtime policy:`n - $($violations -join "`n - ")"
 }
 
-Write-Host "PASS: $script:checks owned-runtime policy checks; release is locked, vanilla-first, and production candidate source contains no Dark Future/E3 ownership or source-mod item identity."
+Write-Host "PASS: $script:checks owned-runtime policy checks; release is locked, vanilla-first, retired prototype source is absent, and production source contains no Dark Future/E3 ownership or source-mod item identity."
