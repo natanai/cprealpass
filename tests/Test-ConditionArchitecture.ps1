@@ -10,15 +10,17 @@ $provenancePath = Join-Path $project 'src/redscript/CyberpunkRealism/InjuryProve
 $presentationPath = Join-Path $project 'src/redscript/CyberpunkRealism/ConditionPresentation.reds'
 $nativeUiPath = Join-Path $project 'src/redscript/CyberpunkRealism/ConditionNativeUI.reds'
 $professionalPath = Join-Path $project 'src/redscript/CyberpunkRealism/ProfessionalCareModel.reds'
+$professionalRuntimePath = Join-Path $project 'src/redscript/CyberpunkRealism/ProfessionalCareRuntime.reds'
 $woundsPath = Join-Path $project 'src/redscript/CyberpunkRealism/CombatWoundsNative.reds'
 $fieldCarePath = Join-Path $project 'src/redscript/CyberpunkRealism/FieldCareActionRuntime.reds'
-foreach ($path in @($provenancePath,$presentationPath,$nativeUiPath,$professionalPath,$woundsPath,$fieldCarePath)) {
+foreach ($path in @($provenancePath,$presentationPath,$nativeUiPath,$professionalPath,$professionalRuntimePath,$woundsPath,$fieldCarePath)) {
     Check (Test-Path -LiteralPath $path) "Missing Condition architecture source: $path"
 }
 $provenance = Get-Content -Raw -LiteralPath $provenancePath
 $presentation = Get-Content -Raw -LiteralPath $presentationPath
 $nativeUi = Get-Content -Raw -LiteralPath $nativeUiPath
 $professional = Get-Content -Raw -LiteralPath $professionalPath
+$professionalRuntime = Get-Content -Raw -LiteralPath $professionalRuntimePath
 $wounds = Get-Content -Raw -LiteralPath $woundsPath
 $fieldCare = Get-Content -Raw -LiteralPath $fieldCarePath
 
@@ -48,6 +50,10 @@ Check (-not $professional.Contains('CRInjuryModel.Treat(')) 'Professional-care e
 foreach ($forbiddenEconomyAuthority in @('GameInstance.GetTransactionSystem','GetMoney(','RemoveMoney(','AddMoney(','PriceService(','PurchaseService(')) {
     Check (-not $professional.Contains($forbiddenEconomyAuthority)) "Professional-care eligibility introduced economy authority: $forbiddenEconomyAuthority"
 }
+Check ($professionalRuntime.Contains('@addMethod(CRBodyRuntime)') -and $professionalRuntime.Contains('CompleteProfessionalCare')) 'Professional care has no realpass body-runtime boundary.'
+Check ($professionalRuntime.Contains('CRProfessionalCareModel.CanHelp')) 'Professional runtime does not revalidate current condition before commit.'
+Check ($professionalRuntime.Contains('this.CompleteTreatment(region, kind, 1.0)')) 'Professional runtime does not enter the shared ordered treatment authority.'
+Check (-not $professionalRuntime.Contains('CRInjuryModel.Treat(')) 'Professional runtime bypasses the shared body treatment authority.'
 
 Check ($presentation.Contains('public class CRConditionDescriptor')) 'Condition presentation descriptor is missing.'
 Check ($presentation.Contains('CRInjuryModel.Function')) 'Condition presentation does not project authoritative regional function.'
@@ -69,7 +75,7 @@ Check ($nativeUi.Contains('descriptor.canDress') -and $nativeUi.Contains('descri
 Check ($nativeUi.Contains('CRBodyRuntime.Get().UseFieldCare')) 'Condition UI does not dispatch field treatment through the authoritative timed-care runtime.'
 Check ($nativeUi.Contains('descriptor.canClinical') -and $nativeUi.Contains('descriptor.canMechanical')) 'Condition UI does not gate distinct professional actions through model-derived applicability.'
 Check ($nativeUi.Contains('CRConditionClinical') -and $nativeUi.Contains('CRConditionMechanical')) 'Condition UI is missing separate clinical/mechanical controls.'
-Check ($nativeUi.Contains('CRBodyRuntime.Get().CompleteTreatment')) 'Professional Condition actions do not commit through the shared body input/treatment authority.'
+Check ($nativeUi.Contains('CRBodyRuntime.Get().CompleteProfessionalCare')) 'Professional Condition actions do not use the revalidating body-runtime boundary.'
 Check ($nativeUi.Contains('Equals(this.m_screen, CyberwareScreenType.Ripperdoc)')) 'Condition UI does not distinguish ordinary field-care context from ripperdoc context.'
 Check ($nativeUi.Contains('Biological recovery still takes time')) 'Professional UI implies clinical care is an instant biological heal.'
 Check (-not $nativeUi.Contains('SetStatPoolValue') -and -not $nativeUi.Contains('ApplyDamage') -and -not $nativeUi.Contains('CRInjuryModel.Treat(')) 'Condition UI became a simulation/damage authority.'
