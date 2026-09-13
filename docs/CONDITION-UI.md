@@ -2,7 +2,7 @@
 
 Status: canonical injury/personal-condition UX design; first owned native slice implemented, native acceptance pending
 Last updated: 2026-09-13
-Governing goals: `AGREED-GOALS.md` G-040 through G-057
+Governing goals: `AGREED-GOALS.md` G-004 and G-040 through G-057
 
 ## Product intent
 
@@ -16,7 +16,7 @@ The first project-original native slice exists in `ConditionNativeUI.reds`. It d
 
 `ConditionPresentation.reds` is the read-only projection from authoritative regional injury state plus bounded provenance. The UI has no native-HP dependency and does not mutate injuries directly.
 
-Ordinary inventory/Cyberware context exposes model-approved **dressing** and **limb support**. They begin through the timed field-care runtime: the menu must be closed, the player must remain stationary/out of combat with hands available, and interruption cancels the action. Trauma Kits are no longer wound-care currency.
+Ordinary inventory/Cyberware context exposes model-approved **dressing** and **limb support**. They begin through the timed field-care runtime: the menu must be closed, the player must remain stationary/out of combat with hands available, and interruption cancels the action. MaxDoc is analgesia, not wound-care currency; dressing/support use separate supplies.
 
 Ripperdoc context exposes distinct professional actions when the model says they can help:
 
@@ -25,7 +25,9 @@ Ripperdoc context exposes distinct professional actions when the model says they
 
 `ProfessionalCareModel.reds` owns professional-care eligibility and deliberately does not own pricing/economy. The first acceptance slice treats the click as completion of an appropriate professional service; service price/time presentation can be calibrated later without making realpass an economy overhaul.
 
-The first project-original pain slice now also exists. `PainModel.reds` derives physical pain from biological regional injury, models diminishing Trauma Kit analgesia and an overuse/intoxication envelope, and derives pain-only weapon-handling factors. `PainRuntime.reds` persists analgesic state while synchronizing decay to `CRBodyRuntime` elapsed body time rather than creating another timer. `PainNativeEffects.reds` projects perceived pain into native weapon sway/spread/recoil and reuses CDPR's existing fullscreen drunk effect loops for excessive overlapping analgesia without applying the stock alcohol status effect.
+The first project-original pain slice now also exists. `PainModel.reds` derives physical pain from biological regional injury, models diminishing MaxDoc analgesia and an overuse/intoxication envelope, and derives pain-only weapon-handling factors. `PainRuntime.reds` persists analgesic state while synchronizing decay to `CRBodyRuntime` elapsed body time rather than creating another timer. `PainNativeEffects.reds` projects perceived pain into native weapon sway/spread/recoil and reuses CDPR's existing fullscreen drunk effect loops for excessive overlapping analgesia without applying the stock alcohol status effect.
+
+The native item adapter preserves the **vanilla MaxDoc identity**. It intercepts `UseHealChargeAction` only for `ConsumableBaseName.FirstAidWhiff`, suppresses the normal MaxDoc healing status-effect application, and routes the completed inhaler use into realpass analgesia. Vanilla animation, quick-slot/charge flow and item naming remain CDPR-owned. Health Booster and Bounce Back are not aliases for MaxDoc and remain separate vanilla items pending their own realism decisions.
 
 This code is **not yet native-accepted**. Cloud/offline tests can verify authority boundaries and pure treatment/pain behavior, but exact stock-controller hook signatures, dynamic Ink layout, paper-doll behavior, item interception, native drunk loops, weapon sway and installed-game interactions must pass the user's local 2.31 compile/preflight and attended test before this interface is considered working in Cyberpunk.
 
@@ -54,7 +56,7 @@ The current first slice overlays its realpass panel rather than fully suppressin
 
 ## Patch-resilience rule
 
-Prefer dynamic realpass widgets attached to the stock controller/root/anchors over replacing whole `.inkwidget` resources. If a future game patch moves an anchor, the adapter should be fixable without changing the injury, pain or treatment models.
+Prefer dynamic realpass widgets attached to the stock controller/root/anchors over replacing whole `.inkwidget` resources. Preserve vanilla item/system identity and hook stable semantic action boundaries where possible. If a future game patch moves an anchor or changes a hook signature, the adapter should be fixable without changing the injury, pain or treatment models.
 
 ## Condition identity
 
@@ -98,11 +100,11 @@ The selected condition should communicate, in approximately this order:
 
 Normal presentation should not expose raw injury percentages, blood-rate numbers, analgesic load or a pain meter.
 
-## Pain and Trauma Kits
+## Pain and MaxDoc
 
 Pain is an embodied consequence, not another HP pool. Biological tissue/bone injury produces pain; chrome-only structural damage does not automatically create nociceptive pain unless surrounding biology is also hurt.
 
-A **Trauma Kit is analgesia only**. It may reduce perceived pain and therefore reduce pain-derived aim/weapon instability, but it does not change:
+**MaxDoc remains the vanilla MaxDoc inhaler and is analgesia only in realpass.** It may reduce perceived pain and therefore reduce pain-derived aim/weapon instability, but it does not change:
 
 - tissue damage;
 - bone damage or support state;
@@ -112,7 +114,7 @@ A **Trauma Kit is analgesia only**. It may reduce perceived pain and therefore r
 - structural impairment from an injured limb;
 - native HP.
 
-Repeated overlapping Trauma Kit use has diminishing pain relief. Excess concurrent analgesic load enters an intoxication/disorientation envelope. The native adapter reuses Cyberpunk's own `status_drunk_level_1/2/3` fullscreen effect loops and associated fullscreen audio parameter rather than applying `BaseStatusEffect.Drunk`, because the stock alcohol status carries unrelated weapon/gameplay packages.
+Repeated overlapping MaxDoc use has diminishing pain relief. Excess concurrent analgesic load enters an intoxication/disorientation envelope. The native adapter reuses Cyberpunk's own `status_drunk_level_1/2/3` fullscreen effect loops and associated fullscreen audio parameter rather than applying `BaseStatusEffect.Drunk`, because the stock alcohol status carries unrelated weapon/gameplay packages.
 
 Significant perceived pain is intended to make weapon handling visibly less stable through weapon sway plus restrained spread/recoil effects. Analgesia reduces this **pain-derived** component; a fractured/damaged arm's separate structural penalties remain.
 
@@ -120,14 +122,14 @@ Existing V pain/grunt vocalizations are a desired contextual cue but remain pend
 
 ## Field treatment and supplies
 
-Field treatment uses separate physical supplies from Trauma Kits.
+Field treatment uses separate physical supplies from MaxDoc.
 
 Current development mapping:
 
 - `APPLY DRESSING — Medical Gauze x1 — 8 sec` (`Items.GenericJunkItem4`, stock Medical Gauze);
 - `SUPPORT LIMB — support material x1 — 12 sec` (`Items.CommonMaterial1` as the current provisional rigid-support supply).
 
-The support-material presentation may be replaced with a clearer realpass-owned item/data mapping before release. The architectural requirement is fixed: **neither action consumes Trauma Kits**.
+The support-material presentation may be replaced with a clearer vanilla-compatible item/data mapping before release. The architectural requirement is fixed: **neither action consumes MaxDoc**.
 
 Field actions remain subject to context rules: out of combat, hands available, stationary, menu closed during progression, valid current body state and available supply. The Condition UI initiates care; the timed action/body runtime performs validation, inventory transaction and authoritative commit.
 
@@ -169,17 +171,18 @@ Condition/injury/pain UX is not accepted until all of the following are demonstr
 7. Detail text comes from authoritative injury state/provenance, not native HP.
 8. External/internal bleeding and biological/chrome damage remain distinct.
 9. Field actions appear only when useful and still validate at commit time.
-10. Dressing consumes Medical Gauze; support consumes its support supply; neither consumes Trauma Kits.
-11. Trauma Kit consumption removes the vanilla Health Booster effect and changes realpass analgesia only.
-12. Analgesia produces diminishing returns and cannot erase all physical pain while the injury persists.
-13. Excess overlapping Trauma Kits reach the authored native drunk visual envelope without inheriting stock alcohol gameplay packages.
-14. Meaningful pain creates visible weapon/aim instability; analgesia reduces only the pain component, not structural impairment.
-15. Clinical/mechanical actions are ordinary-context unavailable and ripperdoc-context available only when their respective models can help.
-16. Clinical care does not instantly heal tissue/bone/replace blood; mechanical repair does not heal biology.
-17. The backpack Field Care prototype remains absent from the owned runtime.
-18. No Dark Future/Project E3 runtime content is required.
-19. Save/reload preserves regional injury, analgesic state and bounded explanatory history.
-20. V pain vocalizations, if enabled, are contextually correct and rate-limited rather than spammed.
+10. Dressing consumes Medical Gauze; support consumes its support supply; neither consumes MaxDoc.
+11. Using vanilla MaxDoc (`FirstAidWhiff`) suppresses its vanilla HP-regeneration status effects and changes realpass analgesia only; item name, animation and native use/charge flow remain intact.
+12. Health Booster and Bounce Back are not silently renamed or routed through the MaxDoc analgesia model.
+13. Analgesia produces diminishing returns and cannot erase all physical pain while the injury persists.
+14. Excess overlapping MaxDoc uses reach the authored native drunk visual envelope without inheriting stock alcohol gameplay packages.
+15. Meaningful pain creates visible weapon/aim instability; analgesia reduces only the pain component, not structural impairment.
+16. Clinical/mechanical actions are ordinary-context unavailable and ripperdoc-context available only when their respective models can help.
+17. Clinical care does not instantly heal tissue/bone/replace blood; mechanical repair does not heal biology.
+18. The backpack Field Care prototype remains absent from the owned runtime.
+19. No Dark Future/Project E3 runtime content is required.
+20. Save/reload preserves regional injury, analgesic state and bounded explanatory history.
+21. V pain vocalizations, if enabled, are contextually correct and rate-limited rather than spammed.
 
 ## Implementation status / next order
 
@@ -190,10 +193,11 @@ Condition/injury/pain UX is not accepted until all of the following are demonstr
 5. Stock paper-doll zoom reuse — **implemented in source; native acceptance pending**.
 6. Field-care initiation/timing — **implemented/offline-tested; native acceptance pending**.
 7. Distinct professional clinical/mechanical care — **implemented/model-tested; native acceptance pending**.
-8. Trauma Kit pain-only model, diminishing returns and overuse envelope — **implemented/model-tested; native acceptance pending**.
-9. Trauma Kit native Health Booster interception — **implemented in source; native exact compile/gameplay pending**.
+8. MaxDoc pain-only model, diminishing returns and overuse envelope — **implemented/model-tested; native acceptance pending**.
+9. Vanilla MaxDoc/`FirstAidWhiff` native healing-action interception — **implemented in source; native exact compile/gameplay pending**.
 10. Pain-derived native sway/spread/recoil and drunk visual loops — **implemented in source; native exact compile/gameplay pending**.
 11. Separate wound-care supplies — **implemented in development mapping; native inventory/UI acceptance pending**.
-12. V pain/grunt cue mapping/throttling — **research/implementation pending**.
-13. Final Condition visual polish/minigrid suppression — **native calibration pending**.
-14. Exact-compile and attended-test the owned runtime before release polish — **next local gate**.
+12. Realistic roles for vanilla Bounce Back and Health Booster — **open; do not rename/reuse as MaxDoc**.
+13. V pain/grunt cue mapping/throttling — **research/implementation pending**.
+14. Final Condition visual polish/minigrid suppression — **native calibration pending**.
+15. Exact-compile and attended-test the owned runtime before release polish — **next local gate**.
