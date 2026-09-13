@@ -41,7 +41,12 @@ public func CompleteAction(gameInstance: GameInstance) -> Void {
     // affected. This is presentation/gameplay plumbing, not the pain model itself.
     StatusEffectHelper.RemoveStatusEffect(local, T"BaseStatusEffect.HealthBooster");
     StatusEffectHelper.RemoveStatusEffect(local, T"BaseStatusEffect.Blackmarket_HealthBooster");
-    CRPainRuntime.Get().UseTraumaKit();
+    if CRPainRuntime.Get().UseTraumaKit() {
+      // Consumable completion is an explicit state boundary. Reconstruct transient
+      // weapon/intoxication feedback now rather than waiting for a later injury or
+      // body refresh tick; no independent pain polling timer is introduced.
+      CRPainNativeEffects.Refresh(local, true);
+    }
     return;
   }
 
