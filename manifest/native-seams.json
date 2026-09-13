@@ -21,7 +21,8 @@
     "FieldCareActionRuntime.reds",
     "InjuryEffectsNative.reds",
     "NoHealthbars.reds",
-    "PainNativeEffects.reds"
+    "PainNativeEffects.reds",
+    "ProfessionalCareRuntime.reds"
   ],
   "stableCoreExamples": [
     "BodyModel.reds",
