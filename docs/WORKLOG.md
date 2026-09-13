@@ -208,3 +208,21 @@ Added `AGREED-GOALS.md` at repository root as the canonical user-intent ledger w
 Not claimed: adding a goal ledger does not implement the Condition UI or complete owned-runtime cleanup. Those remain active engineering work.
 
 Next: keep every newly agreed product decision synchronized into `AGREED-GOALS.md`, then continue owned-runtime cleanup and Condition-mode implementation before the next user deployment/test.
+
+---
+
+## 2026-09-13 — first owned Cyberpunk 2.31 compile/preflight passed; readiness restored to 50%
+
+Branch: `chatgpt-continuation`
+Local candidate: `realpass-owned-preflight-20260913-201539-52d9961b`
+Remote source immediately before documentation update: `2ccb67fb8f467237ec18a29b755f77e8a0e4253e`
+
+The user ran `Prepare-OwnedSession.ps1` without `-Deploy` against the installed Steam Cyberpunk 2077 2.31 game. All 42 owned-path offline checks passed. The tool verified RED4ext 1.30.0 and redscript 0.5.31, then exact-compiled the complete owned source candidate successfully: **42 project-original REDscript sources** compiled to a temporary `final.redscripts`, and the final deployable owned runtime profile compiled successfully with **50 files**. The game cache was not modified; nothing was deployed or launched.
+
+This local pass came after the compiler had already exposed and driven fixes for real integration mistakes: REDscript persistent initializer rules, project-owned method extension/wrapping boundaries, Ink text wrapping API usage, array helper syntax, provenance pruning, professional-care dispatch and native pain refresh ownership. The resulting source-mod-free candidate now has compiler evidence against the user's actual installed 2.31 scripts rather than only cloud/static confidence.
+
+Not claimed: successful compilation is **not** gameplay validation. The owned runtime has not yet been installed, loaded in the game, rendered in the Cyberware/Condition UI, exercised through MaxDoc/body/combat/treatment flows, or proven across save/reload/quests/Phantom Liberty. No source-mod-residue-free live deployment has yet been verified.
+
+Because a real release gate closed, the weighted readiness estimate moves from **45% to 50%**. The increase credits owned native compile compatibility and reproducible preflight only; it does not credit unobserved gameplay behavior.
+
+Next: run `Prepare-OwnedSession.ps1 -Deploy`. It must establish a verified save backup, hash-verify the transaction and prove Dark Future/Project E3 runtime residue is absent. Only if the tool reports `READY` should the user launch normally through Steam for the first owned-runtime smoke test.
