@@ -41,10 +41,14 @@ foreach ($method in @('OnInitialize','OnUpdateHealthBarVisibility','EvaluateHeal
 }
 
 # Player suppression deliberately hides children, not the entire biomonitor root, so
-# RAM/buffs can remain available even while HP is unknown to the player.
+# RAM/buffs and contextual condition indicators can remain available even while HP
+# is unknown. Dark Future keys its conditions HUD off the native moduleShown state,
+# so realpass must not falsify that controller state merely to hide HP pixels.
 $playerHelper = [regex]::Match($source,'(?s)private func CRHideTraditionalPlayerHealth\(\) -> Void \{(.*?)\n\}').Groups[1].Value
 Check (-not $playerHelper.Contains('GetRootWidget().SetVisible(false)')) 'Player helper hides RAM/buffs with the whole biomonitor root.'
 Check (-not $playerHelper.Contains('m_quickhacksContainer')) 'Player helper hides quickhack/RAM information.'
+Check (-not $source.Contains('m_moduleShown = false')) 'Healthbar suppression disables the shared HUD module state used by contextual condition cues.'
+Check (-not $source.Contains('DarkFutureHUDSystem = null')) 'Healthbar suppression severs Dark Future contextual HUD integration.'
 
 # Companion is an actor-health readout and is intentionally hidden. Do not expand
 # this policy into generic objective/vehicle durability HUDs without a separate,
@@ -66,4 +70,4 @@ Check ($healthSetting.Count -eq 1 -and $healthSetting[0].default -eq $false -and
 $module = @($modules.modules | Where-Object id -eq 'presentation')
 Check ($module.Count -eq 1 -and @($module[0].subtoggles) -contains 'traditionalHealthBars' -and @($module[0].owns) -contains 'healthbar-suppression') 'Presentation module does not own healthbar suppression.'
 
-Write-Host "PASS: $checks no-healthbar presentation contract checks; player, NPC, boss and companion actor HP UI stays hidden without becoming a damage authority."
+Write-Host "PASS: $checks no-healthbar presentation contract checks; actor HP stays hidden while shared non-health HUD/condition state remains available and presentation never becomes damage authority."
