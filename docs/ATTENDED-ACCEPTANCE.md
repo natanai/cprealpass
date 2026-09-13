@@ -11,37 +11,41 @@ Default broad attended candidate:
 - body simulation: **on**
 - combat physical bridge: **on**
 - localized injury / blood loss / impairment / armor / treatment: active only through their existing native safety and eligibility gates
-- traditional player health bar: **hidden**
-- ordinary NPC health bars: **hidden**
+- traditional player health/overshield bars and HP numbers: **hidden**
+- ordinary NPC health bars and damage-preview bars: **hidden**
 - dedicated boss / MaxTac health bar: **hidden**
+- dedicated companion/Flathead actor health bar: **hidden**
+- generic objective/vehicle durability UI: **not intentionally hidden**; those can communicate mission state rather than an actor's HP
 - NPC names / scanner presentation: retained according to authored/native visibility rules
 - RAM, buffs and other non-health player biomonitor information: not intentionally hidden by the no-healthbar module
 - diagnostics: **off** unless the tester explicitly requests a diagnostic build
 - no background logger, watcher, recorder, service or scheduled task
 
-The no-healthbar rule is presentation only. It must not change health, damage, one-shot protection, boss logic, quest immunity, wound calculation or treatment state.
+The no-healthbar rule is presentation only. It must not change health, overshield state, damage, one-shot protection, boss logic, quest immunity, wound calculation or treatment state.
 
 ## Preferred operator path
 
-`tools/Prepare-AttendedSession.ps1` is the preferred entry point once the PC is available. It is intentionally safe to run before the player is ready to launch the game.
+`tools/Prepare-AttendedSession.ps1` is the preferred entry point once the PC is available. It is intentionally safe to run before the player is ready to launch the game. The ordinary path no longer requires the player or local agent to invent a build ID or remember a manifest name.
 
-With no source-manifest argument, it reads the verified current deployment pointer and automatically uses `manifest/<current buildId>.deployment.json` as the base. This preserves the exact currently installed/presented candidate instead of asking the player to remember internal manifest names. The base may already have body enabled, but it must still have combat and diagnostics closed.
+With no source-manifest argument, it reads the verified current deployment pointer and automatically uses `manifest/<current buildId>.deployment.json` as the base. With no build ID, it creates a unique immutable ID containing the mode, UTC timestamp and a random suffix.
 
-A local agent should first create a unique build ID and run:
-
-```powershell
-pwsh ./tools/Prepare-AttendedSession.ps1 -BuildId realpass-attended-<unique-id>
-```
-
-That command does **not** alter the game. It validates the current source manifest and every source hash, requires the full body -> combat -> armor -> wound -> blood loss -> impairment -> field-care chain, generates the immutable candidate, compiles the exact candidate against the installed Cyberpunk 2077 scripts, and runs the real upgrade planner in `-WhatIf` mode.
-
-Only after that preflight passes, while the player is present and the game is stopped, rerun the same build preparation with a **new** unique build ID and `-Deploy`. The deployment path establishes a verified save backup first, runs the reversible upgrade, verifies the deployment receipt and then stops. It does **not** launch Cyberpunk.
+First run the one-command compile/preflight:
 
 ```powershell
-pwsh ./tools/Prepare-AttendedSession.ps1 -BuildId realpass-attended-<new-unique-id> -Deploy
+pwsh ./tools/Prepare-AttendedSession.ps1
 ```
 
-Do not reuse the preflight build ID because generated attended profiles/evidence are immutable. `-Diagnostics` is an explicit second-pass troubleshooting mode, not the ordinary feel-test default. `-ShowTraditionalHealthBars` exists only as a comparison/debug build; the authored realpass default is health bars hidden.
+That command does **not** alter the game. It validates the current source manifest and every source hash, requires the full body -> combat -> armor -> wound -> blood loss -> impairment -> field-care chain, generates an immutable candidate, compiles the exact candidate against the installed Cyberpunk 2077 scripts, and runs the real upgrade planner in `-WhatIf` mode.
+
+Only after that preflight passes, while the player is present and the game is stopped, run:
+
+```powershell
+pwsh ./tools/Prepare-AttendedSession.ps1 -Deploy
+```
+
+This creates a **new** immutable deployment ID automatically, repeats exact build/compile/preflight, establishes a verified save backup, performs the reversible upgrade, verifies the deployment receipt and then stops. It does **not** launch Cyberpunk. A local agent may supply `-BuildId` or `-SourceManifestPath` explicitly when diagnosing/reproducing a particular case, but the normal operator path should not need them.
+
+`-Diagnostics` is an explicit second-pass troubleshooting mode, not the ordinary feel-test default. `-ShowTraditionalHealthBars` exists only as a comparison/debug build; the authored realpass default is health bars hidden.
 
 If auto-discovery reports that the current build manifest is missing, recover/reconstruct that local manifest rather than guessing. If it reports that the current manifest lacks any required broad-runtime file, rebuild a coherent combined base before testing; do not interpret a partial profile as combat balance evidence.
 
@@ -49,8 +53,8 @@ If auto-discovery reports that the current build manifest is missing, recover/re
 
 1. Sync `chatgpt-continuation` and verify the current GitHub CI head is green.
 2. Confirm Cyberpunk 2077 is fully stopped.
-3. Use `Prepare-AttendedSession.ps1` to compile/preflight the current deployed build as described above.
-4. For the live candidate, use its explicit `-Deploy` path so a verified save backup and reversible receipt exist before any file changes.
+3. Run `pwsh ./tools/Prepare-AttendedSession.ps1` and require the exact compile + upgrade preflight to pass.
+4. For the live candidate, run `pwsh ./tools/Prepare-AttendedSession.ps1 -Deploy` so a verified save backup and reversible receipt exist before any game-file changes.
 5. Use a save where ordinary open-world combat can be tested without immediately entering a critical quest sequence.
 6. Keep diagnostics off for the first feel pass.
 
@@ -61,15 +65,19 @@ A future agent operating on the user's PC should perform these setup steps direc
 Before firing a weapon, establish that the test build is behaving as one coherent profile.
 
 - Load normally and remain idle for a minute.
-- Confirm no traditional player HP bar/HP number is visible, including after drawing a weapon and entering ordinary combat readiness.
+- Confirm no traditional player HP bar, HP number or overshield bar is visible, including after drawing a weapon and entering ordinary combat readiness.
+- If Overclock is available, activate/deactivate it and confirm the direct Overclock visibility path does not re-show HP while RAM/Overclock information still behaves normally.
+- If an overshield effect is available, gain/lose it and confirm the dedicated overshield evaluator does not re-show a continuous bar while the underlying effect still functions.
 - Confirm RAM/quickhack information still works when appropriate; hiding HP must not blank the whole biomonitor root.
 - Scan an ordinary civilian. Confirm the permitted public/display name behavior still works and no empty nameplate rectangle appears.
-- Scan or focus an ordinary hostile. Confirm no NPC HP bar appears before or after damage.
+- Scan or focus an ordinary hostile. Confirm no NPC HP bar or damage-preview bar appears before or after damage.
+- If a reproducible companion/Flathead health HUD is available, confirm the actor HP bar stays hidden without breaking companion/mission behavior.
+- Confirm objective/vehicle durability indicators still appear when a mission genuinely uses them; realpass must not remove required non-actor mission feedback merely because it resembles a bar.
 - Confirm minimap/compass/interaction presentation has not regressed from the current accepted local candidate.
 - Eat/drink once, perform the toilet interaction once, and observe that body state continues without duplicate interactions or labels.
 - Sprint or otherwise exert V enough to observe recovery behavior. Exertion should recover; it must not become a permanent generic debuff.
 
-If the HUD root disappears entirely, RAM disappears unexpectedly, names become empty rectangles, or the game reports script compilation errors, stop the batch before combat conclusions are drawn.
+If the HUD root disappears entirely, RAM disappears unexpectedly, names become empty rectangles, objective UI is lost, or the game reports script compilation errors, stop the batch before combat conclusions are drawn.
 
 ## Session B — ordinary unarmored combat
 
@@ -91,7 +99,7 @@ Test both directions of damage.
 
 - Allow a controlled ordinary enemy to hit V without immediately attempting a lethal stress test.
 - Confirm V receives the same physical injury model rather than a separate arcade-only path.
-- Confirm V's HP bar remains hidden throughout damage and recovery.
+- Confirm V's HP/overshield bars remain hidden throughout damage and recovery.
 - Look for physical consequences that can replace a bar as feedback: regional movement/handling impairment, blood-loss effects, contextual injury cues and treatment need.
 - Verify the absence of a bar does not make combat state itself malfunction (healing/treatment, death, native protections and save state remain functional).
 
@@ -143,6 +151,7 @@ Only after ordinary combat behaves coherently:
 - test an authored quest-protected or one-shot-protected actor and verify realpass respects final native protection rather than bypassing it;
 - test a defeated/nonlethal outcome and confirm injury does not force an unintended kill;
 - test a drone/mechanical target and confirm unsupported biological wound routing is rejected;
+- test a companion actor if available and confirm healthbar suppression does not interfere with its scripted lifecycle;
 - test combat near a quest/dialogue transition and a Phantom Liberty encounter when a safe reproducible point is available.
 
 A boss taking more punishment because of an explicitly authored protection rule is acceptable; a physically identical ordinary human becoming a sponge merely because of level/max-HP inflation is not the intended model.
@@ -157,8 +166,9 @@ The player should not need to run diagnostics for the first feel pass. Record ob
 - what happened immediately;
 - what changed over the next several seconds/minutes;
 - whether the result felt too weak, too strong or physically implausible;
-- whether any traditional HP bar appeared;
+- whether any traditional actor HP/overshield bar appeared and what caused it;
 - whether a nameplate, scanner, RAM or other unrelated UI element disappeared;
+- whether objective/vehicle mission feedback disappeared unexpectedly;
 - whether treatment/reload/save changed the result unexpectedly.
 
 Only if an observation cannot be explained should a second build enable the explicit attended diagnostics switch. Diagnostics are for resolving a concrete discrepancy, not for turning ordinary play into a telemetry session.
@@ -169,8 +179,9 @@ Do not call combat accepted just because the game launches. Promotion requires, 
 
 - exact candidate compiles and deploys/rolls back cleanly;
 - player and ordinary NPC physical hit paths work in both directions;
-- no traditional HP bars appear for V, ordinary NPCs or bosses in the default presentation;
-- healthbar suppression does not hide RAM/buffs/names or mutate health;
+- no traditional actor HP bars appear for V, ordinary NPCs, bosses or dedicated companion HUDs in the default presentation, including Overclock/overshield state changes;
+- healthbar suppression does not hide RAM/buffs/names or mutate health/overshield state;
+- objective/vehicle mission-state UI remains available where required;
 - regional armor coverage and mechanical-vs-biological routing behave coherently;
 - bleeding/impairment/treatment operate without duplicates or orphaned modifiers;
 - save/reload does not replay, duplicate or erase live injury state;
