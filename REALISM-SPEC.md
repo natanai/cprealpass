@@ -20,6 +20,19 @@ Dark Future and Project E3 HUD are reference/inspiration sources only for the fi
 
 This ownership rule is stricter than licensing. Code being legally adaptable does not make it appropriate to use as realpass runtime code.
 
+## Vanilla-first replacement rule
+
+realpass should alter the **minimum necessary layer** of the vanilla game. Keep CDPR's existing names, item identities, animations, screens, assets and interaction structures whenever they can host the realism model cleanly. Replace the mechanic underneath them instead of inventing a parallel branded ecosystem.
+
+Examples:
+
+- MaxDoc stays MaxDoc; realpass changes what its inhaler does rather than renaming another item into a "Trauma Kit".
+- Bounce Back stays Bounce Back and Health Booster stays Health Booster; their realistic roles are authored separately rather than aliased together.
+- The stock Cyberware/body screen remains the shell for Condition inspection/treatment instead of shipping a separate medical menu where the vanilla shell already provides the right body/zoom language.
+- The native modern scanner remains authoritative instead of restoring a reference mod's scanner replacement.
+
+This rule is both a product goal and a stability strategy. Prefer semantic hooks at stable native action/controller boundaries feeding realpass-owned models. Avoid full resource replacements, duplicated vanilla state and variant-by-variant patches unless the vanilla surface cannot support the accepted behavior.
+
 ## Scope boundary
 
 ### In scope
@@ -65,6 +78,7 @@ Each phenomenon has one authority. Internal development gates must leave clean s
 5. Player and NPC physical rules should be as symmetrical as the engine permits.
 6. Prefer one authoritative model per phenomenon. Reference mods may inform questions and edge cases but never remain a hidden second authority.
 7. Prefer direct native game signals and thin realpass adapters over broad gameplay-mod hosts.
+8. Prefer preserving vanilla identity and replacing behavior under it over renaming/rebuilding a parallel item/UI ecosystem.
 
 ## Human timescale guardrails
 
@@ -115,5 +129,6 @@ Use **realpass** as the mod's in-game display name. Preserve authored weather wh
 - Does it create arbitrary punishment without a physical rationale?
 - Is it actually in scope, or merely inherited from a reference mod?
 - Is the executing implementation physically ours in the repository?
+- Does it preserve the vanilla identity/surface where that surface remains useful?
 - Can it be isolated internally for testing without becoming a public gameplay option?
 - Does the final locked configuration preserve Phantom Liberty quest integrity and acceptable script latency?
