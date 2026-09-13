@@ -45,7 +45,7 @@ foreach ($name in @($policy.stableCoreExamples)) {
     Check (Test-Path -LiteralPath $path -PathType Leaf) "Stable-core example is missing: $name"
     $text = Get-Content -Raw -LiteralPath $path
     foreach ($annotation in $annotations) {
-        Check (-not $text.Contains([string]$annotation)) "Stable simulation core gained patch-sensitive hook $annotation: $name"
+        Check (-not $text.Contains([string]$annotation)) "Stable simulation core gained patch-sensitive hook $($annotation): $name"
     }
 }
 
