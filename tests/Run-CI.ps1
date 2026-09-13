@@ -29,6 +29,7 @@ $tests = @(
     'Test-ClockModel.ps1',
     'Test-CombatCore.ps1',
     'Test-BallisticProfiles.ps1',
+    'Test-CombatFeelEnvelope.ps1',
     'Test-InjuryBody.ps1',
     'Test-WoundPipeline.ps1',
     'Test-ArmorWear.ps1',
