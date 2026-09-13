@@ -9,7 +9,12 @@ $destination=Resolve-SafeChildPath ([IO.Path]::GetFullPath($BackupRoot)) ([DateT
 if($destination.StartsWith($SaveRoot+'\',[StringComparison]::OrdinalIgnoreCase)){throw 'Backup location must be outside the live save directory.'}
 $files=@(Get-ChildItem -LiteralPath $SaveRoot -File -Recurse)
 if($files.Count -eq 0){throw 'Save directory contains no files; backup not established.'}
+Write-Host "Save backup: $($files.Count) files will be copied and hash-verified."
+$index=0
 $records=@(foreach($file in $files){
+    $index++
+    $percent=[Math]::Floor((100.0*$index)/$files.Count)
+    Write-Progress -Activity 'Backing up Cyberpunk saves' -Status "Copying and hashing $index / $($files.Count): $($file.Name)" -PercentComplete $percent
     $relative=$file.FullName.Substring($SaveRoot.Length+1)
     $source=Resolve-SafeChildPath $SaveRoot $relative
     $target=Resolve-SafeChildPath $destination ('files\'+$relative)
@@ -19,10 +24,19 @@ $records=@(foreach($file in $files){
     if((Get-Sha256 $target) -ne $hash -or (Get-Sha256 $source) -ne $hash){throw 'Save changed during backup; do not treat snapshot as verified.'}
     [ordered]@{path=$relative;sha256=$hash;length=$file.Length}
 })
+Write-Progress -Activity 'Backing up Cyberpunk saves' -Completed
+Write-Host 'Save backup copied. Re-checking the live save directory before accepting the snapshot...'
 Assert-GameStopped
 $after=@(Get-ChildItem -LiteralPath $SaveRoot -Recurse -File)
 if($after.Count -ne $files.Count){throw 'Save directory changed during backup.'}
-foreach($record in $records){if((Get-Sha256 (Resolve-SafeChildPath $SaveRoot $record.path)) -ne $record.sha256){throw 'Save changed during backup.'}}
+$verifyIndex=0
+foreach($record in $records){
+    $verifyIndex++
+    $percent=[Math]::Floor((100.0*$verifyIndex)/$records.Count)
+    Write-Progress -Activity 'Verifying Cyberpunk save snapshot' -Status "Verifying $verifyIndex / $($records.Count)" -PercentComplete $percent
+    if((Get-Sha256 (Resolve-SafeChildPath $SaveRoot $record.path)) -ne $record.sha256){throw 'Save changed during backup.'}
+}
+Write-Progress -Activity 'Verifying Cyberpunk save snapshot' -Completed
 Write-JsonFile ([ordered]@{createdAtUtc=[DateTime]::UtcNow.ToString('o');source=$SaveRoot;status='verified';files=$records}) (Join-Path $destination 'backup.json')
 Write-Host "Verified backup of $($files.Count) save files: $destination"
 return $destination
