@@ -17,6 +17,9 @@ public class CRPainProjection extends IScriptable {
   public let perceivedPain: Float = 0.0;
   public let intoxication: Float = 0.0;
   public let nextDoseGain: Float = 0.0;
+  public let weaponSway: Float = 1.0;
+  public let painSpread: Float = 1.0;
+  public let painRecoil: Float = 1.0;
 }
 
 public class CRPainModel extends IScriptable {
@@ -70,6 +73,21 @@ public class CRPainModel extends IScriptable {
     return ClampF((load - 2.0) / 2.0, 0.0, 1.0);
   }
 
+  // Pain handling is separate from structural limb impairment. Analgesia can reduce
+  // these factors because they depend on perceived pain, while a damaged arm's
+  // mechanical reload/recoil penalties continue to come from CRInjuryEffectsModel.
+  public static func WeaponSwayMultiplier(perceivedPain: Float) -> Float {
+    return 1.0 + 1.25 * ClampF(perceivedPain, 0.0, 1.0);
+  }
+
+  public static func SpreadMultiplier(perceivedPain: Float) -> Float {
+    return 1.0 + 0.35 * ClampF(perceivedPain, 0.0, 1.0);
+  }
+
+  public static func RecoilMultiplier(perceivedPain: Float) -> Float {
+    return 1.0 + 0.20 * ClampF(perceivedPain, 0.0, 1.0);
+  }
+
   public static func Read(injury: ref<CRInjuryState>, state: ref<CRPainState>) -> ref<CRPainProjection> {
     let result: ref<CRPainProjection> = new CRPainProjection();
     if !CRPainModel.Valid(state) || !CRInjuryModel.ValidState(injury) {
@@ -80,6 +98,9 @@ public class CRPainModel extends IScriptable {
     result.perceivedPain = result.physicalPain * (1.0 - result.analgesia);
     result.intoxication = CRPainModel.IntoxicationForLoad(state.analgesicLoad);
     result.nextDoseGain = CRPainModel.AnalgesiaForLoad(MinF(16.0, state.analgesicLoad + 1.0)) - result.analgesia;
+    result.weaponSway = CRPainModel.WeaponSwayMultiplier(result.perceivedPain);
+    result.painSpread = CRPainModel.SpreadMultiplier(result.perceivedPain);
+    result.painRecoil = CRPainModel.RecoilMultiplier(result.perceivedPain);
     result.valid = true;
     return result;
   }
