@@ -1,7 +1,7 @@
 . "$PSScriptRoot\..\tools\Common.ps1"
 . "$PSScriptRoot\CoreHarness.ps1"
 $project = Get-ProjectRoot
-$paths = @('InjuryModel','BodyModel','SleepModel','ProfessionalCareModel') | ForEach-Object { Join-Path $project "src/redscript/CyberpunkRealism/$_.reds" }
+$paths = @('InjuryModel','BodyModel','SleepModel','BodyInputs','ProfessionalCareModel') | ForEach-Object { Join-Path $project "src/redscript/CyberpunkRealism/$_.reds" }
 $code = Convert-RedscriptCore $paths
 Add-Type -TypeDefinition $code
 $script:checks = 0
@@ -46,6 +46,18 @@ Check ($s.leftLeg.tissueDamage -eq $beforeTissue -and $s.leftLeg.boneDamage -eq 
 Check ($s.bloodLostMl -eq 300 -and $s.bloodDeficitMl -eq 300) 'Mechanical service altered whole-body blood loss.'
 Check (-not [CRProfessionalCareModel]::MechanicalCanHelp($s,5)) 'Repaired chrome still advertises duplicate mechanical service.'
 
+# The native UI commits professional service through CRBodyRuntime.CompleteTreatment,
+# which queues the same ordered CRBodyInputs path used by every other body mutation.
+$cQueue = [CRBodyConfig]::new()
+$body = [CRBodyModel]::Create($cQueue)
+$body.injuries = Wounded
+$queue = [CRBodyInputQueue]::new()
+Check ([CRBodyInputs]::Treatment($queue,5,4,1) -and $queue.count -eq 1) 'Clinical service could not enter shared ordered body inputs.'
+Check ([CRBodyInputs]::Drain($queue,$body,$cQueue) -eq 1 -and $queue.appliedTreatments -eq 1) 'Clinical service did not commit through shared body inputs.'
+Check ($body.injuries.leftLeg.externalBleedMlPerHour -eq 0 -and $body.injuries.leftLeg.internalBleedMlPerHour -eq 0 -and $body.injuries.leftLeg.tissueDamage -eq [float]0.4 -and $body.injuries.leftLeg.boneDamage -eq [float]0.5 -and $body.injuries.leftLeg.cyberwareDamage -eq [float]0.6) 'Shared clinical commit crossed biological/mechanical boundaries.'
+Check ([CRBodyInputs]::Treatment($queue,5,5,1) -and [CRBodyInputs]::Drain($queue,$body,$cQueue) -eq 1 -and $queue.appliedTreatments -eq 2) 'Mechanical service did not commit through shared body inputs.'
+Check ($body.injuries.leftLeg.cyberwareDamage -eq 0 -and $body.injuries.leftLeg.tissueDamage -eq [float]0.4 -and $body.injuries.leftLeg.boneDamage -eq [float]0.5) 'Shared mechanical commit altered biological injury.'
+
 # Mechanical repair before clinical care leaves bleeding and biology untouched.
 $s = Wounded
 Check ([CRInjuryModel]::Treat($s,5,5,1)) 'Initial mechanical service failed.'
@@ -87,6 +99,6 @@ Write-JsonFile ([ordered]@{
     passed = $true
     assertions = $script:checks
     sources = @($paths | ForEach-Object { [ordered]@{path=$_;sha256=(Get-Sha256 $_)} })
-    scope = 'Pure professional-care eligibility plus injury-model treatment/recovery boundaries. Verifies clinical versus mechanical separation, no instant tissue/bone healing, no blood replacement, and later body-clock recovery. Native ripperdoc context, UI, service cost/time and saves remain unverified.'
+    scope = 'Professional-care eligibility plus injury-model and ordered-body-input treatment/recovery boundaries. Verifies clinical versus mechanical separation, no instant tissue/bone healing, no blood replacement, and later body-clock recovery. Native ripperdoc context, UI, service cost/time and saves remain unverified.'
 }) (Join-Path $project 'reports/professional-care-tests.json')
 Write-Host "PASS: $script:checks professional-care checks."
