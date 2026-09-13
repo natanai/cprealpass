@@ -2,9 +2,23 @@
 
 ## Product definition
 
-realpass is one coherent realism pass for Cyberpunk 2077 + Phantom Liberty. It should feel like one mod rather than a stack of unrelated overhauls. Every subsystem must represent a physical, physiological, or presentation-level part of the same world model, and every nonessential subsystem must be independently toggleable without breaking the rest.
+realpass is one coherent realism pass for Cyberpunk 2077 + Phantom Liberty. It is not a curated stack, a compatibility preset, or a reskin of other gameplay/presentation mods. The gameplay and presentation behavior that defines realpass must be authored in this repository and owned by realpass. Other mods may be studied as references and may have informed design questions, but their gameplay scripts, archives, assets and runtime state are not part of the finished product.
 
 The target is not "hardcore mode" and not a general rebalance. The target is plausible cause and effect: bodies need food, water, sleep and recovery; exertion has consequences; bullets interact with clothing, armor, cyberware and tissue; injuries impair and can require treatment; presentation removes unnecessary gamey abstraction where doing so remains usable.
+
+### One authored experience
+
+Development remains modular because isolated gates make calibration, fault-finding and regression testing possible. **The released mod is not modular from the player's perspective.** A normal release enables the complete accepted realpass experience as one authored balance. There is no public menu for disabling combat, needs, injury, armor or other core authorities and no collection of balance sliders that lets two realpass players effectively run different games.
+
+Development-only gates and diagnostics may temporarily isolate a subsystem. They are build/test controls, not player preferences. Accessibility options are considered separately only when they do not change simulation authority or balance. Traditional actor health bars are intentionally not part of the authored realpass presentation.
+
+## Runtime ownership rule
+
+Gameplay and presentation runtime code must be project-original realpass code. Generic modding frameworks may remain when they provide only infrastructure such as script loading, data loading, UI primitives or input plumbing. A framework must not own realpass gameplay policy or simulation state.
+
+Dark Future and Project E3 HUD are reference/inspiration sources only for the finished architecture. They may remain represented in provenance, historical recipes and research notes, but an owned-runtime test or release build must fail closed if it contains their scripts, archives, assets, tweak payloads or persistent-system dependencies.
+
+This ownership rule is stricter than licensing. Code being legally adaptable does not make it appropriate to use as realpass runtime code.
 
 ## Scope boundary
 
@@ -15,7 +29,7 @@ The target is not "hardcore mode" and not a general rebalance. The target is pla
 - Realistic combat: projectile/ammunition behavior, hit region, penetration, armor coverage, cybernetic structure, tissue injury, incapacitation and death.
 - Clothing and armor as physical equipment. Ordinary clothing is clothing; ballistic protection comes from actual protective equipment and only where that protection is present.
 - Cyberware where it changes a relevant physical or biological subsystem.
-- Sparse presentation changes that support the realism model, including the selected E3-inspired HUD treatment, readable NPC identity and removal of unnecessary RPG clutter.
+- Sparse presentation changes that support the realism model, including a realpass-owned HUD/nameplate treatment, readable NPC identity and removal of unnecessary RPG clutter.
 
 ### Explicitly not part of the realism pass
 
@@ -23,13 +37,14 @@ The target is not "hardcore mode" and not a general rebalance. The target is pla
 - Economy overhauls, arbitrary scarcity systems, price rebalancing or unrelated inventory difficulty.
 - Added random encounters, travel restrictions, summon currencies or other difficulty-for-difficulty's-sake systems.
 - A new outfit/transmog/wardrobe mechanic. realpass does not treat "outfit" as a separate simulation layer: clothing is clothing and armor is armor. Appearance-only systems supplied by the base game are not an authority that realpass should expand into.
-- Features inherited from source mods merely because they exist. If a source feature does not serve the realpass physical model, it should be omitted rather than exposed as another setting.
+- Features inherited from source/reference mods merely because they exist.
+- A public subsystem-toggle menu whose purpose is to let players opt out of core realpass simulation.
 
-A feature is not justified by making it toggleable. Toggleability is required for included modules; it is not a reason to retain out-of-scope features.
+A mechanic belongs only if it serves the single physical model. Development modularity is a validation technique, not a justification for shipping optional feature sprawl.
 
-## Module rule
+## Internal authority boundaries
 
-The distributed result should have one realpass structure and one settings surface. Internally, major authorities should remain separable so they can be enabled, disabled, tested and removed without overlapping ownership:
+The implementation keeps clear internal authorities so they can be independently tested and repaired during development:
 
 1. **Needs / body** — food, water, sleep, exertion, elimination and recovery.
 2. **Injury** — regional injury, bleeding, impairment, stabilization and healing.
@@ -39,7 +54,7 @@ The distributed result should have one realpass structure and one settings surfa
 6. **Presentation** — HUD, nameplates, inspection/status surfaces and removal of gamey clutter.
 7. **Diagnostics** — development-only observability, off in normal play.
 
-Each gameplay module needs a master enable/disable control. Finer controls are appropriate only where they correspond to a real separable subsystem, not as a way to preserve inherited feature sprawl.
+Each phenomenon has one authority. Internal development gates must leave clean state when disabled, but final release configuration enables the accepted gameplay/presentation authorities together.
 
 ## Simulation principles
 
@@ -48,7 +63,8 @@ Each gameplay module needs a master enable/disable control. Finer controls are a
 3. Exact values may exist internally, but normal play should communicate state mainly through animation, audio, movement, stamina, contextual effects, and subtle HUD cues.
 4. Cyberware modifies the relevant biological or structural subsystem; it is not a generic stat bonus.
 5. Player and NPC physical rules should be as symmetrical as the engine permits.
-6. Prefer one authoritative model per phenomenon. Imported systems must be reduced or adapted rather than stacked when they compete for the same authority.
+6. Prefer one authoritative model per phenomenon. Reference mods may inform questions and edge cases but never remain a hidden second authority.
+7. Prefer direct native game signals and thin realpass adapters over broad gameplay-mod hosts.
 
 ## Human timescale guardrails
 
@@ -77,16 +93,18 @@ Required qualities:
 - Armor has projectile-dependent penetration limits and preferably degradation.
 - Unprotected limbs remain vulnerable; injury affects locomotion or weapon use where feasible.
 - Getting shot must resolve through the physical pipeline rather than through a generic damage sponge whenever the engine permits.
-- Avoid stacked damage, armor, or injury overhauls unless overlap is explicitly disabled or patched.
+- Avoid stacked damage, armor, or injury overhauls; realpass is the sole authority for the phenomena it owns.
 
 ## Presentation
 
-Use **realpass** as the mod's in-game display name, retaining dependency author credits and stable internal save identities. Preserve authored weather while completing presentation, physiology and combat.
+Use **realpass** as the mod's in-game display name. Preserve authored weather while completing presentation, physiology and combat.
 
-- Make E3-era HUD/UI presentation part of the default build where it does not replace superior modern game functionality; retain readable names above NPCs when appropriate.
-- Remove unnecessary floating numbers and RPG clutter.
+- Recreate only the selected E3-era ideas we actually want with realpass-owned code/assets; do not depend on Project E3 HUD at runtime.
+- Keep superior modern game functionality such as the modern scanner/quickhack flow.
+- Retain readable names above NPCs when appropriate using a realpass-owned implementation.
+- Remove traditional actor health bars, unnecessary floating numbers and RPG clutter.
 - Do not expose every need as a permanent percentage dashboard.
-- Exact diagnostic state belongs in a status/inspection surface, not the primary play HUD.
+- Exact diagnostic state belongs in a development/status inspection surface, not the primary play HUD.
 - Presentation is subordinate to simulation: a visual feature should not become a second gameplay system.
 
 ## Acceptance questions for every mechanic
@@ -95,7 +113,7 @@ Use **realpass** as the mod's in-game display name, retaining dependency author 
 - Does its timescale remain credible relative to other systems?
 - Does it duplicate an existing authority?
 - Does it create arbitrary punishment without a physical rationale?
-- Is it actually in scope, or merely inherited from a dependency?
-- Can the feature be tuned, disabled, tested, and safely removed?
-- Does disabling it leave the rest of realpass coherent?
-- Does it preserve Phantom Liberty quest integrity and acceptable script latency?
+- Is it actually in scope, or merely inherited from a reference mod?
+- Is the executing implementation physically ours in the repository?
+- Can it be isolated internally for testing without becoming a public gameplay option?
+- Does the final locked configuration preserve Phantom Liberty quest integrity and acceptable script latency?
