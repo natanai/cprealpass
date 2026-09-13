@@ -38,6 +38,9 @@ private let crConditionCause: wref<inkText>;
 private let crConditionFunction: wref<inkText>;
 
 @addField(RipperDocGameController)
+private let crConditionPain: wref<inkText>;
+
+@addField(RipperDocGameController)
 private let crConditionCare: wref<inkText>;
 
 @addField(RipperDocGameController)
@@ -158,6 +161,7 @@ private func CRConditionCreateUI() -> Void {
   this.crConditionTitle.Reparent(this.crConditionPanel, -1);
   this.crConditionState = this.CRConditionWrappedText("", n"CRConditionState", 20, 570.0); this.crConditionState.Reparent(this.crConditionPanel, -1);
   this.crConditionFunction = this.CRConditionWrappedText("", n"CRConditionFunction", 20, 570.0); this.crConditionFunction.Reparent(this.crConditionPanel, -1);
+  this.crConditionPain = this.CRConditionWrappedText("", n"CRConditionPain", 18, 570.0); this.crConditionPain.SetOpacity(0.90); this.crConditionPain.Reparent(this.crConditionPanel, -1);
   this.crConditionCause = this.CRConditionWrappedText("", n"CRConditionCause", 18, 570.0); this.crConditionCause.SetOpacity(0.78); this.crConditionCause.Reparent(this.crConditionPanel, -1);
   this.crConditionCare = this.CRConditionWrappedText("", n"CRConditionCare", 18, 570.0); this.crConditionCare.Reparent(this.crConditionPanel, -1);
   this.crConditionProfessional = this.CRConditionWrappedText("", n"CRConditionProfessional", 18, 570.0); this.crConditionProfessional.Reparent(this.crConditionPanel, -1);
@@ -259,6 +263,7 @@ private func CRConditionRefresh() -> Void {
     this.crConditionTitle.SetText("NO ACTIVE CONDITIONS");
     this.crConditionState.SetText("No regional injury currently requires attention.");
     this.crConditionFunction.SetText("");
+    this.crConditionPain.SetText("");
     this.crConditionCause.SetText("");
     this.crConditionCare.SetText("");
     this.crConditionProfessional.SetText("");
@@ -272,6 +277,7 @@ private func CRConditionRefresh() -> Void {
   this.crConditionTitle.SetText(descriptor.regionName + " — " + descriptor.title + " / " + descriptor.severity);
   this.crConditionState.SetText(descriptor.currentState);
   this.crConditionFunction.SetText(descriptor.functionText);
+  this.crConditionPain.SetText(descriptor.painText);
   this.crConditionCause.SetText(descriptor.likelyCause);
   this.crConditionCare.SetText("FIELD CARE: " + descriptor.fieldCare);
   this.crConditionProfessional.SetText("PROFESSIONAL CARE: " + descriptor.professionalCare);
@@ -347,7 +353,7 @@ protected cb func OnCRConditionRegionReleased(evt: ref<inkPointerEvent>) -> Bool
 private func CRConditionCareFeedback(result: Int32) -> String {
   switch result {
     case 8: return CRFieldCareActionRuntime.Get().Status();
-    case 2: return "No trauma kit available. No treatment started.";
+    case 2: return "Required field-care supplies are unavailable. No treatment started.";
     case 6: return "That field treatment no longer helps this condition.";
   }
   return "Field care is unavailable here. Nothing was consumed.";
@@ -441,6 +447,7 @@ protected cb func OnUninitialize() -> Bool {
   this.crConditionState = null;
   this.crConditionCause = null;
   this.crConditionFunction = null;
+  this.crConditionPain = null;
   this.crConditionCare = null;
   this.crConditionProfessional = null;
   this.crConditionDress = null;
