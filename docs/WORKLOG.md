@@ -62,3 +62,67 @@ Files: `docs/PROJECT-STATUS.md`
 Added a weighted release-readiness model, current known-good state, blocker list, immediate priority order and future-agent rules. Overall baseline is **43%**. The percentage is deliberately conservative and measures progress toward a usable, validated, redistributable 1.0 rather than source-code volume.
 
 Next: add runtime/distribution contracts and cloud-safe automation, then revise the percentage only if those changes materially close release gates.
+
+---
+
+## 2026-09-12 — contracts, cloud CI and safe artifact policy established
+
+Branch: `chatgpt-continuation`
+Key files: `manifest/runtime-modules.json`, `manifest/settings.json`, `manifest/distribution.json`, `manifest/acceptance.json`, `.github/workflows/ci.yml`, `tests/Run-CI.ps1`, package/artifact policy tests
+
+Converted major architecture decisions into machine-readable runtime, settings, distribution and acceptance contracts and added cloud-safe regression checks. CI was separated from local-only tests that require acquired third-party source, generated deployment manifests, the installed game or live deployment state. Safe development-package policy rejects forbidden paths, blocked dependencies and game/user data instead of treating a successful ZIP operation as release readiness.
+
+Evidence: public-source CI repeatedly exercised module/settings/distribution/install contracts plus body, combat, wound, armor, field-care, blood-loss, injury-effects and NPC progression models. A previously failing cloud run exposed local-manifest-only tests in `Run-CI.ps1`; those were correctly moved out of the cloud tier rather than faking the missing manifests. Subsequent exact-head CI passed.
+
+Not claimed: cloud CI cannot prove native redscript compatibility with the user's installed Cyberpunk 2.31 script bundle, E3 integration behavior, save persistence or actual gameplay feel.
+
+Next: build one broad, immutable attended candidate that can exercise the whole physical pipeline together.
+
+---
+
+## 2026-09-12 — broad body/combat attended candidate and operator flow added
+
+Branch: `chatgpt-continuation`
+Key commits/files: `tools/Build-AttendedAcceptance.ps1`, `tools/Prepare-AttendedSession.ps1`, `tests/Test-AttendedBuilder.ps1`, `tests/Test-AttendedSessionTool.ps1`, `tests/Test-ActivationGates.ps1`, `docs/ATTENDED-ACCEPTANCE.md`, `docs/COMBAT-CALIBRATION.md`
+
+Added a broad attended builder that refuses partial combat profiles: body runtime, interactions, combat profiles/bridge, wound routing, regional armor wear, injury effects, blood loss, field-care runtime, timed treatment/item handling and field-care UI must all be present before the candidate is accepted for compilation. Canonical source body/combat gates remain closed; only a new immutable generated profile may open them.
+
+`Prepare-AttendedSession.ps1` now provides the preferred local operator path. It can derive the verified active deployment manifest, build and compile the broad candidate, run the real upgrade planner in `-WhatIf` mode, and stop. Live installation requires an explicit `-Deploy`, a verified save backup, reversible upgrade receipt and post-write verification. It never launches Cyberpunk or installs background monitoring.
+
+The combat calibration guide formalizes the target: physical impact and anatomy/protection drive injury; native HP is an engine-output channel, not the causal wound model. Ordinary-human level/max-HP inflation must not define wound severity, while explicit boss/quest/nonlethal protections remain authoritative.
+
+Evidence: exact branch-head GitHub Actions run `34718888471` completed successfully for commit `378a2b2` after the attended orchestration and acceptance docs were added.
+
+Not claimed: the generated candidate has not yet been compiled or played against the user's local acquired dependency/game bundle. Native combat feel remains an attended gate.
+
+Next: close known actor-healthbar re-show paths, then run exact local compile/preflight as soon as the PC is available.
+
+---
+
+## 2026-09-12 — no-traditional-healthbar coverage hardened
+
+Branch: `chatgpt-continuation`
+Commits: `d27cf9e`, `0d046ff`
+Files: `src/redscript/CyberpunkRealism/NoHealthbars.reds`, `tests/Test-NoHealthbars.ps1`
+
+Expanded the default no-healthbar presentation from the generic player/NPC/boss paths to the direct native visibility paths that can otherwise re-show player HP during Overclock or overshield changes. Added dedicated companion/Flathead actor-health suppression as well. The implementation continues to hide health-specific children rather than the entire player biomonitor root so RAM/buffs and other non-health information can remain visible.
+
+The scope is intentionally actor health only. Generic objective/vehicle durability UI is not blanket-suppressed because those bars can communicate mission state rather than an actor's remaining HP.
+
+Evidence: hook signatures were cross-checked against public decompiled Cyberpunk script references for `EvaluateHealthBarVisibility(Bool)`, `EvaluateOvershieldBarVisibility()` and `CompanionHealthBarGameController.OnFlatheadStatusChanged(Bool)`. Static contract tests now require all player visibility paths to finish by reapplying the same health-only suppression helper and continue forbidding presentation code from mutating health/damage authority.
+
+Not claimed: these new wrappers have not yet passed the project's exact local 2.31 compilation or native rendering test. They are specifically designed to fail the attended compile/preflight before deployment if the installed signatures differ.
+
+Next: let CI validate the public contract batch, then exact-compile on the user's machine and test Overclock/overshield/companion cases alongside ordinary combat.
+
+---
+
+## 2026-09-12 — release-readiness estimate advanced to 50%
+
+Branch: `chatgpt-continuation`
+Commit: `42b6306`
+File: `docs/PROJECT-STATUS.md`
+
+Recomputed the weighted release-readiness ledger from the original 43% baseline to **50%**. Credit was added for architecture/contracts, cloud-safe regression coverage, artifact policy, broad immutable attended tooling, no-healthbar integration and durable operator documentation. Native gameplay/save/quest validation intentionally remains at 15%, so this increase does not assume the unplayed candidate works in-game.
+
+Next: the single highest-leverage gate is now local exact compile/preflight followed by one broad attended gameplay session rather than further speculative activation work.
