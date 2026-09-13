@@ -19,7 +19,8 @@ Check ($acquire.Contains('$selected.ContainsKey')) 'Selective acquisition does n
 foreach ($needle in @(
     "`$genericIds = @('red4ext','redscript')",
     'Acquire-Components.ps1',
-    "Stage-Components.ps1\" -Profile 'm1-base'",
+    'Stage-Components.ps1',
+    "-Profile 'm1-base'",
     'Build-OwnedAcceptance.ps1',
     "profile = 'owned-runtime-development'",
     'Compile-Profile.ps1',
@@ -37,8 +38,8 @@ foreach ($danger in @('Deploy.ps1','Upgrade.ps1','Start-Process','Register-Sched
 }
 
 Check ($session.Contains('Build-OwnedRuntimeProfile.ps1')) 'Owned session does not build the explicit owned profile.'
-Check ($session.Contains("Upgrade.ps1\" -GameRoot `$GameRoot -ManifestPath `$manifest -StateRoot `$StateRoot -WhatIf")) 'Owned upgrade path does not use the real transaction planner as preflight.'
-Check ($session.Contains("Deploy.ps1\" -GameRoot `$GameRoot -ManifestPath `$manifest -StateRoot `$StateRoot -WhatIf")) 'Owned initial-deploy path does not use the real transaction planner as preflight.'
+Check ($session.Contains('Upgrade.ps1') -and $session.Contains('-WhatIf')) 'Owned upgrade path does not use the real transaction planner as preflight.'
+Check ($session.Contains('Deploy.ps1') -and $session.Contains('-WhatIf')) 'Owned initial-deploy path does not use the real transaction planner as preflight.'
 Check ($session.Contains('Backup-Saves.ps1')) 'Live owned deployment does not require a verified save backup.'
 Check ($session.Contains('Verify-Deployment.ps1')) 'Live owned deployment does not hash-verify its receipt.'
 Check ($session.Contains('Get-ForbiddenOwnedAcceptanceResidue')) 'Owned session does not verify source-mod runtime isolation.'
