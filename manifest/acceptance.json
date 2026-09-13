@@ -15,7 +15,7 @@
       "area": "architecture",
       "status": "passed",
       "evidence": ["manifest/feature-inventory.json", "tests/Test-FeatureInventory.ps1"],
-      "remaining": "Continue removing historical source-mod implementation paths from the active build/deployment workflow; reference material may remain documented but cannot execute in the owned runtime."
+      "remaining": "Continue removing historical source-mod implementation paths from active tooling. Reference material may remain documented but cannot execute in the owned runtime, and source-mod item renames are not product features."
     },
     {
       "id": "unified-settings-contract",
@@ -30,6 +30,13 @@
       "status": "partial",
       "evidence": ["manifest/runtime-origin-policy.json", "tests/Test-RuntimeOriginPolicy.ps1", "tools/Build-OwnedAcceptance.ps1", "tools/Build-OwnedRuntimeProfile.ps1", "tools/Prepare-OwnedSession.ps1", "tests/Test-OwnedAcceptanceBuilder.ps1", "tests/Test-OwnedSessionTool.ps1"],
       "remaining": "Run exact local compilation/preflight against the user's installed 2.31 game, then deploy an attended owned candidate and verify no Dark Future or Project E3 executing residue remains before gameplay acceptance."
+    },
+    {
+      "id": "vanilla-first-native-integration",
+      "area": "architecture",
+      "status": "partial",
+      "evidence": ["AGREED-GOALS.md", "REALISM-SPEC.md", "manifest/feature-inventory.json", "src/redscript/CyberpunkRealism/BodyNativeHooks.reds", "tests/Test-PainArchitecture.ps1", "tests/Test-FeatureInventory.ps1"],
+      "remaining": "Exact-compile the semantic native hooks locally and keep replacing mechanics beneath vanilla identities instead of duplicating screens/items or importing source-mod renames."
     },
     {
       "id": "body-pure-model",
@@ -56,8 +63,15 @@
       "id": "wound-injury-blood-treatment-model",
       "area": "combat",
       "status": "passed",
-      "evidence": ["src/redscript/CyberpunkRealism/WoundModel.reds", "src/redscript/CyberpunkRealism/InjuryModel.reds", "src/redscript/CyberpunkRealism/BloodLossModel.reds", "src/redscript/CyberpunkRealism/FieldCareModel.reds", "tests/Test-WoundPipeline.ps1", "tests/Test-InjuryBody.ps1", "tests/Test-FieldCare.ps1", "tests/Test-FieldCareTimed.ps1", "tests/Test-BloodLoss.ps1", "tests/Test-InjuryEffects.ps1"],
+      "evidence": ["src/redscript/CyberpunkRealism/WoundModel.reds", "src/redscript/CyberpunkRealism/InjuryModel.reds", "src/redscript/CyberpunkRealism/BloodLossModel.reds", "src/redscript/CyberpunkRealism/FieldCareModel.reds", "src/redscript/CyberpunkRealism/ProfessionalCareModel.reds", "tests/Test-WoundPipeline.ps1", "tests/Test-InjuryBody.ps1", "tests/Test-FieldCare.ps1", "tests/Test-FieldCareTimed.ps1", "tests/Test-ProfessionalCare.ps1", "tests/Test-BloodLoss.ps1", "tests/Test-InjuryEffects.ps1"],
       "remaining": "Anatomy/bleeding coefficients are provisional game abstractions; native hit shapes, treatment interaction and outcome calibration remain open."
+    },
+    {
+      "id": "pain-and-maxdoc-model",
+      "area": "body",
+      "status": "partial",
+      "evidence": ["AGREED-GOALS.md", "src/redscript/CyberpunkRealism/PainModel.reds", "src/redscript/CyberpunkRealism/PainRuntime.reds", "src/redscript/CyberpunkRealism/PainNativeEffects.reds", "src/redscript/CyberpunkRealism/BodyNativeHooks.reds", "tests/Test-PainModel.ps1", "tests/Test-PainArchitecture.ps1"],
+      "remaining": "Exact-compile and attend the vanilla MaxDoc/FirstAidWhiff UseHealChargeAction hook, confirm native MaxDoc HP regeneration is suppressed while native item identity/animation/charge flow remain intact, then calibrate pain sway, diminishing analgesia and overuse presentation. Bounce Back and Health Booster remain separate vanilla items pending their own authored realism roles."
     },
     {
       "id": "armor-coverage-and-wear-model",
@@ -84,8 +98,8 @@
       "id": "condition-ui-and-treatment",
       "area": "body",
       "status": "partial",
-      "evidence": ["AGREED-GOALS.md", "docs/CONDITION-UI.md", "src/redscript/CyberpunkRealism/InjuryProvenance.reds", "src/redscript/CyberpunkRealism/ConditionPresentation.reds", "src/redscript/CyberpunkRealism/FieldCareItemUse.reds", "tests/Test-ConditionArchitecture.ps1"],
-      "remaining": "Mount the realpass-owned CYBERWARE | CONDITION view on the stock body screen, reuse native regional zoom, expose valid field-care actions, add accepted ripperdoc/clinical treatment context, and native-test save/reload plus treatment outcomes."
+      "evidence": ["AGREED-GOALS.md", "docs/CONDITION-UI.md", "src/redscript/CyberpunkRealism/InjuryProvenance.reds", "src/redscript/CyberpunkRealism/ConditionPresentation.reds", "src/redscript/CyberpunkRealism/ConditionNativeUI.reds", "src/redscript/CyberpunkRealism/FieldCareActionRuntime.reds", "src/redscript/CyberpunkRealism/ProfessionalCareRuntime.reds", "tests/Test-ConditionArchitecture.ps1", "tests/Test-PainArchitecture.ps1"],
+      "remaining": "Exact-compile and live-test the realpass-owned CYBERWARE | CONDITION view on the stock body screen, stock regional zoom, left/right condition identity, field-care actions, ripperdoc clinical/mechanical treatment, pain/MaxDoc text and save/reload outcomes."
     },
     {
       "id": "nameplates-and-toilet-presentation",
