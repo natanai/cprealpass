@@ -9,6 +9,7 @@ $contract = Get-Content -Raw -LiteralPath $contractPath | ConvertFrom-Json
 $policy = Get-Content -Raw -LiteralPath $policyPath
 $script:checks = 0
 function Check($condition,[string]$message) { if (-not $condition) { throw $message }; $script:checks++ }
+function Has-Property($object,[string]$name) { return $null -ne $object.PSObject.Properties[$name] }
 
 Check ($source.Contains('public class CRRealpassSettings extends ScriptableSystem')) 'realpass settings are not owned by one ScriptableSystem.'
 Check ($source.Contains('ModSettings.RegisterListenerToClass(this);')) 'Settings system does not register for Mod Settings value updates.'
@@ -100,9 +101,11 @@ foreach ($key in $fieldMap.Keys) {
     Check ($source.Contains('flags.' + $flag + ' = this.' + $field + ';')) "Player-intent snapshot mapping missing: $key -> $flag"
 }
 
-# Exactly the 20 player-facing booleans are exposed to Mod Settings. Diagnostics
-# remains an explicit attended-build choice, not a normal player menu toggle.
-$publicContractCount = @($contract.categories | Where-Object { -not $_.developmentOnly } | ForEach-Object { @($_.settings) }).Count
+# Optional JSON properties are genuinely optional. Do not let PowerShell strict
+# mode turn their absence into a test failure; treat a missing developmentOnly as
+# false and a missing dependency as no dependency.
+$publicCategories = @($contract.categories | Where-Object { -not (Has-Property $_ 'developmentOnly' -and [bool]$_.developmentOnly) })
+$publicContractCount = @($publicCategories | ForEach-Object { @($_.settings) }).Count
 $modAnnotations = [regex]::Matches($source,'@runtimeProperty\("ModSettings\.mod", "realpass"\)').Count
 Check ($publicContractCount -eq 20) 'Unexpected public setting count in manifest contract.'
 Check ($modAnnotations -eq $publicContractCount) 'Mod Settings annotations do not match public contract count.'
@@ -113,11 +116,11 @@ Check ($diagIndex -gt $afterLastAnnotation) 'Diagnostics may have entered the or
 
 # Mod Settings dependency names refer to source fields, while the manifest uses
 # stable dotted product keys. Require an exact per-module mapping for all subtoggles.
-foreach ($category in @($contract.categories | Where-Object { -not $_.developmentOnly })) {
+foreach ($category in $publicCategories) {
     $master = @($category.settings | Where-Object { $_.key -eq ($category.id + '.enabled') })
     if ($master.Count -eq 1) {
         $masterField = $fieldMap[$master[0].key]
-        foreach ($setting in @($category.settings | Where-Object dependency)) {
+        foreach ($setting in @($category.settings | Where-Object { Has-Property $_ 'dependency' })) {
             $field = $fieldMap[$setting.key]
             $fieldPattern = '(?s)@runtimeProperty\("ModSettings\.dependency", "' + [regex]::Escape($masterField) + '"\)\s+public let ' + [regex]::Escape($field) + ': Bool'
             Check ([regex]::IsMatch($source,$fieldPattern)) "Runtime dependency mismatch: $($setting.key)"
