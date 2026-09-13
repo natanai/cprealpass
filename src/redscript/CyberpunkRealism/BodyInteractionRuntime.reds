@@ -1,4 +1,5 @@
 // Original game interaction adapters. No independent timer or background helper.
+// Patch-sensitive native hooks live here; body physiology remains in the pure model.
 import CyberpunkRealism.Integration.*
 
 @wrapMethod(PlayerPuppet)
@@ -11,28 +12,32 @@ protected cb func OnStatusEffectApplied(evt: ref<ApplyStatusEffectEvent>) -> Boo
 }
 
 // A distinct explicit action. Merely flushing a toilet never changes body state.
+// Reuse the stock Flush interaction record as presentation plumbing instead of
+// creating a parallel TweakDB interaction record. realpass owns the separate action
+// semantics and replaces only its displayed caption after CreateInteraction().
 public class CRUseToilet extends ActionBool {
   public let completedByDevice: Bool = false;
   public let bodyApplied: Bool = false;
 
   public func SetProperties() -> Void {
     this.actionName = n"CRUseToilet";
-    this.prop = DeviceActionPropertyFunctions.SetUpProperty_Bool(n"CRUseToilet", true, n"RealpassUseToiletCaption", n"RealpassUseToiletCaption");
+    this.prop = DeviceActionPropertyFunctions.SetUpProperty_Bool(n"CRUseToilet", true, n"CRUseToilet", n"CRUseToilet");
   }
 
   public func GetTweakDBChoiceRecord() -> String {
-    return "RealpassUseToilet";
+    return "Flush";
   }
 
   public func GetTweakDBChoiceID() -> TweakDBID {
-    return t"Interactions.RealpassUseToilet";
+    return t"Interactions.Flush";
   }
 
   public func SetBodyCaption() -> Void {
-    let caption: String = GetLocalizedTextByKey(n"RealpassUseToiletCaption");
+    // Keep the first owned acceptance slice self-contained in REDscript and preserve
+    // the vanilla Flush record/icon. A project-owned localization resource can
+    // replace this literal later without changing action/body semantics.
+    let caption: String = "Use toilet";
     this.interactionChoice.caption = caption;
-    // Native and E3 menus also read the interaction record's localizedName.
-    // Both that record and these caption parts resolve the same realpass key.
     InteractionChoiceCaption.Clear(this.interactionChoice.captionParts);
     InteractionChoiceCaption.AddTextPart(this.interactionChoice.captionParts, caption);
   }
