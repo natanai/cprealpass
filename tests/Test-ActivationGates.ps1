@@ -18,7 +18,9 @@ $acceptance = Get-Content -Raw -LiteralPath $acceptancePath | ConvertFrom-Json
 $settings = Get-Content -Raw -LiteralPath $settingsPath | ConvertFrom-Json
 
 function RequireDisabledPolicy([string]$source,[string]$class,[string]$method) {
-    $pattern = 'public class ' + [regex]::Escape($class) + ' extends IScriptable\s*\{\s*public static func ' + [regex]::Escape($method) + '\(\) -> Bool\s*\{\s*return false;'
+    # Comments are allowed between a class brace and its policy method. Match the
+    # class body narrowly rather than assuming undocumented source formatting.
+    $pattern = '(?s)public class ' + [regex]::Escape($class) + ' extends IScriptable\s*\{.*?public static func ' + [regex]::Escape($method) + '\(\) -> Bool\s*\{\s*return false;'
     if ([regex]::Matches($source,$pattern).Count -ne 1) { throw "Expected exactly one disabled source policy: $class.$method" }
 }
 
@@ -39,9 +41,10 @@ if ($bodyAttended -match '(?i)(Start-Process|Cyberpunk2077\.exe|scheduled task|R
     throw 'Attended body builder must not launch the game or install background automation.'
 }
 
-# Broad builder is the only project helper allowed to open BOTH body and combat,
-# and only in a new immutable generated manifest that is compiled before use. The
-# base may already have accepted body enabled, but combat must arrive closed.
+# The historical broad builder can open BOTH body and combat only in a new
+# immutable generated manifest that is compiled before use. It is NOT the new
+# owned-runtime release/test path; ownership policy separately prevents calling its
+# inherited source-mod profile an owned candidate.
 foreach ($needle in @(
     "Set-PolicyOnce `$bodyText 'CRBodyRuntimePolicy' 'Enabled' `$true",
     "Set-PolicyOnce `$combatText 'CRCombatRuntimePolicy' 'Enabled' `$true 'false'",
@@ -65,4 +68,4 @@ if ($session -match '(?i)(Start-Process|Register-ScheduledTask|New-Service)') {
     throw 'Attended session tool must not launch the game or install background automation.'
 }
 
-Write-Host 'PASS: canonical body/combat/diagnostic gates remain closed; current body-enabled builds may seed immutable attended candidates, staged combat requires an explicitly closed base, and live installation requires explicit deploy + save/receipt verification.'
+Write-Host 'PASS: canonical body/combat/diagnostic gates remain closed; generated development profiles cannot silently open native authority and live installation remains explicit + backed up.'
