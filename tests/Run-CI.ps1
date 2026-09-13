@@ -16,6 +16,7 @@ $tests = @(
     'Test-FeatureInventory.ps1',
     'Test-AcceptanceLedger.ps1',
     'Test-ActivationGates.ps1',
+    'Test-OwnedAcceptanceBuilder.ps1',
     'Test-AttendedSessionTool.ps1',
     'Test-ArtifactPolicy.ps1',
     'Test-PlayerPackageFinalizer.ps1',
