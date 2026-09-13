@@ -28,7 +28,7 @@ foreach ($goal in @('G-043','G-044','G-045','G-046','G-047','G-048','G-049','G-0
     Check ($goals.Contains($goal)) "Canonical Condition/treatment goal missing: $goal"
 }
 Check ($conditionDoc.Contains('CYBERWARE | CONDITION')) 'Condition UI contract does not preserve the agreed mode concept.'
-Check ($conditionDoc.Contains('The current backpack `FIELD CARE` popup is a development prototype')) 'Backpack prototype retirement is not documented.'
+Check ($conditionDoc.Contains('obsolete backpack `FIELD CARE` popup has been retired from production source')) 'Backpack prototype retirement is not documented as production-source removal.'
 Check ($conditionDoc.Contains('paper-doll zoom')) 'Native zoom reuse is not part of the Condition UI contract.'
 Check ($conditionDoc.Contains('bounded provenance')) 'Condition UI contract does not require bounded provenance.'
 
