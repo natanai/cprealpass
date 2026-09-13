@@ -1,108 +1,128 @@
-# realpass modular architecture
+# realpass internal modular architecture
 
 ## Goal
 
-Ship one coherent realism mod, not a bundle of separately branded feature mods. Source projects may be used as references or dependencies during development, but retained behavior should be adapted into a realpass-owned module boundary wherever licensing and technical constraints permit.
+Ship one coherent realism mod with one authored balance. The internal code remains modular so individual authorities can be isolated, calibrated and regression-tested during development, but that modularity is **not** the final player product. A release build enables the accepted realpass systems together.
 
-A module exists because it owns a distinct physical phenomenon. A setting does not exist merely because an upstream mod exposed one.
+Gameplay and presentation implementations are realpass-owned. Dark Future, Project E3 HUD and other gameplay/presentation mods are reference material only; their runtime scripts/assets/state are forbidden from an owned-runtime candidate. Generic frameworks may remain only as plumbing when realpass genuinely needs their APIs.
 
-## Runtime module map
+## Internal authority map
 
 ### Body / needs
 
 Owns nutrition, hydration, wake time, fatigue, exertion, recovery, digestion/elimination and the minimum hygiene interactions that survive the busywork test.
 
-Master switch: `body.enabled`
+Development gate: `body`.
 
-Suggested subordinate switches: `nutrition`, `hydration`, `sleep`, `exertion`, `elimination`, `hygiene`.
+Internal facets such as nutrition, hydration, sleep, exertion, elimination and hygiene may be isolated in tests, but are not final player-facing switches.
 
 ### Injury
 
 Owns wound state, regional impairment, blood loss, stabilization, treatment and recovery.
 
-Master switch: `injury.enabled`
+Development gate: `injury`.
 
-This module consumes impacts produced by combat. When disabled, combat must fall back safely rather than leaving half-active bleeding or impairment state.
+It consumes impacts produced by combat. Development builds may isolate injury to diagnose failures; a release build does not offer an injury-off mode.
 
 ### Ballistics / combat
 
-Owns weapon/projectile profiles, ammunition, hit region, penetration and terminal-effect decisions. It should output a physical impact result rather than a second independent damage model.
+Owns weapon/projectile profiles, ammunition, hit region, penetration and terminal-effect decisions. It outputs a physical impact result rather than a second independent RPG damage model.
 
-Master switch: `combat.enabled`
+Development gate: `combat`.
 
-This module should minimize or bypass level-driven health inflation where technically safe while preserving authored exceptions.
+The release minimizes or bypasses level-driven health inflation where technically safe while preserving authored exceptions needed for quest integrity.
 
 ### Armor / clothing
 
 Owns physical protective coverage and armor wear. Normal clothing contributes no meaningful ballistic protection unless a specific item is actually protective by construction.
 
-Master switch: `armor.enabled`
+Development gate: `armor`.
 
-There is no realpass outfit module. realpass should not add a separate wardrobe/transmog simulation layer.
+There is no realpass outfit module and no player switch that changes clothing into an abstract armor system.
 
 ### Cyberware physiology
 
 Owns only cyberware consequences that alter physical protection, biological demand, structural damage, treatment or recovery.
 
-Master switch: `cyberwarePhysiology.enabled`
+Development gate: `cyberwarePhysiology`.
 
 It must not become a generic cyberware rebalance.
 
 ### Presentation
 
-Owns HUD/nameplate/status presentation required to communicate the above systems cleanly. It may preserve selected E3 presentation while allowing superior modern scanner functionality to remain native.
+Owns realpass HUD/nameplate/status behavior required to communicate the physical model. The modern native scanner remains authoritative where it is superior; selected E3-era ideas must be recreated with realpass-owned implementation rather than imported E3 runtime content.
 
-Master switch: `presentation.enabled`
+Development gate: `presentation`.
 
-Presentation should never become an alternate gameplay authority.
+The authored release removes traditional actor health bars and unnecessary RPG clutter. Presentation never owns simulation state.
 
 ### Diagnostics
 
-Owns debug/status visibility needed for calibration and testing.
+Owns finite observability needed for calibration and testing.
 
-Master switch: `diagnostics.enabled`
+Development gate: `diagnostics`.
 
-Default: off.
+Always off in a normal release.
 
-## Configuration principles
+## Release configuration
 
-- One realpass settings surface.
-- One master toggle per major module.
-- Sub-toggles only for genuinely separable processes.
-- Disabling a module must not leave persistent penalties, orphaned listeners, incompatible save state or hidden dependencies on an unrelated module.
-- Defaults should describe the intended realpass experience, not upstream defaults.
-- Upstream configuration should be treated as migration/input data, not as the public product structure.
-- Development diagnostics are not player-facing gameplay features.
+The final configuration is deliberately simple:
+
+- accepted body authority: on;
+- accepted injury authority: on;
+- accepted combat authority: on;
+- accepted armor authority: on;
+- accepted cyberware-physiology authority: on where implemented;
+- accepted presentation authority: on;
+- diagnostics: off;
+- traditional actor health bars: off.
+
+There is no normal player-facing subsystem enable/disable menu and no balance-slider matrix. Two players using the same realpass version should be playing the same authored simulation.
+
+Internal gates remain valuable because they let a developer answer “which authority caused this?” without deleting code or changing the public product definition. Build/test tooling may expose those gates explicitly; release tooling must lock them to the accepted profile.
+
+## Runtime ownership
+
+Owned-runtime code follows this hierarchy:
+
+`Cyberpunk native game APIs → thin realpass adapter → realpass model/state → realpass presentation`
+
+Not:
+
+`Cyberpunk → another gameplay mod → realpass bridge → another mod's UI/state`.
+
+A generic framework such as redscript/RED4ext/Codeware may appear below a thin adapter only when it supplies infrastructure rather than gameplay policy. Every such dependency must be justified independently and removed if no accepted realpass runtime file needs it.
 
 ## Dependency direction
 
 Preferred one-way flow:
 
-`clock/lifecycle → body state`
+`native clock/lifecycle/input → body state`
 
-`weapon/ammunition → impact → armor/cyberware → tissue injury → blood loss/impairment → treatment/recovery`
+`native weapon/ammunition/equipment signals → impact → armor/cyberware → tissue injury → blood loss/impairment → treatment/recovery`
 
-`body + injury + equipment state → presentation`
+`body + injury + equipment state → realpass presentation`
 
-Presentation must not write simulation state. Economy, weather, travel restrictions and outfit systems should have no dependency edges because they are outside scope.
+Presentation must not write simulation state. Economy, weather, travel restrictions and outfit systems have no dependency edges because they are outside scope.
 
-## Consolidation test for imported features
+## Reference-mod rule
 
-For every feature inherited from a source mod:
+For every useful idea observed in another mod:
 
-1. Name the physical phenomenon it represents.
-2. Identify the realpass module that should own that phenomenon.
-3. If no in-scope module owns it, remove it from the realpass build.
-4. If another module already owns it, adapt or disable the duplicate.
-5. If it remains, expose only the minimum controls needed to tune or disable the real phenomenon.
-6. Verify that the source feature can be removed from packaging without silently removing unrelated realpass behavior.
+1. Name the physical or presentation problem the idea helps expose.
+2. Re-derive the behavior from native game signals and the realpass model.
+3. Implement the chosen behavior in realpass-owned source/data.
+4. Keep attribution/research notes where relevant, but do not make the reference mod a hidden runtime host.
+5. Prove an owned-runtime deployment contains no reference-mod scripts, archives, tweak payloads or required save state.
+
+“Adapted enough to look like realpass” is not the target. The executing implementation itself must belong to realpass.
 
 ## Clothing and armor rule
 
-The simulation should distinguish appearance from protection by physical equipment rather than by an abstract outfit slot. Clothing can affect appearance and, where appropriate later, physical properties such as coverage or insulation; ballistic armor protects according to actual protective construction and coverage. No generic outfit bonus, transmog armor authority or arbitrary clothing armor value belongs in the realism model.
+The simulation distinguishes appearance from protection by physical equipment rather than by an abstract outfit slot. Clothing can affect appearance and, where appropriate later, physical properties such as coverage or insulation; ballistic armor protects according to actual protective construction and coverage. No generic outfit bonus, transmog armor authority or arbitrary clothing armor value belongs in the realism model.
 
 ## Combat acceptance target
 
 A gunshot should be explainable as a causal chain: what projectile struck, where it struck, what material/protection it encountered, whether it penetrated, what tissue or cybernetic structure was affected, what immediate impairment resulted, whether bleeding or other physiological consequences follow, and what treatment can change the outcome.
 
-If the result is primarily explained by the target's level, a large generic health pool or stacked percentage bonuses, the realism pass has not yet reached its target.
+If the result is primarily explained by target level, a large generic health pool, stacked percentage bonuses or another mod's hidden damage authority, the realism pass has not reached its target.
