@@ -1,73 +1,78 @@
 # realpass project status
 
-Last updated: 2026-09-12
+Last updated: 2026-09-13
 Working branch: `chatgpt-continuation`
-Baseline branch tip when this status ledger was introduced: `4b9dbbeb5e0ef243900b2daec4baf800e2a4af64`
+Canonical product goals: `AGREED-GOALS.md`
 
 ## Release target
 
-realpass is intended to become one coherent Cyberpunk 2077 + Phantom Liberty realism mod. The target player experience is: download one release package, copy/extract it into the Cyberpunk 2077 game root (or run one equally simple installer if dependency licensing forces that route), then launch the game normally through Steam. The player should not need to understand the source mods, development staging, manifest system, or deployment receipts.
+realpass is intended to become one coherent Cyberpunk 2077 + Phantom Liberty realism mod with a **realpass-owned executing runtime**. Dark Future and Project E3 HUD are reference/inspiration only; an accepted owned-runtime candidate may not require their scripts, assets, state machines, save state or gameplay/UI authority.
 
-The gameplay target is physical and physiological realism rather than generalized difficulty. In-scope authorities are body/needs, injury, realistic projectile/impact behavior, physical armor/clothing coverage, relevant cyberware physiology, presentation required to communicate those systems, and diagnostics for development. Weather, economy overhauls, arbitrary scarcity, added random encounters, travel restrictions and a separate outfit/transmog system are out of scope.
+The target player experience is: download one release package, copy/extract it into the Cyberpunk 2077 game root (or run one equally simple installer if dependency licensing technically requires that route), then launch normally through Steam. No Vortex knowledge, source-mod stack management or persistent realpass launcher should be required.
+
+The release is a fixed authored experience rather than a player-configurable module collection. Development builds retain internal gates so engineers can isolate body/combat/injury/presentation problems, but a normal release enables the accepted physical model together and keeps diagnostics off.
+
+For the full current product decisions and precedence rules, read `AGREED-GOALS.md` first.
 
 ## Overall completion estimate
 
-**50% toward a first credible 1.0 release.**
+**45% toward a first credible 1.0 release.**
 
-This percentage is a weighted engineering estimate, not a claim that half the source is written. A subsystem receives credit only for work that advances a releasable, gameplay-validated, safely installable mod. Offline models, static contracts and compilation scaffolding without native gameplay validation remain partial credit.
+This estimate was deliberately reduced from the earlier 50% after the ownership requirement was tightened. Work that only functioned through Dark Future/Project E3 integration no longer receives release-completion credit. The source models remain valuable; the reduction reflects reopened integration/presentation gates, not lost simulation work.
 
 | Workstream | Weight | Current completion | Weighted contribution | Notes |
 | --- | ---: | ---: | ---: | --- |
-| Scope, architecture and authority ownership | 10% | 95% | 9.5% | Realism rules, exclusions, module boundaries and authority ownership are explicit and machine-tested. |
-| Body / needs / sleep / exertion | 20% | 58% | 11.6% | Significant original model/runtime work and broad integration scaffolding exist; calibration and native acceptance remain incomplete. |
-| Combat / injury / blood loss / armor | 25% | 46% | 11.5% | Causal models, native bridges, armor wear, impairment, blood loss and field care have extensive offline tests; broad native combat acceptance is the next major gate. |
-| Unified settings and independent toggles | 10% | 30% | 3.0% | Machine-readable settings/module contracts and independence tests exist; the final player-facing runtime settings authority is not wired end-to-end. |
-| Presentation / scanner / nameplates | 10% | 65% | 6.5% | Modern-scanner/nameplate candidate plus actor-healthbar suppression are integrated for attended testing; exact native/E3 rendering still needs acceptance and standalone presentation remains open. |
-| Distribution / one-package installation | 10% | 25% | 2.5% | Safe package policy, artifact checks, local deploy/upgrade/rollback and CI artifact scaffolding exist; redistribution-cleared one-package release does not yet. |
-| Native gameplay, save and quest validation | 10% | 15% | 1.5% | Earlier smoke evidence exists, but the new broad body/combat/save/boss/Phantom Liberty candidate has not yet been run on the user's game. |
-| Documentation / handoff / reproducibility | 5% | 78% | 3.9% | Durable worklog/status, architecture, calibration, acceptance and operator docs now preserve most project intent and test procedure. |
-| **Total** | **100%** |  | **50.0%** | |
-
-The increase from the original 43% baseline reflects real closed engineering gates: machine-readable contracts, cloud-safe CI, broader offline regression coverage, safe artifact policy, an immutable broad attended builder, no-healthbar presentation work, and one-command compile/preflight/deploy orchestration. It does **not** award native-game acceptance that has not happened yet.
+| Scope, architecture and authority ownership | 10% | 95% | 9.5% | Product scope, fixed-release philosophy and owned-runtime requirement are explicit. |
+| Body / needs / sleep / exertion | 20% | 50% | 10.0% | Substantial original models plus a new native-runtime direction exist; the Dark Future-free native path is not yet compile/game accepted. |
+| Combat / injury / blood loss / armor | 25% | 40% | 10.0% | Original causal models are substantial; owned native routing, provenance and broad gameplay calibration/acceptance remain incomplete. |
+| Fixed release profile / development gates | 10% | 55% | 5.5% | Architecture now correctly treats modularity as development-only; earlier player-facing Mod Settings work is retired from the product path. |
+| Presentation / condition UI / scanner / nameplates | 10% | 30% | 3.0% | No-healthbar and modern-scanner directions are strong, but E3-independent presentation and the new Cyberware/Condition body interface are not yet native accepted. |
+| Distribution / one-package installation | 10% | 20% | 2.0% | Safe deployment/rollback/artifact scaffolding exists, but the player artifact cannot be called owned/all-in-one until runtime dependencies are cleaned. |
+| Native gameplay, save and quest validation | 10% | 5% | 0.5% | Do not test the legacy integrated candidate as the intended product; first produce an owned-runtime compile candidate. |
+| Documentation / handoff / reproducibility | 5% | 90% | 4.5% | `AGREED-GOALS.md`, architecture/status/worklog and acceptance docs preserve current product intent and handoff state. |
+| **Total** | **100%** |  | **45.0%** | |
 
 ## Current known-good state
 
-- `main` contains the local-agent work through commit `938c8b9`, including the scanned-NPC/toilet fixes and the modern scanner restoration candidate.
-- `chatgpt-continuation` starts from that state and contains the clarified realism scope, module architecture, machine-readable settings/runtime/distribution contracts and broad acceptance tooling.
-- GitHub Actions runs the public-source reproducible model/contract suite and safe development-package policy. The exact branch head immediately before this status refresh was green.
-- Original realpass body, combat, wound, armor-wear, blood-loss, field-care and NPC-body models are present in source with substantial offline regression coverage.
-- Canonical body/combat activation remains deliberately gated. `Build-AttendedAcceptance.ps1` may open both only in a new immutable generated candidate after validating the full causal runtime chain and compiling the exact profile.
-- The default broad attended candidate removes traditional HP bars for V, ordinary NPCs and bosses. The actor-health presentation also covers direct overclock/overshield visibility paths and the dedicated companion actor healthbar while deliberately leaving generic objective/vehicle durability UI alone.
-- `Prepare-AttendedSession.ps1` can derive the active local deployment, compile/preflight the broad candidate, and—only with explicit `-Deploy`—establish a verified save backup, perform a reversible upgrade and verify the receipt. It never launches the game.
-- The project has verified file deployment, upgrade, rollback, hashing and save-backup machinery for local integration testing.
-- The project has explicit provenance and license records for framework dependencies, Dark Future adaptations and the Project E3 HUD dependency.
+- `main` remains the local-agent baseline through `938c8b9`, including the modern-scanner restoration candidate and earlier presentation fixes.
+- `chatgpt-continuation` contains the clarified realism scope, internal modular architecture, fixed-release configuration direction, ownership policy work and extensive original body/combat/injury models.
+- `AGREED-GOALS.md` is now the canonical user-intent ledger and supersedes conflicting older design text.
+- Core realpass source includes original models for body/needs, ballistics/impact, localized injuries, blood loss, armor wear, impairment, field care and NPC injury progression.
+- The body runtime has begun moving from Dark Future lifecycle/intake/time-skip ownership to direct native Cyberpunk hooks (`BodyNativeHooks.reds` plus realpass-owned body runtime/state).
+- Dark Future preview/menu/intake/tick authority files were removed from the active production source path during the ownership pivot.
+- **Owned-runtime cleanup is not complete:** `FieldCareActionRuntime.reds` still imports `DarkFuture.Services.DFGameStateService`, so the current source tree must not yet be called Dark Future-independent.
+- The final injury UX direction is now the vanilla Cyberware/body screen with a realpass `CYBERWARE | CONDITION` concept, condition entries anchored to body regions, native anatomical zoom/drill-down where possible, injury provenance/cause explanation, field care in ordinary context and professional/mechanical care in ripperdoc/clinical context.
+- The current backpack `FIELD CARE` popup is a prototype slated for retirement after the Condition interface replaces it.
+- Traditional actor health bars remain outside the authored presentation target; generic objective/vehicle durability indicators are not blanket-suppressed.
 
 ## Principal release blockers
 
-1. **Broad native gameplay acceptance.** Compile the exact current candidate against the user's installed 2.31 script bundle, then validate player/NPC combat symmetry, no-healthbar presentation, localized injury, armor, bleeding, impairment, treatment, save/reload and time progression in one coherent session.
-2. **Combat calibration from native evidence.** Validate weapon/ammunition mapping, hit-region routing, actual armor coverage, penetration and tissue/cyberware consequences. Remove ordinary-human level/HP sponge behavior where the native engine permits while preserving authored boss/quest/nonlethal exceptions.
-3. **Single runtime settings authority.** Convert the machine-readable module/settings contract into the final realpass-owned in-game settings surface. Every major module must remain independently disable-able without orphaned state or hidden dependencies.
-4. **Presentation independence.** Preserve the useful E3-inspired look without requiring a redistributable copy of Project E3 HUD. Current published E3 permissions require the original mod and block a true standalone one-ZIP release.
-5. **Distribution licensing.** Confirm transitive redistribution obligations for every bundled framework and adapted third-party material. Do not publish a package containing blocked or unreviewed assets.
-6. **Release artifact.** Evolve the current safe development artifact into the permitted game-root-shaped player package, with deterministic contents, hashes, notices and simple install/upgrade behavior.
-7. **Compatibility acceptance.** Validate bosses, MaxTac, companions, nonlethal outcomes, quest immunity, Phantom Liberty critical sequences, save migration, performance and script latency.
+1. **Finish owned-runtime separation.** Remove every remaining Dark Future/Project E3 executing dependency from accepted source/build manifests, beginning with the lingering `DFGameStateService` use in field-care timing/context.
+2. **Build an explicit owned-runtime candidate.** The candidate must be assembled from a realpass-owned manifest rather than inherited from the currently installed legacy integration. Machine policy must reject Dark Future/E3 runtime payloads/namespaces.
+3. **Cyberware/Condition injury interface.** Replace the backpack prototype with the agreed body-screen Condition mode, using the stock Cyberware/ripperdoc shell/zoom behavior where feasible and realpass-owned condition widgets/state.
+4. **Injury provenance.** Add a bounded history/provenance record (impact type/projectile family/region/protection/penetration/time) so Condition details can explain how an injury likely occurred without turning event history into the authoritative injury model.
+5. **Exact local compilation.** Compile the owned candidate against the user's installed game/framework scripts before deployment. Fix signature/API issues at the thin adapter boundary.
+6. **Broad native gameplay acceptance.** Validate player/NPC physical symmetry, no-healthbar feedback, localized injury, armor, bleeding, impairment, field/professional treatment, body progression, save/reload, bosses/MaxTac/nonlethal/quest protections and Phantom Liberty critical sequences.
+7. **E3-independent presentation.** Recreate only the desired nameplate/HUD ideas with realpass-owned implementation; keep the native modern scanner authoritative.
+8. **Player release artifact.** After runtime ownership and native behavior stabilize, produce the deterministic game-root-shaped release with hashes/notices/collision rules and simple install/update/rollback behavior.
 
 ## Immediate priority order
 
-1. On the user's PC, sync `chatgpt-continuation` and run the broad attended compile/preflight without deploying. Fix any exact-game-script or acquired-dependency compile mismatch before gameplay conclusions are drawn.
-2. If preflight is clean, generate and deploy a fresh immutable candidate through `Prepare-AttendedSession.ps1 -Deploy`, preserving the verified save backup and rollback receipt, then perform the broad attended acceptance plan.
-3. Convert each native failure into a narrow acceptance-ledger issue rather than weakening the physical model or reintroducing health-sponge scaling.
-4. Continue consolidating the player-facing realpass settings authority and remove inherited/upstream feature ownership where realpass should be authoritative.
-5. Continue standalone presentation and licensing work so the eventual package does not depend on redistributing blocked Project E3 material.
-6. Promote distribution tooling from development-source artifacts toward a deterministic redistribution-cleared player package only after native behavior is stable.
+1. Treat `AGREED-GOALS.md` as the first read for every agent and keep it synchronized when the user makes a new explicit product decision.
+2. Finish the owned-runtime code cleanup before asking the user to deploy/test another candidate.
+3. Implement the Condition-mode injury data/presentation architecture and bounded injury provenance while preserving the regional physical state as authority.
+4. Build a realpass-owned compile candidate that contains no Dark Future/Project E3 runtime content and run exact local compile/preflight on the user's PC.
+5. Only after the owned-runtime compile is clean, deploy with verified save backup/rollback and run a broad attended session.
+6. Convert native failures into narrow adapter/model/acceptance issues; do not solve them by reintroducing source-mod ownership or generic health-sponge scaling.
 
 ## Rules for future agents
 
-- Read `REALISM-SPEC.md`, `docs/MODULAR-ARCHITECTURE.md`, `docs/ROADMAP.md`, this file, `docs/WORKLOG.md`, `docs/COMBAT-CALIBRATION.md` and `docs/ATTENDED-ACCEPTANCE.md` before changing behavior.
-- Treat the percentages here as conservative release-readiness estimates. Update them only when a real gate closes or reopens, and explain the change in `docs/WORKLOG.md`.
-- Do not reactivate body or combat in canonical source merely because scripts compile. Native gameplay acceptance is required.
-- Do not add features outside the realism scope simply because an upstream dependency offers them.
-- Do not redistribute Project E3 HUD assets under the current recorded permission model.
-- Keep local game files, saves, generated staging state, downloaded dependencies and deployment receipts out of the public repository.
+- **Read `AGREED-GOALS.md first.** Then read this file, `docs/WORKLOG.md`, `REALISM-SPEC.md`, `docs/MODULAR-ARCHITECTURE.md`, `docs/SETTINGS-ARCHITECTURE.md`, `docs/COMBAT-CALIBRATION.md` and relevant acceptance docs before changing behavior.
+- If an older document conflicts with a locked goal in `AGREED-GOALS.md`, update the older document; do not reinterpret the goal to preserve legacy implementation.
+- Update `AGREED-GOALS.md` whenever the user explicitly agrees to a new product goal. Give new decisions stable `G-###` identifiers.
+- Update completion percentages only when a real release gate closes/reopens and explain the change in `docs/WORKLOG.md`.
+- Do not label any candidate “owned-runtime” while Dark Future/Project E3 executing content remains required.
+- Do not reactivate/deploy speculative body/combat code merely because offline tests pass; exact native compile/preflight comes first.
+- Keep game files, saves, downloaded dependencies, generated staging state and deployment receipts out of the public repository.
 - No unattended game launch, background watcher/logger/service or scheduled task may be introduced for testing.
-- Prefer a few coherent, reviewable batches over dozens of speculative patches.
+- Prefer coherent reviewable batches over speculative patches.
