@@ -119,7 +119,7 @@ public class CRFieldCareActionRuntime extends ScriptableSystem {
       return 6;
     }
     player = GameInstance.GetPlayerSystem(GetGameInstance()).GetLocalPlayerMainGameObject() as PlayerPuppet;
-    if CRFieldCareInventory.Count(player) < 1 {
+    if CRFieldCareInventory.Count(player, kind) < 1 {
       return 2;
     }
     this.action = CRFieldCareActionModel.Create(region, kind);
@@ -167,12 +167,12 @@ public class CRFieldCareActionRuntime extends ScriptableSystem {
       this.action = null;
       this.Unschedule();
       if outcome == 1 {
-        this.status = "Field care completed. Used 1 trauma kit.";
+        this.status = "Field care completed. Used 1 treatment supply.";
       } else {
         if outcome == 4 {
-          this.status = "Field care failed and the kit could not be returned. Please report this error.";
+          this.status = "Field care failed and the treatment supply could not be returned. Please report this error.";
         } else {
-          this.status = "Field care did not complete. No kit used, or the kit was returned.";
+          this.status = "Field care did not complete. No treatment supply used, or the supply was returned.";
         }
       }
       this.Notify(this.status, 4.0);
