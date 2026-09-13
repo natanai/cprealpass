@@ -54,6 +54,9 @@ $missing = @($requiredDestinations | Where-Object { -not $destinations.ContainsK
 if ($missing.Count -gt 0) {
     throw "Source manifest is not a broad realpass acceptance profile. Missing:`n - $($missing -join "`n - ")"
 }
+if (@($manifest.files | Where-Object component -eq 'mod-settings').Count -eq 0) {
+    throw 'Broad attended settings surface requires the pinned Mod Settings component in the source profile.'
+}
 
 $stageRelative = 'staging/attended-' + [guid]::NewGuid().ToString('N')
 $stage = Resolve-SafeChildPath $project $stageRelative
@@ -86,6 +89,28 @@ function Stage-Replacement([string]$destination,[string]$text,[string]$label) {
     $changes.Add([ordered]@{destination=$destination;purpose=$label;beforeSha256=$before;afterSha256=$entry.sha256})
 }
 
+function Sync-ProjectSource([string]$sourceRelative,[string]$destination,[string]$component,[string]$label) {
+    $source = Resolve-SafeChildPath $project $sourceRelative
+    $hash = Get-Sha256 $source
+    if ($destinations.ContainsKey($destination)) {
+        $existing = $destinations[$destination]
+        $owner = [string]$existing.component
+        if (-not [string]::IsNullOrWhiteSpace($owner) -and $owner -notlike 'realpass*' -and $owner -ne 'cyberpunk-realism-body') {
+            throw "$destination is owned by a non-realpass component: $owner"
+        }
+        $before = $existing.sha256
+        $existing.source = $sourceRelative
+        $existing.sha256 = $hash
+        if ([string]::IsNullOrWhiteSpace($owner)) { $existing.component = $component }
+        $changes.Add([ordered]@{destination=$destination;purpose=$label;beforeSha256=$before;afterSha256=$hash})
+    } else {
+        $entry = [pscustomobject][ordered]@{source=$sourceRelative;destination=$destination;sha256=$hash;component=$component}
+        $manifest.files += $entry
+        $destinations[$destination] = $entry
+        $changes.Add([ordered]@{destination=$destination;purpose=$label;beforeSha256=$null;afterSha256=$hash})
+    }
+}
+
 # The current known-good deployment may already be a body-enabled quiet profile.
 # Accept either canonical-disabled or already-body-enabled input, but make the
 # generated result unambiguously body-enabled. Diagnostics must arrive closed so a
@@ -108,35 +133,18 @@ $combatText = [IO.File]::ReadAllText($combatSource).Replace("`r`n","`n")
 $combatText = Set-PolicyOnce $combatText 'CRCombatRuntimePolicy' 'Enabled' $true 'false'
 Stage-Replacement $combatDestination $combatText 'combat native bridge enabled for attended acceptance'
 
+# Always compile the current project-owned settings surface into the attended
+# candidate. It records player intent only and cannot open body/combat acceptance
+# gates. Refreshing here lets an older known-good deployed base test the new surface
+# without requiring the player to rebuild that base by hand first.
+$settingsDestination = 'r6/scripts/CyberpunkRealism/RealpassSettings.reds'
+Sync-ProjectSource 'src/redscript/CyberpunkRealism/RealpassSettings.reds' $settingsDestination 'realpass-settings' 'refresh passive realpass-owned Mod Settings surface'
+
 # Add the project-original no-healthbar presentation to the test candidate by
 # default. It hides HP UI only; it does not change the damage/stat-pool simulation.
 $healthbarDestination = 'r6/scripts/CyberpunkRealism/NoHealthbars.reds'
-$healthbarSourceRelative = 'src/redscript/CyberpunkRealism/NoHealthbars.reds'
-$healthbarSource = Resolve-SafeChildPath $project $healthbarSourceRelative
-$healthbarHash = Get-Sha256 $healthbarSource
 if (-not $ShowTraditionalHealthBars) {
-    if ($destinations.ContainsKey($healthbarDestination)) {
-        $existing = $destinations[$healthbarDestination]
-        $component = [string]$existing.component
-        if (-not ([string]::IsNullOrWhiteSpace($component)) -and $component -notlike 'realpass*') {
-            throw "NoHealthbars destination is owned by a non-realpass component: $component"
-        }
-        $before = $existing.sha256
-        $existing.source = $healthbarSourceRelative
-        $existing.sha256 = $healthbarHash
-        if ([string]::IsNullOrWhiteSpace($component)) { $existing.component = 'realpass-presentation' }
-        $changes.Add([ordered]@{destination=$healthbarDestination;purpose='refresh project-original traditional healthbar suppression';beforeSha256=$before;afterSha256=$healthbarHash})
-    } else {
-        $entry = [pscustomobject][ordered]@{
-            source = $healthbarSourceRelative
-            destination = $healthbarDestination
-            sha256 = $healthbarHash
-            component = 'realpass-presentation'
-        }
-        $manifest.files += $entry
-        $destinations[$healthbarDestination] = $entry
-        $changes.Add([ordered]@{destination=$healthbarDestination;purpose='traditional player/NPC/boss health bars hidden';beforeSha256=$null;afterSha256=$healthbarHash})
-    }
+    Sync-ProjectSource 'src/redscript/CyberpunkRealism/NoHealthbars.reds' $healthbarDestination 'realpass-presentation' 'traditional player/NPC/boss/companion actor health bars hidden'
 }
 
 $sourceBuildId = [string]$manifest.buildId
@@ -159,10 +167,11 @@ $record = [ordered]@{
     diagnosticsEnabled = [bool]$Diagnostics
     traditionalHealthBars = [bool]$ShowTraditionalHealthBars
     noTraditionalHealthBars = -not [bool]$ShowTraditionalHealthBars
+    settingsSurface = $settingsDestination
     requiredRuntimeDestinations = @($requiredDestinations)
     changes = @($changes.ToArray())
     manifestPath = $outputRelative
-    scope = 'Attended compile candidate only. Build does not deploy or launch Cyberpunk. Native combat feel, UI rendering, saves, quests, bosses and Phantom Liberty still require player-attended acceptance.'
+    scope = 'Attended compile candidate only. Build does not deploy or launch Cyberpunk. Native combat feel, settings rendering, UI rendering, saves, quests, bosses and Phantom Liberty still require player-attended acceptance.'
 }
 Write-JsonFile $record $report
-Write-Host "Staged and compiled attended candidate $BuildId: body=on, combat=on, healthBars=$([bool]$ShowTraditionalHealthBars), diagnostics=$([bool]$Diagnostics). No live deployment performed."
+Write-Host "Staged and compiled attended candidate $BuildId: body=on, combat=on, healthBars=$([bool]$ShowTraditionalHealthBars), diagnostics=$([bool]$Diagnostics), settings=passive. No live deployment performed."
