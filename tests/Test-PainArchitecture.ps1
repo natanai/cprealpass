@@ -8,6 +8,7 @@ $goals = Get-Content -Raw -LiteralPath (Join-Path $project 'AGREED-GOALS.md')
 $painModel = Get-Content -Raw -LiteralPath (Join-Path $project 'src/redscript/CyberpunkRealism/PainModel.reds')
 $painRuntime = Get-Content -Raw -LiteralPath (Join-Path $project 'src/redscript/CyberpunkRealism/PainRuntime.reds')
 $painNative = Get-Content -Raw -LiteralPath (Join-Path $project 'src/redscript/CyberpunkRealism/PainNativeEffects.reds')
+$injuryEffectsNative = Get-Content -Raw -LiteralPath (Join-Path $project 'src/redscript/CyberpunkRealism/InjuryEffectsNative.reds')
 $bodyHooks = Get-Content -Raw -LiteralPath (Join-Path $project 'src/redscript/CyberpunkRealism/BodyNativeHooks.reds')
 $fieldCare = Get-Content -Raw -LiteralPath (Join-Path $project 'src/redscript/CyberpunkRealism/FieldCareRuntime.reds')
 $conditionPresentation = Get-Content -Raw -LiteralPath (Join-Path $project 'src/redscript/CyberpunkRealism/ConditionPresentation.reds')
@@ -62,6 +63,8 @@ foreach ($level in 1..3) {
 Check ($painNative.Contains('vfx_fullscreen_drunk_level')) 'Native intoxication audio/fullscreen parameter is not synchronized.'
 Check (-not $painNative.Contains('ApplyStatusEffect') -and -not $painNative.Contains('BaseStatusEffect.Drunk')) 'Pain overuse inherited the stock alcohol status/gameplay package.'
 Check (-not $painNative.Contains('gamedataStatPoolType.Health') -and -not $painNative.Contains('CRInjuryModel.Treat(')) 'Native pain presentation became a healing/HP authority.'
+Check (-not $painNative.Contains('@wrapMethod(CRInjuryEffectsRuntime)')) 'Pain reintroduced a REDscript-incompatible wrapper around a project-defined runtime.'
+Check ($injuryEffectsNative.Contains('CRPainNativeEffects.Refresh(localPlayer')) 'Pain is not refreshed from the owned transient-injury reconstruction boundary.'
 
 # Condition mode must expose the qualitative projection rather than calculating a
 # second pain value or presenting a numeric pain meter.
@@ -70,4 +73,4 @@ Check ($conditionPresentation.Contains('MaxDoc analgesia') -and -not $conditionP
 Check ($conditionUI.Contains('crConditionPain') -and $conditionUI.Contains('this.crConditionPain.SetText(descriptor.painText)')) 'Condition UI does not render qualitative pain state.'
 Check (-not $conditionUI.Contains('PAIN: ') -and -not $conditionUI.Contains('pain.perceivedPain')) 'Condition UI computes or exposes a raw pain meter instead of rendering the projection.'
 
-Write-Host "PASS: $script:checks vanilla-MaxDoc analgesia ownership, immediate feedback, REDscript-compatible clock anchoring, and Condition rendering architecture checks."
+Write-Host "PASS: $script:checks vanilla-MaxDoc analgesia ownership, immediate feedback, REDscript-compatible clock/refresh boundaries, and Condition rendering architecture checks."
