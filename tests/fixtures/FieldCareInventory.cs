@@ -17,14 +17,20 @@ public class TransactionSystem {
     public bool giveFails;
     public int removeCalls;
     public int giveCalls;
+    public string lastItem;
     public System.Action onRemove;
+    private static bool IsFieldSupply(ItemID item) {
+        return item != null && (item.id == "Items.GenericJunkItem4" || item.id == "Items.CommonMaterial1");
+    }
     public int GetItemQuantity(PlayerPuppet player, ItemID item) {
-        if (item.id != "Items.HealthBooster") throw new System.Exception("Wrong supply record");
+        if (!IsFieldSupply(item)) throw new System.Exception("Wrong supply record");
+        lastItem = item.id;
         return count;
     }
     public bool RemoveItem(PlayerPuppet player, ItemID item, int quantity) {
         removeCalls++;
-        if (quantity != 1 || item.id != "Items.HealthBooster") throw new System.Exception("Wrong debit");
+        if (quantity != 1 || !IsFieldSupply(item)) throw new System.Exception("Wrong debit");
+        lastItem = item.id;
         if (removeFails || count < quantity) return false;
         count -= quantity;
         var callback = onRemove;
@@ -34,7 +40,8 @@ public class TransactionSystem {
     }
     public bool GiveItem(PlayerPuppet player, ItemID item, int quantity) {
         giveCalls++;
-        if (quantity != 1 || item.id != "Items.HealthBooster") throw new System.Exception("Wrong compensation");
+        if (quantity != 1 || !IsFieldSupply(item)) throw new System.Exception("Wrong compensation");
+        lastItem = item.id;
         if (giveFails) return false;
         count += quantity;
         return true;
