@@ -29,7 +29,7 @@ The owned runtime has now passed the first exact local Cyberpunk 2.31 compile/pr
 | Combat / injury / blood loss / armor / pain | 25% | 45% | 11.25% | Original causal models and native adapters exact-compile together; physical outcomes, armor, pain/MaxDoc and treatment still need attended gameplay acceptance. |
 | Fixed release profile / development gates | 10% | 55% | 5.5% | Architecture treats modularity as development-only; player gameplay/balance settings are retired from the product path. |
 | Presentation / Condition UI / scanner / nameplates | 10% | 35% | 3.5% | No-healthbar and owned Cyberware/Condition adapters exact-compile; live rendering/interaction and E3-independent nameplates remain unaccepted. |
-| Distribution / one-package installation | 10% | 25% | 2.5% | Owned build/preflight/deploy/rollback path exists and the deployment profile exact-compiles; public packaging is still blocked by live acceptance and final dependency audit. |
+| Distribution / one-package installation | 10% | 25% | 2.5% | Owned build/preflight plus a fast flat install/removal path exists; public packaging is still blocked by live acceptance and final dependency audit. |
 | Native gameplay, save and quest validation | 10% | 20% | 2.0% | Exact local compile/preflight is now proven; first owned-runtime deployment, save/reload, combat/body/Condition behavior and quest compatibility are still ahead. |
 | Documentation / handoff / reproducibility | 5% | 95% | 4.75% | Goals, architecture/status/worklog, native-seam policy and attended acceptance path preserve current intent and reproducible evidence. |
 | **Total** | **100%** |  | **50.0%** | |
@@ -52,27 +52,28 @@ The owned runtime has now passed the first exact local Cyberpunk 2.31 compile/pr
 - `ConditionNativeUI.reds` contains the first owned native `CYBERWARE | CONDITION` slice on the stock Cyberware/ripperdoc controller, including active-condition listing, stock paper-doll selection/zoom calls, field-care controls and ripperdoc clinical/mechanical controls. It now exact-compiles against the user's installed 2.31 scripts; live rendering/input acceptance is still pending.
 - `docs/CONDITION-UI.md` defines the final injury UX: vanilla Cyberware/body shell, `CYBERWARE | CONDITION`, condition entries anchored to anatomy, native paper-doll zoom where possible, cause/protection explanation, field care in ordinary context and professional/mechanical care in ripperdoc context.
 - `Build-OwnedRuntimeProfile.ps1` layers only the pinned generic `RED4ext + redscript` base under the owned source candidate, rejects Dark Future/Project E3/Mod Settings/Input Loader payloads, and exact-compiles the final deployment manifest.
-- `Prepare-OwnedSession.ps1` provides the safe local path: compile + transaction preflight by default; `-Deploy` additionally requires a verified save backup, performs hash-verified deploy/upgrade, checks for source-mod runtime residue, and rolls back if post-deploy isolation fails. It never launches Cyberpunk.
+- `Prepare-OwnedSession.ps1` now uses `Install-OwnedRuntime.ps1` for the development install path. It exact-compiles first, plans only the current flat payload, directly replaces the current realpass-owned script namespace, removes known retired Dark Future/Project E3 runtime residue, verifies every copied payload hash, records one flat `owned-current.json`, and checks source-mod isolation. It does **not** traverse old rollback chains or create an extra local save backup.
+- `Remove-OwnedRuntime.ps1` is the lightweight realpass cleanup path. It removes recorded realpass-installed files whose hashes still match. If stock game bytes ever need repair, use Steam **Verify Files** or reinstall; Steam verification is not expected to remove arbitrary extra mod files on its own.
 - On 2026-09-13, owned preflight build `realpass-owned-preflight-20260913-201539-52d9961b` passed all 42 cloud-safe/offline checks and exact-compiled **42 project-original REDscript sources** against the installed Cyberpunk 2.31 scripts. The final deployable owned profile also exact-compiled with **50 files**. The game cache was not modified and nothing was deployed or launched.
 - Traditional actor health bars remain outside the authored presentation target; generic objective/vehicle durability indicators are not blanket-suppressed.
 - Exact-head cloud CI is required before moving to local acceptance; cloud success remains architecture/model evidence only, not gameplay acceptance.
 
 ## Principal release blockers
 
-1. **First owned-runtime live deployment and smoke test.** Exact compilation is now clean. The next gate is the save-backed `Prepare-OwnedSession.ps1 -Deploy` transaction followed by a manual launch through Steam and a short smoke test proving the game boots, scripts load and the owned runtime is actually active.
+1. **First owned-runtime live deployment and smoke test.** Exact compilation is now clean. The next gate is the fast flat `Prepare-OwnedSession.ps1 -Deploy` install followed by a manual launch through Steam and a short smoke test proving the game boots, scripts load and the owned runtime is actually active.
 2. **Cyberware/Condition live acceptance.** The agreed Condition mode exact-compiles, but its dynamic Ink layout, `CYBERWARE | CONDITION` toggle, active-condition list, paper-doll zoom behavior and treatment controls must be verified in the stock screen.
 3. **First attended combat/injury/pain/treatment acceptance.** Validate physical combat, armor, wounds, bleeding, impairment, pain/MaxDoc, no-healthbar feedback, Condition treatment and persistence together.
 4. **Provenance-to-UI acceptance.** Verify persistence, cause wording and left/right regional association in the live Condition interface without exposing raw simulation numbers.
 5. **Body native calibration.** Validate real game clock rate, consumption, sleep/wait distinction, exertion, washing/bathroom interactions and save/reload under the owned runtime.
 6. **Special combat compatibility.** Validate bosses/MaxTac, authored immunity/quest protections, nonlethal paths, NPC persistence/AI effects and Phantom Liberty critical sequences.
 7. **E3-independent presentation.** Recreate only desired nameplate/HUD ideas with realpass-owned implementation; keep the native modern scanner authoritative.
-8. **Player release artifact.** After runtime ownership and native behavior stabilize, produce the deterministic game-root-shaped release with hashes/notices/collision rules and simple install/update/rollback behavior.
+8. **Player release artifact.** After runtime ownership and native behavior stabilize, produce the deterministic game-root-shaped release with hashes/notices/ownership records and a simple install/update/uninstall path.
 
 ## Immediate priority order
 
 1. Treat `AGREED-GOALS.md` as the first read for every agent and keep it synchronized when the user makes a new explicit product decision.
 2. Keep the cloud-owned-path suite green and use it to reject architecture regressions, including native-hook code leaking out of the explicit seam allowlist.
-3. Run the first **save-backed owned deployment** with `Prepare-OwnedSession.ps1 -Deploy`. If deployment verification or residue isolation fails, stop and use the automatic rollback evidence rather than launching the game.
+3. Run the first **fast owned deployment** with `Prepare-OwnedSession.ps1 -Deploy`. It should exact-compile, install only the current 50-file owned profile, clean retired source-mod residue, verify installed bytes and stop at `READY` without walking historical rollback receipts or copying saves.
 4. If deployment reports `READY`, launch Cyberpunk normally through Steam and perform a short boot/load/save smoke test before deliberately exercising combat/body/Condition systems.
 5. Then run one broad attended combat + injury + pain + Condition treatment session using `docs/ATTENDED-ACCEPTANCE.md` as the checklist.
 6. Convert native/runtime failures into narrow adapter/model/acceptance issues; do not solve them by reintroducing source-mod ownership, item renames or generic health-sponge scaling.
@@ -87,6 +88,7 @@ The owned runtime has now passed the first exact local Cyberpunk 2.31 compile/pr
 - Update completion percentages only when a real release gate closes/reopens and explain the change in `docs/WORKLOG.md`.
 - Do not label any candidate “owned-runtime” while Dark Future/Project E3 executing content remains required.
 - Do not treat a successful exact compile as gameplay validation; the first owned deployment and attended live session are now the next authority.
-- Keep game files, saves, downloaded dependencies, generated staging state and deployment receipts out of the public repository.
+- Keep game files, saves, downloaded dependencies, generated staging state and local install-state files out of the public repository.
+- Do not reintroduce heavy local rollback/save-backup machinery into the normal development path unless the project owner explicitly asks for it. Flat owned-file tracking plus Steam repair is the accepted recovery model.
 - No unattended game launch, background watcher/logger/service or scheduled task may be introduced for testing.
 - Prefer coherent reviewable batches over speculative patches.
