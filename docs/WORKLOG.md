@@ -226,3 +226,22 @@ Not claimed: successful compilation is **not** gameplay validation. The owned ru
 Because a real release gate closed, the weighted readiness estimate moves from **45% to 50%**. The increase credits owned native compile compatibility and reproducible preflight only; it does not credit unobserved gameplay behavior.
 
 Next: run `Prepare-OwnedSession.ps1 -Deploy`. It must establish a verified save backup, hash-verify the transaction and prove Dark Future/Project E3 runtime residue is absent. Only if the tool reports `READY` should the user launch normally through Steam for the first owned-runtime smoke test.
+
+---
+
+## 2026-09-13 — development install/recovery path deliberately simplified
+
+Branch: `chatgpt-continuation`
+Key commits/files: `tools/Install-OwnedRuntime.ps1`, `tools/Remove-OwnedRuntime.ps1`, `tools/Prepare-OwnedSession.ps1`, `tests/Test-OwnedSessionTool.ps1`, `AGREED-GOALS.md`, `manifest/acceptance.json`, `docs/PROJECT-STATUS.md`
+
+The user explicitly rejected spending local iteration time on redundant save backups and multi-generation game-file rollback history. Their Cyberpunk saves are already protected externally/cloud-side, and stock-game repair can be delegated to Steam Verify Files or a reinstall if necessary.
+
+The owned development path was therefore replaced with a deliberately flat model. `Prepare-OwnedSession.ps1` still runs the offline contracts and exact local compile before any install, but then plans only the current owned payload. `Install-OwnedRuntime.ps1` clears the project-owned `CyberpunkRealism` script namespace plus known retired Dark Future/Project E3 residue, writes the current compiled payload directly with per-file hash verification, and records one `owned-current.json` manifest. It does not traverse the six-receipt historical rollback chain, does not copy saves, and does not create another generation of game-file backups. `Remove-OwnedRuntime.ps1` removes matching files from that flat ownership record; if stock game bytes ever need repair, Steam Verify Files/reinstall is the recovery authority.
+
+Important limitation recorded explicitly: Steam verification should not be assumed to remove arbitrary extra mod files. That is why the lightweight owned-file manifest/removal tool remains useful even though stock-game recovery is delegated to Steam.
+
+Evidence so far: cloud CI for the first fast-installer policy batch passed; later documentation/acceptance synchronization is being kept under exact-head CI as usual. The prior local exact compile remains valid evidence for the REDscript source itself, but the new installer still needs one local attended run.
+
+Not claimed: the fast installer has not yet been exercised on the user's machine, and the game still has not been launched with the owned runtime. Readiness remains **50%** until live deployment/gameplay evidence closes another gate.
+
+Next: after exact-head CI is green, pull the simplified tooling and run `Prepare-OwnedSession.ps1 -Deploy`. The expected planning/install scope is the current ~50-file owned payload, not hundreds of historical receipt entries. If it reports `READY`, launch normally through Steam for the first owned-runtime smoke test.
