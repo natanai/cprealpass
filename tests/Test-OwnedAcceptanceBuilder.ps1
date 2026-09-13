@@ -15,6 +15,8 @@ Check (-not $source.Contains("'InjuryProvenance.reds',")) 'Injury provenance was
 foreach ($needle in @('DarkFuture','Project\s*E3','Codeware','ModSettings|Mod Settings')) {
     Check ($source.Contains($needle)) "Owned builder lost forbidden-runtime guard: $needle"
 }
+Check ($source.Contains('Trauma\s+Kit') -and $source.Contains('UseTraumaKit')) 'Owned builder no longer rejects Dark Future Trauma Kit identity leakage.'
+Check ($source.Contains('vanillaIdentityPolicy')) 'Owned acceptance report does not record vanilla-identity policy.'
 Check ($source.Contains("component = 'realpass-owned-runtime'")) 'Owned manifest does not label project runtime ownership.'
 Check ($source.Contains("origin = 'project-original'")) 'Owned manifest does not preserve source provenance.'
 Check ($source.Contains('ownedRuntime = $true')) 'Owned manifest/report does not assert the owned-runtime boundary.'
