@@ -15,6 +15,7 @@ public class CRConditionDescriptor extends IScriptable {
   public let functionText: String;
   public let currentState: String;
   public let likelyCause: String;
+  public let painText: String;
   public let fieldCare: String;
   public let professionalCare: String;
   public let canDress: Bool;
@@ -39,29 +40,52 @@ public class CRConditionPresentation extends IScriptable {
   private static func Severity(value: Float) -> String {
     // Presentation thresholds are provisional authored categories, not clinical
     // diagnoses. They intentionally hide exact model values from normal play.
-    if value >= 0.70 {
-      return "severe";
-    }
-    if value >= 0.35 {
-      return "significant";
-    }
-    if value > 0.0 {
-      return "minor";
-    }
+    if value >= 0.70 { return "severe"; }
+    if value >= 0.35 { return "significant"; }
+    if value > 0.0 { return "minor"; }
     return "none";
   }
 
   private static func FunctionText(function: Float) -> String {
-    if function < 0.0 {
-      return "Function unavailable";
-    }
-    if function < 0.50 {
-      return "Function severely impaired";
-    }
-    if function < 0.85 {
-      return "Function impaired";
-    }
+    if function < 0.0 { return "Function unavailable"; }
+    if function < 0.50 { return "Function severely impaired"; }
+    if function < 0.85 { return "Function impaired"; }
     return "Function near normal";
+  }
+
+  private static func PainText(pain: ref<CRPainProjection>) -> String {
+    let text: String;
+    if !IsDefined(pain) || !pain.valid {
+      return "Pain response unavailable.";
+    }
+    if pain.perceivedPain >= 0.75 {
+      text = "Pain response: severe.";
+    } else {
+      if pain.perceivedPain >= 0.45 {
+        text = "Pain response: significant.";
+      } else {
+        if pain.perceivedPain >= 0.15 {
+          text = "Pain response: noticeable.";
+        } else {
+          if pain.physicalPain > 0.0 {
+            text = "Pain response: subdued.";
+          } else {
+            text = "Pain response: minimal.";
+          }
+        }
+      }
+    }
+    if pain.analgesia > 0.0 && pain.physicalPain > 0.0 {
+      text += " Trauma Kit analgesia is reducing perceived pain only.";
+    }
+    if pain.intoxication >= 0.66 {
+      text += " Analgesic overuse: severe disorientation.";
+    } else {
+      if pain.intoxication > 0.0 {
+        text += " Analgesic overuse: disorientation.";
+      }
+    }
+    return text;
   }
 
   private static func ProjectileFamily(family: Int32) -> String {
@@ -96,72 +120,36 @@ public class CRConditionPresentation extends IScriptable {
 
   private static func CurrentState(r: ref<CRRegionalInjury>) -> String {
     let text: String = "";
-    if r.tissueDamage > 0.0 {
-      text += "Soft-tissue trauma: " + CRConditionPresentation.Severity(r.tissueDamage) + ". ";
-    }
-    if r.boneDamage > 0.0 {
-      text += "Bone trauma: " + CRConditionPresentation.Severity(r.boneDamage) + ". ";
-    }
-    if r.externalBleedMlPerHour > 0.0 {
-      text += "External bleeding active. ";
-    }
-    if r.internalBleedMlPerHour > 0.0 {
-      text += "Internal bleeding suspected. ";
-    }
-    if r.cyberwareDamage > 0.0 {
-      text += "Cyberware structural damage: " + CRConditionPresentation.Severity(r.cyberwareDamage) + ". ";
-    }
-    if r.support > 0.0 && r.boneDamage > 0.0 {
-      text += "Region supported/stabilized. ";
-    }
-    if r.clinicalCare > 0.0 && (r.tissueDamage > 0.0 || r.boneDamage > 0.0) {
-      text += "Professional biological aftercare active. ";
-    }
+    if r.tissueDamage > 0.0 { text += "Soft-tissue trauma: " + CRConditionPresentation.Severity(r.tissueDamage) + ". "; }
+    if r.boneDamage > 0.0 { text += "Bone trauma: " + CRConditionPresentation.Severity(r.boneDamage) + ". "; }
+    if r.externalBleedMlPerHour > 0.0 { text += "External bleeding active. "; }
+    if r.internalBleedMlPerHour > 0.0 { text += "Internal bleeding suspected. "; }
+    if r.cyberwareDamage > 0.0 { text += "Cyberware structural damage: " + CRConditionPresentation.Severity(r.cyberwareDamage) + ". "; }
+    if r.support > 0.0 && r.boneDamage > 0.0 { text += "Region supported/stabilized. "; }
+    if r.clinicalCare > 0.0 && (r.tissueDamage > 0.0 || r.boneDamage > 0.0) { text += "Professional biological aftercare active. "; }
     return text;
   }
 
   private static func Title(r: ref<CRRegionalInjury>, entry: ref<CRInjuryProvenance>) -> String {
-    if r.cyberwareDamage > 0.0 && r.cyberwareDamage >= MaxF(r.tissueDamage, r.boneDamage) {
-      return "Cyberware structural damage";
-    }
-    if CRInjuryProvenanceRuntime.Valid(entry) && entry.projectileFamily > 0 {
-      return "Ballistic trauma";
-    }
-    if r.boneDamage > 0.0 {
-      return "Bone trauma";
-    }
-    if r.tissueDamage > 0.0 {
-      return "Soft-tissue trauma";
-    }
-    if r.externalBleedMlPerHour + r.internalBleedMlPerHour > 0.0 {
-      return "Bleeding injury";
-    }
+    if r.cyberwareDamage > 0.0 && r.cyberwareDamage >= MaxF(r.tissueDamage, r.boneDamage) { return "Cyberware structural damage"; }
+    if CRInjuryProvenanceRuntime.Valid(entry) && entry.projectileFamily > 0 { return "Ballistic trauma"; }
+    if r.boneDamage > 0.0 { return "Bone trauma"; }
+    if r.tissueDamage > 0.0 { return "Soft-tissue trauma"; }
+    if r.externalBleedMlPerHour + r.internalBleedMlPerHour > 0.0 { return "Bleeding injury"; }
     return "Condition";
   }
 
   private static func ProfessionalCare(r: ref<CRRegionalInjury>, canClinical: Bool, canMechanical: Bool) -> String {
     let text: String = "";
     if canClinical {
-      if r.internalBleedMlPerHour > 0.0 {
-        text += "Clinical intervention can control the internal bleeding. ";
-      }
-      if r.externalBleedMlPerHour > 0.0 {
-        text += "Clinical intervention can control the external bleeding. ";
-      }
-      if r.tissueDamage > 0.0 || r.boneDamage > 0.0 {
-        text += "Professional aftercare can support later biological recovery. ";
-      }
+      if r.internalBleedMlPerHour > 0.0 { text += "Clinical intervention can control the internal bleeding. "; }
+      if r.externalBleedMlPerHour > 0.0 { text += "Clinical intervention can control the external bleeding. "; }
+      if r.tissueDamage > 0.0 || r.boneDamage > 0.0 { text += "Professional aftercare can support later biological recovery. "; }
     } else {
-      if (r.tissueDamage > 0.0 || r.boneDamage > 0.0) && r.clinicalCare > 0.0 {
-        text += "Professional biological aftercare is already active; recovery still takes body time. ";
-      }
+      if (r.tissueDamage > 0.0 || r.boneDamage > 0.0) && r.clinicalCare > 0.0 { text += "Professional biological aftercare is already active; recovery still takes body time. "; }
     }
-    if canMechanical {
-      text += "Ripperdoc/mechanical repair can address damaged chrome. ";
-    }
-    if Equals(text, "") {
-      return "No additional professional intervention currently indicated by realpass.";
-    }
+    if canMechanical { text += "Ripperdoc/mechanical repair can address damaged chrome. "; }
+    if Equals(text, "") { return "No additional professional intervention currently indicated by realpass."; }
     return text;
   }
 
@@ -190,6 +178,7 @@ public class CRConditionPresentation extends IScriptable {
       result.functionText = "Function near normal";
       result.currentState = "No active regional injury recorded.";
       result.likelyCause = "";
+      result.painText = "";
       result.fieldCare = "No field treatment indicated.";
       result.professionalCare = "No professional intervention indicated.";
       return result;
@@ -203,10 +192,10 @@ public class CRConditionPresentation extends IScriptable {
     result.likelyCause = CRConditionPresentation.Cause(entry);
 
     if result.canDress && result.canSupport {
-      result.fieldCare = "Dressing and limb support can help this condition.";
+      result.fieldCare = "Medical Gauze and limb support can help this condition.";
     } else {
       if result.canDress {
-        result.fieldCare = "A dressing can help the external bleeding.";
+        result.fieldCare = "Medical Gauze can help the external bleeding.";
       } else {
         if result.canSupport {
           result.fieldCare = "Limb support can stabilize the bone injury.";
@@ -221,9 +210,14 @@ public class CRConditionPresentation extends IScriptable {
 
   public static func Current(region: Int32) -> ref<CRConditionDescriptor> {
     let body: ref<CRBodyState> = CRBodyRuntime.Get().GetBodySnapshot();
+    let result: ref<CRConditionDescriptor>;
     if !IsDefined(body) {
       return new CRConditionDescriptor();
     }
-    return CRConditionPresentation.Describe(body.injuries, region, CRInjuryProvenanceRuntime.Get().LatestForRegion(region));
+    result = CRConditionPresentation.Describe(body.injuries, region, CRInjuryProvenanceRuntime.Get().LatestForRegion(region));
+    if IsDefined(result) && result.valid && result.hasCondition {
+      result.painText = CRConditionPresentation.PainText(CRPainRuntime.Get().Read());
+    }
+    return result;
   }
 }
