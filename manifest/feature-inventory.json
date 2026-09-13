@@ -1,34 +1,34 @@
 {
   "schemaVersion": 1,
-  "purpose": "Consolidation ledger for behavior inherited from source/reference mods. A feature is retained only when it represents an in-scope physical phenomenon; disabled upstream baggage is removed from the final realpass runtime rather than exposed as a realpass option.",
-  "allowedDispositions": ["retain", "adapt", "replace", "remove", "development-only"],
+  "purpose": "Consolidation ledger for behavior once explored through source/reference mods. Dark Future and Project E3 are reference/inspiration only; no executing gameplay or presentation behavior from them is part of the owned realpass target. realpass starts from vanilla Cyberpunk identities and substitutes project-original mechanics where realism requires it.",
+  "allowedDispositions": ["retain", "replace", "remove", "development-only"],
   "features": [
     {
       "id": "darkfuture-basic-needs",
       "source": "Dark Future 2.0",
-      "phenomenon": "hydration/nutrition/energy presentation and integration host",
+      "phenomenon": "hydration/nutrition/energy presentation and integration patterns",
       "owner": "body",
-      "disposition": "adapt",
-      "currentState": "local integration base; original realpass body authority staged behind Dark Future host",
-      "targetState": "realpass owns physiology; retain only the minimum licensed integration/UI behavior still needed"
+      "disposition": "replace",
+      "currentState": "historical/reference implementation only; owned runtime is moving to direct vanilla hooks",
+      "targetState": "realpass owns physiology, state, timing and native adapters; no Dark Future runtime required"
     },
     {
       "id": "darkfuture-needs-ui",
       "source": "Dark Future 2.0",
-      "phenomenon": "contextual needs visibility",
+      "phenomenon": "contextual needs visibility ideas",
       "owner": "presentation",
-      "disposition": "adapt",
-      "currentState": "adapted backpack/radial presentation",
-      "targetState": "one realpass presentation surface with no unrelated Dark Future settings"
+      "disposition": "replace",
+      "currentState": "reference/prototype evidence only",
+      "targetState": "realpass-owned restrained presentation attached to vanilla UI surfaces where practical"
     },
     {
       "id": "darkfuture-consumable-intake",
       "source": "Dark Future 2.0",
       "phenomenon": "food/drink events entering physiology",
       "owner": "body",
-      "disposition": "adapt",
-      "currentState": "bridge exists",
-      "targetState": "ordered realpass intake model remains authority; host callback is replaceable"
+      "disposition": "replace",
+      "currentState": "owned BodyNativeHooks now observes stock Cyberpunk consumable actions directly",
+      "targetState": "vanilla consumable identity/action -> thin realpass adapter -> ordered realpass body model"
     },
     {
       "id": "darkfuture-legacy-injury-condition",
@@ -36,8 +36,17 @@
       "phenomenon": "generic HP-derived injury condition",
       "owner": "injury",
       "disposition": "replace",
-      "currentState": "handover guard staged; legacy authority disabled only after safe handover",
-      "targetState": "localized realpass wound/injury authority only"
+      "currentState": "not an accepted owned-runtime authority",
+      "targetState": "localized realpass wound/injury authority plus Condition UI only"
+    },
+    {
+      "id": "darkfuture-item-renames",
+      "source": "Dark Future 2.0",
+      "phenomenon": "renaming/recasting vanilla medical items such as Health Booster into different concepts",
+      "owner": null,
+      "disposition": "remove",
+      "currentState": "explicitly rejected by canonical goal G-004",
+      "targetState": "preserve vanilla MaxDoc, Bounce Back, Health Booster and other item identities; change mechanics underneath only when explicitly authored"
     },
     {
       "id": "darkfuture-reduced-carry-weight",
@@ -45,8 +54,8 @@
       "phenomenon": "inventory difficulty",
       "owner": null,
       "disposition": "remove",
-      "currentState": "disabled in restrained preset",
-      "targetState": "not present in realpass public settings/runtime"
+      "currentState": "out of scope",
+      "targetState": "not present in realpass runtime"
     },
     {
       "id": "darkfuture-stamina-recovery-penalty",
@@ -54,8 +63,8 @@
       "phenomenon": "generic difficulty penalty",
       "owner": null,
       "disposition": "remove",
-      "currentState": "disabled in restrained preset",
-      "targetState": "exertion effects come from realpass body state instead"
+      "currentState": "out of scope",
+      "targetState": "exertion effects come only from realpass body/injury state"
     },
     {
       "id": "darkfuture-stash-crafting-restriction",
@@ -63,7 +72,7 @@
       "phenomenon": "inventory/crafting restriction",
       "owner": null,
       "disposition": "remove",
-      "currentState": "disabled in restrained preset",
+      "currentState": "out of scope",
       "targetState": "vanilla authority"
     },
     {
@@ -72,7 +81,7 @@
       "phenomenon": "inventory restriction",
       "owner": null,
       "disposition": "remove",
-      "currentState": "disabled in restrained preset",
+      "currentState": "out of scope",
       "targetState": "vanilla authority"
     },
     {
@@ -81,7 +90,7 @@
       "phenomenon": "travel restriction",
       "owner": null,
       "disposition": "remove",
-      "currentState": "disabled in restrained preset",
+      "currentState": "out of scope",
       "targetState": "vanilla authority"
     },
     {
@@ -90,7 +99,7 @@
       "phenomenon": "travel UI restriction",
       "owner": null,
       "disposition": "remove",
-      "currentState": "disabled in restrained preset",
+      "currentState": "out of scope",
       "targetState": "vanilla authority"
     },
     {
@@ -99,7 +108,7 @@
       "phenomenon": "vehicle summon restriction/currency",
       "owner": null,
       "disposition": "remove",
-      "currentState": "disabled in restrained preset",
+      "currentState": "out of scope",
       "targetState": "vanilla authority"
     },
     {
@@ -108,7 +117,7 @@
       "phenomenon": "added random encounter",
       "owner": null,
       "disposition": "remove",
-      "currentState": "disabled in restrained preset",
+      "currentState": "out of scope",
       "targetState": "not part of realpass"
     },
     {
@@ -117,7 +126,7 @@
       "phenomenon": "arbitrary stress-meter death",
       "owner": null,
       "disposition": "remove",
-      "currentState": "disabled in restrained preset",
+      "currentState": "out of scope",
       "targetState": "not part of realpass"
     },
     {
@@ -126,7 +135,7 @@
       "phenomenon": "humanity/cyberpsychosis gameplay system",
       "owner": null,
       "disposition": "remove",
-      "currentState": "disabled in restrained preset",
+      "currentState": "out of scope",
       "targetState": "not part of realpass; cyberware module is physical/physiological only"
     },
     {
@@ -135,8 +144,8 @@
       "phenomenon": "alcohol/nicotine/narcotic addiction progression",
       "owner": null,
       "disposition": "remove",
-      "currentState": "disabled in restrained preset",
-      "targetState": "not in the current realpass scope"
+      "currentState": "out of scope",
+      "targetState": "not in current realpass scope"
     },
     {
       "id": "darkfuture-economy-prices",
@@ -144,7 +153,7 @@
       "phenomenon": "consumable/ammunition economy",
       "owner": null,
       "disposition": "remove",
-      "currentState": "disabled in restrained preset",
+      "currentState": "out of scope",
       "targetState": "vanilla economy authority"
     },
     {
@@ -153,7 +162,7 @@
       "phenomenon": "inventory/economy mass tuning",
       "owner": null,
       "disposition": "remove",
-      "currentState": "disabled in restrained preset",
+      "currentState": "out of scope",
       "targetState": "not part of current realpass scope"
     },
     {
@@ -168,20 +177,20 @@
     {
       "id": "e3-npc-nameplates",
       "source": "Project E3 - HUD",
-      "phenomenon": "readable NPC names/focus presentation",
+      "phenomenon": "readable NPC names/focus presentation idea",
       "owner": "presentation",
       "disposition": "replace",
-      "currentState": "local adaptation works in screenshots; original dependency required",
-      "targetState": "independently distributable realpass implementation preserving authored hide/scan rules"
+      "currentState": "historical local adaptation/reference only",
+      "targetState": "realpass-owned implementation using vanilla signals/assets where practical; no E3 runtime required"
     },
     {
       "id": "e3-hud-aesthetic",
       "source": "Project E3 - HUD",
-      "phenomenon": "selected HUD presentation",
+      "phenomenon": "selected HUD presentation ideas",
       "owner": "presentation",
       "disposition": "replace",
-      "currentState": "local archive integration only",
-      "targetState": "recreate only the selected visual behavior with distributable realpass-owned assets/code or obtain permission"
+      "currentState": "reference only for the owned-runtime target",
+      "targetState": "recreate only accepted presentation behavior with realpass-owned code/assets or vanilla UI composition"
     },
     {
       "id": "e3-scanner-overrides",
@@ -189,7 +198,7 @@
       "phenomenon": "scanner/quickhack replacement",
       "owner": "presentation",
       "disposition": "remove",
-      "currentState": "modern-scanner candidate omits 34 E3 scanner/quickhack/focus resources and the scanner-border script",
+      "currentState": "explicitly rejected for the owned runtime",
       "targetState": "native modern scanner/quickhack presentation remains authoritative"
     },
     {
@@ -198,8 +207,8 @@
       "phenomenon": "body resources, sleep, exertion, digestion/elimination and recovery",
       "owner": "body",
       "disposition": "retain",
-      "currentState": "model/runtime implemented; native activation gated",
-      "targetState": "single body authority with player-facing module/subtoggles"
+      "currentState": "project-original model/runtime implemented; owned native activation pending exact acceptance",
+      "targetState": "single authored body authority active as part of the all-or-nothing release"
     },
     {
       "id": "realpass-ballistics-wounds",
@@ -216,8 +225,17 @@
       "phenomenon": "localized wounds, blood loss, impairment, treatment and recovery",
       "owner": "injury",
       "disposition": "retain",
-      "currentState": "models/native/UI adapters staged; activation gated",
+      "currentState": "models/native/Condition UI adapters staged; activation gated",
       "targetState": "single injury authority for V and supported human NPCs"
+    },
+    {
+      "id": "realpass-pain-maxdoc",
+      "source": "project-original",
+      "phenomenon": "injury-derived pain, MaxDoc analgesia, diminishing returns and analgesic overuse",
+      "owner": "injury",
+      "disposition": "retain",
+      "currentState": "pure model and native adapter authored; local exact compile/gameplay acceptance pending",
+      "targetState": "vanilla MaxDoc/FirstAidWhiff identity and native use flow retained while realpass replaces its HP-regeneration effect with pain-only analgesia"
     },
     {
       "id": "realpass-physical-protection",
