@@ -1,15 +1,15 @@
 // Project-original adapter over Cyberpunk's native inventory transaction system.
-// Trauma Kits are analgesia-only in realpass and are intentionally NOT consumed by
-// dressing/support. Field actions use separate stock supplies until/if dedicated
-// realpass supply records are introduced.
+// MaxDoc is analgesia-only in realpass and is intentionally NOT consumed by
+// dressing/support. Field actions use separate stock supplies until a clearer
+// vanilla-compatible support-supply mapping is accepted.
 module CyberpunkRealism.Integration
 import CyberpunkRealism.Physiology.*
 
 public class CRFieldCareInventory extends IScriptable {
-  // Development-owned supply mapping using stable stock records:
+  // Development-owned supply mapping using stock records:
   // 2 dressing -> Medical Gauze junk item; 3 support -> common crafting material.
   // The exact final support item/UX remains an open data-design detail, but this
-  // boundary prevents Trauma Kits from becoming wound-healing currency again.
+  // boundary prevents the MaxDoc inhaler from becoming wound-healing currency.
   public static func Supply(kind: Int32) -> ItemID {
     if kind == 2 {
       return ItemID.CreateQuery(t"Items.GenericJunkItem4");
