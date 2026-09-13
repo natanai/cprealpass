@@ -7,7 +7,11 @@ import CyberpunkRealism.Physiology.*
 
 public class CRPainRuntime extends ScriptableSystem {
   private persistent let state: ref<CRPainState>;
-  private persistent let lastBodyHours: Float = -1.0;
+  // REDscript persistent-field defaults must be literal constants. Keep an explicit
+  // anchor bit instead of using a negative Float sentinel such as -1.0, which the
+  // 2.31 compiler parses as a unary expression rather than a constant initializer.
+  private persistent let lastBodyHours: Float = 0.0;
+  private persistent let bodyClockAnchored: Bool = false;
 
   public static func Get() -> ref<CRPainRuntime> {
     return GameInstance.GetScriptableSystemsContainer(GetGameInstance()).Get(NameOf<CRPainRuntime>()) as CRPainRuntime;
@@ -33,8 +37,9 @@ public class CRPainRuntime extends ScriptableSystem {
     if !IsDefined(body) || !body.initialized {
       return null;
     }
-    if this.lastBodyHours < 0.0 || body.elapsedHours < this.lastBodyHours {
+    if !this.bodyClockAnchored || body.elapsedHours < this.lastBodyHours {
       this.lastBodyHours = body.elapsedHours;
+      this.bodyClockAnchored = true;
       return body;
     }
     delta = body.elapsedHours - this.lastBodyHours;
