@@ -58,12 +58,15 @@ Check ($builder.Contains('settings=passive')) 'Builder output does not state the
 Check (-not $settings.Contains('CRBodyRuntimePolicy') -and -not $settings.Contains('CRCombatRuntimePolicy')) 'Settings source directly controls development activation gates.'
 
 # The broad acceptance profile requested for combat defaults to information-sparse
-# play: no traditional HP bars, while source offers an explicit comparison switch.
+# play: no traditional HP bars, while source offers an exact comparison switch that
+# also removes suppression inherited from an already-barless deployed base.
 Check ($builder.Contains("`$healthbarDestination = 'r6/scripts/CyberpunkRealism/NoHealthbars.reds'")) 'No-healthbar presentation is not part of the attended candidate.'
-Check ($builder.Contains('if (-not $ShowTraditionalHealthBars)')) 'Traditional health bars are not hidden by default.'
+Check ($builder.Contains('if ($ShowTraditionalHealthBars)')) 'Explicit traditional-healthbar comparison branch is missing.'
+Check ($builder.Contains("Remove-ProjectSource `$healthbarDestination")) 'Healthbars-on comparison can silently inherit realpass suppression from its base.'
+Check ($builder.Contains("Sync-ProjectSource 'src/redscript/CyberpunkRealism/NoHealthbars.reds'")) 'Default attended candidate no longer installs no-healthbar presentation.'
 Check ($builder.Contains('[switch]$ShowTraditionalHealthBars')) 'No explicit comparison path exists for healthbars-on debugging.'
 Check ($health.Contains('return false;')) 'No-healthbar source default changed.'
-Check ($builder.Contains("owner -notlike 'realpass*'")) 'Project-source refresh could overwrite an unrelated component.'
+Check ($builder.Contains("owner -notlike 'realpass*'")) 'Project-source refresh/removal could overwrite or remove an unrelated component.'
 
 # Builder must verify every inherited payload hash, compile exact output, and stop.
 Check ($builder.Contains('Source profile hash mismatch')) 'Inherited source profile is not hash-validated.'
@@ -79,4 +82,4 @@ Check ($builder.Contains("'manifest/' + `$BuildId + '.deployment.json'")) 'Build
 Check ($builder.Contains('requiredRuntimeDestinations')) 'Attended report does not preserve the required runtime inventory.'
 Check ($builder.Contains('settingsSurface = $settingsDestination')) 'Attended report does not record the compiled settings surface.'
 
-Write-Host "PASS: $script:checks attended-builder safety checks; current body-enabled builds are valid bases, settings remain passive, canonical combat stays closed, and generated broad combat testing defaults to no health bars."
+Write-Host "PASS: $script:checks attended-builder safety checks; current body-enabled builds are valid bases, settings remain passive, canonical combat stays closed, and generated broad combat testing defaults to no health bars with an exact bars-on comparison path."
