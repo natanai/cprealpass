@@ -14,20 +14,38 @@ protected cb func OnGameAttached() -> Bool {
 // Capture an actual completed stock consumable action rather than depending on a
 // broad gameplay mod's dispatch/tags. The record is captured before vanilla may
 // remove the item from inventory; realpass processes it only for the local player.
+//
+// Health Booster-family items are the realpass Trauma Kit input. Vanilla first
+// completes its normal consumption transaction/animation, then realpass removes
+// the stock long-lasting health buff and records analgesia only. This keeps item
+// ownership/animation native while preventing a Trauma Kit from healing HP/wounds.
 @wrapMethod(ConsumeAction)
 public func CompleteAction(gameInstance: GameInstance) -> Void {
   let executor: ref<GameObject> = this.GetExecutor();
   let itemID: ItemID = this.GetItemData().GetID();
-  let record: wref<Item_Record> = TweakDBInterface.GetItemRecord(ItemID.GetTDBID(itemID));
+  let tdbid: TweakDBID = ItemID.GetTDBID(itemID);
+  let record: wref<Item_Record> = TweakDBInterface.GetItemRecord(tdbid);
+  let consumable: wref<ConsumableItem_Record> = TweakDBInterface.GetConsumableItemRecord(tdbid);
   wrappedMethod(gameInstance);
 
   if !CRBodyRuntimePolicy.Enabled() || !IsDefined(executor) || !executor.IsPlayer() || !IsDefined(record) {
     return;
   }
   let local: ref<PlayerPuppet> = GameInstance.GetPlayerSystem(gameInstance).GetLocalPlayerMainGameObject() as PlayerPuppet;
-  if IsDefined(local) && Equals(local.GetEntityID(), executor.GetEntityID()) {
-    CRBodyRuntime.Get().Consume(record);
+  if !IsDefined(local) || !Equals(local.GetEntityID(), executor.GetEntityID()) {
+    return;
   }
+
+  if IsDefined(consumable) && Equals(consumable.ConsumableBaseName().Type(), gamedataConsumableBaseName.HealthBooster) {
+    // Remove both stock variants defensively; only an actually applied effect is
+    // affected. This is presentation/gameplay plumbing, not the pain model itself.
+    StatusEffectHelper.RemoveStatusEffect(local, T"BaseStatusEffect.HealthBooster");
+    StatusEffectHelper.RemoveStatusEffect(local, T"BaseStatusEffect.Blackmarket_HealthBooster");
+    CRPainRuntime.Get().UseTraumaKit();
+    return;
+  }
+
+  CRBodyRuntime.Get().Consume(record);
 }
 
 // The pause/hub button is an explicit "wait/skip time" path. Bed interactions use
