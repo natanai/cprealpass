@@ -9,10 +9,10 @@ function Check($condition,[string]$message) { if (-not $condition) { throw $mess
 Check ($source.Contains("'src/redscript/CyberpunkRealism'")) 'Owned builder does not start from the realpass source tree.'
 Check ($source.Contains("Get-ChildItem -LiteralPath `$sourceRoot -File -Filter '*.reds'")) 'Owned builder does not discover the current owned REDscript tree.'
 Check ($source.Contains("`$excluded = @('FieldCareUI.reds')")) 'Legacy backpack Field Care prototype is not explicitly excluded.'
-Check (-not $source.Contains("'ConditionPresentation.reds'" + ',')) 'Condition presentation was accidentally added to the prototype exclusion list.'
-Check (-not $source.Contains("'InjuryProvenance.reds'" + ',')) 'Injury provenance was accidentally added to the prototype exclusion list.'
+Check (-not $source.Contains("'ConditionPresentation.reds',")) 'Condition presentation was accidentally added to the prototype exclusion list.'
+Check (-not $source.Contains("'InjuryProvenance.reds',")) 'Injury provenance was accidentally added to the prototype exclusion list.'
 
-foreach ($needle in @('DarkFuture','Project\\s*E3','Codeware','ModSettings|Mod Settings')) {
+foreach ($needle in @('DarkFuture','Project\s*E3','Codeware','ModSettings|Mod Settings')) {
     Check ($source.Contains($needle)) "Owned builder lost forbidden-runtime guard: $needle"
 }
 Check ($source.Contains("component = 'realpass-owned-runtime'")) 'Owned manifest does not label project runtime ownership.'
