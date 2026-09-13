@@ -1,6 +1,0 @@
-# Original realpass interaction. Inherit the game's input/icon defaults without changing Flush.
-# TweakXL record cloning: https://github.com/psiberx/cp2077-tweak-xl/wiki/YAML-Tweaks
-Interactions.RealpassUseToilet:
-  $base: Interactions.Flush
-  name: RealpassUseToilet
-  caption: RealpassUseToiletCaption
