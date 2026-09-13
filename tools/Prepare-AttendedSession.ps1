@@ -1,5 +1,5 @@
 param(
-    [Parameter(Mandatory=$true)][ValidatePattern('^[a-zA-Z0-9][a-zA-Z0-9._-]*$')][string]$BuildId,
+    [string]$BuildId,
     [string]$SourceManifestPath,
     [string]$GameRoot = 'C:\Games\Steam\steamapps\common\Cyberpunk 2077',
     [string]$SaveRoot,
@@ -13,6 +13,18 @@ $ErrorActionPreference = 'Stop'
 $project = Get-ProjectRoot
 $GameRoot = Assert-GameRoot $GameRoot
 Assert-GameStopped
+
+# Build IDs are immutable evidence keys. Generate one by default so the normal
+# operator path is genuinely one command and a preflight ID is never accidentally
+# reused for a later deployment. Advanced/local agents may still provide one.
+if ([string]::IsNullOrWhiteSpace($BuildId)) {
+    $mode = if ($Deploy) { 'deploy' } else { 'preflight' }
+    $BuildId = 'realpass-attended-' + $mode + '-' + [DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss') + '-' + [guid]::NewGuid().ToString('N').Substring(0,8)
+}
+if ($BuildId -notmatch '^[a-zA-Z0-9][a-zA-Z0-9._-]*$') {
+    throw 'BuildId may contain only letters, numbers, dot, underscore and hyphen, and must start with a letter or number.'
+}
+Write-Host "Attended build ID: $BuildId"
 
 if (-not $StateRoot) { $StateRoot = Join-Path $project 'snapshots\deployment-state' }
 $StateRoot = [IO.Path]::GetFullPath($StateRoot)
@@ -81,7 +93,7 @@ $reportPath = Resolve-SafeChildPath $project ('reports/attended-session-' + $Bui
 if (-not $Deploy) {
     Write-JsonFile $preflight $reportPath
     Write-Host "PASS: attended candidate $BuildId compiled and upgrade preflight passed for $($plan.Count) paths. Nothing was deployed."
-    Write-Host 'When the player is present and ready, rerun the same command with -Deploy. The script still will not launch Cyberpunk.'
+    Write-Host 'When the player is present and ready, rerun this tool with -Deploy. Omit -BuildId to receive a fresh immutable deployment ID automatically. The script still will not launch Cyberpunk.'
     return $reportPath
 }
 
