@@ -20,6 +20,14 @@ if ($BuildId -notmatch '^[a-zA-Z0-9][a-zA-Z0-9._-]*$') { throw 'Invalid BuildId.
 if (-not $StateRoot) { $StateRoot = Join-Path $project 'snapshots\deployment-state' }
 $StateRoot = [IO.Path]::GetFullPath($StateRoot)
 
+# One owned-session command should establish both public-source coherence and the
+# installed-game preflight. This remains entirely attended/dev tooling: CI-style
+# checks run first, then the exact local candidate is built. Nothing is deployed
+# unless -Deploy is explicit.
+Write-Host '=== Running owned-path offline checks ==='
+& (Join-Path $project 'tests\Run-CI.ps1')
+if ($LASTEXITCODE -ne 0) { throw 'Owned-path offline checks failed; candidate build/deployment aborted.' }
+
 function Get-ForbiddenOwnedAcceptanceResidue([string]$root) {
     $hits = [Collections.Generic.List[string]]::new()
     foreach ($relative in @(
@@ -77,6 +85,7 @@ $preflight = [ordered]@{
     buildId = $BuildId
     preparedAtUtc = [DateTime]::UtcNow.ToString('o')
     ownedRuntime = $true
+    offlineChecksPassed = $true
     candidateManifest = $manifest
     gameRoot = $GameRoot
     stateRoot = $StateRoot
@@ -94,7 +103,7 @@ $reportPath = Resolve-SafeChildPath $project ('reports/owned-session-' + $BuildI
 
 if (-not $Deploy) {
     Write-JsonFile $preflight $reportPath
-    Write-Host "PASS: owned candidate $BuildId exact-compiled and deployment preflight passed for $($plan.Count) paths. Nothing was deployed."
+    Write-Host "PASS: owned candidate $BuildId passed offline checks, exact compilation, and deployment preflight for $($plan.Count) paths. Nothing was deployed."
     if ($preflight.preexistingForbiddenResidue.Count -gt 0) {
         Write-Host 'NOTE: source-mod residue currently exists in the live game, but the deployment plan has not run yet. A live owned session will verify that it is gone after the transaction.'
     }
@@ -139,7 +148,7 @@ $preflight.deploymentReceipt = [string]$receipt
 $preflight.status = 'owned-runtime-deployed-and-verified'
 $preflight.postDeployForbiddenResidue = @()
 Write-JsonFile $preflight $reportPath
-Write-Host "READY: owned runtime $BuildId is deployed, hash-verified, source-mod-residue-free, and protected by a verified save backup."
+Write-Host "READY: owned runtime $BuildId passed offline checks and is deployed, hash-verified, source-mod-residue-free, and protected by a verified save backup."
 Write-Host 'This tool does not launch Cyberpunk, create background services, or enable diagnostics unless explicitly requested.'
 Write-Host "Rollback receipt: $receipt"
 return $reportPath
