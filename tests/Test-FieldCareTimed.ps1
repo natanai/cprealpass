@@ -35,7 +35,7 @@ $script:checks=0
 function Check($condition,$message){if(-not $condition){throw $message};$script:checks++}
 function Reset {[CareTimedFixture]::Reset()}
 function Begin($kind=2){return [CareTimedFixture]::runtime.Begin(5,$kind)}
-function StartCare {[DFGameStateService]::inMenu=$false;[CareTimedFixture]::Sample()}
+function StartCare {[CareTimedFixture]::inMenu=$false;[CareTimedFixture]::Sample()}
 function Finish($samples=32){foreach($i in 1..$samples){[CareTimedFixture]::Sample()}}
 Reset;$r=[CareTimedFixture]::runtime;$inv=[CareTimedFixture]::game.inventory
 Check ((Begin) -eq 8 -and $inv.removeCalls -eq 0 -and [CareTimedFixture]::delays.callbacks.Count -eq 1) 'Queuing care consumed a kit or scheduled duplicate callbacks'
@@ -52,7 +52,7 @@ Reset;Begin 3|Out-Null;StartCare;Finish 32
 Check ([CareTimedFixture]::game.inventory.removeCalls -eq 0) 'Limb support incorrectly used dressing duration'
 Finish 16
 Check ([CareTimedFixture]::body.body.injuries.leftLeg.support -eq 1 -and [CareTimedFixture]::body.body.injuries.leftLeg.boneDamage -eq 0.5) 'Timed support healed bone or failed to apply support'
-foreach($case in @('move','teleport','menu','combat','dead','mounted','scene','invalid-game','skip-gap','backward-clock','detached','restored','manual','menu-boundary','weapon','consumable','aim')){
+foreach($case in @('move','teleport','menu','combat','dead','mounted','scene','runtime-stopped','skip-gap','backward-clock','detached','restored','manual','menu-boundary','weapon','consumable','aim')){
  Reset;Begin|Out-Null;StartCare;$r=[CareTimedFixture]::runtime
  switch($case){
   'weapon'{[CareTimedFixture]::player.board.values['weapon']=9}
@@ -60,18 +60,18 @@ foreach($case in @('move','teleport','menu','combat','dead','mounted','scene','i
   'aim'{[CareTimedFixture]::player.board.values['upper']=1}
   'move'{[CareTimedFixture]::player.velocity=[Vector4]@{X=1}}
   'teleport'{[CareTimedFixture]::player.position=[Vector4]@{X=2}}
-  'menu'{[DFGameStateService]::inMenu=$true}
+  'menu'{[CareTimedFixture]::inMenu=$true}
   'combat'{[CareTimedFixture]::player.combat=$true}
   'dead'{[CareTimedFixture]::player.dead=$true}
   'mounted'{[CareTimedFixture]::player.mounted=$true}
   'scene'{[CareTimedFixture]::player.scene=$true}
-  'invalid-game'{[DFGameStateService]::valid=$false}
+  'runtime-stopped'{[CareTimedFixture]::body.running=$false}
   'skip-gap'{[CareTimedFixture]::sim+=10}
   'backward-clock'{[CareTimedFixture]::sim=-1}
   'detached'{$r.OnDetach()}
   'restored'{$r.OnRestored(1,1)}
   'manual'{$r.Cancel($true)}
-  'menu-boundary'{[DFGameStateService]::inMenu=$true;$r.OnMenuBoundary()}
+  'menu-boundary'{[CareTimedFixture]::inMenu=$true;$r.OnMenuBoundary()}
  }
  if($r.Active()){[CareTimedFixture]::Sample()}
  Check (-not $r.Active() -and [CareTimedFixture]::delays.callbacks.Count -eq 0 -and [CareTimedFixture]::game.inventory.removeCalls -eq 0 -and [CareTimedFixture]::body.body.injuries.leftLeg.externalBleedMlPerHour -eq 100) "Interrupted care mutated inventory/wounds or left a timer: $case"
@@ -102,5 +102,5 @@ Reset;Begin|Out-Null;StartCare;[CareTimedFixture]::game.inventory.onRemove={ [Ca
 Check ([CareTimedFixture]::game.inventory.count -eq 3 -and [CareTimedFixture]::body.inputs.appliedTreatments -eq 0) 'State changed during debit without a cancel event but treatment still applied'
 Reset;[CareTimedFixture]::delays.failSchedule=$true
 Check ((Begin) -eq 0 -and -not [CareTimedFixture]::runtime.Active() -and [CareTimedFixture]::delays.callbacks.Count -eq 0) 'Rejected callback scheduling left a queued action stuck'
-Write-JsonFile ([ordered]@{testedAtUtc=[DateTime]::UtcNow.ToString('o');passed=$true;assertions=$script:checks;runtimeSha256=Get-Sha256 $nativePath;bodyRuntimeSha256=Get-Sha256 $bodyPath;sources=@($paths|ForEach-Object{[ordered]@{path=$_;sha256=Get-Sha256 $_}});scope='Actual action model/runtime, eligibility, completion and inventory methods translated with native scheduling/player/notification fixtures. Duration, menu queueing, interruption, bounded scheduling, stale tickets, completion-only debit and callback cancellation/refund tested. Engine scheduling, native UI, save lifecycle and animation remain unverified.'}) (Join-Path $project 'reports/field-care-timed-tests.json')
+Write-JsonFile ([ordered]@{testedAtUtc=[DateTime]::UtcNow.ToString('o');passed=$true;assertions=$script:checks;runtimeSha256=Get-Sha256 $nativePath;bodyRuntimeSha256=Get-Sha256 $bodyPath;sources=@($paths|ForEach-Object{[ordered]@{path=$_;sha256=Get-Sha256 $_}});scope='Actual action model/runtime, eligibility, completion and inventory methods translated with native menu/lifecycle scheduling/player/notification fixtures. Duration, menu queueing, interruption, bounded scheduling, stale tickets, completion-only debit and callback cancellation/refund tested. Engine scheduling, native UI, save lifecycle and animation remain unverified.'}) (Join-Path $project 'reports/field-care-timed-tests.json')
 Write-Host "PASS: $script:checks timed field-care/runtime checks."
