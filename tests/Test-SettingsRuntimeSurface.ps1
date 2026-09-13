@@ -3,8 +3,10 @@ $ErrorActionPreference = 'Stop'
 $project = Get-ProjectRoot
 $sourcePath = Join-Path $project 'src/redscript/CyberpunkRealism/RealpassSettings.reds'
 $contractPath = Join-Path $project 'manifest/settings.json'
+$policyPath = Join-Path $project 'src/redscript/CyberpunkRealism/RuntimePolicyModel.reds'
 $source = Get-Content -Raw -LiteralPath $sourcePath
 $contract = Get-Content -Raw -LiteralPath $contractPath | ConvertFrom-Json
+$policy = Get-Content -Raw -LiteralPath $policyPath
 $script:checks = 0
 function Check($condition,[string]$message) { if (-not $condition) { throw $message }; $script:checks++ }
 
@@ -13,6 +15,7 @@ Check ($source.Contains('ModSettings.RegisterListenerToClass(this);')) 'Settings
 Check ($source.Contains('ModSettings.UnregisterListenerToClass(this);')) 'Settings system does not unregister cleanly.'
 Check (-not $source.Contains('RegisterListenerToModifications')) 'Passive settings surface should not dispatch runtime effects yet.'
 Check ($source.Contains('public static func Get() -> ref<CRRealpassSettings>')) 'Settings system lacks a stable accessor.'
+Check ($source.Contains('public func IntentSnapshot() -> ref<CRRuntimeFeatureFlags>')) 'Settings system does not map player intent into the central policy model.'
 
 # Player intent must remain passive until a separately accepted runtime-policy
 # facade is introduced. Merely opening the settings menu may not activate systems.
@@ -29,6 +32,10 @@ foreach ($forbidden in @(
     'Register-ScheduledTask'
 )) {
     Check (-not $source.Contains($forbidden)) "Passive settings surface gained side-effect authority: $forbidden"
+}
+foreach ($acceptedField in @('bodyAccepted','injuryAccepted','combatAccepted','armorAccepted','cyberwarePhysiologyAccepted','presentationAccepted','diagnosticsAccepted')) {
+    Check (-not $source.Contains('flags.' + $acceptedField + ' =')) "Player settings can assign an acceptance gate: $acceptedField"
+    Check ($policy -match ('public let ' + $acceptedField + ': Bool = false;')) "Central policy acceptance default is no longer closed: $acceptedField"
 }
 
 $fieldMap = [ordered]@{
@@ -54,17 +61,43 @@ $fieldMap = [ordered]@{
     'presentation.traditionalHealthBars' = 'presentationTraditionalHealthBars'
     'diagnostics.enabled' = 'diagnosticsEnabled'
 }
+$flagMap = [ordered]@{
+    'body.enabled' = 'bodyEnabled'
+    'body.nutrition' = 'nutritionEnabled'
+    'body.hydration' = 'hydrationEnabled'
+    'body.sleep' = 'sleepEnabled'
+    'body.exertion' = 'exertionEnabled'
+    'body.elimination' = 'eliminationEnabled'
+    'body.hygiene' = 'hygieneEnabled'
+    'injury.enabled' = 'injuryEnabled'
+    'injury.bloodLoss' = 'bloodLossEnabled'
+    'injury.impairment' = 'impairmentEnabled'
+    'injury.fieldCare' = 'fieldCareEnabled'
+    'injury.recovery' = 'injuryRecoveryEnabled'
+    'combat.enabled' = 'combatEnabled'
+    'armor.enabled' = 'armorEnabled'
+    'armor.wear' = 'armorWearEnabled'
+    'cyberwarePhysiology.enabled' = 'cyberwarePhysiologyEnabled'
+    'presentation.enabled' = 'presentationEnabled'
+    'presentation.nameplates' = 'nameplatesEnabled'
+    'presentation.statusCues' = 'statusCuesEnabled'
+    'presentation.traditionalHealthBars' = 'traditionalHealthBarsEnabled'
+    'diagnostics.enabled' = 'diagnosticsEnabled'
+}
 
 $settings = @{}
 foreach ($category in @($contract.categories)) {
     foreach ($setting in @($category.settings)) { $settings[$setting.key] = [pscustomobject]@{category=$category;setting=$setting} }
 }
 Check ($settings.Count -eq $fieldMap.Count) 'Runtime field map no longer covers every settings-contract key.'
+Check ($settings.Count -eq $flagMap.Count) 'Policy flag map no longer covers every settings-contract key.'
 foreach ($key in $fieldMap.Keys) {
     Check ($settings.ContainsKey($key)) "Runtime field map references unknown contract key: $key"
     $field = $fieldMap[$key]
+    $flag = $flagMap[$key]
     $default = if ($settings[$key].setting.default) { 'true' } else { 'false' }
     Check ($source -match ('public let ' + [regex]::Escape($field) + ': Bool = ' + $default + ';')) "Runtime setting default mismatch: $key -> $field"
+    Check ($source.Contains('flags.' + $flag + ' = this.' + $field + ';')) "Player-intent snapshot mapping missing: $key -> $flag"
 }
 
 # Exactly the 20 player-facing booleans are exposed to Mod Settings. Diagnostics
@@ -99,4 +132,4 @@ Check ($source.Contains('@runtimeProperty("ModSettings.category", "Armor")')) 'A
 Check ($source.Contains('@runtimeProperty("ModSettings.category", "Cyberware physiology")')) 'Cyberware category missing from runtime surface.'
 Check ($source.Contains('@runtimeProperty("ModSettings.category", "Presentation")')) 'Presentation category missing from runtime surface.'
 
-Write-Host "PASS: $script:checks passive realpass Mod Settings surface checks; 20 public preferences mirror contract defaults while activation gates remain untouched."
+Write-Host "PASS: $script:checks passive realpass Mod Settings surface checks; 20 public preferences mirror contract defaults and map to closed policy flags without opening acceptance gates."
