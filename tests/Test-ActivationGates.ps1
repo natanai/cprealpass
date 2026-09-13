@@ -30,7 +30,11 @@ RequireDisabledPolicy $combat 'CRCombatRuntimePolicy' 'Enabled'
 
 $combatGate = @($acceptance.gates | Where-Object id -eq 'combat-native-activation')
 if ($combatGate.Count -ne 1 -or $combatGate[0].status -eq 'passed') { throw 'Combat source is gated but acceptance ledger does not identify pending native activation.' }
-if (@($settings.safety.currentAcceptedForAutomaticActivation).Count -ne 0) { throw 'Settings contract claims automatic native acceptance while source policies remain gated.' }
+if ($settings.schemaVersion -ne 2 -or $settings.surface.publicGameplaySettings -ne $false) { throw 'Locked release settings contract unexpectedly restored player activation controls.' }
+foreach ($authority in @('body','injury','combat','armor','cyberwarePhysiology','presentation')) {
+    if ($settings.releaseProfile.$authority -ne $true) { throw "Authored release profile is not locked on: $authority" }
+}
+if ($settings.releaseProfile.diagnostics -ne $false) { throw 'Authored release profile does not lock diagnostics off.' }
 
 # Legacy body-only builder may open only the body gate in generated staging and
 # must reject combat. It remains useful for isolated body acceptance.
@@ -68,4 +72,4 @@ if ($session -match '(?i)(Start-Process|Register-ScheduledTask|New-Service)') {
     throw 'Attended session tool must not launch the game or install background automation.'
 }
 
-Write-Host 'PASS: canonical body/combat/diagnostic gates remain closed; generated development profiles cannot silently open native authority and live installation remains explicit + backed up.'
+Write-Host 'PASS: canonical body/combat/diagnostic gates remain closed; release intent is fixed rather than player-toggleable, and live installation remains explicit + backed up.'
