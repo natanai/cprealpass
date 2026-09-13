@@ -221,6 +221,7 @@ public class CRInjuryEffectsRuntime extends ScriptableSystem {
   public func Refresh(body: ref<CRBodyState>, config: ref<CRBodyConfig>, enabled: Bool) -> Void {
     let i: Int32 = 0;
     let player: ref<ScriptedPuppet> = GameInstance.GetPlayerSystem(GetGameInstance()).GetLocalPlayerMainGameObject() as ScriptedPuppet;
+    let localPlayer: ref<PlayerPuppet> = player as PlayerPuppet;
     this.lastRefreshFailures = 0;
     if IsDefined(body) {
       if !CRInjuryEffectsBridge.Apply(player, body.injuries, config, enabled) {
@@ -239,6 +240,10 @@ public class CRInjuryEffectsRuntime extends ScriptableSystem {
       }
       i += 1;
     }
+    // This project-defined runtime is the canonical reconstruction point for all
+    // transient injury consequences. Refresh pain here directly rather than trying
+    // to wrap another realpass class with @wrapMethod.
+    CRPainNativeEffects.Refresh(localPlayer, IsDefined(body) && enabled && CRInjuryEffectsBridge.Allowed(localPlayer, true));
   }
   public func Suspend() -> Void {
     this.Refresh(null, null, false);
