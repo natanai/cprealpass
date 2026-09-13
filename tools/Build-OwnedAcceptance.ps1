@@ -33,19 +33,21 @@ if ($sourceFiles.Count -lt 20) { throw 'Unexpectedly small realpass source tree;
 $excluded = @('FieldCareUI.reds')
 $candidateFiles = @($sourceFiles | Where-Object { $_.Name -notin $excluded })
 
-# Fail closed on source-mod/runtime-host imports. Generic frameworks may eventually
+# Fail closed on source-mod/runtime-host imports and on source-mod nomenclature that
+# would silently rebrand vanilla gameplay items. Generic frameworks may eventually
 # be allowed by an explicit dependency contract, but the first owned acceptance
 # source candidate intentionally has no gameplay/UI framework import of its own.
-$forbiddenRuntimePatterns = @(
+$forbiddenOwnedPatterns = @(
     '(?m)^\s*(?:module|import)\s+DarkFuture(?:\.|\b)',
     '(?im)Project\s*E3',
     '(?m)^\s*import\s+Codeware(?:\.|\b)',
-    '(?im)ModSettings|Mod Settings'
+    '(?im)ModSettings|Mod Settings',
+    '(?i)\bTrauma\s+Kit\b|UseTraumaKit'
 )
 foreach ($file in $candidateFiles) {
     $text = Get-Content -Raw -LiteralPath $file.FullName
-    foreach ($pattern in $forbiddenRuntimePatterns) {
-        if ($text -match $pattern) { throw "Owned candidate source has forbidden runtime dependency: $($file.Name) / $pattern" }
+    foreach ($pattern in $forbiddenOwnedPatterns) {
+        if ($text -match $pattern) { throw "Owned candidate source has forbidden dependency or source-mod identity: $($file.Name) / $pattern" }
     }
 }
 
@@ -141,8 +143,9 @@ $record = [ordered]@{
     manifestPath = $outputRelative
     traditionalActorHealthBars = $false
     sourceModsRequired = @()
+    vanillaIdentityPolicy = 'Preserve vanilla item/system identity; source-mod renames are forbidden in the owned candidate.'
     scope = 'Owned attended compile candidate only. Contains project-original realpass REDscript, excludes Dark Future/Project E3 and the backpack Field Care prototype, does not deploy or launch Cyberpunk. Native UI/gameplay/save/quest acceptance is still required.'
 }
 Write-JsonFile $record $report
-Write-Host "PASS: owned realpass candidate $BuildId compiled from $($entries.Count) project-original sources. No Dark Future/Project E3 runtime was inherited. Nothing was deployed or launched."
+Write-Host "PASS: owned realpass candidate $BuildId compiled from $($entries.Count) project-original sources. No Dark Future/Project E3 runtime or source-mod item renames were inherited. Nothing was deployed or launched."
 return $outputRelative
