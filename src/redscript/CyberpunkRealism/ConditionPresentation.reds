@@ -76,7 +76,7 @@ public class CRConditionPresentation extends IScriptable {
       }
     }
     if pain.analgesia > 0.0 && pain.physicalPain > 0.0 {
-      text += " Trauma Kit analgesia is reducing perceived pain only.";
+      text += " MaxDoc analgesia is reducing perceived pain only.";
     }
     if pain.intoxication >= 0.66 {
       text += " Analgesic overuse: severe disorientation.";
