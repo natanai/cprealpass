@@ -68,7 +68,7 @@ function Set-PolicyOnce([string]$text,[string]$className,[string]$methodName,[bo
     if ($matches.Count -ne 1) { throw "Expected exactly one policy gate: $className.$methodName" }
     $current = $matches[0].Groups['value'].Value
     if ($requiredCurrent -in @('true','false') -and $current -ne $requiredCurrent) {
-        throw "Unexpected canonical policy for $className.$methodName: $current; required $requiredCurrent"
+        throw "Unexpected canonical policy for $className.$($methodName): $current; required $requiredCurrent"
     }
     $desiredText = $desired.ToString().ToLowerInvariant()
     return $regex.Replace($text,('${1}return ' + $desiredText + ';'),1)
