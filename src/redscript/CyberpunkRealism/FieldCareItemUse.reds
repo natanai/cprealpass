@@ -1,16 +1,9 @@
 // Original pre-consumption routing for the regional-care trauma kit.
-// The backpack/popup route is a development prototype until Condition mode owns
-// treatment entry, but this source remains entirely realpass-owned.
+// Condition mode will own treatment entry. Until that interface is native-accepted,
+// the item is preserved and the player is directed to the body/Condition screen.
 module CyberpunkRealism.Integration
 
-import CyberpunkRealism.Presentation.CRFieldCareMenuSession
-
 public class CRFieldCareItemUse extends IScriptable {
-  private static func InMenu() -> Bool {
-    let board: ref<IBlackboard> = GameInstance.GetBlackboardSystem(GetGameInstance()).Get(GetAllBlackboardDefs().UI_System);
-    return IsDefined(board) && board.GetBool(GetAllBlackboardDefs().UI_System.IsInMenu);
-  }
-
   // True means this request belongs to regional care, not that a kit was consumed.
   public static func Intercept(executor: wref<GameObject>, item: wref<gameItemData>, actionID: TweakDBID) -> Bool {
     if !CRBodyRuntimePolicy.Enabled() || !CRCombatRuntimePolicy.Enabled() || !IsDefined(item) || !Equals(ItemID.GetTDBID(item.GetID()), t"Items.HealthBooster") {
@@ -26,13 +19,11 @@ public class CRFieldCareItemUse extends IScriptable {
       return false;
     }
     // Ownership persists while temporarily unavailable; never fall back to spending
-    // the kit through vanilla healing while realpass owns these injuries.
+    // the kit as a generic instant heal while realpass owns localized injuries.
     if !CRBodyRuntime.Get().CanUseFieldCare() {
       CRFieldCareItemUse.Notify("Field care is unavailable here. Trauma kit kept.");
     } else {
-      if !CRFieldCareItemUse.InMenu() || !CRFieldCareMenuSession.Get().RequestOpen() {
-        CRFieldCareItemUse.Notify("Trauma kit kept. Open FIELD CARE to choose treatment.");
-      }
+      CRFieldCareItemUse.Notify("Trauma kit kept. Open CYBERWARE > CONDITION and select an injury to treat.");
     }
     return true;
   }
