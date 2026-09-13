@@ -10,6 +10,8 @@ $painRuntime = Get-Content -Raw -LiteralPath (Join-Path $project 'src/redscript/
 $painNative = Get-Content -Raw -LiteralPath (Join-Path $project 'src/redscript/CyberpunkRealism/PainNativeEffects.reds')
 $bodyHooks = Get-Content -Raw -LiteralPath (Join-Path $project 'src/redscript/CyberpunkRealism/BodyNativeHooks.reds')
 $fieldCare = Get-Content -Raw -LiteralPath (Join-Path $project 'src/redscript/CyberpunkRealism/FieldCareRuntime.reds')
+$conditionPresentation = Get-Content -Raw -LiteralPath (Join-Path $project 'src/redscript/CyberpunkRealism/ConditionPresentation.reds')
+$conditionUI = Get-Content -Raw -LiteralPath (Join-Path $project 'src/redscript/CyberpunkRealism/ConditionNativeUI.reds')
 
 foreach ($goal in @('G-054','G-055','G-056','G-057')) {
     Check ($goals.Contains($goal)) "Canonical pain/Trauma Kit goal missing: $goal"
@@ -35,11 +37,13 @@ Check ($bodyHooks.Contains('gamedataConsumableBaseName.HealthBooster')) 'Native 
 Check ($bodyHooks.Contains('StatusEffectHelper.RemoveStatusEffect(local, T"BaseStatusEffect.HealthBooster")')) 'Vanilla Health Booster effect is not removed.'
 Check ($bodyHooks.Contains('StatusEffectHelper.RemoveStatusEffect(local, T"BaseStatusEffect.Blackmarket_HealthBooster")')) 'Blackmarket Health Booster variant is not removed.'
 Check ($bodyHooks.Contains('CRPainRuntime.Get().UseTraumaKit()')) 'Native Trauma Kit use does not route to pain runtime.'
+Check ($bodyHooks.Contains('CRPainNativeEffects.Refresh(local, true)')) 'Accepted Trauma Kit use does not reconstruct pain/intoxication feedback immediately.'
 
 # Field wound treatment uses separate supplies. This assertion is deliberately
 # cross-layer so a future refactor cannot silently turn Trauma Kits into bandages.
 Check (-not $fieldCare.Contains('Items.HealthBooster')) 'Field care still spends Trauma Kits.'
 Check ($fieldCare.Contains('Items.GenericJunkItem4') -and $fieldCare.Contains('Items.CommonMaterial1')) 'Dressing/support do not have distinct field supplies.'
+Check (-not $conditionUI.Contains('No trauma kit available')) 'Condition field-care feedback still describes wound supplies as Trauma Kits.'
 
 # Native pain effects use weapon sway and CDPR's existing fullscreen drunk loops,
 # but do not apply BaseStatusEffect.Drunk and inherit alcohol gameplay packages.
@@ -51,4 +55,10 @@ Check ($painNative.Contains('vfx_fullscreen_drunk_level')) 'Native intoxication 
 Check (-not $painNative.Contains('ApplyStatusEffect') -and -not $painNative.Contains('BaseStatusEffect.Drunk')) 'Pain overuse inherited the stock alcohol status/gameplay package.'
 Check (-not $painNative.Contains('gamedataStatPoolType.Health') -and -not $painNative.Contains('CRInjuryModel.Treat(')) 'Native pain presentation became a healing/HP authority.'
 
-Write-Host "PASS: $script:checks pain/Trauma-Kit ownership and native-effect architecture checks."
+# Condition mode must expose the qualitative projection rather than calculating a
+# second pain value or presenting a numeric pain meter.
+Check ($conditionPresentation.Contains('public let painText: String') -and $conditionPresentation.Contains('CRPainRuntime.Get().Read()')) 'Condition descriptor is not sourced from the owned pain projection.'
+Check ($conditionUI.Contains('crConditionPain') -and $conditionUI.Contains('this.crConditionPain.SetText(descriptor.painText)')) 'Condition UI does not render qualitative pain state.'
+Check (-not $conditionUI.Contains('PAIN: ') -and -not $conditionUI.Contains('pain.perceivedPain')) 'Condition UI computes or exposes a raw pain meter instead of rendering the projection.'
+
+Write-Host "PASS: $script:checks pain/Trauma-Kit ownership, immediate feedback, and Condition rendering architecture checks."
