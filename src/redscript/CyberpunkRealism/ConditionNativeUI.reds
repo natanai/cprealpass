@@ -50,6 +50,12 @@ private let crConditionDress: wref<inkText>;
 private let crConditionSupport: wref<inkText>;
 
 @addField(RipperDocGameController)
+private let crConditionClinical: wref<inkText>;
+
+@addField(RipperDocGameController)
+private let crConditionMechanical: wref<inkText>;
+
+@addField(RipperDocGameController)
 private let crConditionStatus: wref<inkText>;
 
 @addField(RipperDocGameController)
@@ -166,6 +172,16 @@ private func CRConditionCreateUI() -> Void {
   this.crConditionSupport.RegisterToCallback(n"OnRelease", this, n"OnCRConditionCareReleased");
   this.crConditionSupport.Reparent(this.crConditionPanel, -1);
 
+  this.crConditionClinical = this.CRConditionText("[ CLINICAL CARE ]", n"CRConditionClinical", 20);
+  this.crConditionClinical.SetInteractive(true);
+  this.crConditionClinical.RegisterToCallback(n"OnRelease", this, n"OnCRConditionProfessionalReleased");
+  this.crConditionClinical.Reparent(this.crConditionPanel, -1);
+
+  this.crConditionMechanical = this.CRConditionText("[ REPAIR CYBERWARE ]", n"CRConditionMechanical", 20);
+  this.crConditionMechanical.SetInteractive(true);
+  this.crConditionMechanical.RegisterToCallback(n"OnRelease", this, n"OnCRConditionProfessionalReleased");
+  this.crConditionMechanical.Reparent(this.crConditionPanel, -1);
+
   this.crConditionStatus = this.CRConditionWrappedText("", n"CRConditionStatus", 18, 570.0);
   this.crConditionStatus.SetOpacity(0.82);
   this.crConditionStatus.Reparent(this.crConditionPanel, -1);
@@ -216,6 +232,7 @@ private func CRConditionRefresh() -> Void {
   let i: Int32 = 0;
   let descriptor: ref<CRConditionDescriptor>;
   let active: Bool;
+  let atRipperdoc: Bool = Equals(this.m_screen, CyberwareScreenType.Ripperdoc);
   if !IsDefined(this.crConditionPanel) {
     return;
   }
@@ -247,6 +264,8 @@ private func CRConditionRefresh() -> Void {
     this.crConditionProfessional.SetText("");
     this.crConditionDress.SetVisible(false);
     this.crConditionSupport.SetVisible(false);
+    this.crConditionClinical.SetVisible(false);
+    this.crConditionMechanical.SetVisible(false);
     this.crConditionStatus.SetText("");
     return;
   }
@@ -257,9 +276,13 @@ private func CRConditionRefresh() -> Void {
   this.crConditionCause.SetText(descriptor.likelyCause);
   this.crConditionCare.SetText("FIELD CARE: " + descriptor.fieldCare);
   this.crConditionProfessional.SetText("PROFESSIONAL CARE: " + descriptor.professionalCare);
-  this.crConditionDress.SetVisible(descriptor.canDress && !Equals(this.m_screen, CyberwareScreenType.Ripperdoc));
-  this.crConditionSupport.SetVisible(descriptor.canSupport && !Equals(this.m_screen, CyberwareScreenType.Ripperdoc));
-  this.crConditionStatus.SetText(CRFieldCareActionRuntime.Get().Status());
+  this.crConditionDress.SetVisible(descriptor.canDress && !atRipperdoc);
+  this.crConditionSupport.SetVisible(descriptor.canSupport && !atRipperdoc);
+  this.crConditionClinical.SetVisible(descriptor.canClinical && atRipperdoc);
+  this.crConditionMechanical.SetVisible(descriptor.canMechanical && atRipperdoc);
+  if !CRFieldCareActionRuntime.Get().Active() {
+    this.crConditionStatus.SetText("");
+  }
 }
 
 @addMethod(RipperDocGameController)
@@ -355,6 +378,46 @@ protected cb func OnCRConditionCareReleased(evt: ref<inkPointerEvent>) -> Bool {
   return true;
 }
 
+@addMethod(RipperDocGameController)
+protected cb func OnCRConditionProfessionalReleased(evt: ref<inkPointerEvent>) -> Bool {
+  let descriptor: ref<CRConditionDescriptor>;
+  let kind: Int32;
+  let accepted: Bool;
+  if !this.crConditionMode || !IsDefined(evt) || !evt.IsAction(n"click") || evt.IsHandled() || this.crConditionSelectedRegion < 1 || !Equals(this.m_screen, CyberwareScreenType.Ripperdoc) {
+    return false;
+  }
+  descriptor = CRConditionPresentation.Current(this.crConditionSelectedRegion);
+  if !IsDefined(descriptor) || !descriptor.valid || !descriptor.hasCondition {
+    return false;
+  }
+  if Equals(evt.GetCurrentTarget(), this.crConditionClinical) && descriptor.canClinical {
+    kind = 4;
+  } else {
+    if Equals(evt.GetCurrentTarget(), this.crConditionMechanical) && descriptor.canMechanical {
+      kind = 5;
+    } else {
+      return false;
+    }
+  }
+
+  // These are completed professional-service interactions, not portable kit care.
+  // Clinical care controls bleeding/establishes aftercare; biological tissue/bone
+  // still recover on the body clock. Mechanical repair affects chrome only.
+  accepted = CRBodyRuntime.Get().CompleteTreatment(this.crConditionSelectedRegion, kind, 1.0);
+  if accepted {
+    if kind == 4 {
+      this.crConditionStatus.SetText("Clinical care completed. Biological recovery still takes time.");
+    } else {
+      this.crConditionStatus.SetText("Cyberware repair completed for this region.");
+    }
+  } else {
+    this.crConditionStatus.SetText("Professional care could not be completed. No injury state was changed.");
+  }
+  this.CRConditionRefresh();
+  evt.Handle();
+  return true;
+}
+
 @wrapMethod(RipperDocGameController)
 protected cb func OnInitialize() -> Bool {
   let result: Bool = wrappedMethod();
@@ -383,6 +446,8 @@ protected cb func OnUninitialize() -> Bool {
   this.crConditionProfessional = null;
   this.crConditionDress = null;
   this.crConditionSupport = null;
+  this.crConditionClinical = null;
+  this.crConditionMechanical = null;
   this.crConditionStatus = null;
   return wrappedMethod();
 }
