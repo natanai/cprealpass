@@ -1,16 +1,13 @@
-// Cyberpunk Realism original integration adapter using published Dark Future events.
-// Staged integration build only. Enabled stays false until model calibration,
-// scripted/body interactions and native validation form a coherent gameplay batch.
+// Project-original body runtime. This adapter talks directly to Cyberpunk native
+// lifecycle/time/player state and to other realpass systems. Dark Future and other
+// gameplay mods are not runtime hosts.
 module CyberpunkRealism.Integration
 
 import CyberpunkRealism.Physiology.*
-import DarkFuture.Main.*
-import DarkFuture.Needs.*
-import DarkFuture.Conditions.DFInjuryConditionSystem
-import DarkFuture.Services.DFGameStateService
-
 
 public class CRBodyRuntimePolicy extends IScriptable {
+  // Canonical source remains fail-closed. Attended/release builders open this only
+  // after compiling the exact owned-runtime candidate against the installed game.
   public static func Enabled() -> Bool {
     return false;
   }
@@ -22,12 +19,20 @@ public class CRBodyTestPolicy extends IScriptable {
   }
 }
 
+public class CRBodyTickCallback extends DelayCallback {
+  public let generation: Int32;
+
+  public func Call() -> Void {
+    CRBodyRuntime.Get().HandleTick(this.generation);
+  }
+}
+
 public class CRBodyRuntime extends ScriptableSystem {
   private persistent let body: ref<CRBodyState>;
   private persistent let inputs: ref<CRBodyInputQueue>;
   private persistent let unmappedConsumptions: Int32 = 0;
   private persistent let bodySchemaVersion: Int32 = 0;
-  private persistent let localizedInjuryHandover: Bool = false;
+
   private let clock: ref<CRClockState>;
   private let config: ref<CRBodyConfig>;
   private let meterConfig: ref<CRBodyMeterConfig>;
@@ -35,8 +40,12 @@ public class CRBodyRuntime extends ScriptableSystem {
   private let unsupportedSaveVersion: Bool = false;
   private let timeSkipForecastReady: Bool = false;
   private let fieldCareBusy: Bool = false;
-  private let testLogCount: Int32 = 0;
+  private let tickGeneration: Int32 = 0;
+  private let tickScheduled: Bool = false;
+  private let nextSkipFromWaitMenu: Bool = false;
+  private let testSnapshotCount: Int32 = 0;
   private let testLastSim: Float = 0.0;
+  private let testLastSnapshot: String;
 
   public static func Get() -> ref<CRBodyRuntime> {
     return GameInstance.GetScriptableSystemsContainer(GetGameInstance()).Get(NameOf<CRBodyRuntime>()) as CRBodyRuntime;
@@ -54,6 +63,8 @@ public class CRBodyRuntime extends ScriptableSystem {
     CRFieldCareActionRuntime.Get().Cancel(false);
     CRInjuryEffectsRuntime.Get().Suspend();
     this.running = false;
+    this.tickGeneration += 1;
+    this.tickScheduled = false;
     this.clock = null;
   }
 
@@ -63,8 +74,11 @@ public class CRBodyRuntime extends ScriptableSystem {
     this.meterConfig = new CRBodyMeterConfig();
     this.running = false;
     this.unsupportedSaveVersion = this.bodySchemaVersion < 0 || this.bodySchemaVersion > 2;
-    this.TestSnapshot("restore");
+    this.timeSkipForecastReady = false;
     this.fieldCareBusy = false;
+    this.nextSkipFromWaitMenu = false;
+    this.tickGeneration += 1;
+    this.tickScheduled = false;
   }
 
   public func Activate() -> Void {
@@ -75,20 +89,23 @@ public class CRBodyRuntime extends ScriptableSystem {
     if this.unsupportedSaveVersion {
       return;
     }
+
+    // A clean realpass save starts from realpass' own physiological baseline. We do
+    // not import percentages or persistent state from another gameplay mod.
     if this.bodySchemaVersion == 0 {
-      // Refuse an ambiguous pre-existing body rather than overwriting it.
       if IsDefined(this.body) {
         return;
       }
-      let migrated: ref<CRBodyState> = CRBodyPresentation.Migrate(this.config, this.meterConfig, DFHydrationSystem.Get().GetNeedValue(), DFNutritionSystem.Get().GetNeedValue(), DFEnergySystem.Get().GetNeedValue());
-      if !IsDefined(migrated) {
+      this.body = CRBodyModel.Create(this.config);
+      if !IsDefined(this.body) {
         return;
       }
-      this.body = migrated;
       this.bodySchemaVersion = 2;
     }
+
     let upgradedSchema: Int32 = CRBodyPresentation.UpgradeSchema(this.bodySchemaVersion, this.body, this.config, this.meterConfig);
     if upgradedSchema < 0 {
+      this.bodySchemaVersion = -1;
       return;
     }
     this.bodySchemaVersion = upgradedSchema;
@@ -98,71 +115,46 @@ public class CRBodyRuntime extends ScriptableSystem {
     if !IsDefined(this.inputs) {
       this.inputs = new CRBodyInputQueue();
     }
-    DFHydrationSystem.Get().CRPrepareBodyHandover();
-    DFNutritionSystem.Get().CRPrepareBodyHandover();
-    DFEnergySystem.Get().CRPrepareBodyHandover();
-    DFEnergySystem.Get().ClearEnergyManagementEffects();
+
     this.running = true;
     this.ResetClock();
-    this.TryInjuryHandover();
     this.Publish();
+    this.ScheduleTick();
     this.TestSnapshot("activate");
   }
 
-  // Attended test diagnostics use existing game callbacks only. No timer or helper.
-  public func TestStatus() -> String {
-    if !CRBodyTestPolicy.Diagnostics() || !IsDefined(this.clock) || !IsDefined(this.body) || !IsDefined(this.inputs) {
-      return "";
-    }
-    return "TEST CLOCK  |  Last rate " + ToString(this.clock.lastObservedRatio) + "x  |  Body hours " + ToString(this.body.elapsedHours) + "  |  Meals/drinks " + ToString(this.inputs.appliedIntakes) + "  |  Queue " + ToString(this.inputs.count) + "  |  Fault " + ToString(this.inputs.faulted);
+  public func Suspend() -> Void {
+    this.TestSnapshot("suspend");
+    CRFieldCareActionRuntime.Get().Cancel(false);
+    CRInjuryEffectsRuntime.Get().Suspend();
+    this.running = false;
+    this.tickGeneration += 1;
+    this.tickScheduled = false;
+    this.ResetClock();
   }
 
-  public func TestSnapshot(event: String) -> Void {
-    if !CRBodyTestPolicy.Diagnostics() || this.testLogCount >= 500 {
-      return;
-    }
-    let sim: Float = this.SimSeconds();
-    if Equals(event, "tick") && sim >= this.testLastSim && sim - this.testLastSim < 60.0 {
-      return;
-    }
-    this.testLastSim = sim;
-    this.testLogCount += 1;
-    let line: String = "[CRTEST] event=" + event + " schema=" + ToString(this.bodySchemaVersion) + " running=" + ToString(this.running) + " owns=" + ToString(this.OwnsNeeds()) + " world=" + ToString(this.WorldSeconds()) + " sim=" + ToString(sim);
-    if IsDefined(this.clock) {
-      line += " ratio=" + ToString(this.clock.lastObservedRatio) + " suppressed=" + ToString(this.clock.suppressedWorldSeconds) + " unclassified=" + ToString(this.clock.unclassifiedWorldSeconds) + " skipPending=" + ToString(this.clock.skipPending);
-    }
-    if IsDefined(this.body) {
-      let meters: ref<CRBodyMeters> = this.GetMeters();
-      line += " valid=" + ToString(meters.valid) + " hydration=" + ToString(meters.hydration) + " nutrition=" + ToString(meters.nutrition) + " energy=" + ToString(meters.energy) + " elapsed=" + ToString(this.body.elapsedHours) + " pending=" + ToString(this.body.pendingHours) + " gutWater=" + ToString(this.body.gutWaterMl) + " gutEnergy=" + ToString(this.body.gutEnergyKcal) + " water=" + ToString(this.body.bodyWaterMl) + " bladder=" + ToString(this.body.bladderMl) + " bowel=" + ToString(this.body.bowelGrams) + " sleepPressure=" + ToString(this.body.sleepPressureHours) + " sleepDebt=" + ToString(this.body.sleepDebtHours) + " hygiene=" + ToString(this.body.hygieneLoad);
-    }
-    if IsDefined(this.inputs) {
-      line += " queued=" + ToString(this.inputs.count) + " fault=" + ToString(this.inputs.faulted) + " intakes=" + ToString(this.inputs.appliedIntakes) + " interactions=" + ToString(this.inputs.appliedInteractions);
-    }
-    FTLog(line);
+  public func IsRunning() -> Bool {
+    return this.running;
   }
 
   public func OwnsNeeds() -> Bool {
-    // Retain ownership through suspension; resuming must not refill saved needs.
+    // Ownership survives temporary menu/cinematic suspension; the saved body is
+    // never refilled merely because progression is paused.
     return CRBodyRuntimePolicy.Enabled() && this.bodySchemaVersion == 2 && IsDefined(this.body) && this.body.initialized;
+  }
+
+  public func OwnsLocalizedInjuries() -> Bool {
+    return CRCombatRuntimePolicy.Enabled() && this.OwnsNeeds();
   }
 
   public func GetBodyConfig() -> ref<CRBodyConfig> {
     return this.config;
   }
+
   public func GetMeters() -> ref<CRBodyMeters> {
     return CRBodyPresentation.Read(this.body, this.config, this.meterConfig);
   }
 
-  public func RefreshInjuryEffects() -> Void {
-    CRInjuryEffectsRuntime.Get().Refresh(this.body, this.config, this.running && this.OwnsLocalizedInjuries() && DFGameStateService.Get().IsValidGameState(this));
-  }
-
-  private func Publish() -> Void {
-    this.RefreshInjuryEffects();
-    if this.running && this.OwnsNeeds() && DFGameStateService.Get().IsValidGameState(this, true) {
-      CRPublishBodyMeters(this.GetMeters());
-    }
-  }
   public func GetBodySnapshot() -> ref<CRBodyState> {
     return CRBodyForecast.CopyBody(this.body);
   }
@@ -187,12 +179,22 @@ public class CRBodyRuntime extends ScriptableSystem {
   public func IsTimeSkipForecastReady() -> Bool {
     return this.timeSkipForecastReady;
   }
-  public func Suspend() -> Void {
-    this.TestSnapshot("suspend");
-    CRFieldCareActionRuntime.Get().Cancel(false);
-    CRInjuryEffectsRuntime.Get().Suspend();
-    this.running = false;
-    this.ResetClock();
+
+  private func Player() -> ref<PlayerPuppet> {
+    return GameInstance.GetPlayerSystem(GetGameInstance()).GetLocalPlayerMainGameObject() as PlayerPuppet;
+  }
+
+  private func InMenu() -> Bool {
+    let board: ref<IBlackboard> = GameInstance.GetBlackboardSystem(GetGameInstance()).Get(GetAllBlackboardDefs().UI_System);
+    return IsDefined(board) && board.GetBool(GetAllBlackboardDefs().UI_System.IsInMenu);
+  }
+
+  private func NativeStateAllowed(allowMenu: Bool) -> Bool {
+    let player: ref<PlayerPuppet> = this.Player();
+    if !this.running || !CRInjuryEffectsBridge.Allowed(player, true) {
+      return false;
+    }
+    return allowMenu || !this.InMenu();
   }
 
   private func WorldSeconds() -> Int32 {
@@ -212,22 +214,17 @@ public class CRBodyRuntime extends ScriptableSystem {
 
   public func RebaseObservation() -> Void {
     if this.running && IsDefined(this.clock) {
-      // Preserve skipPending: closing a sleep menu must not cancel its finish event.
-      CRClockModel.Reset(this.clock, this.WorldSeconds(), this.SimSeconds(), this.Allowed());
+      CRClockModel.Reset(this.clock, this.WorldSeconds(), this.SimSeconds(), this.NativeStateAllowed(false));
     }
-  }
-  private func Allowed() -> Bool {
-    let guard: ref<DFGameStateService> = DFGameStateService.Get();
-    return this.running && guard.IsValidGameState(this) && !guard.IsInAnyMenu();
   }
 
   private func Exertion() -> Float {
-    let player: ref<PlayerPuppet> = GameInstance.GetPlayerSystem(GetGameInstance()).GetLocalPlayerMainGameObject() as PlayerPuppet;
+    let player: ref<PlayerPuppet> = this.Player();
     if !IsDefined(player) || VehicleComponent.IsMountedToVehicle(GetGameInstance(), player) {
       return 0.0;
     }
-    // Provisional movement proxy. Stamina use, swimming and combat effort require
-    // additional signals; vehicle movement must never count as running.
+    // Provisional movement proxy. It is intentionally owned here and can later be
+    // enriched with stamina/swim/combat signals without changing the body model.
     return ClampF(Vector4.Length(player.GetVelocity()) / 7.0, 0.0, 1.0);
   }
 
@@ -239,10 +236,10 @@ public class CRBodyRuntime extends ScriptableSystem {
   }
 
   public func Observe() -> Void {
-    if !this.running || !IsDefined(this.clock) {
+    if !this.running || !IsDefined(this.clock) || !IsDefined(this.inputs) || !IsDefined(this.body) {
       return;
     }
-    let hours: Float = CRClockModel.Observe(this.clock, this.WorldSeconds(), this.SimSeconds(), this.Allowed());
+    let hours: Float = CRClockModel.Observe(this.clock, this.WorldSeconds(), this.SimSeconds(), this.NativeStateAllowed(false));
     this.ApplyHours(hours, false, this.Exertion());
     if this.OwnsLocalizedInjuries() && !this.inputs.faulted {
       CRInjuryEffectsRuntime.Get().Advance(hours, this.config, false);
@@ -252,9 +249,43 @@ public class CRBodyRuntime extends ScriptableSystem {
     this.TestSnapshot("tick");
   }
 
+  private func ScheduleTick() -> Void {
+    let callback: ref<CRBodyTickCallback>;
+    if !this.running || this.tickScheduled || !CRBodyRuntimePolicy.Enabled() {
+      return;
+    }
+    callback = new CRBodyTickCallback();
+    callback.generation = this.tickGeneration;
+    this.tickScheduled = true;
+    GameInstance.GetDelaySystem(GetGameInstance()).DelayCallback(callback, 1.0);
+  }
+
+  public func HandleTick(generation: Int32) -> Void {
+    if generation != this.tickGeneration || !this.running || !CRBodyRuntimePolicy.Enabled() {
+      return;
+    }
+    this.tickScheduled = false;
+    this.Observe();
+    this.ScheduleTick();
+  }
+
+  // The normal pause/hub "skip time" entry point marks the next popup as waiting.
+  // Other stock TimeskipGameController invocations are treated as bed sleep. The
+  // native hook consumes this marker at popup initialization so cancellation cannot
+  // leave stale classification behind.
+  public func MarkNextTimeSkipAsWait() -> Void {
+    this.nextSkipFromWaitMenu = true;
+  }
+
+  public func ConsumeNextTimeSkipSleeping() -> Bool {
+    let sleeping: Bool = !this.nextSkipFromWaitMenu;
+    this.nextSkipFromWaitMenu = false;
+    return sleeping;
+  }
+
   public func BeginSkip() -> Void {
     CRFieldCareActionRuntime.Get().Cancel(false);
-    if !this.running {
+    if !this.running || !IsDefined(this.clock) {
       return;
     }
     this.Observe();
@@ -262,38 +293,38 @@ public class CRBodyRuntime extends ScriptableSystem {
     this.TestSnapshot("skip-start");
   }
 
-  public func FinishSkip(data: DFTimeSkipData) -> Void {
-    if !this.running {
+  public func FinishSkipHours(hoursRequested: Float, sleeping: Bool) -> Void {
+    if !this.running || !IsDefined(this.clock) || !IsDefined(this.inputs) || !IsDefined(this.body) {
       return;
     }
-    let hours: Float = CRClockModel.FinishSkip(this.clock, this.WorldSeconds(), this.SimSeconds(), Cast<Float>(data.hoursSkipped));
-    this.ApplyHours(hours, NotEquals(data.timeSkipType, DFTimeSkipType.TimeSkip), 0.0);
+    let hours: Float = CRClockModel.FinishSkip(this.clock, this.WorldSeconds(), this.SimSeconds(), hoursRequested);
+    this.ApplyHours(hours, sleeping, 0.0);
     if this.OwnsLocalizedInjuries() && !this.inputs.faulted {
-      // V sleeping is not evidence that every other actor slept.
-      CRInjuryEffectsRuntime.Get().Advance(hours, this.config, true);
+      CRInjuryEffectsRuntime.Get().Advance(hours, this.config, sleeping);
     }
     CRBodyInputs.Drain(this.inputs, this.body, this.config);
     this.Publish();
     this.TestSnapshot("skip-finish");
   }
 
-  // Shared injury ownership and native committed combat paths. Wound magnitudes
-  // must come from mapped anatomy/impact, never inferred from an HP percentage.
-  public func OwnsLocalizedInjuries() -> Bool {
-    // Ownership survives a temporary suspension; damage notifications must not
-    // wake the old HP-percentage accumulator while the body is paused.
-    return CRCombatRuntimePolicy.Enabled() && this.OwnsNeeds() && this.localizedInjuryHandover;
+  public func CancelSkip() -> Void {
+    this.ResetClock();
   }
 
-  private func TryInjuryHandover() -> Void {
-    if !this.localizedInjuryHandover && CRCombatRuntimePolicy.Enabled() && this.OwnsNeeds() && this.running && this.Allowed() && DFInjuryConditionSystem.Get().CRIsClearForHandover() {
-      this.localizedInjuryHandover = true;
-    }
+  public func RefreshInjuryEffects() -> Void {
+    CRInjuryEffectsRuntime.Get().Refresh(this.body, this.config, this.NativeStateAllowed(false) && this.OwnsLocalizedInjuries());
   }
+
+  private func Publish() -> Void {
+    // Presentation is separately owned. The body runtime publishes no values into
+    // another mod's needs systems and creates no duplicate HUD authority.
+    this.RefreshInjuryEffects();
+  }
+
   public func CanAcceptCombatInjury() -> Bool {
-    this.TryInjuryHandover();
-    return this.running && this.OwnsLocalizedInjuries() && this.Allowed() && IsDefined(this.inputs) && !this.inputs.faulted && CRInjuryModel.CanAdvance(this.body.injuries, this.config);
+    return this.NativeStateAllowed(false) && this.OwnsLocalizedInjuries() && IsDefined(this.inputs) && !this.inputs.faulted && CRInjuryModel.CanAdvance(this.body.injuries, this.config);
   }
+
   public func RecordInjury(region: Int32, tissue: Float, bone: Float, cyberware: Float, externalBleed: Float, internalBleed: Float) -> Bool {
     if !this.CanAcceptCombatInjury() {
       return false;
@@ -309,7 +340,7 @@ public class CRBodyRuntime extends ScriptableSystem {
   }
 
   public func CompleteTreatment(region: Int32, kind: Int32, effectiveness: Float) -> Bool {
-    if !this.running || !this.OwnsNeeds() || !DFGameStateService.Get().IsValidGameState(this, true) || !IsDefined(this.inputs) || this.inputs.faulted {
+    if !this.OwnsNeeds() || !this.NativeStateAllowed(true) || !IsDefined(this.inputs) || this.inputs.faulted {
       return false;
     }
     this.Observe();
@@ -320,36 +351,30 @@ public class CRBodyRuntime extends ScriptableSystem {
     }
     return accepted;
   }
+
   public func CanUseFieldCare() -> Bool {
     return !this.fieldCareBusy && this.CanContinueFieldCare();
   }
+
   public func CanContinueFieldCare() -> Bool {
-    let player: ref<PlayerPuppet> = GameInstance.GetPlayerSystem(GetGameInstance()).GetLocalPlayerMainGameObject() as PlayerPuppet;
-    return this.running && this.OwnsLocalizedInjuries() && IsDefined(this.inputs) && !this.inputs.faulted && DFGameStateService.Get().IsValidGameState(this) && IsDefined(player) && !player.IsInCombat() && !player.IsDead() && !VehicleComponent.IsMountedToVehicle(GetGameInstance(), player) && CRInjuryEffectsBridge.Allowed(player, true);
+    let player: ref<PlayerPuppet> = this.Player();
+    return this.OwnsLocalizedInjuries() && this.NativeStateAllowed(false) && IsDefined(this.inputs) && !this.inputs.faulted && IsDefined(player) && !player.IsInCombat() && !VehicleComponent.IsMountedToVehicle(GetGameInstance(), player);
   }
 
   public func UseFieldCare(region: Int32, kind: Int32) -> Int32 {
-    if CRCombatRuntimePolicy.Enabled() && this.OwnsNeeds() && !this.localizedInjuryHandover && !DFInjuryConditionSystem.Get().CRIsClearForHandover() {
-      return 7;
-    }
     return CRFieldCareActionRuntime.Get().Begin(region, kind);
   }
+
   public func CommitFieldCare(action: ref<CRFieldCareAction>) -> Int32 {
-    if !CRFieldCareActionRuntime.Get().IsCompleting(action) {
+    if !CRFieldCareActionRuntime.Get().IsCompleting(action) || !this.CanUseFieldCare() {
       return 0;
     }
     let region: Int32 = action.region;
     let kind: Int32 = action.kind;
-    if CRCombatRuntimePolicy.Enabled() && this.OwnsNeeds() && !this.localizedInjuryHandover && !DFInjuryConditionSystem.Get().CRIsClearForHandover() {
-      return 7;
-    }
-    if !this.CanUseFieldCare() {
-      return 0;
-    }
     this.fieldCareBusy = true;
     this.Observe();
-    // A paid interaction never jumps ahead of pending body events. Let the
-    // existing tick drain a long backlog; no extra polling/timer is created.
+    // A paid interaction never jumps ahead of pending body events. Let the normal
+    // body drain settle first rather than creating a second timing authority.
     if this.inputs.faulted || this.inputs.count != 0 || !CRBodyModel.CloseInterval(this.body, this.config) {
       this.fieldCareBusy = false;
       return 0;
@@ -359,8 +384,7 @@ public class CRBodyRuntime extends ScriptableSystem {
       this.fieldCareBusy = false;
       return 6;
     }
-    let player: ref<PlayerPuppet> = GameInstance.GetPlayerSystem(GetGameInstance()).GetLocalPlayerMainGameObject() as PlayerPuppet;
-    let result: Int32 = CRFieldCareInventory.ExecuteForAction(player, plan, this.body.injuries, action);
+    let result: Int32 = CRFieldCareInventory.ExecuteForAction(this.Player(), plan, this.body.injuries, action);
     if result == 1 {
       this.inputs.appliedTreatments += 1;
     }
@@ -368,15 +392,16 @@ public class CRBodyRuntime extends ScriptableSystem {
     this.Publish();
     return result;
   }
+
   public func CanUseBodyInteraction() -> Bool {
-    let player: ref<PlayerPuppet> = GameInstance.GetPlayerSystem(GetGameInstance()).GetLocalPlayerMainGameObject() as PlayerPuppet;
-    return this.running && this.OwnsNeeds() && IsDefined(this.inputs) && !this.inputs.faulted && this.Allowed() && IsDefined(player) && !player.IsInCombat();
+    let player: ref<PlayerPuppet> = this.Player();
+    return this.OwnsNeeds() && this.NativeStateAllowed(false) && IsDefined(this.inputs) && !this.inputs.faulted && IsDefined(player) && !player.IsInCombat();
   }
 
   public func CompleteBodyInteraction(kind: Int32) -> Bool {
-    // Shower completion may occur in a cinematic; retain core story/replacer
-    // exclusions while allowing that temporary scene tier.
-    if !this.running || !this.OwnsNeeds() || !DFGameStateService.Get().IsValidGameState(this, true) {
+    // Shower completion can occur during a native cinematic, so allow menu/scene
+    // presentation here while retaining the realpass body/schema/input guards.
+    if !this.running || !this.OwnsNeeds() || !IsDefined(this.inputs) || this.inputs.faulted {
       return false;
     }
     this.Observe();
@@ -384,52 +409,54 @@ public class CRBodyRuntime extends ScriptableSystem {
     if accepted {
       CRBodyInputs.Drain(this.inputs, this.body, this.config);
       this.Publish();
-      CRShowBodyMeters();
     }
     return accepted;
   }
+
   public func Consume(itemRecord: wref<Item_Record>) -> Void {
-    // Inventory menus are a valid consumption surface even though time is paused.
-    if !this.running || !IsDefined(itemRecord) || !DFGameStateService.Get().IsValidGameState(this, true) {
+    // Inventory is a valid native consumption surface even though UI time is paused.
+    if !this.running || !this.OwnsNeeds() || !IsDefined(itemRecord) || !this.NativeStateAllowed(true) || !IsDefined(this.inputs) || this.inputs.faulted {
       return;
     }
     this.Observe();
     let serving: ref<CRServing> = CRItemServing.Resolve(itemRecord);
     if !serving.recognized {
-      // Includes unmapped alcohol/drugs: do not manufacture food or negative water.
       this.unmappedConsumptions += 1;
       this.TestSnapshot("unmapped-item");
       return;
     }
     CRBodyInputs.Intake(this.inputs, serving.waterMl, serving.energyKcal, serving.residueGrams);
-    CRShowBodyMeters();
     CRBodyInputs.Drain(this.inputs, this.body, this.config);
     this.Publish();
     this.TestSnapshot("consume");
   }
-  public func CancelSkip() -> Void {
-    this.ResetClock();
-  }
-}
 
-// Reuse existing lifecycle/tick events; create no independent polling timer.
-public class CRBodyRuntimeEvents extends ScriptableService {
-  public cb func OnLoad() {
-    if !CRBodyRuntimePolicy.Enabled() {
+  // Attended diagnostics remain in-memory only. No external log, watcher, file,
+  // timer service or telemetry process is created by the diagnostic surface.
+  public func TestStatus() -> String {
+    if !CRBodyTestPolicy.Diagnostics() || !IsDefined(this.clock) || !IsDefined(this.body) || !IsDefined(this.inputs) {
+      return "";
+    }
+    return "TEST CLOCK | Last rate " + ToString(this.clock.lastObservedRatio) + "x | Body hours " + ToString(this.body.elapsedHours) + " | Meals/drinks " + ToString(this.inputs.appliedIntakes) + " | Queue " + ToString(this.inputs.count) + " | Fault " + ToString(this.inputs.faulted);
+  }
+
+  public func TestSnapshot(event: String) -> Void {
+    if !CRBodyTestPolicy.Diagnostics() || this.testSnapshotCount >= 500 {
       return;
     }
-    let callbacks = GameInstance.GetCallbackSystem();
-    callbacks.RegisterCallback(n"DarkFuture.Main.MainSystemLifecycleInitDoneEvent", this, n"OnStart", true);
-    callbacks.RegisterCallback(n"DarkFuture.Main.MainSystemLifecycleResumeDoneEvent", this, n"OnResume", true);
-    callbacks.RegisterCallback(n"DarkFuture.Main.MainSystemLifecycleSuspendEvent", this, n"OnSuspend", true);
-    callbacks.RegisterCallback(n"DarkFuture.Main.MainSystemPlayerDeathEvent", this, n"OnDeath", true);
-    callbacks.RegisterCallback(n"DarkFuture.Main.MainSystemTimeSkipStartEvent", this, n"OnSkipStart", true);
-    callbacks.RegisterCallback(n"DarkFuture.Main.MainSystemTimeSkipCancelledEvent", this, n"OnSkipCancel", true);
+    let sim: Float = this.SimSeconds();
+    if Equals(event, "tick") && sim >= this.testLastSim && sim - this.testLastSim < 60.0 {
+      return;
+    }
+    this.testLastSim = sim;
+    this.testSnapshotCount += 1;
+    this.testLastSnapshot = "event=" + event + " schema=" + ToString(this.bodySchemaVersion) + " running=" + ToString(this.running) + " world=" + ToString(this.WorldSeconds()) + " sim=" + ToString(sim);
   }
-  private cb func OnStart(event: ref<MainSystemLifecycleInitDoneEvent>) { CRBodyRuntime.Get().Activate(); }
-  private cb func OnResume(event: ref<MainSystemLifecycleResumeDoneEvent>) { CRBodyRuntime.Get().Activate(); }
-  private cb func OnSuspend(event: ref<MainSystemLifecycleSuspendEvent>) { CRBodyRuntime.Get().Suspend(); }
-  private cb func OnDeath(event: ref<MainSystemPlayerDeathEvent>) { CRBodyRuntime.Get().Suspend(); }
-  private cb func OnSkipStart(event: ref<MainSystemTimeSkipStartEvent>) { CRBodyRuntime.Get().BeginSkip(); }
-  private cb func OnSkipCancel(event: ref<MainSystemTimeSkipCancelledEvent>) { CRBodyRuntime.Get().CancelSkip(); }
+
+  public func TestLastSnapshot() -> String {
+    if !CRBodyTestPolicy.Diagnostics() {
+      return "";
+    }
+    return this.testLastSnapshot;
+  }
 }
