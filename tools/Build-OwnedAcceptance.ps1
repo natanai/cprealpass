@@ -27,11 +27,15 @@ $sourceRoot = Resolve-SafeChildPath $project 'src/redscript/CyberpunkRealism'
 $sourceFiles = @(Get-ChildItem -LiteralPath $sourceRoot -File -Filter '*.reds' | Sort-Object Name)
 if ($sourceFiles.Count -lt 20) { throw 'Unexpectedly small realpass source tree; refusing to construct an incomplete owned candidate.' }
 
-# The old Codeware-backed backpack field-care popup is retained as prototype/source
-# evidence while Condition mode is implemented, but it is not part of the owned
-# acceptance runtime. Treatment models/action runtime are still included.
-$excluded = @('FieldCareUI.reds')
-$candidateFiles = @($sourceFiles | Where-Object { $_.Name -notin $excluded })
+# These files belonged to superseded source-mod-integrated/prototype paths. They are
+# intentionally retired from production source rather than silently excluded at build
+# time. Git history remains the reference if their old behavior needs to be studied.
+$retiredProductionSources = @('FieldCareUI.reds','RealpassLocalization.reds','FieldCareItemUse.reds')
+$presentRetired = @($sourceFiles | Where-Object { $_.Name -in $retiredProductionSources })
+if ($presentRetired.Count -gt 0) {
+    throw "Retired legacy/prototype production source reappeared: $(@($presentRetired.Name) -join ', ')"
+}
+$candidateFiles = @($sourceFiles)
 
 # Fail closed on source-mod/runtime-host imports and on source-mod nomenclature that
 # would silently rebrand vanilla gameplay items. Generic frameworks may eventually
@@ -109,8 +113,8 @@ foreach ($file in $candidateFiles) {
 if (@($entries | Where-Object { $_.destination -match '(?i)(dark[ _-]?future|project[ _-]?e3)' }).Count -gt 0) {
     throw 'Owned candidate generated a forbidden source-mod destination.'
 }
-if (@($entries | Where-Object destination -eq 'r6/scripts/CyberpunkRealism/FieldCareUI.reds').Count -gt 0) {
-    throw 'Backpack field-care prototype leaked into owned candidate.'
+if (@($entries | Where-Object { [IO.Path]::GetFileName([string]$_.destination) -in $retiredProductionSources }).Count -gt 0) {
+    throw 'Retired legacy/prototype source leaked into the owned candidate.'
 }
 
 $manifest = [ordered]@{
@@ -137,15 +141,15 @@ $record = [ordered]@{
     gameVersion = $actualVersion
     ownedRuntime = $true
     sourceCount = $entries.Count
-    excludedPrototypeSources = @($excluded)
+    retiredProductionSources = @($retiredProductionSources)
     genericRuntimeRequirement = 'Generic loader/toolchain requirements are audited separately before deployment; this source candidate inherits no gameplay or presentation mod runtime.'
     stagedGates = @($stagedGates.ToArray())
     manifestPath = $outputRelative
     traditionalActorHealthBars = $false
     sourceModsRequired = @()
     vanillaIdentityPolicy = 'Preserve vanilla item/system identity; source-mod renames are forbidden in the owned candidate.'
-    scope = 'Owned attended compile candidate only. Contains project-original realpass REDscript, excludes Dark Future/Project E3 and the backpack Field Care prototype, does not deploy or launch Cyberpunk. Native UI/gameplay/save/quest acceptance is still required.'
+    scope = 'Owned attended compile candidate only. Contains the complete current project-original realpass REDscript tree; retired source-mod bridge/prototype files are absent; does not deploy or launch Cyberpunk. Native UI/gameplay/save/quest acceptance is still required.'
 }
 Write-JsonFile $record $report
-Write-Host "PASS: owned realpass candidate $BuildId compiled from $($entries.Count) project-original sources. No Dark Future/Project E3 runtime or source-mod item renames were inherited. Nothing was deployed or launched."
+Write-Host "PASS: owned realpass candidate $BuildId compiled from $($entries.Count) project-original sources. No Dark Future/Project E3 runtime, retired prototype source, or source-mod item renames were inherited. Nothing was deployed or launched."
 return $outputRelative
