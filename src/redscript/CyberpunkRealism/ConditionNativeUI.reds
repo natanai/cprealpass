@@ -82,7 +82,7 @@ private func CRConditionText(text: String, name: CName, size: Int32) -> ref<inkT
 @addMethod(RipperDocGameController)
 private func CRConditionWrappedText(text: String, name: CName, size: Int32, width: Float) -> ref<inkText> {
   let widget: ref<inkText> = this.CRConditionText(text, name, size);
-  widget.SetWrapping(true, width);
+  widget.SetWrappingAtPosition(width);
   widget.SetSize(Vector2(width, 0.0));
   return widget;
 }
@@ -141,7 +141,7 @@ private func CRConditionCreateUI() -> Void {
   this.crConditionList.SetChildMargin(inkMargin(0.0, 3.0, 0.0, 3.0));
   this.crConditionList.Reparent(this.crConditionPanel, -1);
 
-  this.crConditionRegionWidgets.Clear();
+  ArrayClear(this.crConditionRegionWidgets);
   region = this.CRConditionText("", n"CRConditionRegion1", 24); ArrayPush(this.crConditionRegionWidgets, region); region.Reparent(this.crConditionList, -1);
   region = this.CRConditionText("", n"CRConditionRegion2", 24); ArrayPush(this.crConditionRegionWidgets, region); region.Reparent(this.crConditionList, -1);
   region = this.CRConditionText("", n"CRConditionRegion3", 24); ArrayPush(this.crConditionRegionWidgets, region); region.Reparent(this.crConditionList, -1);
@@ -408,7 +408,7 @@ protected cb func OnCRConditionProfessionalReleased(evt: ref<inkPointerEvent>) -
   // The runtime re-checks service eligibility immediately before the shared body
   // treatment commit. Biological recovery still takes body time; mechanical repair
   // affects chrome only.
-  accepted = CRBodyRuntime.Get().CompleteProfessionalCare(this.crConditionSelectedRegion, kind);
+  accepted = CRProfessionalCareRuntime.Complete(this.crConditionSelectedRegion, kind);
   if accepted {
     if kind == 4 {
       this.crConditionStatus.SetText("Clinical care completed. Biological recovery still takes time.");
@@ -437,7 +437,7 @@ protected cb func OnInitialize() -> Bool {
 protected cb func OnUninitialize() -> Bool {
   this.crConditionMode = false;
   this.crConditionSelectedRegion = 0;
-  this.crConditionRegionWidgets.Clear();
+  ArrayClear(this.crConditionRegionWidgets);
   this.crConditionTabs = null;
   this.crConditionPanel = null;
   this.crConditionList = null;
