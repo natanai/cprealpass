@@ -8,7 +8,7 @@ Governing goals: `AGREED-GOALS.md` G-004 and G-040 through G-057
 
 The final realpass injury interface lives inside Cyberpunk's existing Cyberware/body screen. The stock body visualization and paper-doll zoom/drill-down language are the shell; realpass owns all new condition state, condition cards, explanatory text and treatment behavior.
 
-The current backpack `FIELD CARE` popup is a development prototype. It is not the intended final navigation path and is excluded from the owned acceptance runtime; Condition mode is replacing it.
+The obsolete backpack `FIELD CARE` popup has been retired from production source. It survives only in Git history as prototype evidence; there is no owned-runtime exclusion that silently keeps it in the production tree. Condition mode is the treatment-navigation path being accepted.
 
 ## Current implementation status
 
@@ -56,7 +56,7 @@ The current first slice overlays its realpass panel rather than fully suppressin
 
 ## Patch-resilience rule
 
-Prefer dynamic realpass widgets attached to the stock controller/root/anchors over replacing whole `.inkwidget` resources. Preserve vanilla item/system identity and hook stable semantic action boundaries where possible. If a future game patch moves an anchor or changes a hook signature, the adapter should be fixable without changing the injury, pain or treatment models.
+Prefer dynamic realpass widgets attached to the stock controller/root/anchors over replacing whole `.inkwidget` resources. Preserve vanilla item/system identity and hook stable semantic action boundaries where possible. `manifest/native-seams.json` is the machine-readable boundary: engine-version-sensitive hook annotations belong in explicit adapter files, not in the injury/pain/treatment models. If a future game patch moves an anchor or changes a hook signature, the intended repair is at that seam without changing the underlying physical model unless the game's semantics genuinely changed.
 
 ## Condition identity
 
@@ -179,7 +179,7 @@ Condition/injury/pain UX is not accepted until all of the following are demonstr
 15. Meaningful pain creates visible weapon/aim instability; analgesia reduces only the pain component, not structural impairment.
 16. Clinical/mechanical actions are ordinary-context unavailable and ripperdoc-context available only when their respective models can help.
 17. Clinical care does not instantly heal tissue/bone/replace blood; mechanical repair does not heal biology.
-18. The backpack Field Care prototype remains absent from the owned runtime.
+18. The retired backpack Field Care popup is absent from production source and the deployed owned runtime.
 19. No Dark Future/Project E3 runtime content is required.
 20. Save/reload preserves regional injury, analgesic state and bounded explanatory history.
 21. V pain vocalizations, if enabled, are contextually correct and rate-limited rather than spammed.
@@ -197,7 +197,8 @@ Condition/injury/pain UX is not accepted until all of the following are demonstr
 9. Vanilla MaxDoc/`FirstAidWhiff` native healing-action interception — **implemented in source; native exact compile/gameplay pending**.
 10. Pain-derived native sway/spread/recoil and drunk visual loops — **implemented in source; native exact compile/gameplay pending**.
 11. Separate wound-care supplies — **implemented in development mapping; native inventory/UI acceptance pending**.
-12. Realistic roles for vanilla Bounce Back and Health Booster — **open; do not rename/reuse as MaxDoc**.
-13. V pain/grunt cue mapping/throttling — **research/implementation pending**.
-14. Final Condition visual polish/minigrid suppression — **native calibration pending**.
-15. Exact-compile and attended-test the owned runtime before release polish — **next local gate**.
+12. Retire old backpack/source-mod localization/item-routing paths — **complete in production source; guarded by owned-runtime tests**.
+13. Realistic roles for vanilla Bounce Back and Health Booster — **open; do not rename/reuse as MaxDoc**.
+14. V pain/grunt cue mapping/throttling — **research/implementation pending**.
+15. Final Condition visual polish/minigrid suppression — **native calibration pending**.
+16. Exact-compile and attended-test the owned runtime before release polish — **next local gate**.
