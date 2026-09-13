@@ -2,7 +2,7 @@
 
 Status: canonical injury/personal-condition UX design; first owned native slice implemented, native acceptance pending
 Last updated: 2026-09-13
-Governing goals: `AGREED-GOALS.md` G-040 through G-049, G-050 through G-053
+Governing goals: `AGREED-GOALS.md` G-040 through G-057
 
 ## Product intent
 
@@ -12,20 +12,22 @@ The current backpack `FIELD CARE` popup is a development prototype. It is not th
 
 ## Current implementation status
 
-The first project-original native slice now exists in `ConditionNativeUI.reds`. It dynamically mounts a `CYBERWARE | CONDITION` switch and qualitative condition panel on the stock `RipperDocGameController`, lists active conditions only, maps the six realpass body regions onto stock anatomical areas, and calls the stock `DollHover`/`DollSelect` selection path instead of introducing a custom camera system.
+The first project-original native slice exists in `ConditionNativeUI.reds`. It dynamically mounts a `CYBERWARE | CONDITION` switch and qualitative condition panel on the stock `RipperDocGameController`, lists active conditions only, maps the six realpass body regions onto stock anatomical areas, and calls the stock `DollHover`/`DollSelect` selection path instead of introducing a custom camera system.
 
 `ConditionPresentation.reds` is the read-only projection from authoritative regional injury state plus bounded provenance. The UI has no native-HP dependency and does not mutate injuries directly.
 
-Ordinary inventory/Cyberware context exposes model-approved **dressing** and **limb support** actions. They still begin through the timed field-care runtime: the menu must be closed, the player must remain stationary/out of combat with hands available, and interruption cancels the action without turning the trauma kit into a universal heal.
+Ordinary inventory/Cyberware context exposes model-approved **dressing** and **limb support**. They begin through the timed field-care runtime: the menu must be closed, the player must remain stationary/out of combat with hands available, and interruption cancels the action. Trauma Kits are no longer wound-care currency.
 
-Ripperdoc context now exposes two distinct professional actions when the model says they can help:
+Ripperdoc context exposes distinct professional actions when the model says they can help:
 
 - **Clinical care** controls external/internal bleeding and establishes professional biological aftercare. It does not directly erase tissue/bone trauma or replace lost blood; subsequent biological recovery still occurs through the shared body clock.
 - **Cyberware repair** reduces structural chrome damage only. It does not treat biological tissue, bone or blood loss.
 
-`ProfessionalCareModel.reds` owns professional-care eligibility. It deliberately does not own pricing/economy. The first acceptance slice treats the click as completion of an appropriate professional service; service price/time presentation can be calibrated later without making realpass an economy overhaul.
+`ProfessionalCareModel.reds` owns professional-care eligibility and deliberately does not own pricing/economy. The first acceptance slice treats the click as completion of an appropriate professional service; service price/time presentation can be calibrated later without making realpass an economy overhaul.
 
-This code is **not yet native-accepted**. Cloud/offline tests can verify authority boundaries and pure treatment behavior, but the exact stock-controller hook signatures, dynamic Ink layout, paper-doll behavior and installed-game interactions must pass the user's local 2.31 compile/preflight and attended test before this interface is considered working in Cyberpunk.
+The first project-original pain slice now also exists. `PainModel.reds` derives physical pain from biological regional injury, models diminishing Trauma Kit analgesia and an overuse/intoxication envelope, and derives pain-only weapon-handling factors. `PainRuntime.reds` persists analgesic state while synchronizing decay to `CRBodyRuntime` elapsed body time rather than creating another timer. `PainNativeEffects.reds` projects perceived pain into native weapon sway/spread/recoil and reuses CDPR's existing fullscreen drunk effect loops for excessive overlapping analgesia without applying the stock alcohol status effect.
+
+This code is **not yet native-accepted**. Cloud/offline tests can verify authority boundaries and pure treatment/pain behavior, but exact stock-controller hook signatures, dynamic Ink layout, paper-doll behavior, item interception, native drunk loops, weapon sway and installed-game interactions must pass the user's local 2.31 compile/preflight and attended test before this interface is considered working in Cyberpunk.
 
 ## Two modes
 
@@ -39,28 +41,20 @@ Preserve vanilla behavior as closely as practical. Installed cyberware slots, eq
 
 ### Condition
 
-Realpass takes over only the condition layer:
+realpass takes over only the condition layer:
 
 - installed-cyberware cards/minigrids are hidden or visually deprioritized for the Condition view;
 - the central stock body remains visible;
-- active realpass conditions appear as selectable entries anchored to the relevant anatomy;
+- active realpass conditions appear as selectable entries associated with relevant anatomy;
 - healthy regions remain visually quiet rather than filling the screen with `OK` cards;
 - selecting a condition uses the stock regional paper-doll zoom/drill-down where available;
 - the zoomed/detail view becomes the place to understand and tend the selected condition.
 
 The current first slice overlays its realpass panel rather than fully suppressing/dimming every vanilla cyberware minigrid. That visual handoff is intentionally left for native acceptance/calibration rather than making a broad resource replacement before the stock-controller integration is proven.
 
-The exact switch widget/position is an implementation detail. It should look native and must not require a separate Mod Settings dependency.
+## Patch-resilience rule
 
-## Vanilla shell we intend to reuse
-
-The current game controller used by the cyberware/ripperdoc body UI already distinguishes inventory-vs-ripperdoc context, owns anatomical anchors (arms, legs, hands, system, nervous system, skeleton, ocular, integumentary, frontal cortex, cardiovascular), and drives paper-doll selection/zoom.
-
-realpass should wrap/extend that controller rather than ship a copied third-party UI.
-
-### Patch-resilience rule
-
-Prefer dynamic realpass widgets attached to the stock controller/root/anchors over replacing whole `.inkwidget` resources. If a future game patch moves an anchor, the adapter should be fixable without changing the injury model or condition data.
+Prefer dynamic realpass widgets attached to the stock controller/root/anchors over replacing whole `.inkwidget` resources. If a future game patch moves an anchor, the adapter should be fixable without changing the injury, pain or treatment models.
 
 ## Condition identity
 
@@ -77,196 +71,129 @@ A **condition entry** is a player-facing interpretation of that physical state p
 
 Examples:
 
-- `LEFT ARM — Gunshot wound`
+- `LEFT ARM — Ballistic trauma`
 - `TORSO — Blunt trauma`
 - `HEAD — Concussive trauma`
 - `RIGHT LEG — Cyberware structural damage`
 
-Multiple recent causes may be shown when useful, but the current regional physical state remains authoritative.
-
-## Overview behavior
-
-Condition overview should answer one question quickly: **what currently needs attention?**
-
-Healthy regions: no card required.
-
-A region with a meaningful condition can expose one primary condition card. The title should prioritize the current physical problem rather than raw values.
-
-Possible supporting indicators:
-
-- external bleeding;
-- suspected/internal bleeding;
-- fracture/bone trauma;
-- impaired function;
-- damaged chrome;
-- supported/stabilized;
-- healing/recovering.
-
-Do not turn these into six health bars or exact percentage meters.
+Healthy regions remain visually quiet. Multiple recent causes may be explained when useful, but current regional physical state remains authoritative.
 
 ## Regional zoom mapping
 
-Use CDPR's existing regional zooms wherever possible.
+Use CDPR's existing regional zooms wherever possible. The first source slice maps head→Frontal Cortex, torso→Integumentary System, either arm→Arms and either leg→Legs solely to drive stock selection language. Left/right identity remains in realpass condition state and text.
 
-If the vanilla screen has one `Arms` zoom rather than distinct left/right camera states, realpass should:
+If vanilla has one `Arms` or `Legs` zoom rather than distinct left/right camera states, realpass keeps left/right conditions separate inside that shared zoom instead of inventing fragile custom camera assets.
 
-1. zoom to Arms using the native transition;
-2. keep left/right condition entries distinct in the zoomed content;
-3. select/focus the requested side through realpass UI emphasis rather than inventing a fragile custom camera asset.
+## Detail-view hierarchy
 
-Apply the same rule to Legs or any other combined stock region.
+The selected condition should communicate, in approximately this order:
 
-The first native slice maps head→Frontal Cortex, torso→Integumentary System, either arm→Arms and either leg→Legs solely to drive the existing stock selection language. Left/right identity remains in the realpass condition entry and authoritative region.
+1. **Condition / region** — penetrating trauma, blunt trauma, cyberware structural damage, etc.
+2. **When / likely cause** — approximate time, projectile/impact family, protection encountered/defeated when useful, using bounded provenance rather than exact energy numbers.
+3. **Current condition** — qualitative tissue/bone/external bleed/internal bleed/chrome/function state.
+4. **Pain / analgesia** — qualitative pain, whether analgesia is active, and disorientation warning when overused.
+5. **Functional consequences** — only effects realpass is actually applying.
+6. **Field treatment** — only plausible applicable actions and required supplies.
+7. **Professional care** — what requires clinical or mechanical service.
 
-## Detail view information hierarchy
+Normal presentation should not expose raw injury percentages, blood-rate numbers, analgesic load or a pain meter.
 
-The zoomed condition view should communicate, in this approximate order:
+## Pain and Trauma Kits
 
-### 1. Condition title
+Pain is an embodied consequence, not another HP pool. Biological tissue/bone injury produces pain; chrome-only structural damage does not automatically create nociceptive pain unless surrounding biology is also hurt.
 
-Examples:
+A **Trauma Kit is analgesia only**. It may reduce perceived pain and therefore reduce pain-derived aim/weapon instability, but it does not change:
 
-`LEFT ARM`
-`PENETRATING TRAUMA`
+- tissue damage;
+- bone damage or support state;
+- external/internal bleeding;
+- blood deficit;
+- cyberware damage;
+- structural impairment from an injured limb;
+- native HP.
 
-or
+Repeated overlapping Trauma Kit use has diminishing pain relief. Excess concurrent analgesic load enters an intoxication/disorientation envelope. The native adapter reuses Cyberpunk's own `status_drunk_level_1/2/3` fullscreen effect loops and associated fullscreen audio parameter rather than applying `BaseStatusEffect.Drunk`, because the stock alcohol status carries unrelated weapon/gameplay packages.
 
-`RIGHT LEG`
-`CYBERWARE STRUCTURAL DAMAGE`
+Significant perceived pain is intended to make weapon handling visibly less stable through weapon sway plus restrained spread/recoil effects. Analgesia reduces this **pain-derived** component; a fractured/damaged arm's separate structural penalties remain.
 
-### 2. When / likely cause
+Existing V pain/grunt vocalizations are a desired contextual cue but remain pending exact native event identification and throttling. Do not guess/spam audio events.
 
-Use bounded realpass provenance when available:
+## Field treatment and supplies
 
-- approximate game time/elapsed time;
-- ballistic/projectile family or other impact family;
-- region struck;
-- protection encountered and whether meaningful residual impact reached the body;
-- biological/cybernetic contact context;
-- distance/ricochet details only when they improve the explanation.
+Field treatment uses separate physical supplies from Trauma Kits.
 
-Normal UI should say things like:
+Current development mapping:
 
-`Likely caused by a handgun projectile. No effective protection stopped the impact.`
+- `APPLY DRESSING — Medical Gauze x1 — 8 sec` (`Items.GenericJunkItem4`, stock Medical Gauze);
+- `SUPPORT LIMB — support material x1 — 12 sec` (`Items.CommonMaterial1` as the current provisional rigid-support supply).
 
-not:
+The support-material presentation may be replaced with a clearer realpass-owned item/data mapping before release. The architectural requirement is fixed: **neither action consumes Trauma Kits**.
 
-`Initial energy: 472.38 J; residual: 318.24 J.`
+Field actions remain subject to context rules: out of combat, hands available, stationary, menu closed during progression, valid current body state and available supply. The Condition UI initiates care; the timed action/body runtime performs validation, inventory transaction and authoritative commit.
 
-Exact values remain diagnostic data.
+## Professional care
 
-### 3. Current condition
+When the selected condition exceeds field treatment, say so clearly. In accepted ripperdoc context, model-approved `CLINICAL CARE` and `REPAIR CYBERWARE` controls are exposed.
 
-Qualitative state derived from the authoritative region:
+Clinical care and mechanical repair are separate by design:
 
-- soft-tissue trauma: minor/moderate/severe;
-- bone trauma: none/suspected/significant;
-- external bleeding: none/minor/moderate/severe;
-- internal bleeding: none/suspected/significant;
-- cyberware damage: none/minor/moderate/severe;
-- function: normal/impaired/severely impaired.
+- clinical care can control biological bleeding and establish aftercare, but tissue/bone recovery still takes body time and prior lost blood is not magically replaced;
+- mechanical repair addresses chrome damage only and does not treat biology.
 
-### 4. Functional consequences
+Professional economics are not an authority in this milestone. A later accepted native service cost/time may be added without becoming an economy overhaul or altering treatment semantics.
 
-Explain only effects realpass is actually applying, for example:
+## Injury provenance
 
-- reduced movement from leg injury;
-- reduced reload/weapon handling from arm injury;
-- reduced stamina from torso injury/blood loss;
-- degraded weapon control from head injury.
+`InjuryProvenance.reds` stores a bounded recent explanatory ledger. It records accepted player-wound context such as game time, region/material, projectile family, distance/ricochet, protection encountered/unresolved mapping and wound result fields.
 
-Do not promise an effect not currently active in the runtime.
+Provenance failure must never veto an accepted wound. It explains how the current state arose; it does not own healing or treatment.
 
-### 5. Field treatment
+## Pain-state contract
 
-Show only actions that can plausibly help the current state and are currently available.
+`PainModel.reds` owns the authored relationship between physical biological injury, perceived pain, diminishing analgesia, intoxication and pain-derived weapon factors.
 
-Examples:
+`PainRuntime.reds` persists analgesic state but derives decay from `CRBodyRuntime`'s elapsed body time. It has no independent `DelaySystem`/polling clock.
 
-`APPLY DRESSING — Trauma Kit x1 — 8 sec`
-
-`SUPPORT ARM — Trauma Kit x1 — 12 sec`
-
-An action remains subject to realpass context rules: out of combat, hands available, stationary, not interrupted by another menu/action, valid current body state and available supplies.
-
-The first native slice already initiates these through `CRBodyRuntime.UseFieldCare`; the UI does not debit inventory or mutate injury state itself.
-
-### 6. Professional care
-
-If the selected condition exceeds field treatment, state that clearly.
-
-Examples:
-
-- internal bleeding requires clinical care;
-- serious biological injury benefits from professional aftercare;
-- structural cyberware damage requires mechanical/ripperdoc repair.
-
-When the same screen is opened in stock ripperdoc context, model-approved `CLINICAL CARE` and `REPAIR CYBERWARE` controls are exposed. The actions are distinct by design. Clinical care cannot repair chrome; mechanical repair cannot heal biology. Neither replenishes prior blood loss or native HP.
-
-## Biological vs cybernetic presentation
-
-The same body region can contain both biological and cybernetic injury. Do not collapse them into one generic damage number.
-
-Presentation may use different visual language (for example medical red/amber versus technical/cyan) as long as accessibility and clarity are preserved. Exact colors are not yet locked.
-
-## Injury provenance contract
-
-`InjuryProvenance.reds` stores a bounded recent ledger for explanatory UI. It currently records accepted player wound metadata such as:
-
-- game-world time;
-- region/material;
-- weapon/ammo records and projectile family;
-- distance/ricochet count;
-- whether protection was encountered and whether protection mapping was unresolved;
-- internal impact bookkeeping needed to derive a qualitative explanation;
-- wound result fields.
-
-The ledger is intentionally bounded. Provenance failure must never veto an accepted wound, and provenance never owns recovery/treatment state.
-
-## Treatment navigation
-
-The Condition screen may initiate treatment, but treatment completion occurs through the realpass action/body runtime, not by mutating the UI copy of state.
-
-A field-care action should continue to require the player to leave/close the menu and remain still for its authored duration. The UI starts an action; the gameplay runtime validates and commits it.
-
-Professional actions are context-gated completed services. Clinical care is represented by treatment kind 4 and cyberware repair by kind 5 in the same ordered body-input/treatment authority used by recovery. This preserves one injury state and avoids a second vendor-specific healing model.
-
-## Ripperdoc / professional context
-
-The stock cyberware/ripperdoc controller already distinguishes whether it was opened as ordinary inventory or through a vendor/ripperdoc context. The first native slice uses `CyberwareScreenType.Ripperdoc` for this permission boundary rather than inventing parallel clinic detection.
-
-Professional-care actions remain realpass-owned. The fact that the screen is a ripperdoc screen is permission/context, not an external gameplay authority.
-
-Professional service economics are intentionally not an authority in this milestone. realpass' scope excludes an economy overhaul; a later accepted service cost/time may use native money/UI without creating arbitrary scarcity or changing the physical treatment semantics.
+The native presentation/handling adapter may apply owned weapon modifiers and CDPR visual effect loops, but must not mutate physical injury or HP.
 
 ## Acceptance criteria
 
-Condition UI is not accepted until all of the following are demonstrated in the installed game:
+Condition/injury/pain UX is not accepted until all of the following are demonstrated in the installed game:
 
 1. Cyberware mode still performs its normal vanilla role.
-2. Condition mode can be entered/exited without corrupting cyberware screen state.
+2. Condition mode enters/exits without corrupting cyberware-screen state.
 3. Healthy V does not get a wall of empty condition cards.
 4. A real accepted injury produces the correct regional condition entry.
-5. Selecting an arm/leg/head/torso condition uses the intended stock zoom or a documented safe fallback.
-6. Left/right conditions remain distinguishable even if the native camera groups Arms/Legs.
-7. Detail text is derived from current authoritative injury state and bounded provenance, not from native HP.
-8. External versus internal bleeding is communicated distinctly.
-9. Biological versus cyberware damage is communicated distinctly.
-10. Field-care actions only appear when they can help and still pass runtime validation at commit time.
-11. Clinical and mechanical actions are unavailable in ordinary context and available only in accepted ripperdoc/clinical context when their respective model says they can help.
-12. Clinical care controls bleeding/aftercare without instantly healing tissue/bone or replacing blood; mechanical repair affects chrome without treating biology.
-13. The backpack prototype remains absent from the owned runtime once this interface passes.
-14. No Dark Future/Project E3 runtime script/asset/state is required by this screen.
-15. Save/reload preserves current regional injury and the bounded explanatory history needed for current conditions.
+5. Selecting head/torso/arm/leg uses the intended stock zoom or documented safe fallback.
+6. Left/right remain distinguishable within grouped Arms/Legs zooms.
+7. Detail text comes from authoritative injury state/provenance, not native HP.
+8. External/internal bleeding and biological/chrome damage remain distinct.
+9. Field actions appear only when useful and still validate at commit time.
+10. Dressing consumes Medical Gauze; support consumes its support supply; neither consumes Trauma Kits.
+11. Trauma Kit consumption removes the vanilla Health Booster effect and changes realpass analgesia only.
+12. Analgesia produces diminishing returns and cannot erase all physical pain while the injury persists.
+13. Excess overlapping Trauma Kits reach the authored native drunk visual envelope without inheriting stock alcohol gameplay packages.
+14. Meaningful pain creates visible weapon/aim instability; analgesia reduces only the pain component, not structural impairment.
+15. Clinical/mechanical actions are ordinary-context unavailable and ripperdoc-context available only when their respective models can help.
+16. Clinical care does not instantly heal tissue/bone/replace blood; mechanical repair does not heal biology.
+17. The backpack Field Care prototype remains absent from the owned runtime.
+18. No Dark Future/Project E3 runtime content is required.
+19. Save/reload preserves regional injury, analgesic state and bounded explanatory history.
+20. V pain vocalizations, if enabled, are contextually correct and rate-limited rather than spammed.
 
-## Implementation order
+## Implementation status / next order
 
-1. Keep `CRInjuryState` authoritative. **Implemented/model-tested.**
-2. Record bounded provenance only after a wound is actually accepted. **Implemented/offline-tested.**
-3. Add pure presentation helpers that turn region + provenance into condition descriptors. **Implemented/offline contract-tested.**
-4. Mount a minimal Condition toggle/overview on the stock Cyberware/ripperdoc controller. **Implemented in source; native compile/render acceptance pending.**
-5. Reuse/trigger stock regional selection and zoom rather than implementing a new camera system. **Implemented in source via `DollHover`/`DollSelect`; native acceptance pending.**
-6. Build regional detail content and field-treatment initiation. **Implemented in first source slice; native acceptance pending.**
-7. Add ripperdoc-context professional/mechanical care. **Implemented in first source slice + pure model tests; native acceptance pending.**
-8. Retire the backpack Field Care prototype from the owned release path. **Owned acceptance builder excludes it; historical source remains as prototype evidence.**
-9. Exact-compile and native-test every stock-controller/treatment integration before polishing or expanding the UI surface. **Next local gate.**
+1. Six-region injury authority — **implemented/model-tested**.
+2. Bounded accepted-wound provenance — **implemented/offline-tested**.
+3. Qualitative condition descriptors — **implemented/offline-tested**.
+4. Native Condition toggle/list on stock controller — **implemented in source; native acceptance pending**.
+5. Stock paper-doll zoom reuse — **implemented in source; native acceptance pending**.
+6. Field-care initiation/timing — **implemented/offline-tested; native acceptance pending**.
+7. Distinct professional clinical/mechanical care — **implemented/model-tested; native acceptance pending**.
+8. Trauma Kit pain-only model, diminishing returns and overuse envelope — **implemented/model-tested; native acceptance pending**.
+9. Trauma Kit native Health Booster interception — **implemented in source; native exact compile/gameplay pending**.
+10. Pain-derived native sway/spread/recoil and drunk visual loops — **implemented in source; native exact compile/gameplay pending**.
+11. Separate wound-care supplies — **implemented in development mapping; native inventory/UI acceptance pending**.
+12. V pain/grunt cue mapping/throttling — **research/implementation pending**.
+13. Final Condition visual polish/minigrid suppression — **native calibration pending**.
+14. Exact-compile and attended-test the owned runtime before release polish — **next local gate**.
