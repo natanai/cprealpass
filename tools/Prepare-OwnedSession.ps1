@@ -24,6 +24,7 @@ $StateRoot = [IO.Path]::GetFullPath($StateRoot)
 # installed-game preflight. This remains entirely attended/dev tooling: CI-style
 # checks run first, then the exact local candidate is built. Nothing is deployed
 # unless -Deploy is explicit.
+Write-Host '[1/6] Validating repository and offline contracts...'
 Write-Host '=== Running owned-path offline checks ==='
 & (Join-Path $project 'tests\Run-CI.ps1')
 if ($LASTEXITCODE -ne 0) { throw 'Owned-path offline checks failed; candidate build/deployment aborted.' }
@@ -52,6 +53,7 @@ function Get-ForbiddenOwnedAcceptanceResidue([string]$root) {
     return @($hits | Sort-Object -Unique)
 }
 
+Write-Host '[2/6] Building and exact-compiling the owned Cyberpunk 2.31 runtime...'
 Write-Host "Owned attended build ID: $BuildId"
 $builderArgs = @{ BuildId = $BuildId; GameRoot = $GameRoot }
 if ($Diagnostics) { $builderArgs.Diagnostics = $true }
@@ -59,6 +61,7 @@ $manifestRelative = & "$PSScriptRoot\Build-OwnedRuntimeProfile.ps1" @builderArgs
 if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace([string]$manifestRelative)) { throw 'Owned runtime build/compile did not complete.' }
 $manifest = Resolve-SafeChildPath $project ([string]$manifestRelative)
 
+Write-Host '[3/6] Planning the reversible deployment transaction...'
 $currentPath = Join-Path $StateRoot 'current.json'
 $deploymentMode = 'deploy'
 $plan = @()
@@ -79,6 +82,7 @@ if (Test-Path -LiteralPath $currentPath -PathType Leaf) {
     $plan = @(& "$PSScriptRoot\Deploy.ps1" -GameRoot $GameRoot -ManifestPath $manifest -StateRoot $StateRoot -WhatIf)
 }
 if ($plan.Count -eq 0) { throw 'Owned runtime candidate produced an empty deployment plan.' }
+Write-Host "Deployment plan ready: $($plan.Count) paths; mode=$deploymentMode."
 
 $preflight = [ordered]@{
     schemaVersion = 1
@@ -110,6 +114,7 @@ if (-not $Deploy) {
     return $reportPath
 }
 
+Write-Host '[4/6] Creating and verifying a save backup before any game files are changed...'
 $backupArgs = @{}
 if ($SaveRoot) { $backupArgs.SaveRoot = $SaveRoot }
 $backup = & "$PSScriptRoot\Backup-Saves.ps1" @backupArgs
@@ -117,6 +122,7 @@ if ([string]::IsNullOrWhiteSpace([string]$backup)) { throw 'Verified save backup
 $preflight.saveBackup = [string]$backup
 Assert-GameStopped
 
+Write-Host "[5/6] Applying the $deploymentMode transaction..."
 $receipt = $null
 try {
     if ($deploymentMode -eq 'upgrade') {
@@ -125,6 +131,7 @@ try {
         $receipt = & "$PSScriptRoot\Deploy.ps1" -GameRoot $GameRoot -ManifestPath $manifest -StateRoot $StateRoot
     }
     if ([string]::IsNullOrWhiteSpace([string]$receipt)) { throw 'Deployment returned no receipt.' }
+    Write-Host '[6/6] Hash-verifying the installed runtime and checking source-mod isolation...'
     & "$PSScriptRoot\Verify-Deployment.ps1" -ReceiptPath $receipt
     $residue = @(Get-ForbiddenOwnedAcceptanceResidue $GameRoot)
     if ($residue.Count -gt 0) {
@@ -134,6 +141,7 @@ try {
     $failure = $_.Exception.Message
     if (-not [string]::IsNullOrWhiteSpace([string]$receipt) -and (Test-Path -LiteralPath ([string]$receipt))) {
         try {
+            Write-Host 'Deployment verification failed; rolling back the candidate...'
             & "$PSScriptRoot\Rollback.ps1" -ReceiptPath ([string]$receipt)
             throw "$failure Candidate deployment was rolled back to the prior verified state."
         } catch {
