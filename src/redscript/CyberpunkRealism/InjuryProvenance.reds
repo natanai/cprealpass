@@ -72,12 +72,12 @@ public class CRInjuryProvenanceRuntime extends ScriptableSystem {
     let i: Int32 = ArraySize(this.recent) - 1;
     while i >= 0 {
       if !CRInjuryProvenanceRuntime.Valid(this.recent[i]) {
-        this.recent.Erase(i);
+        ArrayErase(this.recent, i);
       }
       i -= 1;
     }
     while ArraySize(this.recent) > 16 {
-      this.recent.Erase(0);
+      ArrayErase(this.recent, 0);
     }
   }
 
