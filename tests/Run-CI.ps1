@@ -40,6 +40,7 @@ $tests = @(
     'Test-FieldCare.ps1',
     'Test-FieldCareTimed.ps1',
     'Test-ProfessionalCare.ps1',
+    'Test-PainModel.ps1',
     'Test-BloodLoss.ps1',
     'Test-InjuryEffects.ps1',
     'Test-BarlessFeedbackEnvelope.ps1',
