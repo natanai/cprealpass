@@ -89,6 +89,21 @@ public class CRBodyRuntime {
         return accepted;
     }
 }
+
+// Provenance is an explanatory side effect after the physical wound commits. The
+// full ledger has its own contract test; this fixture records only the boundary so
+// wound-pipeline tests can prove provenance is never invoked for rejected wounds.
+public class CRInjuryProvenanceRuntime {
+    public static CRInjuryProvenanceRuntime instance = new CRInjuryProvenanceRuntime();
+    public int records;
+    public static CRInjuryProvenanceRuntime Get() { return instance; }
+    public bool Record(CRNativeHitSample sample, CRImpactWound wound) {
+        if (sample == null || wound == null) return false;
+        records++;
+        return true;
+    }
+}
+
 public static class NativeWoundFixture {
     public static bool NotEquals<T>(T a, T b) { return !object.Equals(a,b); }
     public static gameHitEvent Hit(bool player, int region = 2, int material = 1, float mass = 8, float speed = 360) {
