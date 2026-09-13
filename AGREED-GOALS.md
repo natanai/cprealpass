@@ -261,8 +261,10 @@ The exact candidate should compile/preflight against the installed game/framewor
 ### G-091 — Broad attended testing beats tiny disconnected tests — LOCKED
 Once a coherent owned-runtime candidate exists, prefer broad attended sessions that exercise scanner/presentation, body, combat, armor, injury, bleeding, pain/analgesia, impairment, treatment, save/reload and time progression together. Narrow diagnostic profiles remain available only to isolate failures.
 
-### G-092 — Save safety; no unattended game automation — LOCKED
-Before live development deployment, maintain verified save backup/rollback practices. Do not add unattended game launching, background watchers/loggers/services or scheduled tasks.
+### G-092 — Save safety is operator-controlled; no unattended game automation — LOCKED
+The local attended deployment path should keep verified save backup **on by default**, but the project owner may explicitly skip the extra local save copy when they already consider their saves adequately protected by external/cloud backups. Skipping the save copy must be an explicit, auditable operator choice and must **not** disable game-file transaction rollback, collision checks, hash verification or fail-closed deployment behavior.
+
+Do not add unattended game launching, background watchers/loggers/services or scheduled tasks.
 
 ---
 
