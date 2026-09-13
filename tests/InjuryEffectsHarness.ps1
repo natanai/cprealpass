@@ -10,6 +10,12 @@ $classes=foreach($name in @('CRNPCInjuryBridge','CRInjuryModifierSlot','CRInjury
  while($depth -gt 0 -and $end -lt $native.Length){if($native[$end] -eq '{'){$depth++};if($native[$end] -eq '}'){$depth--};$end++}
  if($depth -ne 0){throw 'Unbalanced source class'}
  $s=$native.Substring($match.Index,$end-$match.Index).Replace('extends ScriptableSystem','extends IScriptable').Replace('private let','public let').Replace('wref<','ref<')
+ # The pure injury-effects harness deliberately excludes the PlayerPuppet-only pain
+ # presentation call. Pain ownership/refresh is covered by Test-PainArchitecture and
+ # exact local REDscript compilation; keeping it here would require fake engine/UI
+ # types in a model harness and would weaken rather than improve the isolation test.
+ $s=$s.Replace('    let localPlayer: ref<PlayerPuppet> = player as PlayerPuppet;' + "`n",'')
+ $s=$s.Replace('    CRPainNativeEffects.Refresh(localPlayer, IsDefined(body) && enabled && CRInjuryEffectsBridge.Allowed(localPlayer, true));' + "`n",'')
  $s=[regex]::Replace($s,'(public|private) func (\w+)\(','$1 static func CRInstance_$2(')
  $s=[regex]::Replace($s,'return GameInstance.GetScriptableSystemsContainer\(GetGameInstance\(\)\).+?;', 'return CREffectsFixture.runtime;')
  $s=$s.Replace('GetGameInstance()','CREffectsFixture.game').Replace('array<ref<CRInjuryModifierSlot>>','CRModifierSlots = new CRModifierSlots()').Replace('array<ref<NPCPuppet>>','CRNpcList = new CRNpcList()')
