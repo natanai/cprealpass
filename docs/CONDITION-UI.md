@@ -1,6 +1,6 @@
 # realpass Condition interface
 
-Status: canonical injury/personal-condition UX design
+Status: canonical injury/personal-condition UX design; first owned native slice implemented, native acceptance pending
 Last updated: 2026-09-13
 Governing goals: `AGREED-GOALS.md` G-040 through G-049, G-050 through G-053
 
@@ -8,7 +8,24 @@ Governing goals: `AGREED-GOALS.md` G-040 through G-049, G-050 through G-053
 
 The final realpass injury interface lives inside Cyberpunk's existing Cyberware/body screen. The stock body visualization and paper-doll zoom/drill-down language are the shell; realpass owns all new condition state, condition cards, explanatory text and treatment behavior.
 
-The current backpack `FIELD CARE` popup is a development prototype. It is not the intended final navigation path and should be removed from production once Condition mode reaches native acceptance.
+The current backpack `FIELD CARE` popup is a development prototype. It is not the intended final navigation path and is excluded from the owned acceptance runtime; Condition mode is replacing it.
+
+## Current implementation status
+
+The first project-original native slice now exists in `ConditionNativeUI.reds`. It dynamically mounts a `CYBERWARE | CONDITION` switch and qualitative condition panel on the stock `RipperDocGameController`, lists active conditions only, maps the six realpass body regions onto stock anatomical areas, and calls the stock `DollHover`/`DollSelect` selection path instead of introducing a custom camera system.
+
+`ConditionPresentation.reds` is the read-only projection from authoritative regional injury state plus bounded provenance. The UI has no native-HP dependency and does not mutate injuries directly.
+
+Ordinary inventory/Cyberware context exposes model-approved **dressing** and **limb support** actions. They still begin through the timed field-care runtime: the menu must be closed, the player must remain stationary/out of combat with hands available, and interruption cancels the action without turning the trauma kit into a universal heal.
+
+Ripperdoc context now exposes two distinct professional actions when the model says they can help:
+
+- **Clinical care** controls external/internal bleeding and establishes professional biological aftercare. It does not directly erase tissue/bone trauma or replace lost blood; subsequent biological recovery still occurs through the shared body clock.
+- **Cyberware repair** reduces structural chrome damage only. It does not treat biological tissue, bone or blood loss.
+
+`ProfessionalCareModel.reds` owns professional-care eligibility. It deliberately does not own pricing/economy. The first acceptance slice treats the click as completion of an appropriate professional service; service price/time presentation can be calibrated later without making realpass an economy overhaul.
+
+This code is **not yet native-accepted**. Cloud/offline tests can verify authority boundaries and pure treatment behavior, but the exact stock-controller hook signatures, dynamic Ink layout, paper-doll behavior and installed-game interactions must pass the user's local 2.31 compile/preflight and attended test before this interface is considered working in Cyberpunk.
 
 ## Two modes
 
@@ -30,6 +47,8 @@ Realpass takes over only the condition layer:
 - healthy regions remain visually quiet rather than filling the screen with `OK` cards;
 - selecting a condition uses the stock regional paper-doll zoom/drill-down where available;
 - the zoomed/detail view becomes the place to understand and tend the selected condition.
+
+The current first slice overlays its realpass panel rather than fully suppressing/dimming every vanilla cyberware minigrid. That visual handoff is intentionally left for native acceptance/calibration rather than making a broad resource replacement before the stock-controller integration is proven.
 
 The exact switch widget/position is an implementation detail. It should look native and must not require a separate Mod Settings dependency.
 
@@ -96,6 +115,8 @@ If the vanilla screen has one `Arms` zoom rather than distinct left/right camera
 3. select/focus the requested side through realpass UI emphasis rather than inventing a fragile custom camera asset.
 
 Apply the same rule to Legs or any other combined stock region.
+
+The first native slice maps head→Frontal Cortex, torso→Integumentary System, either arm→Arms and either leg→Legs solely to drive the existing stock selection language. Left/right identity remains in the realpass condition entry and authoritative region.
 
 ## Detail view information hierarchy
 
@@ -168,6 +189,8 @@ Examples:
 
 An action remains subject to realpass context rules: out of combat, hands available, stationary, not interrupted by another menu/action, valid current body state and available supplies.
 
+The first native slice already initiates these through `CRBodyRuntime.UseFieldCare`; the UI does not debit inventory or mutate injury state itself.
+
 ### 6. Professional care
 
 If the selected condition exceeds field treatment, state that clearly.
@@ -175,10 +198,10 @@ If the selected condition exceeds field treatment, state that clearly.
 Examples:
 
 - internal bleeding requires clinical care;
-- serious bone injury benefits from professional care;
+- serious biological injury benefits from professional aftercare;
 - structural cyberware damage requires mechanical/ripperdoc repair.
 
-When the same screen is opened in an appropriate ripperdoc/clinical context, those actions may become interactive rather than informational.
+When the same screen is opened in stock ripperdoc context, model-approved `CLINICAL CARE` and `REPAIR CYBERWARE` controls are exposed. The actions are distinct by design. Clinical care cannot repair chrome; mechanical repair cannot heal biology. Neither replenishes prior blood loss or native HP.
 
 ## Biological vs cybernetic presentation
 
@@ -202,15 +225,19 @@ The ledger is intentionally bounded. Provenance failure must never veto an accep
 
 ## Treatment navigation
 
-The Condition screen may initiate treatment, but treatment completion occurs through the realpass action runtime, not by mutating the UI copy of state.
+The Condition screen may initiate treatment, but treatment completion occurs through the realpass action/body runtime, not by mutating the UI copy of state.
 
 A field-care action should continue to require the player to leave/close the menu and remain still for its authored duration. The UI starts an action; the gameplay runtime validates and commits it.
 
+Professional actions are context-gated completed services. Clinical care is represented by treatment kind 4 and cyberware repair by kind 5 in the same ordered body-input/treatment authority used by recovery. This preserves one injury state and avoids a second vendor-specific healing model.
+
 ## Ripperdoc / professional context
 
-The stock cyberware/ripperdoc controller already distinguishes whether it was opened as ordinary inventory or through a vendor/ripperdoc context. realpass should use that native context instead of inventing a parallel clinic detection system where possible.
+The stock cyberware/ripperdoc controller already distinguishes whether it was opened as ordinary inventory or through a vendor/ripperdoc context. The first native slice uses `CyberwareScreenType.Ripperdoc` for this permission boundary rather than inventing parallel clinic detection.
 
-Professional-care actions must still be realpass-owned. The fact that the screen is a ripperdoc screen is permission/context, not an external gameplay authority.
+Professional-care actions remain realpass-owned. The fact that the screen is a ripperdoc screen is permission/context, not an external gameplay authority.
+
+Professional service economics are intentionally not an authority in this milestone. realpass' scope excludes an economy overhaul; a later accepted service cost/time may use native money/UI without creating arbitrary scarcity or changing the physical treatment semantics.
 
 ## Acceptance criteria
 
@@ -226,19 +253,20 @@ Condition UI is not accepted until all of the following are demonstrated in the 
 8. External versus internal bleeding is communicated distinctly.
 9. Biological versus cyberware damage is communicated distinctly.
 10. Field-care actions only appear when they can help and still pass runtime validation at commit time.
-11. Professional/mechanical care is unavailable in ordinary context and available only in accepted clinical/ripperdoc context.
-12. The backpack prototype is removed from the release profile once this interface passes.
-13. No Dark Future/Project E3 runtime script/asset/state is required by this screen.
-14. Save/reload preserves current regional injury and the bounded explanatory history needed for current conditions.
+11. Clinical and mechanical actions are unavailable in ordinary context and available only in accepted ripperdoc/clinical context when their respective model says they can help.
+12. Clinical care controls bleeding/aftercare without instantly healing tissue/bone or replacing blood; mechanical repair affects chrome without treating biology.
+13. The backpack prototype remains absent from the owned runtime once this interface passes.
+14. No Dark Future/Project E3 runtime script/asset/state is required by this screen.
+15. Save/reload preserves current regional injury and the bounded explanatory history needed for current conditions.
 
 ## Implementation order
 
-1. Keep `CRInjuryState` authoritative.
-2. Record bounded provenance only after a wound is actually accepted.
-3. Add pure presentation helpers that turn region + provenance into condition descriptors.
-4. Mount a minimal Condition toggle/overview on the stock Cyberware/ripperdoc controller.
-5. Reuse/trigger stock regional selection and zoom rather than implementing a new camera system.
-6. Build regional detail content and field-treatment initiation.
-7. Add ripperdoc-context professional/mechanical care.
-8. Remove the backpack Field Care prototype from the owned release profile.
-9. Exact-compile and native-test every step before expanding the UI surface.
+1. Keep `CRInjuryState` authoritative. **Implemented/model-tested.**
+2. Record bounded provenance only after a wound is actually accepted. **Implemented/offline-tested.**
+3. Add pure presentation helpers that turn region + provenance into condition descriptors. **Implemented/offline contract-tested.**
+4. Mount a minimal Condition toggle/overview on the stock Cyberware/ripperdoc controller. **Implemented in source; native compile/render acceptance pending.**
+5. Reuse/trigger stock regional selection and zoom rather than implementing a new camera system. **Implemented in source via `DollHover`/`DollSelect`; native acceptance pending.**
+6. Build regional detail content and field-treatment initiation. **Implemented in first source slice; native acceptance pending.**
+7. Add ripperdoc-context professional/mechanical care. **Implemented in first source slice + pure model tests; native acceptance pending.**
+8. Retire the backpack Field Care prototype from the owned release path. **Owned acceptance builder excludes it; historical source remains as prototype evidence.**
+9. Exact-compile and native-test every stock-controller/treatment integration before polishing or expanding the UI surface. **Next local gate.**
