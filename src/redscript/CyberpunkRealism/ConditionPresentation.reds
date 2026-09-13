@@ -19,6 +19,8 @@ public class CRConditionDescriptor extends IScriptable {
   public let professionalCare: String;
   public let canDress: Bool;
   public let canSupport: Bool;
+  public let canClinical: Bool;
+  public let canMechanical: Bool;
 }
 
 public class CRConditionPresentation extends IScriptable {
@@ -112,6 +114,9 @@ public class CRConditionPresentation extends IScriptable {
     if r.support > 0.0 && r.boneDamage > 0.0 {
       text += "Region supported/stabilized. ";
     }
+    if r.clinicalCare > 0.0 && (r.tissueDamage > 0.0 || r.boneDamage > 0.0) {
+      text += "Professional biological aftercare active. ";
+    }
     return text;
   }
 
@@ -134,19 +139,28 @@ public class CRConditionPresentation extends IScriptable {
     return "Condition";
   }
 
-  private static func ProfessionalCare(r: ref<CRRegionalInjury>) -> String {
+  private static func ProfessionalCare(r: ref<CRRegionalInjury>, canClinical: Bool, canMechanical: Bool) -> String {
     let text: String = "";
-    if r.internalBleedMlPerHour > 0.0 {
-      text += "Clinical care required for internal bleeding. ";
+    if canClinical {
+      if r.internalBleedMlPerHour > 0.0 {
+        text += "Clinical intervention can control the internal bleeding. ";
+      }
+      if r.externalBleedMlPerHour > 0.0 {
+        text += "Clinical intervention can control the external bleeding. ";
+      }
+      if r.tissueDamage > 0.0 || r.boneDamage > 0.0 {
+        text += "Professional aftercare can support later biological recovery. ";
+      }
+    } else {
+      if (r.tissueDamage > 0.0 || r.boneDamage > 0.0) && r.clinicalCare > 0.0 {
+        text += "Professional biological aftercare is already active; recovery still takes body time. ";
+      }
     }
-    if r.boneDamage > 0.0 {
-      text += "Professional bone care recommended. ";
-    }
-    if r.cyberwareDamage > 0.0 {
-      text += "Ripperdoc/mechanical repair required for damaged chrome. ";
+    if canMechanical {
+      text += "Ripperdoc/mechanical repair can address damaged chrome. ";
     }
     if Equals(text, "") {
-      return "No professional intervention currently indicated by realpass.";
+      return "No additional professional intervention currently indicated by realpass.";
     }
     return text;
   }
@@ -167,6 +181,8 @@ public class CRConditionPresentation extends IScriptable {
     result.regionName = CRConditionPresentation.RegionName(region);
     result.canDress = CRFieldCareModel.CanHelp(state, region, 2);
     result.canSupport = CRFieldCareModel.CanHelp(state, region, 3);
+    result.canClinical = CRProfessionalCareModel.ClinicalCanHelp(state, region);
+    result.canMechanical = CRProfessionalCareModel.MechanicalCanHelp(state, region);
     result.hasCondition = r.tissueDamage + r.boneDamage + r.cyberwareDamage + r.externalBleedMlPerHour + r.internalBleedMlPerHour > 0.0;
     if !result.hasCondition {
       result.title = "No active condition";
@@ -199,7 +215,7 @@ public class CRConditionPresentation extends IScriptable {
         }
       }
     }
-    result.professionalCare = CRConditionPresentation.ProfessionalCare(r);
+    result.professionalCare = CRConditionPresentation.ProfessionalCare(r, result.canClinical, result.canMechanical);
     return result;
   }
 
