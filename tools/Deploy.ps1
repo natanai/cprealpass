@@ -18,7 +18,11 @@ $currentPath = Join-Path $StateRoot 'current.json'
 $lock = Open-StateLock $StateRoot
 try {
     $seen = @{}
-    $plan = @(foreach ($file in $manifest.files) {
+    $manifestFiles = @($manifest.files)
+    $planIndex = 0
+    $plan = @(foreach ($file in $manifestFiles) {
+        $planIndex++
+        Write-Progress -Activity 'Planning realpass deployment' -Status "Hash-checking $planIndex / $($manifestFiles.Count): $($file.destination)" -PercentComplete ([Math]::Floor((100.0*$planIndex)/$manifestFiles.Count))
         $source = Resolve-SafeChildPath $project ([string]$file.source)
         $destination = Resolve-SafeChildPath $GameRoot ([string]$file.destination)
         if ($seen.ContainsKey($destination)) { throw "Duplicate destination: $destination" }
@@ -31,6 +35,7 @@ try {
         $action = if ($existing -eq $file.sha256) { 'preserve' } elseif ($existing) { 'replace' } else { 'create' }
         [ordered]@{source=$source; destination=$file.destination; component=$file.component; priorSha256=$existing; deployedSha256=$file.sha256; action=$action; replacementReason=$reason; backup=$(if ($action -eq 'replace') {'backup\' + $file.destination} else {$null})}
     })
+    Write-Progress -Activity 'Planning realpass deployment' -Completed
     if (Test-Path -LiteralPath $currentPath) {
         $current = Get-Content -Raw -LiteralPath $currentPath | ConvertFrom-Json
         if ($current.gameRoot -ne $GameRoot) { throw 'State directory belongs to a different game root.' }
@@ -49,19 +54,27 @@ try {
     $snapshot = Resolve-SafeChildPath $StateRoot $id
     $receiptPath = Join-Path $snapshot 'receipt.json'
     # Complete and verify every backup before writing any game file.
+    $backupItems = @($plan | Where-Object { $_.backup })
+    $backupIndex = 0
     foreach ($item in $plan) {
         if ($item.backup) {
+            $backupIndex++
+            Write-Progress -Activity 'Backing up files that realpass will replace' -Status "$backupIndex / $($backupItems.Count): $($item.destination)" -PercentComplete ([Math]::Floor((100.0*$backupIndex)/$backupItems.Count))
             $backup = Resolve-SafeChildPath $snapshot $item.backup
             New-Item -ItemType Directory -Force -Path (Split-Path -Parent $backup) | Out-Null
             Copy-Item -LiteralPath (Resolve-SafeChildPath $GameRoot $item.destination) -Destination $backup
             if ((Get-Sha256 $backup) -ne $item.priorSha256) { throw 'Backup verification failed.' }
         }
     }
+    Write-Progress -Activity 'Backing up files that realpass will replace' -Completed
     $receipt = [ordered]@{schemaVersion=2; deploymentId=$id; buildId=$manifest.buildId; gameRoot=$GameRoot; stateRoot=[IO.Path]::GetFullPath($StateRoot); receiptPath=$receiptPath; status='prepared'; deployedAtUtc=[DateTime]::UtcNow.ToString('o'); files=$plan}
     Write-JsonFile $receipt $receiptPath
     Write-JsonFile $receipt $currentPath
     try {
+        $applyIndex = 0
         foreach ($item in $plan) {
+            $applyIndex++
+            Write-Progress -Activity 'Applying realpass runtime' -Status "$applyIndex / $($plan.Count): $($item.destination)" -PercentComplete ([Math]::Floor((100.0*$applyIndex)/$plan.Count))
             $destination = Resolve-SafeChildPath $GameRoot $item.destination
             if ((Get-ExistingHash $destination) -ne $item.priorSha256) { throw "Destination changed after preflight: $destination" }
             if ((Get-Sha256 $item.source) -ne $item.deployedSha256) { throw 'Source changed after preflight.' }
@@ -71,8 +84,10 @@ try {
             }
             if ((Get-Sha256 $destination) -ne $item.deployedSha256) { throw "Post-copy hash failed: $destination" }
         }
+        Write-Progress -Activity 'Applying realpass runtime' -Completed
         $receipt.status = 'deployed'
     } catch {
+        Write-Progress -Activity 'Applying realpass runtime' -Completed
         $receipt.status = 'incomplete'
         Write-JsonFile $receipt $receiptPath
         Write-JsonFile $receipt $currentPath
