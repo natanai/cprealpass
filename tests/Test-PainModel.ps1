@@ -13,12 +13,14 @@ $injury = [CRInjuryModel]::Create()
 Check ([CRPainModel]::Valid($state)) 'Fresh pain state invalid.'
 $p = [CRPainModel]::Read($injury,$state)
 Check ($p.valid -and (Close $p.physicalPain 0) -and (Close $p.perceivedPain 0) -and (Close $p.intoxication 0)) 'Healthy body produced pain/intoxication.'
+Check ((Close $p.weaponSway 1) -and (Close $p.painSpread 1) -and (Close $p.painRecoil 1)) 'Healthy body produced pain-driven weapon penalties.'
 
 # Biological trauma creates pain; chrome-only structural damage does not pretend to
 # be nociceptive pain without surrounding tissue/bone injury.
 [CRInjuryModel]::Wound($injury,3,0.6,0.0,0.0,0.0,0.0) | Out-Null
 $p = [CRPainModel]::Read($injury,$state)
 Check ($p.physicalPain -gt 0.35 -and $p.perceivedPain -eq $p.physicalPain) 'Arm tissue trauma did not create unsuppressed pain.'
+Check ($p.weaponSway -gt 1 -and $p.painSpread -gt 1 -and $p.painRecoil -gt 1) 'Perceived pain did not project into weapon-handling instability.'
 $chrome = [CRInjuryModel]::Create(); [CRInjuryModel]::Wound($chrome,3,0.0,0.0,0.8,0.0,0.0) | Out-Null
 Check ((Close ([CRPainModel]::PhysicalPain($chrome)) 0)) 'Chrome-only damage was treated as biological pain.'
 $bone = [CRInjuryModel]::Create(); [CRInjuryModel]::Wound($bone,5,0.2,0.8,0.0,0.0,0.0) | Out-Null
@@ -26,9 +28,13 @@ Check ([CRPainModel]::PhysicalPain($bone) -gt [CRPainModel]::PhysicalPain($injur
 
 # Trauma Kit analgesia only changes the pain state. It must not modify the injury.
 $before = [CRInjuryModel]::Copy($injury)
+$untreatedSway = $p.weaponSway
+$untreatedSpread = $p.painSpread
+$untreatedRecoil = $p.painRecoil
 Check ([CRPainModel]::UseTraumaKit($state)) 'First Trauma Kit dose rejected.'
 $p1 = [CRPainModel]::Read($injury,$state)
 Check ($p1.analgesia -gt 0 -and $p1.perceivedPain -lt $p1.physicalPain) 'Trauma Kit did not reduce perceived pain.'
+Check ($p1.weaponSway -lt $untreatedSway -and $p1.painSpread -lt $untreatedSpread -and $p1.painRecoil -lt $untreatedRecoil) 'Analgesia did not reduce pain-driven weapon instability.'
 Check ([CRInjuryModel]::ValidState($injury) -and $injury.leftArm.tissueDamage -eq $before.leftArm.tissueDamage) 'Analgesia altered underlying injury.'
 Check ($injury.leftArm.externalBleedMlPerHour -eq $before.leftArm.externalBleedMlPerHour -and $injury.leftArm.cyberwareDamage -eq $before.leftArm.cyberwareDamage) 'Analgesia changed bleeding/chrome.'
 
@@ -60,6 +66,7 @@ Check ([CRPainModel]::Advance($state,6.0)) 'Pain state rejected later time advan
 $pCleared = [CRPainModel]::Read($injury,$state)
 Check ((Close $state.analgesicLoad 0) -and (Close $pCleared.analgesia 0) -and (Close $pCleared.intoxication 0)) 'Analgesia/intoxication failed to clear with time.'
 Check ((Close $pCleared.perceivedPain $pCleared.physicalPain)) 'Pain did not return when analgesia cleared while injury remained.'
+Check ($pCleared.weaponSway -gt $p1.weaponSway) 'Pain-driven sway did not return when analgesia cleared while injury remained.'
 
 # Reject malformed state/time rather than silently normalizing impossible values.
 $bad = [CRPainModel]::Create(); $bad.analgesicLoad = [float]::NaN
@@ -71,6 +78,6 @@ Write-JsonFile ([ordered]@{
     passed = $true
     assertions = $script:checks
     sources = @($paths | ForEach-Object { [ordered]@{path=$_;sha256=(Get-Sha256 $_)} })
-    scope = 'Pure realpass pain/analgesia model. Covers biological versus chrome pain, Trauma Kit pain-only semantics, diminishing returns, intoxication envelope and deterministic load decay. Native item interception, drunk/SFX presentation, V vocalizations and live aiming behavior remain unverified.'
+    scope = 'Pure realpass pain/analgesia model. Covers biological versus chrome pain, Trauma Kit pain-only semantics, diminishing returns, intoxication envelope, deterministic load decay, and pain-driven sway/spread/recoil factors that analgesia can reduce without touching structural injury. Native item interception, drunk/SFX presentation, V vocalizations and live aiming behavior remain unverified.'
 }) (Join-Path $project 'reports/pain-model-tests.json')
 Write-Host "PASS: $script:checks pain/analgesia checks."
