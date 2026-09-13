@@ -15,9 +15,11 @@ foreach ($gate in $gates) {
 }
 
 foreach ($required in @(
+    'owned-runtime-isolation',
     'body-native-integration',
     'combat-impact-and-ballistics-model',
     'combat-native-activation',
+    'condition-ui-and-treatment',
     'no-traditional-healthbars',
     'modern-scanner-native-acceptance',
     'e3-independent-standalone-presentation',
@@ -28,10 +30,13 @@ foreach ($required in @(
     if (-not $ids.ContainsKey($required)) { throw "Acceptance ledger missing required gate: $required" }
 }
 
+if ($ids['owned-runtime-isolation'].status -eq 'passed') { throw 'Owned-runtime isolation cannot be passed before exact local compile/deploy residue verification.' }
 if ($ids['combat-native-activation'].status -eq 'passed') { throw 'Combat activation cannot be passed without native acceptance evidence.' }
+if ($ids['condition-ui-and-treatment'].status -eq 'passed') { throw 'Condition/treatment UI cannot be passed before native body-screen acceptance.' }
 if ($ids['no-traditional-healthbars'].status -eq 'passed') { throw 'No-healthbar presentation cannot be passed before native UI acceptance.' }
 if ($ids['one-download-playable-package'].status -eq 'passed') { throw 'Playable one-download package cannot be passed while public release remains gated.' }
 if ($ids['e3-independent-standalone-presentation'].status -ne 'blocked') { throw 'E3-independent presentation blocker must remain explicit until resolved.' }
+if ($ids['unified-settings-contract'].status -ne 'passed') { throw 'Locked authored release/settings contract should remain resolved unless product intent changes.' }
 
 $distribution = Get-Content -Raw -LiteralPath (Join-Path $project 'manifest/distribution.json') | ConvertFrom-Json
 if ($distribution.releaseGate.publicPlayableArtifactReady -eq $false -and $ids['one-download-playable-package'].status -notin @('pending','blocked','partial')) {
