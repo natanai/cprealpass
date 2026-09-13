@@ -1,9 +1,16 @@
 // Original pre-consumption routing for the regional-care trauma kit.
+// The backpack/popup route is a development prototype until Condition mode owns
+// treatment entry, but this source remains entirely realpass-owned.
 module CyberpunkRealism.Integration
-import DarkFuture.UI.CRFieldCareMenuSession
-import DarkFuture.Services.DFGameStateService
+
+import CyberpunkRealism.Presentation.CRFieldCareMenuSession
 
 public class CRFieldCareItemUse extends IScriptable {
+  private static func InMenu() -> Bool {
+    let board: ref<IBlackboard> = GameInstance.GetBlackboardSystem(GetGameInstance()).Get(GetAllBlackboardDefs().UI_System);
+    return IsDefined(board) && board.GetBool(GetAllBlackboardDefs().UI_System.IsInMenu);
+  }
+
   // True means this request belongs to regional care, not that a kit was consumed.
   public static func Intercept(executor: wref<GameObject>, item: wref<gameItemData>, actionID: TweakDBID) -> Bool {
     if !CRBodyRuntimePolicy.Enabled() || !CRCombatRuntimePolicy.Enabled() || !IsDefined(item) || !Equals(ItemID.GetTDBID(item.GetID()), t"Items.HealthBooster") {
@@ -19,12 +26,12 @@ public class CRFieldCareItemUse extends IScriptable {
       return false;
     }
     // Ownership persists while temporarily unavailable; never fall back to spending
-    // the kit through the legacy cure while the new system owns these injuries.
+    // the kit through vanilla healing while realpass owns these injuries.
     if !CRBodyRuntime.Get().CanUseFieldCare() {
       CRFieldCareItemUse.Notify("Field care is unavailable here. Trauma kit kept.");
     } else {
-      if !DFGameStateService.Get().IsInAnyMenu() || !CRFieldCareMenuSession.Get().RequestOpen() {
-        CRFieldCareItemUse.Notify("Trauma kit kept. Open FIELD CARE in the backpack to choose treatment.");
+      if !CRFieldCareItemUse.InMenu() || !CRFieldCareMenuSession.Get().RequestOpen() {
+        CRFieldCareItemUse.Notify("Trauma kit kept. Open FIELD CARE to choose treatment.");
       }
     }
     return true;
