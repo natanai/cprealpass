@@ -1,6 +1,8 @@
-// Original backpack entry and modal regional treatment controls.
-// Uses the pinned Codeware popup layer and game fonts; no custom archive assets.
-module DarkFuture.UI
+// Project-original backpack access and regional treatment popup.
+// Codeware supplies generic popup plumbing only; all behavior/state/presentation
+// decisions here are owned by realpass.
+module CyberpunkRealism.Presentation
+
 import CyberpunkRealism.Integration.*
 import CyberpunkRealism.Physiology.*
 import Codeware.UI.*
@@ -10,18 +12,25 @@ public class CRFieldCareUI extends IScriptable {
   private let region: Int32 = 2;
   private let focus: Int32 = 1;
   private let popup: wref<CRFieldCarePopup>;
+  private let openButton: wref<inkText>;
   private let message: wref<inkText>;
   private let injurySummary: wref<inkText>;
-  private let bodyNote: wref<inkText>;
   private let regionButtons: array<wref<inkText>>;
   private let controls: array<wref<inkText>>;
 
-  public static func Create(parent: ref<inkCompoundWidget>, note: ref<inkText>) -> ref<CRFieldCareUI> {
-    if !CRBodyPreviewUI.Owns() || !CRCombatRuntimePolicy.Enabled() { return null; }
+  public static func Create(parent: ref<inkCompoundWidget>) -> ref<CRFieldCareUI> {
+    if !CRBodyStatusPresentation.Owns() || !CRCombatRuntimePolicy.Enabled() || !IsDefined(parent) {
+      return null;
+    }
     let ui: ref<CRFieldCareUI> = new CRFieldCareUI();
-    ui.bodyNote = note;
     CRFieldCareMenuSession.Get().Register(ui);
-    ui.Button(parent, n"CRCareOpen", "realpass  |  FIELD CARE  |  Inspect injuries and choose treatment", 1760.0, 42.0);
+    let button: ref<inkText> = ui.MakeText(parent, n"CRCareOpen", "realpass  |  FIELD CARE", 620.0, 54.0, true);
+    button.SetAnchor(inkEAnchor.BottomCenter);
+    button.SetAnchorPoint(Vector2(0.5, 1.0));
+    button.SetHAlign(inkEHorizontalAlign.Center);
+    button.SetVAlign(inkEVerticalAlign.Bottom);
+    button.SetMargin(inkMargin(0.0, 0.0, 0.0, 110.0));
+    ui.openButton = button;
     return ui;
   }
 
@@ -30,6 +39,7 @@ public class CRFieldCareUI extends IScriptable {
   public func Teardown() -> Void {
     this.alive = false;
     CRFieldCareMenuSession.Get().Clear(this);
+    if IsDefined(this.openButton) { this.openButton.SetVisible(false); }
     if IsDefined(this.popup) && this.popup.IsInitialized() { this.popup.Close(); }
   }
 
@@ -44,7 +54,9 @@ public class CRFieldCareUI extends IScriptable {
   }
 
   public func Open() -> Bool {
-    if !this.alive || !CRBodyPreviewUI.Owns() || !CRCombatRuntimePolicy.Enabled() { return false; }
+    if !this.alive || !CRBodyStatusPresentation.Owns() || !CRCombatRuntimePolicy.Enabled() {
+      return false;
+    }
     if IsDefined(this.popup) { return true; }
     let manager: ref<CustomPopupManager> = CustomPopupManager.GetInstance();
     if !IsDefined(manager) || !manager.IsInitialized() { return false; }
@@ -55,38 +67,7 @@ public class CRFieldCareUI extends IScriptable {
     return true;
   }
 
-  public func BuildContent(parent: ref<inkCompoundWidget>) -> Void {
-    ArrayClear(this.controls);
-    ArrayClear(this.regionButtons);
-    this.Label(parent, n"CRCareTitle", "realpass  |  FIELD CARE", 1600.0, 64.0).SetFontSize(44);
-    this.Label(parent, n"CRCareHelp", "Select a region, then a treatment. Close the backpack and stay still to complete care.", 1600.0, 60.0);
-    this.injurySummary = this.Label(parent, n"CRCareInjuries", "", 1600.0, 100.0);
-    let row: ref<inkHorizontalPanel>;
-    let i: Int32 = 0;
-    while i < 6 {
-      if i == 0 || i == 3 {
-        row = new inkHorizontalPanel();
-        row.SetHAlign(inkEHorizontalAlign.Center);
-        row.Reparent(parent);
-      }
-      let button: ref<inkText> = this.Button(row, this.ControlName(i), this.RegionName(i + 1), 520.0, 64.0);
-      ArrayPush(this.regionButtons, button);
-      ArrayPush(this.controls, button);
-      i += 1;
-    }
-    row = new inkHorizontalPanel();
-    row.SetHAlign(inkEHorizontalAlign.Center);
-    row.Reparent(parent);
-    ArrayPush(this.controls, this.Button(row, n"CRCareDress", "", 520.0, 88.0));
-    ArrayPush(this.controls, this.Button(row, n"CRCareSupport", "", 520.0, 88.0));
-    ArrayPush(this.controls, this.Button(row, n"CRCareCancel", "", 520.0, 88.0));
-    this.message = this.Label(parent, n"CRCareMessage", "", 1600.0, 120.0);
-    ArrayPush(this.controls, this.Button(parent, n"CRCareClose", "", 1600.0, 64.0));
-    this.Label(parent, n"CRCareNavigation", "Move between controls with directional input; confirm to select; cancel to return.", 1600.0, 64.0);
-    this.Refresh("");
-  }
-
-  private func Label(parent: ref<inkCompoundWidget>, name: CName, caption: String, width: Float, height: Float) -> ref<inkText> {
+  private func MakeText(parent: ref<inkCompoundWidget>, name: CName, caption: String, width: Float, height: Float, interactive: Bool) -> ref<inkText> {
     let text: ref<inkText> = new inkText();
     text.SetName(name);
     text.SetFontFamily("base\\gameplay\\gui\\fonts\\raj\\raj.inkfontfamily", n"Medium");
@@ -97,17 +78,47 @@ public class CRFieldCareUI extends IScriptable {
     text.SetStyle(r"base\\gameplay\\gui\\common\\main_colors.inkstyle");
     text.BindProperty(n"tintColor", n"MainColors.Red");
     text.SetText(caption);
-    text.SetInteractive(false);
+    text.SetInteractive(interactive);
+    if interactive {
+      text.RegisterToCallback(n"OnRelease", this, n"OnRelease");
+      text.RegisterToCallback(n"OnEnter", this, n"OnEnter");
+    }
     text.Reparent(parent);
     return text;
   }
 
-  private func Button(parent: ref<inkCompoundWidget>, name: CName, caption: String, width: Float, height: Float) -> ref<inkText> {
-    let text: ref<inkText> = this.Label(parent, name, caption, width, height);
-    text.SetInteractive(true);
-    text.RegisterToCallback(n"OnRelease", this, n"OnRelease");
-    text.RegisterToCallback(n"OnEnter", this, n"OnEnter");
-    return text;
+  public func BuildContent(parent: ref<inkCompoundWidget>) -> Void {
+    ArrayClear(this.controls);
+    ArrayClear(this.regionButtons);
+    let title: ref<inkText> = this.MakeText(parent, n"CRCareTitle", "realpass  |  FIELD CARE", 1600.0, 64.0, false);
+    title.SetFontSize(44);
+    this.MakeText(parent, n"CRCareHelp", "Select a region, then a treatment. Stay still and out of combat until care completes.", 1600.0, 60.0, false);
+    this.injurySummary = this.MakeText(parent, n"CRCareInjuries", "", 1600.0, 100.0, false);
+
+    let row: ref<inkHorizontalPanel>;
+    let i: Int32 = 0;
+    while i < 6 {
+      if i == 0 || i == 3 {
+        row = new inkHorizontalPanel();
+        row.SetHAlign(inkEHorizontalAlign.Center);
+        row.Reparent(parent);
+      }
+      let button: ref<inkText> = this.MakeText(row, this.ControlName(i), this.RegionName(i + 1), 520.0, 64.0, true);
+      ArrayPush(this.regionButtons, button);
+      ArrayPush(this.controls, button);
+      i += 1;
+    }
+
+    row = new inkHorizontalPanel();
+    row.SetHAlign(inkEHorizontalAlign.Center);
+    row.Reparent(parent);
+    ArrayPush(this.controls, this.MakeText(row, n"CRCareDress", "", 520.0, 88.0, true));
+    ArrayPush(this.controls, this.MakeText(row, n"CRCareSupport", "", 520.0, 88.0, true));
+    ArrayPush(this.controls, this.MakeText(row, n"CRCareCancel", "", 520.0, 88.0, true));
+    this.message = this.MakeText(parent, n"CRCareMessage", "", 1600.0, 120.0, false);
+    ArrayPush(this.controls, this.MakeText(parent, n"CRCareClose", "", 1600.0, 64.0, true));
+    this.MakeText(parent, n"CRCareNavigation", "Directional input moves; confirm selects; cancel returns.", 1600.0, 64.0, false);
+    this.Refresh("");
   }
 
   private func ControlName(index: Int32) -> CName {
@@ -126,12 +137,24 @@ public class CRFieldCareUI extends IScriptable {
     return n"";
   }
 
+  private func RegionName(region: Int32) -> String {
+    switch region {
+      case 1: return "Head";
+      case 2: return "Torso";
+      case 3: return "Left arm";
+      case 4: return "Right arm";
+      case 5: return "Left leg";
+      case 6: return "Right leg";
+    }
+    return "Unknown";
+  }
+
   private func UpdateActionLabels() -> Void {
     let captions: array<String>;
     ArrayPush(captions, "Apply dressing\n8 sec  |  1 trauma kit");
     ArrayPush(captions, "Support limb\n12 sec  |  1 trauma kit");
     ArrayPush(captions, "Cancel queued care");
-    ArrayPush(captions, "Return to backpack");
+    ArrayPush(captions, "Close field care");
     let i: Int32 = 6;
     while i < ArraySize(this.controls) {
       this.controls[i].SetText((this.focus == i ? "> " : "") + captions[i - 6]);
@@ -147,10 +170,13 @@ public class CRFieldCareUI extends IScriptable {
   public func Confirm() -> Void { this.Activate(this.ControlName(this.focus)); }
 
   private cb func OnEnter(evt: ref<inkPointerEvent>) -> Bool {
-    if !IsDefined(this.popup) || !this.popup.CanInteract() || !IsDefined(evt.GetTarget()) { return false; }
+    if !IsDefined(evt.GetTarget()) { return false; }
+    let name: CName = evt.GetTarget().GetName();
+    if Equals(name, n"CRCareOpen") { return true; }
+    if !IsDefined(this.popup) || !this.popup.CanInteract() { return false; }
     let i: Int32 = 0;
     while i < ArraySize(this.controls) {
-      if Equals(evt.GetTarget().GetName(), this.ControlName(i)) { this.focus = i; this.Refresh(""); return true; }
+      if Equals(name, this.ControlName(i)) { this.focus = i; this.Refresh(""); return true; }
       i += 1;
     }
     return false;
@@ -158,20 +184,12 @@ public class CRFieldCareUI extends IScriptable {
 
   private cb func OnRelease(evt: ref<inkPointerEvent>) -> Bool {
     if evt.IsHandled() || !evt.IsAction(n"click") || !IsDefined(evt.GetTarget()) { return false; }
-    if Equals(evt.GetTarget().GetName(), n"CRCareOpen") { this.Open(); evt.Handle(); return true; }
+    if Equals(evt.GetTarget().GetName(), n"CRCareOpen") {
+      if this.Open() { evt.Handle(); return true; }
+      return false;
+    }
     if this.Activate(evt.GetTarget().GetName()) { evt.Handle(); return true; }
     return false;
-  }
-  private func RegionName(region: Int32) -> String {
-    switch region {
-      case 1: return "Head";
-      case 2: return "Torso";
-      case 3: return "Left arm";
-      case 4: return "Right arm";
-      case 5: return "Left leg";
-      case 6: return "Right leg";
-    }
-    return "Unknown";
   }
 
   private func Refresh(result: String) -> Void {
@@ -180,48 +198,32 @@ public class CRFieldCareUI extends IScriptable {
     let label: String;
     while i < ArraySize(this.regionButtons) {
       label = this.RegionName(i + 1);
-      if this.region == i + 1 {
-        label = "[ " + label + " ]";
-      }
+      if this.region == i + 1 { label = "[ " + label + " ]"; }
       if this.focus == i { label = "> " + label; }
       this.regionButtons[i].SetText(label);
       i += 1;
     }
+
     let player: ref<PlayerPuppet> = GameInstance.GetPlayerSystem(GetGameInstance()).GetLocalPlayerMainGameObject() as PlayerPuppet;
     let summary: String = this.RegionName(this.region) + "  |  Trauma kits: " + ToString(CRFieldCareInventory.Count(player));
     let body: ref<CRBodyState> = CRBodyRuntime.Get().GetBodySnapshot();
     if IsDefined(body) {
-      if CRFieldCareModel.CanHelp(body.injuries, this.region, 2) {
-        summary += "  |  External bleeding: dressing can help";
-      }
-      if CRFieldCareModel.CanHelp(body.injuries, this.region, 3) {
-        summary += "  |  Bone injury: support can help";
-      }
+      if CRFieldCareModel.CanHelp(body.injuries, this.region, 2) { summary += "  |  external bleeding: dressing can help"; }
+      if CRFieldCareModel.CanHelp(body.injuries, this.region, 3) { summary += "  |  bone injury: support can help"; }
     }
-    if !CRBodyRuntime.Get().CanUseFieldCare() {
-      summary += "  |  Care unavailable here";
-    }
-    if Equals(result, "") {
-      result = CRFieldCareActionRuntime.Get().Status();
-    }
-    if Equals(result, "") {
-      result = "Field care does not restore lost blood, heal bone, stop internal bleeding or repair chrome.";
-    }
+    if !CRBodyRuntime.Get().CanUseFieldCare() { summary += "  |  care unavailable here"; }
+    if Equals(result, "") { result = CRFieldCareActionRuntime.Get().Status(); }
+    if Equals(result, "") { result = "Field care does not restore lost blood, heal bone, stop internal bleeding or repair chrome."; }
     this.message.SetText(summary + "\n" + result);
-    let bodySummary: String = "Injury status unavailable";
-    if IsDefined(body) { bodySummary = CRBodyPreviewUI.InjuryStatus(body.injuries); }
-    this.injurySummary.SetText(bodySummary);
+    this.injurySummary.SetText(IsDefined(body) ? CRBodyStatusPresentation.InjuryStatus(body.injuries) : "Injury status unavailable");
     this.UpdateActionLabels();
-    CRBodyPreviewUI.ShowCurrent(this.bodyNote);
   }
 
   public func Activate(name: CName) -> Bool {
     if !IsDefined(this.popup) || !this.popup.CanInteract() || !this.alive { return false; }
     let kind: Int32 = 0;
     switch name {
-      case n"CRCareClose":
-        this.popup.Close();
-        return true;
+      case n"CRCareClose": this.popup.Close(); return true;
       case n"CRCareHead": this.region = 1; break;
       case n"CRCareTorso": this.region = 2; break;
       case n"CRCareLeftArm": this.region = 3; break;
@@ -233,6 +235,7 @@ public class CRFieldCareUI extends IScriptable {
       case n"CRCareSupport": kind = 3; break;
       default: return false;
     }
+
     let feedback: String = "";
     let outcome: Int32;
     if kind > 0 {
@@ -240,12 +243,11 @@ public class CRFieldCareUI extends IScriptable {
       switch outcome {
         case 8: feedback = CRFieldCareActionRuntime.Get().Status(); break;
         case 1: feedback = "Treatment applied to " + this.RegionName(this.region) + ". Used 1 trauma kit."; break;
-        case 2: feedback = "A trauma kit is required. Available from medical vendors."; break;
+        case 2: feedback = "A trauma kit is required."; break;
         case 3: feedback = "Body state changed. Treatment cancelled and the trauma kit returned."; break;
-        case 4: feedback = "Treatment failed and the kit could not be returned. Please report this error."; break;
+        case 4: feedback = "Treatment failed and the kit could not be returned."; break;
         case 5: feedback = "The kit could not be used. No treatment was applied."; break;
         case 6: feedback = "That treatment would not help this region. No kit used."; break;
-        case 7: feedback = "Resolve the existing injury with its normal treatment before using regional care. No kit used."; break;
         default: feedback = "Care unavailable during combat, travel, protected scenes or pending body updates. No kit used.";
       }
     }
@@ -311,13 +313,27 @@ public class CRFieldCarePopup extends CustomPopup {
   }
 }
 
+@addField(BackpackMainGameController)
+private let crFieldCare: ref<CRFieldCareUI>;
+
+@wrapMethod(BackpackMainGameController)
+protected cb func OnInitialize() -> Bool {
+  let result: Bool = wrappedMethod();
+  if CRBodyRuntimePolicy.Enabled() && CRCombatRuntimePolicy.Enabled() {
+    this.crFieldCare = CRFieldCareUI.Create(this.GetRootCompoundWidget());
+  }
+  return result;
+}
+
 @wrapMethod(BackpackMainGameController)
 protected cb func OnUninitialize() -> Bool {
-  if IsDefined(this.crFieldCare) { this.crFieldCare.Teardown(); }
+  if IsDefined(this.crFieldCare) {
+    this.crFieldCare.Teardown();
+    this.crFieldCare = null;
+  }
   return wrappedMethod();
 }
 
-// Transient menu registration shared by standard and Revised Backpack.
 public class CRFieldCareMenuSession extends ScriptableSystem {
   private let current: wref<CRFieldCareUI>;
 
@@ -326,9 +342,7 @@ public class CRFieldCareMenuSession extends ScriptableSystem {
   }
 
   public func Register(ui: wref<CRFieldCareUI>) -> Void {
-    if IsDefined(this.current) && !Equals(this.current, ui) {
-      this.current.Teardown();
-    }
+    if IsDefined(this.current) && !Equals(this.current, ui) { this.current.Teardown(); }
     this.current = ui;
   }
 
