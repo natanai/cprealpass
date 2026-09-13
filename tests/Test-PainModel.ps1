@@ -26,38 +26,38 @@ Check ((Close ([CRPainModel]::PhysicalPain($chrome)) 0)) 'Chrome-only damage was
 $bone = [CRInjuryModel]::Create(); [CRInjuryModel]::Wound($bone,5,0.2,0.8,0.0,0.0,0.0) | Out-Null
 Check ([CRPainModel]::PhysicalPain($bone) -gt [CRPainModel]::PhysicalPain($injury)) 'Severe bone trauma was not pain-heavy.'
 
-# Trauma Kit analgesia only changes the pain state. It must not modify the injury.
+# MaxDoc analgesia only changes the pain state. It must not modify the injury.
 $before = [CRInjuryModel]::Copy($injury)
 $untreatedSway = $p.weaponSway
 $untreatedSpread = $p.painSpread
 $untreatedRecoil = $p.painRecoil
-Check ([CRPainModel]::UseTraumaKit($state)) 'First Trauma Kit dose rejected.'
+Check ([CRPainModel]::UseMaxDoc($state)) 'First MaxDoc use rejected.'
 $p1 = [CRPainModel]::Read($injury,$state)
-Check ($p1.analgesia -gt 0 -and $p1.perceivedPain -lt $p1.physicalPain) 'Trauma Kit did not reduce perceived pain.'
+Check ($p1.analgesia -gt 0 -and $p1.perceivedPain -lt $p1.physicalPain) 'MaxDoc did not reduce perceived pain.'
 Check ($p1.weaponSway -lt $untreatedSway -and $p1.painSpread -lt $untreatedSpread -and $p1.painRecoil -lt $untreatedRecoil) 'Analgesia did not reduce pain-driven weapon instability.'
 Check ([CRInjuryModel]::ValidState($injury) -and $injury.leftArm.tissueDamage -eq $before.leftArm.tissueDamage) 'Analgesia altered underlying injury.'
 Check ($injury.leftArm.externalBleedMlPerHour -eq $before.leftArm.externalBleedMlPerHour -and $injury.leftArm.cyberwareDamage -eq $before.leftArm.cyberwareDamage) 'Analgesia changed bleeding/chrome.'
 
-# Each overlapping dose adds less pain relief than the previous one.
+# Each overlapping use adds less pain relief than the previous one.
 $gain1 = $p1.analgesia
-Check ([CRPainModel]::UseTraumaKit($state)) 'Second Trauma Kit dose rejected.'
+Check ([CRPainModel]::UseMaxDoc($state)) 'Second MaxDoc use rejected.'
 $p2 = [CRPainModel]::Read($injury,$state)
 $gain2 = $p2.analgesia - $p1.analgesia
-Check ([CRPainModel]::UseTraumaKit($state)) 'Third Trauma Kit dose rejected.'
+Check ([CRPainModel]::UseMaxDoc($state)) 'Third MaxDoc use rejected.'
 $p3 = [CRPainModel]::Read($injury,$state)
 $gain3 = $p3.analgesia - $p2.analgesia
 Check ($gain1 -gt $gain2 -and $gain2 -gt $gain3 -and $gain3 -gt 0) 'Analgesia does not have diminishing returns.'
-Check ($p3.perceivedPain -gt 0) 'Stacked Trauma Kits erased pain entirely.'
-Check ($p2.intoxication -eq 0 -and $p3.intoxication -gt 0) 'Overlapping third dose did not enter intoxication envelope at the intended threshold.'
-Check ($p3.intoxication -lt 1) 'Third dose jumped directly to maximum intoxication.'
+Check ($p3.perceivedPain -gt 0) 'Stacked MaxDoc uses erased pain entirely.'
+Check ($p2.intoxication -eq 0 -and $p3.intoxication -gt 0) 'Overlapping third use did not enter intoxication envelope at the intended threshold.'
+Check ($p3.intoxication -lt 1) 'Third use jumped directly to maximum intoxication.'
 
-Check ([CRPainModel]::UseTraumaKit($state)) 'Fourth Trauma Kit dose rejected.'
+Check ([CRPainModel]::UseMaxDoc($state)) 'Fourth MaxDoc use rejected.'
 $p4 = [CRPainModel]::Read($injury,$state)
-Check ((Close $p4.intoxication 1)) 'Fourth overlapping dose did not reach the authored maximum intoxication envelope.'
+Check ((Close $p4.intoxication 1)) 'Fourth overlapping use did not reach the authored maximum intoxication envelope.'
 Check ($p4.analgesia -le 0.85) 'Analgesia exceeded the hard relief ceiling.'
-Check ($state.dosesTaken -eq 4) 'Dose history counter did not record accepted uses.'
+Check ($state.dosesTaken -eq 4) 'Use history counter did not record accepted MaxDoc uses.'
 
-# Load decays through body time; intoxication clears before the lifetime dose count.
+# Load decays through body time; intoxication clears before the lifetime use count.
 Check ([CRPainModel]::Advance($state,2.0)) 'Pain state rejected valid time advancement.'
 $pAfter2h = [CRPainModel]::Read($injury,$state)
 Check ((Close $state.analgesicLoad 3.0) -and $state.dosesTaken -eq 4) 'Analgesic load/history decayed incorrectly.'
@@ -78,6 +78,6 @@ Write-JsonFile ([ordered]@{
     passed = $true
     assertions = $script:checks
     sources = @($paths | ForEach-Object { [ordered]@{path=$_;sha256=(Get-Sha256 $_)} })
-    scope = 'Pure realpass pain/analgesia model. Covers biological versus chrome pain, Trauma Kit pain-only semantics, diminishing returns, intoxication envelope, deterministic load decay, and pain-driven sway/spread/recoil factors that analgesia can reduce without touching structural injury. Native item interception, drunk/SFX presentation, V vocalizations and live aiming behavior remain unverified.'
+    scope = 'Pure realpass pain/analgesia model. Covers biological versus chrome pain, MaxDoc pain-only semantics, diminishing returns, intoxication envelope, deterministic load decay, and pain-driven sway/spread/recoil factors that analgesia can reduce without touching structural injury. Native MaxDoc interception, drunk/SFX presentation, V vocalizations and live aiming behavior remain unverified.'
 }) (Join-Path $project 'reports/pain-model-tests.json')
-Write-Host "PASS: $script:checks pain/analgesia checks."
+Write-Host "PASS: $script:checks pain/MaxDoc analgesia checks."
