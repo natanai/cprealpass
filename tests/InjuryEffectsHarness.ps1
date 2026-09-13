@@ -14,8 +14,9 @@ $classes=foreach($name in @('CRNPCInjuryBridge','CRInjuryModifierSlot','CRInjury
  # presentation call. Pain ownership/refresh is covered by Test-PainArchitecture and
  # exact local REDscript compilation; keeping it here would require fake engine/UI
  # types in a model harness and would weaken rather than improve the isolation test.
- $s=$s.Replace('    let localPlayer: ref<PlayerPuppet> = player as PlayerPuppet;' + "`n",'')
- $s=$s.Replace('    CRPainNativeEffects.Refresh(localPlayer, IsDefined(body) && enabled && CRInjuryEffectsBridge.Allowed(localPlayer, true));' + "`n",'')
+ # Use line regexes so this stays deterministic under both LF and Windows CRLF checkout.
+ $s=[regex]::Replace($s,'(?m)^\s*let localPlayer: ref<PlayerPuppet> = player as PlayerPuppet;\r?\n','')
+ $s=[regex]::Replace($s,'(?m)^\s*CRPainNativeEffects\.Refresh\(localPlayer, IsDefined\(body\) && enabled && CRInjuryEffectsBridge\.Allowed\(localPlayer, true\)\);\r?\n','')
  $s=[regex]::Replace($s,'(public|private) func (\w+)\(','$1 static func CRInstance_$2(')
  $s=[regex]::Replace($s,'return GameInstance.GetScriptableSystemsContainer\(GetGameInstance\(\)\).+?;', 'return CREffectsFixture.runtime;')
  $s=$s.Replace('GetGameInstance()','CREffectsFixture.game').Replace('array<ref<CRInjuryModifierSlot>>','CRModifierSlots = new CRModifierSlots()').Replace('array<ref<NPCPuppet>>','CRNpcList = new CRNpcList()')
