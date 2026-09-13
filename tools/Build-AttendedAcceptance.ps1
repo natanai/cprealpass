@@ -69,7 +69,7 @@ function Set-PolicyOnce([string]$text,[string]$className,[string]$methodName,[bo
     if ($matches.Count -ne 1) { throw "Expected one policy gate: $className.$methodName" }
     $current = $matches[0].Groups['value'].Value
     if ($requiredCurrent -in @('true','false') -and $current -ne $requiredCurrent) {
-        throw "Unexpected current policy for $className.$methodName: $current; required $requiredCurrent"
+        throw "Unexpected current policy for $className.$methodName`: $current; required $requiredCurrent"
     }
     $desiredText = $desired.ToString().ToLowerInvariant()
     if ($current -eq $desiredText) { return $text }
@@ -197,4 +197,4 @@ $record = [ordered]@{
     scope = 'Attended compile candidate only. Build does not deploy or launch Cyberpunk. Native combat feel, settings rendering, UI rendering, saves, quests, bosses and Phantom Liberty still require player-attended acceptance.'
 }
 Write-JsonFile $record $report
-Write-Host "Staged and compiled attended candidate $BuildId: body=on, combat=on, healthBars=$([bool]$ShowTraditionalHealthBars), diagnostics=$([bool]$Diagnostics), settings=passive. No live deployment performed."
+Write-Host "Staged and compiled attended candidate $BuildId`: body=on, combat=on, healthBars=$([bool]$ShowTraditionalHealthBars), diagnostics=$([bool]$Diagnostics), settings=passive. No live deployment performed."
