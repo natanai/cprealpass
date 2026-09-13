@@ -15,11 +15,17 @@ Check ($policy.releaseExperience.publicGameplayToggles -eq $false) 'Public gamep
 Check ($policy.releaseExperience.publicBalanceSliders -eq $false) 'Public balance sliders are forbidden for release.'
 Check ($policy.releaseExperience.traditionalActorHealthBars -eq $false) 'Traditional actor health bars must remain absent in the authored release.'
 Check ($policy.runtimeOwnership.gameplayAndPresentationRequiredOrigin -eq 'project-original') 'Gameplay/presentation runtime is not constrained to project-original code.'
+Check ($policy.vanillaFirst.preserveUsefulIdentity -eq $true -and $policy.vanillaFirst.preserveUsefulNativeShells -eq $true -and $policy.vanillaFirst.preferSemanticNativeHooks -eq $true) 'Vanilla-first stability policy is not active.'
+$medicalExamples = @($policy.vanillaFirst.medicalIdentityExamples) -join ' '
+Check ($medicalExamples -match 'MaxDoc' -and $medicalExamples -match 'FirstAidWhiff' -and $medicalExamples -match 'Bounce Back' -and $medicalExamples -match 'Health Booster') 'Vanilla medical identities are not explicit in runtime policy.'
 foreach ($component in @('darkfuture','project-e3-hud')) {
     Check (@($policy.forbiddenRuntimeComponents) -contains $component) "Forbidden runtime component missing: $component"
 }
 foreach ($needle in @('module DarkFuture.','import DarkFuture.')) {
     Check (@($policy.forbiddenProductionSourceNamespaces) -contains $needle) "Forbidden source namespace rule missing: $needle"
+}
+foreach ($needle in @('Trauma Kit','UseTraumaKit')) {
+    Check (@($policy.vanillaFirst.forbiddenOwnedSourceIdentityPatterns) -contains $needle) "Forbidden source-mod identity rule missing: $needle"
 }
 
 # The redistribution-safe package is the first machine-readable production-source
@@ -33,10 +39,10 @@ foreach ($file in @($package.files)) {
     }
 }
 
-# Production code under src/redscript/CyberpunkRealism may not create new source-mod
-# namespace dependencies. Transitional bridge files are explicitly detected here so
-# CI will remain red until they are removed/replaced; this is intentional under the
-# ownership pivot and prevents an old integration profile from being called owned.
+# Production code may not create source-mod namespace dependencies. The legacy
+# backpack FieldCareUI prototype is explicitly excluded from the owned candidate and
+# may retain historical copy until deleted; all other production candidate sources
+# must also obey the vanilla-identity rule.
 $sourceRoot = Join-Path $project 'src/redscript/CyberpunkRealism'
 $violations = [Collections.Generic.List[string]]::new()
 Get-ChildItem -LiteralPath $sourceRoot -Filter '*.reds' -File | ForEach-Object {
@@ -44,9 +50,14 @@ Get-ChildItem -LiteralPath $sourceRoot -Filter '*.reds' -File | ForEach-Object {
     foreach ($needle in @($policy.forbiddenProductionSourceNamespaces)) {
         if ($text.Contains([string]$needle)) { $violations.Add($_.Name + ' -> ' + $needle) }
     }
+    if ($_.Name -ne 'FieldCareUI.reds') {
+        foreach ($needle in @($policy.vanillaFirst.forbiddenOwnedSourceIdentityPatterns)) {
+            if ($text.Contains([string]$needle)) { $violations.Add($_.Name + ' -> forbidden identity ' + $needle) }
+        }
+    }
 }
 if ($violations.Count -gt 0) {
-    throw "Production source still depends on source-mod namespaces:`n - $($violations -join "`n - ")"
+    throw "Production candidate source violates owned-runtime policy:`n - $($violations -join "`n - ")"
 }
 
-Write-Host "PASS: $script:checks owned-runtime policy checks; release is locked and production source contains no Dark Future/E3 runtime ownership."
+Write-Host "PASS: $script:checks owned-runtime policy checks; release is locked, vanilla-first, and production candidate source contains no Dark Future/E3 ownership or source-mod item identity."
