@@ -2,14 +2,16 @@ $ErrorActionPreference = 'Stop'
 if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'Run-CI.ps1 requires PowerShell 7 or newer.' }
 
 # Only tests reproducible from the public source tree and relevant to the current
-# owned-runtime product path belong here. Historical tests for the source-mod-
-# integrated attended builder and the backpack Field Care popup remain in the repo
-# as prototype evidence but are deliberately not release-path CI targets.
+# vanilla-first, project-owned runtime path belong here. Superseded runtime bridge/
+# popup/localization sources are removed from production rather than hidden behind
+# release-path exclusions. Historical integration tests that require local acquired
+# source/game state remain outside this cloud tier.
 $tests = @(
     'Test-ModuleContract.ps1',
     'Test-SettingsContract.ps1',
     'Test-SettingsRuntimeSurface.ps1',
     'Test-RuntimeOriginPolicy.ps1',
+    'Test-NativeSeamPolicy.ps1',
     'Test-ConditionArchitecture.ps1',
     'Test-PainArchitecture.ps1',
     'Test-DistributionContract.ps1',
