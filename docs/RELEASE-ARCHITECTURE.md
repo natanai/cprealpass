@@ -14,20 +14,25 @@ Preferred release flow:
 3. Extract the archive into the Cyberpunk 2077 game root and merge folders.
 4. Launch Cyberpunk normally through Steam.
 
-There is no persistent RealPass launcher and no public menu for enabling/disabling core realism authorities. The shipped version is one authored simulation.
+There is no persistent RealPass launcher and no public menu for enabling/disabling core realism authorities. The shipped version is one authored simulation. RealPass may appear in Mod Settings so the player can confirm it is active, read a concise managed-feature ledger and change explicitly accepted binary presentation/accessibility preferences that do not alter the simulation.
 
 ## Current runtime dependency set
 
-The completion candidate has been reduced to:
+The integrated owned candidate uses:
 
-- **project-original realpass REDscript**;
-- **pinned redscript runtime/compiler plumbing**.
+- **project-original RealPass REDscript** for gameplay and presentation policy;
+- **redscript 0.5.31** for script loader/compiler plumbing;
+- **RED4ext 1.30.0** as generic infrastructure required by the pinned settings dependency chain;
+- **ArchiveXL 1.27.3** as a generic dependency of the pinned Mod Settings build;
+- **Mod Settings 0.2.21** to host the accepted RealPass settings surface.
 
-The owned source does not currently require RED4ext, ArchiveXL, TweakXL, Codeware, Mod Settings or Input Loader. Those components may remain in the historical component catalog because older development profiles used them, but `m1-base` and `Build-OwnedRuntimeProfile.ps1` deliberately do not stage them.
+`m1-base` remains a useful **redscript-only** source/native-development profile. The deployable `m1-owned-settings` profile is the constrained four-component generic runtime above. TweakXL, Codeware and Input Loader are not required by the current owned candidate.
+
+These generic frameworks do not own RealPass simulation or presentation policy. In particular, Mod Settings only hosts RealPass-owned labels/status text and accepted binary presentation/accessibility preferences. It is not a body, injury, combat, armor, progression or balance authority.
 
 Dark Future and Project E3 are reference/history only and are forbidden from owned/live/public runtime manifests.
 
-The final release should not add a dependency simply because it is already installed on a developer's machine.
+The final release should not add a dependency simply because it is already installed on a developer's machine. Any new framework must correspond to a concrete RealPass-owned source requirement and a synchronized distribution/license contract change.
 
 ## Repository/build boundary
 
@@ -41,7 +46,7 @@ Canonical body/combat gates remain fail-closed in repository source. The candida
 
 `Prepare-OwnedSession.ps1` is the development operator entry point.
 
-Without `-Deploy`, it runs source contracts, builds the complete owned candidate, exact-compiles it against the local Cyberpunk 2077 2.31 base script bundle and produces a flat install plan without changing game files.
+Without `-Deploy`, it runs source contracts, acquires/stages the constrained generic settings profile, builds the complete owned candidate, exact-compiles it against the local Cyberpunk 2077 2.31 base script bundle and produces a flat install plan without changing game files.
 
 With `-Deploy`, it repeats the checks and then uses `Install-OwnedRuntime.ps1` to:
 
@@ -58,7 +63,7 @@ No multi-generation rollback chain or additional RealPass-managed save backup is
 
 ## Final artifact shape
 
-After attended native acceptance, the intended player ZIP is approximately:
+After attended native acceptance and the dependency/license audit, the intended player ZIP is approximately:
 
 ```text
 realpass-x.y.z.zip
@@ -66,21 +71,28 @@ realpass-x.y.z.zip
   UNINSTALL.txt
   REALPASS-VERSION.txt
   SHA256SUMS.txt
+  bin/                    # only files from allowed pinned generic dependencies
+  engine/                 # pinned redscript runtime files
   r6/
     scripts/
       CyberpunkRealism/
-        ... realpass owned .reds sources ...
-  engine/                 # pinned redscript runtime files required by its official Windows package
-  r6/config/              # only redscript runtime config files required by the pinned package
+        ... RealPass-owned .reds sources ...
+    config/                # only required pinned dependency configuration
+  red4ext/                 # only allowed pinned RED4ext/ArchiveXL/Mod Settings payload
+  archive/                 # only dependency payload explicitly required by the accepted profile
   LICENSES/
     realpass.txt
     redscript.txt
+    red4ext.txt
+    archivexl.txt
+    mod-settings.txt
+    ... required third-party notices ...
   realpass/
     provenance.json
     build-manifest.json
 ```
 
-The exact pinned redscript file list comes from the verified upstream archive, not this illustrative directory tree.
+This is illustrative, not a license to copy arbitrary folders from a developer installation. The exact file list must come from the verified upstream archives and the accepted deployment plan for the pinned versions.
 
 The artifact must not contain repository/developer state such as `tests/`, `staging/`, `reports/`, `vendor/`, `ReferenceMods/`, local manifests, save files, game executables/archives or compiled `final.redscripts` copied from the user's installation.
 
@@ -92,17 +104,19 @@ The artifact must not contain repository/developer state such as `tests/`, `stag
 
 - `realpass-project-original`
 - `redscript`
+- `red4ext`
+- `archivexl`
+- `mod-settings`
+
+The four generic dependencies are infrastructure only. The final package may include their pinned runtime files only after license/notice and live-acceptance gates pass.
 
 ### Not required / must not drift into the artifact
 
-- RED4ext
-- ArchiveXL
 - TweakXL
 - Codeware
-- Mod Settings
 - Input Loader
 
-A future change may reintroduce one only after an actual owned-source requirement is documented, the dependency/notice policy is updated and CI is intentionally changed.
+A future change may add one only after an actual owned-source requirement is documented, the dependency/notice policy is updated and CI is intentionally changed.
 
 ### Blocked runtime material
 
@@ -110,7 +124,7 @@ A future change may reintroduce one only after an actual owned-source requiremen
 - Project E3 execution/assets;
 - proprietary Cyberpunk game files/user data.
 
-The artifact scanner rejects provenance declaring both blocked and currently not-required components so the one-download package cannot silently grow back into a mod stack.
+The artifact scanner rejects provenance declaring blocked or currently not-required components so the one-download package cannot silently grow back into a broad mod stack.
 
 ## CI and release pipeline
 
@@ -131,21 +145,22 @@ Cloud CI is source evidence only. It cannot replace exact local compile/native a
 
 The local attended candidate:
 
-- acquires only pinned redscript plumbing;
+- acquires only the pinned redscript/RED4ext/ArchiveXL/Mod Settings plumbing required by `m1-owned-settings`;
 - builds the complete project-original REDscript tree;
 - rejects forbidden source-mod identity/imports;
 - opens fail-closed body/combat gates only in staged copies;
 - exact-compiles against the installed supported game;
+- exact-compiles the final constrained deployment profile;
 - plans/installs only the current manifest payload.
 
 ### Public release
 
 After live acceptance, a clean release workflow should:
 
-- acquire the exact pinned redscript archive from its official source;
-- verify its SHA-256;
-- assemble only allowed components;
-- include required MIT/RealPass notices;
+- acquire the exact pinned allowed dependency archives from their official sources;
+- verify each SHA-256;
+- assemble only allowed components and only the files required by the accepted profile;
+- include all required MIT/third-party/RealPass notices;
 - run the artifact deny/disallowed-component policy;
 - generate a complete file/hash index;
 - produce deterministic version/build metadata and `SHA256SUMS.txt`;
@@ -170,7 +185,7 @@ INSTALL
 4. Launch Cyberpunk 2077 normally through Steam.
 
 REALPASS
-This release is one authored realism experience. Core gameplay systems are not separately toggleable.
+This release is one authored realism experience. Core gameplay systems are not separately toggleable. Mod Settings, when present, exposes only RealPass status/feature information and explicitly accepted presentation/accessibility preferences.
 
 UPDATE
 Close the game and follow the release notes. Extract the new package over the game root only when the release notes say the versions are directly upgrade-compatible.
@@ -184,9 +199,9 @@ Follow UNINSTALL.txt so only files owned by this RealPass release are removed. U
 Public distribution is complete only when:
 
 - a clean supported installation needs one RealPass download rather than a manually assembled dependency stack;
-- the exact shipped candidate has passed body/combat/presentation/save/quest/performance attended acceptance;
+- the exact shipped candidate has passed settings/Biology/Outfit/HUD/body/combat/presentation/save/quest/performance attended acceptance;
 - all shipped files are owned or redistribution-cleared and correctly noticed;
-- the release is reproducible from repository source + pinned upstream redscript;
+- the release is reproducible from repository source + pinned allowed upstream generic dependencies;
 - CI rejects game/user/source-mod/unneeded-framework content;
 - no persistent special launcher/background process is required;
 - update/uninstall ownership is explicit;
