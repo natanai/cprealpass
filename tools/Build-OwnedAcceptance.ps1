@@ -21,11 +21,11 @@ if ($actualVersion -ne '2.31') {
     throw "This owned candidate is calibrated/declared for Cyberpunk 2077 2.31; installed game reports $actualVersion. Update native acceptance before building."
 }
 
-# This builder starts from the repository's realpass source tree, never from the
+# This builder starts from the repository's RealPass source tree, never from the
 # currently deployed mod stack. That distinction is the owned-runtime boundary.
 $sourceRoot = Resolve-SafeChildPath $project 'src/redscript/CyberpunkRealism'
 $sourceFiles = @(Get-ChildItem -LiteralPath $sourceRoot -File -Filter '*.reds' | Sort-Object Name)
-if ($sourceFiles.Count -lt 20) { throw 'Unexpectedly small realpass source tree; refusing to construct an incomplete owned candidate.' }
+if ($sourceFiles.Count -lt 20) { throw 'Unexpectedly small RealPass source tree; refusing to construct an incomplete owned candidate.' }
 
 # These files belonged to superseded source-mod-integrated/prototype paths. They are
 # intentionally retired from production source rather than silently excluded at build
@@ -37,15 +37,16 @@ if ($presentRetired.Count -gt 0) {
 }
 $candidateFiles = @($sourceFiles)
 
-# Fail closed on source-mod/runtime-host imports and on source-mod nomenclature that
-# would silently rebrand vanilla gameplay items. Generic frameworks may eventually
-# be allowed by an explicit dependency contract, but the first owned acceptance
-# source candidate intentionally has no gameplay/UI framework import of its own.
+# Fail closed on source-mod/runtime-host imports and source-mod nomenclature that
+# would silently rebrand vanilla gameplay items. Mod Settings metadata is now
+# intentionally allowed because it supplies a constrained generic settings surface.
+# RealPass source still must not import/call Mod Settings as a gameplay-policy owner.
 $forbiddenOwnedPatterns = @(
     '(?m)^\s*(?:module|import)\s+DarkFuture(?:\.|\b)',
     '(?im)Project\s*E3',
     '(?m)^\s*import\s+Codeware(?:\.|\b)',
-    '(?im)ModSettings|Mod Settings',
+    '(?m)^\s*import\s+ModSettings(?:\.|\b)',
+    '(?m)(?<!["''])\bModSettings\.(?:Register|Unregister|GetInstance|GetMods|GetCategories|GetVars|AcceptChanges|RejectChanges|RestoreDefaults)\b',
     '(?i)\bTrauma\s+Kit\b|UseTraumaKit'
 )
 foreach ($file in $candidateFiles) {
@@ -142,14 +143,15 @@ $record = [ordered]@{
     ownedRuntime = $true
     sourceCount = $entries.Count
     retiredProductionSources = @($retiredProductionSources)
-    genericRuntimeRequirement = 'Generic loader/toolchain requirements are audited separately before deployment; this source candidate inherits no gameplay or presentation mod runtime.'
+    genericRuntimeRequirement = 'Generic loader/toolchain/settings requirements are audited separately before deployment; this source candidate inherits no gameplay or presentation mod runtime.'
     stagedGates = @($stagedGates.ToArray())
     manifestPath = $outputRelative
-    traditionalActorHealthBars = $false
+    traditionalActorHealthBarsFinalTarget = $false
+    developmentHealthbarFallbackUntilReplacementAccepted = $true
     sourceModsRequired = @()
     vanillaIdentityPolicy = 'Preserve vanilla item/system identity; source-mod renames are forbidden in the owned candidate.'
-    scope = 'Owned attended compile candidate only. Contains the complete current project-original realpass REDscript tree; retired source-mod bridge/prototype files are absent; does not deploy or launch Cyberpunk. Native UI/gameplay/save/quest acceptance is still required.'
+    scope = 'Owned attended compile candidate only. Contains the complete current project-original RealPass REDscript tree; retired source-mod bridge/prototype files are absent; does not deploy or launch Cyberpunk. Native UI/gameplay/save/quest acceptance is still required.'
 }
 Write-JsonFile $record $report
-Write-Host "PASS: owned realpass candidate $BuildId compiled from $($entries.Count) project-original sources. No Dark Future/Project E3 runtime, retired prototype source, or source-mod item renames were inherited. Nothing was deployed or launched."
+Write-Host "PASS: owned RealPass candidate $BuildId compiled from $($entries.Count) project-original sources. No Dark Future/Project E3 runtime, retired prototype source, or source-mod item renames were inherited. Nothing was deployed or launched."
 return $outputRelative
