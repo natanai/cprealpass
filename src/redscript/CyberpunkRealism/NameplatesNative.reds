@@ -36,11 +36,15 @@ private final func CRScannedCrowdNameAllowed(puppet: wref<GameObject>) -> Bool {
 }
 
 @wrapMethod(NameplateVisualsLogicController)
-public final func SetVisualData(puppet: ref<GameObject>, incomingData: NPCNextToTheCrosshair, opt isNewNpc: Bool) -> Void {
+public final func SetVisualData(puppet: ref<GameObject>, const incomingData: script_ref<NPCNextToTheCrosshair>, opt isNewNpc: Bool) -> Void {
+  // 2.31 passes this imported struct by script_ref. Work on a local copy so the
+  // wrapper matches the native signature while the caller's blackboard payload is
+  // never mutated in place.
+  let resolved: NPCNextToTheCrosshair = Deref(incomingData);
   // Native focus data always wins. Only recover an empty public crowd name after a
   // permitted completed scan; the stock renderer retains every visibility decision.
-  if !IsStringValid(incomingData.name) && this.CRScannedCrowdNameAllowed(puppet) {
-    incomingData.name = puppet.GetDisplayName();
+  if !IsStringValid(resolved.name) && this.CRScannedCrowdNameAllowed(puppet) {
+    resolved.name = puppet.GetDisplayName();
   }
-  wrappedMethod(puppet, incomingData, isNewNpc);
+  wrappedMethod(puppet, resolved, isNewNpc);
 }
