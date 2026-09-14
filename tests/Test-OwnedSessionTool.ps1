@@ -14,29 +14,29 @@ $acquire = Get-Content -Raw -LiteralPath $acquirePath
 $script:checks = 0
 function Check($condition,[string]$message) { if (-not $condition) { throw $message }; $script:checks++ }
 
-# Selective acquisition is required so the owned path never downloads reference
-# gameplay mods merely because they remain documented in the historical catalog.
 Check ($acquire.Contains('[string[]]$ComponentIds')) 'Component acquisition has no selective owned-runtime path.'
 Check ($acquire.Contains('Add-ComponentWithDependencies')) 'Selective acquisition does not close dependency requirements.'
 Check ($acquire.Contains('$selected.ContainsKey')) 'Selective acquisition does not deduplicate dependency traversal.'
 
 foreach ($needle in @(
-    "`$genericIds = @('red4ext','redscript')",
+    "`$genericIds = @('red4ext','redscript','archivexl','mod-settings')",
     'Acquire-Components.ps1',
     'Stage-Components.ps1',
-    "-Profile 'm1-base'",
+    "-Profile 'm1-owned-settings'",
     'Build-OwnedAcceptance.ps1',
     "profile = 'owned-runtime-development'",
     'Compile-Profile.ps1',
-    'sourceModsRequired = @()'
+    'sourceModsRequired = @()',
+    "settingsProvider = 'mod-settings'"
 )) {
     Check ($builder.Contains($needle)) "Owned deployable-profile invariant missing: $needle"
 }
 Check ($builder.Contains("component = [string]`$entry.component")) 'Owned profile does not preserve per-file component ownership.'
 Check ($builder.Contains("origin = `$(if (`$entry.PSObject.Properties.Name -contains 'origin')")) 'Owned profile does not preserve file provenance.'
-foreach ($forbidden in @('darkfuture','project e3','mod-settings','input-loader')) {
+foreach ($forbidden in @('darkfuture','project e3','input-loader')) {
     Check ($builder.Contains($forbidden)) "Owned deployable profile lost forbidden payload guard: $forbidden"
 }
+Check (-not ($builder -match "foreach \(\`\$forbidden in @\([^\)]*'mod-settings'")) 'Owned deployable profile still treats the accepted settings provider as forbidden runtime content.'
 foreach ($danger in @('Deploy.ps1','Upgrade.ps1','Start-Process','Register-ScheduledTask','New-Service')) {
     Check (-not $builder.Contains($danger)) "Owned profile builder gained live/unattended side effect: $danger"
 }
@@ -52,7 +52,7 @@ Check (-not $session.Contains('Upgrade.ps1')) 'Owned session still traverses leg
 Check (-not $session.Contains('Rollback.ps1')) 'Owned session still depends on legacy automatic rollback.'
 Check ($session.Contains('Steam Verify Files') -and $session.Contains('Remove-OwnedRuntime.ps1')) 'Owned session does not document the simple external recovery path.'
 Check ($session.Contains('Get-ForbiddenOwnedAcceptanceResidue')) 'Owned session does not verify retired/source-mod runtime isolation.'
-Check ($session.Contains('r6/scripts/realpass')) 'Owned session does not reject stale legacy realpass presentation scripts.'
+Check ($session.Contains('r6/scripts/realpass')) 'Owned session does not reject stale legacy RealPass presentation scripts.'
 Check ($session.Contains('r6/scripts/Dark Future') -and $session.Contains('r6/scripts/Project E3 - HUD')) 'Owned session does not check known source-mod script residue.'
 Check ($session.Contains('retired/source-mod runtime residue is absent')) 'Owned session success message does not state the complete runtime-isolation boundary it verified.'
 
@@ -82,4 +82,4 @@ foreach ($text in @($session,$installer,$remover)) {
     }
 }
 
-Write-Host "PASS: $script:checks fast owned runtime build/install orchestration checks."
+Write-Host "PASS: $script:checks fast owned runtime build/install orchestration checks with constrained Mod Settings plumbing."
