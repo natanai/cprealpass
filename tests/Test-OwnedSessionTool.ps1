@@ -6,17 +6,24 @@ $sessionPath = Join-Path $project 'tools/Prepare-OwnedSession.ps1'
 $installerPath = Join-Path $project 'tools/Install-OwnedRuntime.ps1'
 $removerPath = Join-Path $project 'tools/Remove-OwnedRuntime.ps1'
 $acquirePath = Join-Path $project 'tools/Acquire-Components.ps1'
+$profilesPath = Join-Path $project 'manifest/profiles.json'
 $builder = Get-Content -Raw -LiteralPath $builderPath
 $session = Get-Content -Raw -LiteralPath $sessionPath
 $installer = Get-Content -Raw -LiteralPath $installerPath
 $remover = Get-Content -Raw -LiteralPath $removerPath
 $acquire = Get-Content -Raw -LiteralPath $acquirePath
+$profiles = Get-Content -Raw -LiteralPath $profilesPath | ConvertFrom-Json
 $script:checks = 0
 function Check($condition,[string]$message) { if (-not $condition) { throw $message }; $script:checks++ }
 
+# Keep the minimal REDscript-only profile available for source-only/native work,
+# while the deployable settings candidate carries only the generic dependencies
+# required by the accepted Mod Settings presentation surface.
 Check ($acquire.Contains('[string[]]$ComponentIds')) 'Component acquisition has no selective owned-runtime path.'
 Check ($acquire.Contains('Add-ComponentWithDependencies')) 'Selective acquisition does not close dependency requirements.'
 Check ($acquire.Contains('$selected.ContainsKey')) 'Selective acquisition does not deduplicate dependency traversal.'
+Check (@($profiles.profiles.'m1-base').Count -eq 1 -and @($profiles.profiles.'m1-base')[0] -eq 'redscript') 'Owned m1-base profile is not reduced to redscript only.'
+Check (@($profiles.profiles.'m1-owned-settings') -join ',' -eq 'red4ext,redscript,archivexl,mod-settings') 'Owned settings profile does not contain the narrow accepted generic dependency set.'
 
 foreach ($needle in @(
     "`$genericIds = @('red4ext','redscript','archivexl','mod-settings')",
@@ -52,7 +59,7 @@ Check (-not $session.Contains('Upgrade.ps1')) 'Owned session still traverses leg
 Check (-not $session.Contains('Rollback.ps1')) 'Owned session still depends on legacy automatic rollback.'
 Check ($session.Contains('Steam Verify Files') -and $session.Contains('Remove-OwnedRuntime.ps1')) 'Owned session does not document the simple external recovery path.'
 Check ($session.Contains('Get-ForbiddenOwnedAcceptanceResidue')) 'Owned session does not verify retired/source-mod runtime isolation.'
-Check ($session.Contains('r6/scripts/realpass')) 'Owned session does not reject stale legacy RealPass presentation scripts.'
+Check ($session.Contains('r6/scripts/realpass')) 'Owned session does not reject stale legacy realpass presentation scripts.'
 Check ($session.Contains('r6/scripts/Dark Future') -and $session.Contains('r6/scripts/Project E3 - HUD')) 'Owned session does not check known source-mod script residue.'
 Check ($session.Contains('retired/source-mod runtime residue is absent')) 'Owned session success message does not state the complete runtime-isolation boundary it verified.'
 
@@ -82,4 +89,4 @@ foreach ($text in @($session,$installer,$remover)) {
     }
 }
 
-Write-Host "PASS: $script:checks fast owned runtime build/install orchestration checks with constrained Mod Settings plumbing."
+Write-Host "PASS: $script:checks fast owned runtime build/install orchestration checks with a redscript-only base and constrained Mod Settings plumbing."
