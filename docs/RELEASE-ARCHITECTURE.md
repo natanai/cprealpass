@@ -1,166 +1,193 @@
 # realpass release and installation architecture
 
+Last updated: 2026-09-14
+Canonical policy: `AGREED-GOALS.md` and `manifest/distribution.json`
+
 ## User-facing target
 
-A normal player should not need to understand redscript, RED4ext, staging manifests, source-mod patch recipes or deployment receipts.
+A normal player should not need to understand REDscript, staging manifests, development gates or the reference-mod history.
 
-Preferred final flow:
+Preferred release flow:
 
-1. Download `realpass-x.y.z.zip` from the GitHub Release.
-2. Open the Cyberpunk 2077 installation folder.
-3. Extract/copy the archive contents into that folder and allow folder merging.
-4. Start Cyberpunk 2077 normally through Steam.
-5. Configure realpass, if desired, through one in-game realpass settings surface.
+1. Download `realpass-x.y.z.zip`.
+2. Close Cyberpunk 2077.
+3. Extract the archive into the Cyberpunk 2077 game root and merge folders.
+4. Launch Cyberpunk normally through Steam.
 
-No realpass launcher should be required for ordinary play after installation. If licensing or dependency update safety makes a bootstrap installer materially safer than a raw ZIP, that installer must still be one obvious action and must leave normal Steam launch intact.
+There is no persistent RealPass launcher and no public menu for enabling/disabling core realism authorities. The shipped version is one authored simulation.
 
-## Why source code on GitHub does not affect the game by itself
+## Current runtime dependency set
 
-The repository is development source. Cyberpunk only loads realpass when runtime files exist in the game directory paths understood by the game and its mod frameworks (for example `r6/scripts`, `r6/tweaks`, `red4ext/plugins` and `archive/pc/mod`, depending on the final implementation). Git does not inject code into a running or installed game.
+The completion candidate has been reduced to:
 
-The release pipeline therefore has a deliberate boundary:
+- **project-original realpass REDscript**;
+- **pinned redscript runtime/compiler plumbing**.
 
-`repository source -> verified build/staging -> release artifact -> copy/install into game root -> normal game launch`
+The owned source does not currently require RED4ext, ArchiveXL, TweakXL, Codeware, Mod Settings or Input Loader. Those components may remain in the historical component catalog because older development profiles used them, but `m1-base` and `Build-OwnedRuntimeProfile.ps1` deliberately do not stage them.
 
-## Release artifact shape
+Dark Future and Project E3 are reference/history only and are forbidden from owned/live/public runtime manifests.
 
-The player ZIP should be game-root-relative. A representative *shape* is:
+The final release should not add a dependency simply because it is already installed on a developer's machine.
+
+## Repository/build boundary
+
+GitHub source does not affect the game until runtime files are installed. The release boundary is:
+
+`repository source -> verified candidate -> exact compile -> game-root artifact -> install -> normal Steam launch`
+
+Canonical body/combat gates remain fail-closed in repository source. The candidate builder opens them only in immutable staged copies, compiles the exact candidate against the supported game scripts and hashes every source payload.
+
+## Candidate/live-test install
+
+`Prepare-OwnedSession.ps1` is the development operator entry point.
+
+Without `-Deploy`, it runs source contracts, builds the complete owned candidate, exact-compiles it against the local Cyberpunk 2077 2.31 base script bundle and produces a flat install plan without changing game files.
+
+With `-Deploy`, it repeats the checks and then uses `Install-OwnedRuntime.ps1` to:
+
+- remove the previous RealPass-owned script namespace and known retired/source-mod residue;
+- copy only the exact current manifest payload;
+- verify installed hashes;
+- write one `owned-current.json` state file;
+- verify known retired/source-mod runtime residue is absent;
+- stop without launching the game.
+
+`Remove-OwnedRuntime.ps1` removes recorded RealPass-owned files whose hashes still match. If stock game bytes ever need repair, use Steam **Verify Files** or reinstall. Steam verification is not assumed to remove arbitrary extra mod files, which is why the flat RealPass ownership record exists.
+
+No multi-generation rollback chain or additional RealPass-managed save backup is part of the normal development path.
+
+## Final artifact shape
+
+After attended native acceptance, the intended player ZIP is approximately:
 
 ```text
 realpass-x.y.z.zip
   INSTALL.txt
+  UNINSTALL.txt
   REALPASS-VERSION.txt
   SHA256SUMS.txt
-  archive/                 # only when realpass-owned/redistribution-cleared archives are needed
-  bin/                     # only redistribution-cleared framework runtime files if approved
   r6/
     scripts/
       CyberpunkRealism/
-    tweaks/
-      realpass/
-  red4ext/                 # only required redistribution-cleared framework/runtime files
+        ... realpass owned .reds sources ...
+  engine/                 # pinned redscript runtime files required by its official Windows package
+  r6/config/              # only redscript runtime config files required by the pinned package
   LICENSES/
+    realpass.txt
+    redscript.txt
   realpass/
     provenance.json
     build-manifest.json
 ```
 
-The exact directories are determined by the runtime dependency set. The player artifact must not contain repository structure such as `tests/`, `staging/`, `reports/`, `vendor/`, `ReferenceMods/` or source-only patch recipes unless a recipe is specifically required at runtime.
+The exact pinned redscript file list comes from the verified upstream archive, not this illustrative directory tree.
 
-## Dependency rule
+The artifact must not contain repository/developer state such as `tests/`, `staging/`, `reports/`, `vendor/`, `ReferenceMods/`, local manifests, save files, game executables/archives or compiled `final.redscripts` copied from the user's installation.
 
-The desired product is one mod, not a mod list. That does **not** mean third-party authorship disappears. Dependencies fall into three categories:
+## Dependency policy
 
-### Bundleable runtime dependency
+`manifest/distribution.json` is authoritative.
 
-A dependency whose license/notice requirements have been audited and whose necessary runtime files may be redistributed can be placed inside the realpass ZIP with the required notices and provenance. This gives the player one download while retaining authorship and license obligations.
+### Allowed runtime components
 
-### Bootstrap-only dependency
+- `realpass-project-original`
+- `redscript`
 
-If a dependency may be downloaded from its official source but should not be redistributed inside realpass, a future one-click bootstrap installer may fetch the exact pinned release from its official URL, verify its cryptographic hash, and install only the required files. The player still performs one realpass setup action.
+### Not required / must not drift into the artifact
 
-### Blocked/reference-only dependency
+- RED4ext
+- ArchiveXL
+- TweakXL
+- Codeware
+- Mod Settings
+- Input Loader
 
-A dependency whose current terms prohibit standalone redistribution of the required modified material cannot be part of the final one-download artifact. Project E3 HUD is currently in this category under the permissions recorded in this repository. The release solution is therefore to replace the required presentation behavior with realpass-owned/independently distributable implementation, or obtain new permission. The release builder must fail closed if blocked material is present.
+A future change may reintroduce one only after an actual owned-source requirement is documented, the dependency/notice policy is updated and CI is intentionally changed.
 
-`manifest/distribution.json` is the machine-readable source of truth for this policy.
+### Blocked runtime material
 
-## GitHub Actions plan
+- Dark Future execution/content;
+- Project E3 execution/assets;
+- proprietary Cyberpunk game files/user data.
 
-The cloud pipeline is deliberately staged so CI cannot accidentally publish local/reference material.
+The artifact scanner rejects provenance declaring both blocked and currently not-required components so the one-download package cannot silently grow back into a mod stack.
 
-### CI workflow (safe now)
+## CI and release pipeline
 
-Runs on pull requests and pushes to development branches. It should:
+### Normal CI
 
-- validate JSON/manifest contracts;
-- run self-contained model/contract tests that do not need the installed game;
-- run source/package consistency checks;
-- optionally build a clearly named **development/source artifact** containing only redistribution-safe project files;
-- never publish a GitHub Release automatically.
+Push/PR CI must:
 
-### Candidate artifact workflow
+- validate manifests/docs/source contracts;
+- run deterministic model/property tests;
+- validate native-seam placement;
+- enforce runtime-origin rules;
+- enforce artifact/package policies;
+- never launch Cyberpunk or publish a release automatically.
 
-Manual (`workflow_dispatch`) while the project is pre-release. Once enough runtime material is redistributable and cloud-reproducible, it should:
+Cloud CI is source evidence only. It cannot replace exact local compile/native acceptance.
 
-- acquire only explicitly approved pinned dependencies from official URLs;
-- verify every downloaded archive against the pinned hash in `manifest/components.json`;
-- assemble the game-root-relative candidate;
-- run the artifact content deny-list from `manifest/distribution.json`;
+### Candidate build
+
+The local attended candidate:
+
+- acquires only pinned redscript plumbing;
+- builds the complete project-original REDscript tree;
+- rejects forbidden source-mod identity/imports;
+- opens fail-closed body/combat gates only in staged copies;
+- exact-compiles against the installed supported game;
+- plans/installs only the current manifest payload.
+
+### Public release
+
+After live acceptance, a clean release workflow should:
+
+- acquire the exact pinned redscript archive from its official source;
+- verify its SHA-256;
+- assemble only allowed components;
+- include required MIT/RealPass notices;
+- run the artifact deny/disallowed-component policy;
 - generate a complete file/hash index;
-- zip the exact verified directory;
-- upload it as a GitHub Actions artifact for attended testing;
-- mark the artifact `development` or `candidate`, never `release`, while release gates remain open.
+- produce deterministic version/build metadata and `SHA256SUMS.txt`;
+- attach the verified game-root ZIP/checksum to the intentional GitHub release/tag.
 
-### Public release workflow
+No developer-PC save, game file, ignored staging output or previously generated local candidate may enter the release artifact.
 
-Triggered only by an intentional version tag/release after `publicPlayableArtifactReady` is explicitly promoted through review. It should:
+## INSTALL.txt target
 
-- repeat all candidate checks from a clean runner;
-- refuse to run if any component is `blocked` or any required component is still `conditional` without an approved release disposition;
-- compile/validate the exact shipped scripts against the pinned toolchain;
-- build the final game-root package;
-- include required licenses and attribution;
-- verify no forbidden file/path is present;
-- generate `SHA256SUMS.txt` and a build manifest;
-- attach the ZIP and checksum to the GitHub Release.
-
-The release workflow must never pull files from a developer's PC, local save folder, ignored staging directory or prior workflow artifact without re-verification.
-
-## Upgrade and rollback UX
-
-Development currently has robust receipt-based install/upgrade/rollback tools. Those safety properties should survive simplification, but ordinary players should not need to manage receipts manually.
-
-Preferred release behavior:
-
-- first install: folder merge or one-click installer;
-- update: replace only realpass-owned files and approved dependency files;
-- preserve user settings unless a schema migration explicitly changes them;
-- before any risky save-affecting migration, display a clear version/migration warning and create or request a backup;
-- uninstall: remove only files owned by realpass, never broad mod directories shared with other mods;
-- rollback documentation distinguishes file rollback from save-state rollback.
-
-A raw drag-and-drop ZIP is simplest for first installation, but exact uninstall/upgrade ownership may justify an optional helper script. Any helper must be finite, explicit, user-invoked and must not install a background service/watcher/scheduled task.
-
-## INSTALL.txt target content
-
-The finished package should contain a very short installation file approximately equivalent to:
+The final package installation copy should remain short:
 
 ```text
 realpass — Cyberpunk 2077 realism pass
 
-Requirements: Cyberpunk 2077 + Phantom Liberty, supported game version listed below.
+Supported game: <version>
+Build: <version / commit>
 
 INSTALL
 1. Close Cyberpunk 2077.
-2. Open your Cyberpunk 2077 installation folder (the folder containing bin, archive and r6).
-3. Extract everything from this ZIP into that folder. Merge folders when Windows asks.
+2. Open the Cyberpunk 2077 folder containing bin, archive and r6.
+3. Extract this ZIP into that folder and merge folders.
 4. Launch Cyberpunk 2077 normally through Steam.
 
-SETTINGS
-Use the realpass section in the in-game Mod Settings menu. Major realism systems can be disabled independently.
+REALPASS
+This release is one authored realism experience. Core gameplay systems are not separately toggleable.
 
 UPDATE
-Close the game and extract the newer realpass ZIP over the same game folder. Read release notes first when a save migration is listed.
+Close the game and follow the release notes. Extract the new package over the game root only when the release notes say the versions are directly upgrade-compatible.
 
 UNINSTALL
-Follow UNINSTALL.txt for the exact version so only files owned by realpass are removed.
-
-Build: <version / commit>
-Supported game: <version>
+Follow UNINSTALL.txt so only files owned by this RealPass release are removed. Use Steam Verify Files/reinstall only if stock-game repair is needed.
 ```
 
-The real file must list any bundled/bootstrapped prerequisites accurately; it must not claim true drag-and-drop installation until the artifact actually contains or safely obtains every required runtime dependency.
+## Distribution done
 
-## Definition of distribution done
+Public distribution is complete only when:
 
-Distribution is not complete merely because a ZIP can be produced. It is complete when all of the following are true:
-
-- a clean PC with the supported game can install realpass without manually assembling a mod stack;
-- all shipped files are redistribution-cleared and attributed;
-- the exact release is reproducible from the repository and pinned upstream sources;
-- CI verifies every shipped file and rejects blocked/private/game files;
-- installation does not require a permanent launcher;
-- updates and uninstall have explicit file ownership;
-- the installed build passes the same body/combat/save/quest acceptance gates documented for the source revision;
-- the package contains no extraneous upstream gameplay systems outside the realpass scope.
+- a clean supported installation needs one RealPass download rather than a manually assembled dependency stack;
+- the exact shipped candidate has passed body/combat/presentation/save/quest/performance attended acceptance;
+- all shipped files are owned or redistribution-cleared and correctly noticed;
+- the release is reproducible from repository source + pinned upstream redscript;
+- CI rejects game/user/source-mod/unneeded-framework content;
+- no persistent special launcher/background process is required;
+- update/uninstall ownership is explicit;
+- the package contains no out-of-scope gameplay from historical dependencies.
