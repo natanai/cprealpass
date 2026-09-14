@@ -1,0 +1,52 @@
+﻿[
+    {
+        "Name":  "ArchiveXL",
+        "DLLs":  [
+                     {
+                         "File":  "ArchiveXL.dll",
+                         "FileVersion":  "1.27.3.2609071303",
+                         "ProductVersion":  "1.27.3"
+                     }
+                 ]
+    },
+    {
+        "Name":  "Codeware",
+        "DLLs":  [
+                     {
+                         "File":  "Codeware.dll",
+                         "FileVersion":  "1.20.3.2605040034",
+                         "ProductVersion":  "1.20.3"
+                     }
+                 ]
+    },
+    {
+        "Name":  "input_loader",
+        "DLLs":  [
+                     {
+                         "File":  "input_loader.dll",
+                         "FileVersion":  "",
+                         "ProductVersion":  ""
+                     }
+                 ]
+    },
+    {
+        "Name":  "mod_settings",
+        "DLLs":  [
+                     {
+                         "File":  "mod_settings.dll",
+                         "FileVersion":  "0.2.21",
+                         "ProductVersion":  "2.30"
+                     }
+                 ]
+    },
+    {
+        "Name":  "TweakXL",
+        "DLLs":  [
+                     {
+                         "File":  "TweakXL.dll",
+                         "FileVersion":  "1.11.4.2607282033",
+                         "ProductVersion":  "1.11.4"
+                     }
+                 ]
+    }
+]
