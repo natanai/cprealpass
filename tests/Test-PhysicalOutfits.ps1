@@ -3,6 +3,7 @@ $ErrorActionPreference = 'Stop'
 $project = Get-ProjectRoot
 $path = Join-Path $project 'src/redscript/CyberpunkRealism/PhysicalOutfits.reds'
 $source = Get-Content -Raw -LiteralPath $path
+$codeOnly = [regex]::Replace($source,'(?m)//.*$','')
 $seams = Get-Content -Raw -LiteralPath (Join-Path $project 'manifest/native-seams.json') | ConvertFrom-Json
 $script:checks = 0
 function Check($condition,[string]$message) { if (-not $condition) { throw $message }; $script:checks++ }
@@ -16,9 +17,9 @@ Check (@($seams.allowedHookFiles) -contains 'PhysicalOutfits.reds') 'Physical Ou
 Check ($source.Contains('GetItemList(owner, items)')) 'Physical Outfit resolver does not inspect V''s carried inventory.'
 Check ($source.Contains('ItemID.GetTDBID(itemID)') -and $source.Contains('ItemID.GetTDBID(storedVisual)')) 'Stored wardrobe identity is not resolved against actual physical item records.'
 Check ($source.Contains('EquipmentSystem.GetEquipAreaType(itemID)') -and $source.Contains('this.IsEquippable(itemData)')) 'Resolved loadout item is not constrained to the requested physical slot/equip rules.'
-Check (-not $source.Contains('GiveItem(')) 'Physical Outfit adapter can conjure a missing clothing item.'
-Check (-not $source.Contains('TransferItem(')) 'Physical Outfit adapter silently pulls clothing from another inventory/stash.'
-Check (-not ($source -match '(?i)stash')) 'Physical Outfit adapter gained hidden stash behavior.'
+Check (-not $codeOnly.Contains('GiveItem(')) 'Physical Outfit adapter can conjure a missing clothing item.'
+Check (-not $codeOnly.Contains('TransferItem(')) 'Physical Outfit adapter silently pulls clothing from another inventory/stash.'
+Check (-not ($codeOnly -match '(?i)stash')) 'Physical Outfit adapter gained executable stash behavior.'
 
 Check ($source.Contains('this.IsWardrobeEnabled()')) 'Quest wardrobe-disable state is not respected.'
 Check ($source.Contains('HasTag(n"UnequipBlocked")')) 'Quest/special UnequipBlocked clothing is not protected.'
