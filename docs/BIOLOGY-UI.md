@@ -63,16 +63,22 @@ Current source behavior includes:
 
 Biology never creates a second food, drink or medical inventory.
 
-`Eat…` and `Drink…` enumerate the player's **actual carried item stacks** through the stock transaction system, filter those records through `CRItemServing`, and then invoke Cyberpunk's own `ItemActionsHelper.ConsumeItem(...)`. The existing `ConsumeAction.CompleteAction` adapter observes the successfully completed stock action and submits that same record to the realpass body runtime.
+`Eat…` and `Drink…` enumerate the player's **actual carried item stacks** through the stock transaction system and filter those records through `CRItemServing`. The picker also requires a real stock item action before presenting the row. When selected, Biology preserves the item's native action family:
 
-Biology therefore does not manually subtract items and does not call the body-consumption method directly.
+- food uses `ItemActionsHelper.EatItem(...)` when an `Eat` action exists;
+- drinks use `ItemActionsHelper.DrinkItem(...)` when a `Drink` action exists;
+- a stock generic `Consume` action is used only as the native fallback.
+
+All three paths instantiate Cyberpunk's normal `ConsumeAction` transaction. The existing `ConsumeAction.CompleteAction` adapter observes the successfully completed stock action and submits that same item record to the realpass body runtime.
+
+Biology therefore does not manually subtract items and does not call the body-consumption method directly. Displayed quantities come from the stock `TransactionSystem`, and displayed names use the game's item-name localization path.
 
 A food item can be reached from either direction without duplicated state:
 
 - Backpack: *I have an apple; use it.*
 - Biology: *I am hungry; show me applicable food I actually have.*
 
-Both routes resolve to the same stock consumable transaction and the same realpass serving/intake behavior.
+Both routes resolve to the same stock item transaction and the same realpass serving/intake behavior.
 
 ## What leaves Backpack
 
@@ -97,6 +103,8 @@ Current development language includes hunger, thirst, fatigue, urinary/bowel pre
 ### Ordinary hub context
 
 A **BIOLOGY** entry opens the Biology panel and shows current body sensations, meaningful effects and active conditions. Selecting a condition shows its qualitative state, function, pain/cause explanation, field-care guidance and professional-care guidance.
+
+The panel is attached dynamically to the native hub controller and follows `MenuHubLogicController.SetActive(...)`: when the stock hub deactivates, Biology closes and clears any open intake picker so it cannot leak over the next fullscreen menu.
 
 Applicable dressing/support actions enter the existing interruptible field-care runtime. The action remains queued while a menu is open; once the player closes menus it progresses only while the runtime's safety/movement/hands checks continue to pass.
 
@@ -135,8 +143,8 @@ Implemented in source/design:
 5. Dark Future Backpack migration patches no longer inject RealPass body status, field-care widgets or body-meter food previews.
 6. Time-skip body forecasting remains intact because it is simulation correctness rather than Backpack presentation.
 7. `BiologyPresentation.reds` provides a realpass-owned qualitative view model over current needs, effects and active conditions.
-8. `BiologyNativeUI.reds` mounts the ordinary Biology panel on the native hub.
-9. `Eat…` / `Drink…` enumerate actual carried items and invoke the stock consumable action instead of maintaining duplicate inventory state.
+8. `BiologyNativeUI.reds` mounts the ordinary Biology panel on the native hub and closes it with the stock hub lifecycle.
+9. `Eat…` / `Drink…` enumerate actual carried items and preserve stock `Eat` / `Drink` / fallback `Consume` actions instead of maintaining duplicate inventory state.
 10. Active conditions are selectable in Biology and use existing realpass condition/provenance projection.
 11. Field-care actions originate in Biology and still commit through the shared field-care/body runtime.
 12. Ripperdoc context exposes model-approved clinical/mechanical care through a Biology professional-care panel.
@@ -161,7 +169,7 @@ Biology is accepted only when an attended build demonstrates all of the followin
 6. Active injuries/conditions remain selectable and healthy regions remain quiet.
 7. Condition detail is driven by realpass injury/provenance state, not native HP.
 8. `Eat…` and `Drink…` show only applicable items actually carried by V and do not create duplicate inventory state.
-9. Selecting an item from Biology uses the same authoritative item/consumption path as using that item from inventory.
+9. Selecting an item from Biology uses the same authoritative stock item-action/consumption path as using that item from inventory.
 10. Field/professional care remains context-valid and transactional.
 11. Important body state is also communicated by existing justified gameplay consequences where those consequences exist; no permanent needs meter is introduced to compensate for missing calibration.
 12. No Dark Future/Project E3 executing UI/runtime is required by the release implementation.
