@@ -19,8 +19,8 @@ public class CRBiologyAreaHoverOutEvent extends Event {}
 // Keep the exact native Cyberware menu identifier/fullscreen route. Only its visible
 // hub label changes, so every stock transition still opens cyberware_equip.
 @wrapMethod(MenuHubLogicController)
-public final func SetMenusData(menuData: ref<MenuDataBuilder>, tarotIsBlocked: Bool, mapIsBlocked: Bool, perkPoints: Int32, attrPoints: Int32) -> Void {
-  wrappedMethod(menuData, tarotIsBlocked, mapIsBlocked, perkPoints, attrPoints);
+public final func SetMenusData(menuData: ref<MenuDataBuilder>, perkPoints: Int32, attrPoints: Int32) -> Void {
+  wrappedMethod(menuData, perkPoints, attrPoints);
   let biologyData: MenuData = menuData.GetData(EnumInt(HubMenuItems.Cyberware));
   biologyData.label = "BIOLOGY";
   HubMenuUtils.SetMenuData(this.m_btnCyberware, biologyData);
@@ -71,7 +71,7 @@ public final func CRSetBiologyMode(active: Bool) -> Void {
     this.GetRootWidget().SetVisible(true);
     inkWidgetRef.SetVisible(this.m_gridContainer, true);
     inkWidgetRef.SetVisible(this.m_isNew, true);
-    this.UpdateTitle(GetAreaHeader(area));
+    this.UpdateTitle(this.GetAreaHeader(area));
   }
 }
 
