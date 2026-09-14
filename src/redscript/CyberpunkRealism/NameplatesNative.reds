@@ -11,7 +11,7 @@ private final func CRScannedCrowdNameAllowed(puppet: wref<GameObject>) -> Bool {
   let nameplate: wref<UINameplate_Record>;
   let preset: wref<ScannerModuleVisibilityPreset_Record>;
   let ps: ref<ScriptedPuppetPS>;
-  if !IsDefined(npc) || !npc.IsAttached() || !npc.IsScanned() || !npc.IsCharacterCivilian() || this.m_isQuestTarget {
+  if !IsDefined(npc) || !npc.IsAttached() || !npc.IsScanned() || !npc.IsCharacterCivilian() || this.IsQuestTarget() {
     return false;
   }
   if npc.GetBoolFromCharacterTweak("hide_nametag") || !IsDefined(npc.GetBlackboard()) || npc.GetBlackboard().GetBool(GetAllBlackboardDefs().Puppet.HideNameplate) {
@@ -22,17 +22,16 @@ private final func CRScannedCrowdNameAllowed(puppet: wref<GameObject>) -> Bool {
     return false;
   }
   nameplate = character.UiNameplate();
-  if !IsDefined(nameplate) || !nameplate.Enabled() || nameplate.GetID() != t"UINameplate.CrowdSettings" {
+  if !IsDefined(nameplate) || !nameplate.Enabled() || NotEquals(nameplate.GetID(), t"UINameplate.CrowdSettings") {
     return false;
   }
-  ps = npc.GetPS();
+  ps = npc.GetPS() as ScriptedPuppetPS;
   if !IsDefined(ps) || ps.HasAlternativeName() {
     return false;
   }
+  // Match the stock NPC scanner's own visibility source rather than inventing a
+  // second scanner-preset override path.
   preset = character.ScannerModulePreset();
-  if TDBID.IsValid(ps.GetForcedScannerPreset()) {
-    preset = TweakDBInterface.GetScannerModuleVisibilityPresetRecord(ps.GetForcedScannerPreset());
-  }
   return IsDefined(preset) && preset.ShoulShowName();
 }
 
