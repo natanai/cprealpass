@@ -6,6 +6,7 @@
 /dist/
 /ReferenceMods/
 /reports/
+/game-reference/
 /manifest/*.deployment.json
 /manifest/deployment.json
 /manifest/baseline.json
