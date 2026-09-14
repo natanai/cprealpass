@@ -30,8 +30,13 @@ Check ($doc.Contains('players should not feel that they need to poll Biology')) 
 Check ($doc.Contains('Deliberate drill-down') -and $doc.Contains('exact authoritative values')) 'Biology doc does not distinguish overview from exact drill-down.'
 
 # Reuse the stock hub routing: relabel the existing Cyberware menu data instead of
-# inventing a second fullscreen/menu identifier.
+# inventing a second fullscreen/menu identifier. The installed 2.31 compiler proved
+# MenuHubLogicController.SetMenusData has the three-argument signature below; the
+# radial hub has the separate five-argument overload in BiologyRadialHubNative.reds.
 Check ($shell.Contains('@wrapMethod(MenuHubLogicController)')) 'Biology does not hook the stock hub label boundary.'
+Check ($shell.Contains('public final func SetMenusData(menuData: ref<MenuDataBuilder>, perkPoints: Int32, attrPoints: Int32) -> Void')) 'Biology hub wrapper drifted from the verified Cyberpunk 2.31 MenuHubLogicController signature.'
+Check ($shell.Contains('wrappedMethod(menuData, perkPoints, attrPoints)')) 'Biology hub wrapper does not call the verified stock SetMenusData signature.'
+Check (-not $shell.Contains('tarotIsBlocked: Bool, mapIsBlocked: Bool, perkPoints: Int32, attrPoints: Int32')) 'Biology shell reintroduced the RadialMenuHub SetMenusData signature on MenuHubLogicController.'
 Check ($shell.Contains('HubMenuItems.Cyberware')) 'Biology does not reuse the stock Cyberware hub destination.'
 Check ($shell.Contains('biologyData.label = "BIOLOGY"')) 'Stock Cyberware hub destination is not relabeled Biology.'
 Check ($shell.Contains('HubMenuUtils.SetMenuData(this.m_btnCyberware, biologyData)')) 'Relabeled Biology data is not put back on the stock Cyberware button.'
@@ -42,7 +47,8 @@ Check (-not $shell.Contains('OpenMenuRequest') -and -not $shell.Contains('fullsc
 Check ($shell.Contains('"BIOLOGY"') -and $shell.Contains('"CYBERWARE"')) 'Shared shell does not expose both internal modes.'
 Check ($shell.Contains('CRApplyBiologyShellMode(NotEquals(this.m_screen, CyberwareScreenType.Ripperdoc))')) 'Normal/ripperdoc mode defaults are not explicit.'
 Check ($shell.Contains('this.m_gridContainer, false') -and $shell.Contains('this.m_gridContainer, true')) 'Biology mode does not hide/restore stock cyberware slot contents.'
-Check ($shell.Contains('this.UpdateTitle(GetAreaHeader(area))')) 'Cyberware mode does not restore the stock category label.'
+Check ($shell.Contains('this.UpdateTitle(this.GetAreaHeader(area))')) 'Cyberware mode does not restore the stock category label through the verified minigrid instance helper.'
+Check (-not $shell.Contains('this.UpdateTitle(GetAreaHeader(area))')) 'Cyberware label restore regressed to an unresolved global GetAreaHeader call.'
 Check ($shell.Contains('CRSetStockMetersVisible(!biology)')) 'Biology mode leaves cyberware-specific stock meters visible.'
 
 # Native anatomy interaction language is reused rather than simulated by another body widget.
@@ -72,6 +78,9 @@ Check ($actions.Contains('ItemActionsHelper.EatItem') -and $actions.Contains('It
 Check ($actions.Contains('CRBodyRuntime.Get().UseFieldCare')) 'Shared Biology shell lost field-care routing.'
 Check ($actions.Contains('CRProfessionalCareRuntime.Complete')) 'Shared Biology shell lost professional-care routing.'
 Check (-not $actions.Contains('RemoveItem(') -and -not $actions.Contains('CRBodyRuntime.Get().Consume(')) 'Shared Biology actions bypass native inventory/consumption authority.'
+Check ($actions.Contains('public final func CRRefreshBiologyActions() -> Void')) 'Biology action refresh method is missing.'
+Check ($actions.Contains('this.CRRefreshBiologyActions();')) 'Biology action callbacks do not call the actual refresh method.'
+Check (-not $actions.Contains('CRBioRefreshBiologyActions')) 'Biology actions contain the unresolved stale refresh-method spelling caught by the installed compiler.'
 Check ($sync.Contains('CRRefreshBiologyActions')) 'Mode changes do not synchronize contextual action visibility.'
 
-Write-Host "PASS: $script:checks shared Biology parent/Cyberware submode, native anatomy reuse, drill-down metrics, and contextual action checks."
+Write-Host "PASS: $script:checks shared Biology parent/Cyberware submode, verified 2.31 hub/minigrid seams, native anatomy reuse, drill-down metrics, and contextual action checks."
