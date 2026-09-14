@@ -11,6 +11,7 @@
   ],
   "allowedHookFiles": [
     "ArmorWearNative.reds",
+    "BiologyCyberwareShell.reds",
     "BiologyNativeUI.reds",
     "BloodLossNative.reds",
     "BodyInteractionRuntime.reds",
