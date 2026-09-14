@@ -51,9 +51,10 @@ Check (-not $session.Contains('Backup-Saves.ps1')) 'Owned session still performs
 Check (-not $session.Contains('Upgrade.ps1')) 'Owned session still traverses legacy upgrade chains.'
 Check (-not $session.Contains('Rollback.ps1')) 'Owned session still depends on legacy automatic rollback.'
 Check ($session.Contains('Steam Verify Files') -and $session.Contains('Remove-OwnedRuntime.ps1')) 'Owned session does not document the simple external recovery path.'
-Check ($session.Contains('Get-ForbiddenOwnedAcceptanceResidue')) 'Owned session does not verify source-mod runtime isolation.'
+Check ($session.Contains('Get-ForbiddenOwnedAcceptanceResidue')) 'Owned session does not verify retired/source-mod runtime isolation.'
+Check ($session.Contains('r6/scripts/realpass')) 'Owned session does not reject stale legacy realpass presentation scripts.'
 Check ($session.Contains('r6/scripts/Dark Future') -and $session.Contains('r6/scripts/Project E3 - HUD')) 'Owned session does not check known source-mod script residue.'
-Check ($session.Contains('source-mod runtime residue is absent')) 'Owned session success message does not state the ownership boundary it verified.'
+Check ($session.Contains('retired/source-mod runtime residue is absent')) 'Owned session success message does not state the complete runtime-isolation boundary it verified.'
 
 foreach ($needle in @(
     "mode = 'flat-owned-development-install'",
@@ -62,6 +63,7 @@ foreach ($needle in @(
     'Copy-VerifiedPayload',
     'Remove-KnownRetiredRuntime',
     'r6/scripts/CyberpunkRealism',
+    'r6/scripts/realpass',
     'r6/scripts/Dark Future',
     'r6/scripts/Project E3 - HUD',
     'owned-current.json'
