@@ -22,6 +22,7 @@
     "InjuryEffectsNative.reds",
     "NoHealthbars.reds",
     "PainNativeEffects.reds",
+    "PhysicalOutfits.reds",
     "ProfessionalCareRuntime.reds"
   ],
   "stableCoreExamples": [
