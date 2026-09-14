@@ -243,6 +243,45 @@ private func CRBiologyHideItemRows() -> Void {
 }
 
 @addMethod(MenuHubLogicController)
+private func CRBiologyItemHasNativeAction(itemID: ItemID) -> Bool {
+  if this.crBiologyPickerMode == 1 {
+    return IsDefined(ItemActionsHelper.GetEatAction(itemID)) || IsDefined(ItemActionsHelper.GetConsumeAction(itemID));
+  }
+  if this.crBiologyPickerMode == 2 {
+    return IsDefined(ItemActionsHelper.GetDrinkAction(itemID)) || IsDefined(ItemActionsHelper.GetConsumeAction(itemID));
+  }
+  return false;
+}
+
+@addMethod(MenuHubLogicController)
+private func CRBiologyUseNativeItemAction(player: wref<GameObject>, itemID: ItemID) -> Bool {
+  if !IsDefined(player) {
+    return false;
+  }
+  if this.crBiologyPickerMode == 1 {
+    if IsDefined(ItemActionsHelper.GetEatAction(itemID)) {
+      ItemActionsHelper.EatItem(player, itemID, true);
+      return true;
+    }
+    if IsDefined(ItemActionsHelper.GetConsumeAction(itemID)) {
+      ItemActionsHelper.ConsumeItem(player, itemID, true);
+      return true;
+    }
+  }
+  if this.crBiologyPickerMode == 2 {
+    if IsDefined(ItemActionsHelper.GetDrinkAction(itemID)) {
+      ItemActionsHelper.DrinkItem(player, itemID, true);
+      return true;
+    }
+    if IsDefined(ItemActionsHelper.GetConsumeAction(itemID)) {
+      ItemActionsHelper.ConsumeItem(player, itemID, true);
+      return true;
+    }
+  }
+  return false;
+}
+
+@addMethod(MenuHubLogicController)
 private func CRBiologyRefreshItems() -> Void {
   this.CRBiologyHideItemRows();
   if this.crBiologyPickerMode == 0 {
@@ -271,9 +310,10 @@ private func CRBiologyRefreshItems() -> Void {
             matches = record.TagsContains(n"Drink") || record.TagsContains(n"Alcohol");
           }
         }
+        matches = matches && this.CRBiologyItemHasNativeAction(itemID);
         if matches {
           let quantity: Int32 = GameInstance.GetTransactionSystem(GetGameInstance()).GetItemQuantity(player, itemID);
-          this.crBiologyItemRows[shown].SetText("[ " + GetLocalizedTextByKey(record.DisplayName()) + "  x" + ToString(quantity) + " ]");
+          this.crBiologyItemRows[shown].SetText("[ " + GetLocalizedItemNameByCName(record.DisplayName()) + "  x" + ToString(quantity) + " ]");
           this.crBiologyItemRows[shown].SetVisible(true);
           ArrayPush(this.crBiologyItemIDs, itemID);
           shown += 1;
@@ -408,11 +448,10 @@ protected cb func OnCRBiologyItem(evt: ref<inkPointerEvent>) -> Bool {
   while i < ArraySize(this.crBiologyItemRows) && i < ArraySize(this.crBiologyItemIDs) {
     if Equals(evt.GetCurrentTarget(), this.crBiologyItemRows[i]) {
       let player: ref<PlayerPuppet> = GameInstance.GetPlayerSystem(GetGameInstance()).GetLocalPlayerMainGameObject() as PlayerPuppet;
-      if !IsDefined(player) || !IsDefined(ItemActionsHelper.GetConsumeAction(this.crBiologyItemIDs[i])) {
-        this.crBiologyStatus.SetText("That carried item cannot be consumed right now.");
+      if !this.CRBiologyUseNativeItemAction(player, this.crBiologyItemIDs[i]) {
+        this.crBiologyStatus.SetText("That carried item cannot be eaten or drunk right now.");
       } else {
-        ItemActionsHelper.ConsumeItem(player, this.crBiologyItemIDs[i], true);
-        this.crBiologyStatus.SetText("Used the selected carried item through Cyberpunk's normal consumable action.");
+        this.crBiologyStatus.SetText("Used the selected carried item through Cyberpunk's normal item action.");
       }
       this.crBiologyPickerMode = 0;
       this.CRBiologyRefresh();
@@ -614,7 +653,8 @@ private func CRBiologyCreateProfessionalUI() -> Void {
   this.crBiologyCarePanel.SetVisible(false);
   this.crBiologyCarePanel.Reparent(root, -1);
 
-  this.CRBiologyCareText("BIOLOGY / PROFESSIONAL CARE", n"CRBiologyProfessionalHeading", 28).Reparent(this.crBiologyCarePanel, -1);
+  let professionalHeading: ref<inkText> = this.CRBiologyCareText("BIOLOGY / PROFESSIONAL CARE", n"CRBiologyProfessionalHeading", 28);
+  professionalHeading.Reparent(this.crBiologyCarePanel, -1);
   ArrayClear(this.crBiologyCareRows);
   let region: Int32 = 1;
   while region <= 6 {
