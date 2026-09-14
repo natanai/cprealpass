@@ -171,8 +171,17 @@
       "phenomenon": "separate outfit/transmog gameplay authority",
       "owner": null,
       "disposition": "remove",
-      "currentState": "explicitly prohibited by realpass scope",
-      "targetState": "clothing remains clothing; ballistic protection comes only from physically protective equipment"
+      "currentState": "explicitly prohibited as a parallel cosmetic/protection authority",
+      "targetState": "no source-mod transmog layer; visual equipment and armor/protection identity come from the physically equipped object"
+    },
+    {
+      "id": "realpass-physical-outfit-loadouts",
+      "source": "project-original",
+      "phenomenon": "vanilla Outfit convenience reinterpreted as physical equipment loadouts",
+      "owner": "armor",
+      "disposition": "retain",
+      "currentState": "PhysicalOutfits.reds wraps the vanilla wardrobe apply boundary, resolves recorded visuals to actual carried wearable objects, preflights missing/blocked slots, applies ordinary equipment transactions and clears cosmetic override authority; live validation pending",
+      "targetState": "vanilla Outfit UX equips the actual carried items used by protection logic; no conjuring, remote stash teleport, substitution or parallel transmog authority"
     },
     {
       "id": "e3-npc-nameplates",
@@ -200,6 +209,15 @@
       "disposition": "remove",
       "currentState": "removed from the owned runtime target",
       "targetState": "native modern scanner/quickhack presentation remains authoritative"
+    },
+    {
+      "id": "realpass-settings-presence",
+      "source": "project-original",
+      "phenomenon": "RealPass presence, managed feature ledger and presentation/accessibility preferences in Mod Settings",
+      "owner": "presentation",
+      "disposition": "retain",
+      "currentState": "RealpassSettings.reds exposes a read-only managed-feature ledger and one binary fullscreen-disorientation presentation preference; no numeric balance or core-authority controls exist",
+      "targetState": "players can confirm RealPass and adjust explicitly accepted presentation/accessibility channels without changing the authored physical simulation"
     },
     {
       "id": "realpass-body-model",
