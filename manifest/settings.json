@@ -1,13 +1,24 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "product": "realpass",
   "surface": {
-    "provider": "none",
+    "provider": "mod-settings",
+    "purpose": "runtime-presence, concise feature ledger, and binary presentation/accessibility preferences only",
     "publicGameplaySettings": false,
     "publicBalanceSettings": false,
-    "persistenceOwner": "realpass",
-    "notes": "The release is one authored simulation. Internal build gates remain available only to development tooling."
+    "publicPresentationPreferences": true,
+    "persistenceOwner": "mod-settings",
+    "notes": "A RealPass version keeps one authored physical simulation. The public surface may describe active authorities and toggle presentation channels, but never rebalance or disable the underlying simulation."
   },
+  "featureLedger": [
+    "runtime-active",
+    "body-and-physiology",
+    "injury-bleeding-and-recovery",
+    "pain-and-maxdoc-analgesia",
+    "combat-and-ballistics",
+    "physical-armor-and-protection",
+    "presentation-and-feedback"
+  ],
   "releaseProfile": {
     "body": true,
     "injury": true,
@@ -16,9 +27,23 @@
     "cyberwarePhysiology": true,
     "presentation": true,
     "diagnostics": false,
-    "traditionalActorHealthBars": false,
+    "traditionalActorHealthBarsFinalTarget": false,
     "nativeModernScanner": true
   },
+  "developmentFeedbackFallback": {
+    "traditionalPlayerHealthBarsVisibleUntilReplacementAccepted": true,
+    "traditionalNpcHealthBarsVisibleUntilReplacementAccepted": true,
+    "rule": "Do not remove a useful native indicator before the corresponding RealPass Biology/HUD/gameplay feedback has passed attended acceptance. This is a development transition rule, not the final presentation target."
+  },
+  "publicControls": [
+    {
+      "id": "presentation.fullscreen-disorientation-effects",
+      "type": "bool",
+      "default": true,
+      "authority": "presentation-only",
+      "description": "Controls only fullscreen/audio disorientation feedback for excessive analgesic load; hidden pain, dose, injury, weapon handling, bleeding and recovery remain unchanged."
+    }
+  ],
   "developmentProfileKeys": [
     "body",
     "injury",
@@ -31,8 +56,8 @@
   "developmentRules": [
     "Development profile keys exist only to isolate authorities during compilation, calibration and attended diagnosis.",
     "A release builder fixes gameplay/presentation authority keys to the release profile and diagnostics off.",
-    "No development gate is persisted as a normal player preference.",
-    "A development comparison may temporarily alter presentation only when the build is clearly labeled non-release evidence."
+    "Development authority gates are never persisted as normal player preferences.",
+    "A public presentation preference may suppress a cue only when the underlying physical simulation and consequences continue unchanged."
   ],
   "forbiddenPublicSettings": [
     "body.enabled",
@@ -41,7 +66,13 @@
     "armor.enabled",
     "cyberwarePhysiology.enabled",
     "presentation.enabled",
-    "presentation.traditionalHealthBars",
+    "damage-scale",
+    "hunger-rate",
+    "hydration-rate",
+    "bleed-scale",
+    "pain-scale",
+    "armor-scale",
+    "maxdoc-dose-or-decay-scale",
     "weather",
     "economy",
     "carry-weight-difficulty",
@@ -50,11 +81,8 @@
     "random-sleep-encounters",
     "humanity-or-cyberpsychosis",
     "addictions",
-    "outfit-or-transmog-system"
+    "cosmetic-transmog-authority"
   ],
-  "accessibilityPolicy": {
-    "allowedInFuture": true,
-    "rule": "An accessibility control may be public only when it does not disable/rebalance simulation authority or reveal exact hidden state contrary to the authored presentation.",
-    "currentPublicControls": []
-  }
+  "numericPublicBalanceControlsAllowed": false,
+  "binaryPreferenceRule": "A public boolean is allowed only when changing it cannot change physical state, rates, damage, protection, injury, pain state, treatment, recovery or other simulation authority."
 }
