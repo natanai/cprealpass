@@ -22,6 +22,7 @@ $StateRoot = [IO.Path]::GetFullPath($StateRoot)
 function Get-ForbiddenOwnedAcceptanceResidue([string]$root) {
     $hits = [Collections.Generic.List[string]]::new()
     foreach ($relative in @(
+        'r6/scripts/realpass',
         'r6/scripts/Dark Future',
         'r6/tweaks/Dark Future',
         'r6/scripts/Project E3 - HUD',
@@ -92,10 +93,10 @@ $installState = & "$PSScriptRoot\Install-OwnedRuntime.ps1" -GameRoot $GameRoot -
 if ([string]::IsNullOrWhiteSpace([string]$installState)) { throw 'Fast owned-runtime installer returned no state path.' }
 $preflight.installState = [string]$installState
 
-Write-Host '[5/5] Checking source-mod isolation...'
+Write-Host '[5/5] Checking source-mod and retired-presentation isolation...'
 $residue = @(Get-ForbiddenOwnedAcceptanceResidue $GameRoot)
 if ($residue.Count -gt 0) {
-    throw "Owned acceptance isolation failed; source-mod runtime residue remains: $($residue -join ', '). Run Remove-OwnedRuntime.ps1 if cleanup is needed; Steam Verify Files/reinstall remains the stock-game repair path."
+    throw "Owned acceptance isolation failed; retired/source-mod runtime residue remains: $($residue -join ', '). Run Remove-OwnedRuntime.ps1 if cleanup is needed; Steam Verify Files/reinstall remains the stock-game repair path."
 }
 $state = Get-Content -Raw -LiteralPath ([string]$installState) | ConvertFrom-Json
 if ($state.status -ne 'installed' -or $state.buildId -ne $BuildId) { throw 'Flat owned-runtime install state did not finalize correctly.' }
@@ -103,7 +104,7 @@ if ($state.status -ne 'installed' -or $state.buildId -ne $BuildId) { throw 'Flat
 $preflight.status = 'owned-runtime-installed-and-verified'
 $preflight.postDeployForbiddenResidue = @()
 Write-JsonFile $preflight $reportPath
-Write-Host "READY: owned runtime $BuildId exact-compiled and fast-installed $($plan.Count) files; source-mod runtime residue is absent."
+Write-Host "READY: owned runtime $BuildId exact-compiled and fast-installed $($plan.Count) files; retired/source-mod runtime residue is absent."
 Write-Host 'Recovery is intentionally simple: Remove-OwnedRuntime.ps1 removes recorded realpass files; use Steam Verify Files or reinstall Cyberpunk if stock-game repair is ever needed.'
 Write-Host 'This tool does not launch Cyberpunk, create background services, or enable diagnostics unless explicitly requested.'
 return $reportPath
