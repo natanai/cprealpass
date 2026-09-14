@@ -245,3 +245,29 @@ Evidence so far: cloud CI for the first fast-installer policy batch passed; late
 Not claimed: the fast installer has not yet been exercised on the user's machine, and the game still has not been launched with the owned runtime. Readiness remains **50%** until live deployment/gameplay evidence closes another gate.
 
 Next: after exact-head CI is green, pull the simplified tooling and run `Prepare-OwnedSession.ps1 -Deploy`. The expected planning/install scope is the current ~50-file owned payload, not hundreds of historical receipt entries. If it reports `READY`, launch normally through Steam for the first owned-runtime smoke test.
+
+---
+
+## 2026-09-14 — completion branch rebuilt around Biology and a minimal owned runtime
+
+Branch: `chatgpt-realpass-completion`
+Base: new authoritative `main` at `44393b2`
+Key files: `BiologyPresentation.reds`, `BiologyNativeUI.reds`, `NameplatesNative.reds`, `manifest/native-seams.json`, `manifest/runtime-modules.json`, `manifest/feature-inventory.json`, `manifest/acceptance.json`, `manifest/distribution.json`, `manifest/profiles.json`, `Build-OwnedRuntimeProfile.ps1`, updated architecture/acceptance docs and cloud tests
+
+After the user moved the older branch to `main`, a fresh completion branch was created directly from that baseline with an explicit instruction not to merge until repository-side work was complete enough that the next meaningful step would be a real in-game test.
+
+The body UI direction was completed around the newer product decision: **Backpack = possessions; Biology = embodied state.** The old `ConditionNativeUI.reds` / `CYBERWARE | CONDITION` prototype was removed from production. `BiologyPresentation.reds` now composes qualitative needs, pain/analgesia effects and active regional conditions without exposing native HP or hidden body quantities. `BiologyNativeUI.reds` mounts an owned dynamic Biology panel on the stock hub, provides condition detail, routes applicable dressing/support into the shared field-care runtime, and provides a ripperdoc-only Biology professional-care doorway without replacing the vanilla Cyberware equipment screen.
+
+Biology's `Eat…`/`Drink…` path was hardened against public current Cyberpunk script APIs. It enumerates actual carried stacks through `TransactionSystem`, filters them through `CRItemServing`, requires a real stock action, preserves `Eat` and `Drink` actions where present with generic `Consume` only as the stock fallback, uses stock item-name localization/quantity data, and never removes inventory or calls body intake directly. The stock `ConsumeAction.CompleteAction` adapter remains the single intake commit into RealPass. The root-level panel also follows `MenuHubLogicController.SetActive(...)` so it closes/clears when the stock hub deactivates.
+
+Presentation ownership was completed without carrying the old E3 runtime forward. The native modern scanner remains authoritative by absence of a replacement. `NameplatesNative.reds` adds only a scanned-civilian public-name fallback before the stock nameplate renderer runs; it respects stock quest-target state, hide-name flags, exact crowd nameplate policy, alternative identities and `ScannerModulePreset().ShoulShowName()`. A dedicated CI contract now forbids private-field access, unsupported forced-preset APIs, direct widget/health ownership and source-mod presentation dependencies.
+
+The owned deployment profile was reduced from the historical framework stack to **project-original RealPass REDscript + pinned redscript only**. RED4ext, ArchiveXL, TweakXL, Codeware, Mod Settings and Input Loader are marked not required by the candidate; Dark Future/Project E3/game files remain blocked. Artifact policy rejects both blocked and currently unnecessary components so release packaging cannot silently grow back into a mod stack.
+
+Architecture/status documents, runtime/feature/acceptance ledgers and the attended test plan were synchronized to the completed source rather than the earlier Condition/E3 assumptions. Core authorities are now described as source-complete but live-acceptance-pending. The 1.0 readiness estimate deliberately remains **50%** because live/native evidence has not yet closed a release gate; the repository-side live-test milestone is the thing being completed here.
+
+Evidence obtained remotely: repeated GitHub Actions runs passed throughout the migration, including a green run after the Biology native Eat/Drink and lifecycle changes. Public Cyberpunk script references were used to audit the unique native boundaries for hub/ripperdoc controller signatures, Ink widget APIs, inventory enumeration/quantity/localization, item action helpers, nameplate visual-data wrapping, scanner/name visibility, quest state and alternative identity behavior. The final exact-head CI run remains the merge gate after the last documentation/test commit.
+
+Not claimed: the **current** completion head has not yet been exact-compiled against Nat's installed Cyberpunk 2077 2.31 scripts, deployed, rendered or played. The successful 2026-09-13 exact compile predates the final Biology/nameplate source. That is intentionally the next authority after merge, not something remote source review can honestly substitute for.
+
+Next: require green CI for the exact completion head; confirm the branch is strictly ahead of unchanged `main`; merge to `main`; then run `Prepare-OwnedSession.ps1` locally for a fresh exact compile/preflight, followed by `-Deploy` only if clean and then normal Steam launch using `docs/ATTENDED-ACCEPTANCE.md`.

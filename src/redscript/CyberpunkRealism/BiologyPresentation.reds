@@ -9,9 +9,13 @@ import CyberpunkRealism.Physiology.*
 public class CRBiologyViewModel extends IScriptable {
   public let valid: Bool = false;
   public let needs: String;
+  public let effects: String;
   public let conditions: String;
   public let hasNeeds: Bool = false;
+  public let hasEffects: Bool = false;
   public let hasConditions: Bool = false;
+  public let showEat: Bool = false;
+  public let showDrink: Bool = false;
 }
 
 public class CRBiologyPresentation extends IScriptable {
@@ -25,18 +29,59 @@ public class CRBiologyPresentation extends IScriptable {
     return text + descriptor.regionName + " — " + descriptor.title + " / " + descriptor.severity;
   }
 
+  private static func Effects() -> String {
+    let pain: ref<CRPainProjection> = CRPainRuntime.Get().Read();
+    if !IsDefined(pain) || !pain.valid {
+      return "";
+    }
+    let result: String = "";
+    if pain.perceivedPain >= 0.75 {
+      result = "Severe pain is interfering with concentration and control.";
+    } else {
+      if pain.perceivedPain >= 0.45 {
+        result = "Significant pain is affecting control.";
+      } else {
+        if pain.perceivedPain >= 0.15 {
+          result = "Pain is noticeable.";
+        }
+      }
+    }
+    if pain.analgesia > 0.0 && pain.physicalPain > 0.0 {
+      if !Equals(result, "") { result += " "; }
+      result += "MaxDoc is dulling pain without repairing the injury.";
+    }
+    if pain.intoxication >= 0.66 {
+      if !Equals(result, "") { result += " "; }
+      result += "Analgesic overuse is causing severe disorientation.";
+    } else {
+      if pain.intoxication > 0.0 {
+        if !Equals(result, "") { result += " "; }
+        result += "Analgesic overuse is causing disorientation.";
+      }
+    }
+    return result;
+  }
+
   public static func Current() -> ref<CRBiologyViewModel> {
     let result: ref<CRBiologyViewModel> = new CRBiologyViewModel();
     if !CRBodyStatusPresentation.Owns() {
       return result;
     }
     let body: ref<CRBodyState> = CRBodyRuntime.Get().GetBodySnapshot();
-    if !IsDefined(body) || !body.initialized {
+    let meters: ref<CRBodyMeters> = CRBodyRuntime.Get().GetMeters();
+    if !IsDefined(body) || !body.initialized || !IsDefined(meters) || !meters.valid {
       return result;
     }
 
     result.needs = CRBodyStatusPresentation.BodyStatus(body);
     result.hasNeeds = !Equals(result.needs, "") && !Equals(result.needs, "No strong bodily need is demanding attention.");
+    // These are presentation thresholds only. The UI never reads or displays the
+    // underlying percentages; it only decides whether a contextual action is useful.
+    result.showDrink = meters.hydration < 75.0;
+    result.showEat = meters.nutrition < 70.0;
+
+    result.effects = CRBiologyPresentation.Effects();
+    result.hasEffects = !Equals(result.effects, "");
 
     let conditions: String = "";
     let region: Int32 = 1;

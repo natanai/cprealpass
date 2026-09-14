@@ -1,40 +1,38 @@
-# Modern scanner with the E3 HUD
+# realpass scanner presentation
 
-The modern presentation preset restores the game's scanner and quickhack panel while retaining the E3 HUD, menus and NPC nameplates. `Build-RealpassPresentation.ps1` defaults to `-ScannerMode Modern`; `-ScannerMode E3` remains available for the original scanner presentation.
+Status: final source architecture; attended native acceptance pending
+Last updated: 2026-09-14
 
-From the project directory, build a new local candidate with a unique build ID:
+## Decision
 
-```powershell
-./tools/Build-RealpassPresentation.ps1 -BuildId realpass-scanner-review-quiet -ManifestPath manifest/realpass-body-rc2-quiet.deployment.json -ScannerMode Modern
-```
+realpass does **not** ship a scanner replacement. Cyberpunk 2077's current native scanner/quickhack presentation is the release authority.
 
-This uses the local body rc2 manifest as its source. It stages a candidate; it does not launch the game or install the candidate. Existing immutable build IDs cannot be reused.
+Earlier development experiments selectively removed scanner resources from an E3-era HUD integration. That work established that the modern game already supplies the scanner behavior realpass wants, but the integration stack itself is now historical only. The completion candidate contains no scanner archive/resource override and no Project E3 scanner script.
 
-## Resources restored
+## Owned runtime behavior
 
-`config/patches/realpass-modern-scanner.json` pins the original archive and every excluded resource by SHA-256. Its 34 exclusions comprise:
+There is intentionally no `ScannerNative.reds` replacement. Preserving the native scanner means the safest implementation is absence of an override.
 
-- 12 scanning resources, including the scanner HUD, details panel and TwinTone preview.
-- 13 quickhack resources, including the panel, animations, styles, atlases and masks.
-- Two connected-device resources and the netrunner charges widget.
-- Six focus-mode resources: environment settings, effect, particle, scanline material and two scanning color LUTs.
+Other realpass presentation seams must coexist with it:
 
-The preset also omits the pinned `cyberpunk/hud/scanner/scanner_border.reds` replacement. Its only override is `scannerBorderGameController.ComputeVisibility`; no other supplied E3 script depends on it.
+- `NameplatesNative.reds` may provide a public-name fallback for an ordinary scanned civilian only when stock scanner/nameplate policy allows the name;
+- `NoHealthbars.reds` suppresses actor HP-specific presentation without hiding scanner identity/quickhack UI;
+- `BiologyNativeUI.reds` is a menu/body-state surface and does not hook scanner mode.
 
-The installed game's `archive/pc/content` indexes contain **all 34 exact resource paths**, including `netrunner_memory/netrunner_charges.inkwidget`, both connected-device resources and `scanning/twintone/twintone_color_template_preview.inkwidget`. Removing their E3 overrides therefore leaves native resource fallbacks. This was verified by a finite, read-only WolvenKit index command; no game process or logging helper was started.
+## Acceptance
 
-## HUD separation
+The completion candidate must be attended in game to verify:
 
-Decoded E3 `root.inkwidget` has no external resource paths or scanner-specific named containers. The main `prototype_hud.inkhud` independently spawns `scanning/scanning.inkwidget`, `quickhacks/quickhacks.inkwidget` and `scanning/scandetails.inkwidget`, without attachment to a root HUD slot and with zero margins. Across all 15 supplied HUD entry resources, the 48 scanner-family entries have no root-slot attachment. The player healthbar has no external scanner, quickhack, connected-device or netrunner resource dependency.
+1. scanner opens/closes normally;
+2. NPC and device targeting remain correct;
+3. quickhack panels/memory/cost presentation remain usable;
+4. scanning an ordinary civilian can coexist with the owned name fallback;
+5. hidden/quest/alternative identities remain protected by stock policy;
+6. actor-healthbar suppression does not remove scanner information;
+7. entering/leaving scanner mode around combat, vehicles, dialogue and menus does not leave stale realpass UI state.
 
-These findings support retaining the E3 root, HUD entries, player HUD and nameplates. Shared E3 styles and icons remain, so the native scanner can retain some E3 coloring or icon styling. The independent breach minigame assets also remain.
+No scanner-specific calibration should be added unless this native acceptance reveals an actual conflict.
 
-`Build-RealpassArchive.ps1` preserves the original reference archive, creates a separate archive and round-trips that output to check that all 336 retained resources match their original bytes. These are local integration assets from Project E3 - HUD by Virtuoso75; the original mod remains required. Neither the supplied archive nor the derived archive belongs in a standalone public redistribution.
+## Historical note
 
-## Validation status
-
-realpass-presentation-rc4-quiet is installed locally after a fresh save backup. All 114 scripts compile, the exact 225-file update/rollback passes, and candidate/asset verification confirms only the scanner archive and script differ from rc3.
-
-The user's rc3 screenshots confirm that the distinct **Use toilet** action and scanned **Carolyn Veranes** nameplate render. They do not validate the new modern-scanner candidate. Native rendering and interaction acceptance for that candidate remain pending, including opening the scanner, targeting an NPC/device and viewing quickhacks.
-
-Local audit evidence is in `staging/e3-scanner-graph-a6b826ea/`: serialized widget/HUD files, `resource-dependency-graph.json`, `hud-scanner-spawns.json`, `native-scanner-index.txt` and `native-fallback-check.json`. These generated files are ignored and are not required for public project source.
+Legacy scanner/E3 patch recipes and research files may remain in `config/patches`, tooling or Git history as provenance. They are not selected by `Build-OwnedRuntimeProfile.ps1`, are forbidden from the standalone runtime, and should not be treated as the current implementation.

@@ -15,31 +15,31 @@
       "developmentGate": "body",
       "playerFacingToggle": false,
       "releaseEnabled": true,
-      "currentActivation": "owned-runtime-rewrite-required",
+      "currentActivation": "owned-source-complete-live-acceptance-pending",
       "requires": ["core"],
       "reads": [],
       "owns": ["nutrition", "hydration", "wake-time", "sleep-pressure", "sleep-debt", "exertion", "recovery", "digestion", "elimination", "minimal-hygiene"],
       "internalFacets": ["nutrition", "hydration", "sleep", "exertion", "elimination", "hygiene"],
-      "isolationContract": "A development build may suspend body progression for diagnosis without deleting saved state. The release profile always enables the accepted body authority."
+      "isolationContract": "A development build may suspend body progression for diagnosis without deleting saved state. The accepted release profile always enables the body authority."
     },
     {
       "id": "injury",
       "developmentGate": "injury",
       "playerFacingToggle": false,
       "releaseEnabled": true,
-      "currentActivation": "staged-disabled",
+      "currentActivation": "owned-source-complete-live-acceptance-pending",
       "requires": ["core"],
       "reads": ["combat", "armor", "cyberwarePhysiology"],
-      "owns": ["regional-wounds", "blood-loss", "regional-impairment", "stabilization", "field-care", "treatment", "injury-recovery"],
-      "internalFacets": ["bloodLoss", "impairment", "fieldCare", "recovery"],
-      "isolationContract": "Development isolation must clear transient bleeding/impairment effects without destroying retained model state. Release keeps injury authority enabled."
+      "owns": ["regional-wounds", "blood-loss", "pain", "regional-impairment", "stabilization", "field-care", "professional-care", "injury-recovery"],
+      "internalFacets": ["bloodLoss", "pain", "impairment", "fieldCare", "professionalCare", "recovery"],
+      "isolationContract": "Development isolation must clear transient bleeding/pain/impairment effects without destroying retained model state. Release keeps injury authority enabled."
     },
     {
       "id": "combat",
       "developmentGate": "combat",
       "playerFacingToggle": false,
       "releaseEnabled": true,
-      "currentActivation": "staged-disabled",
+      "currentActivation": "owned-source-complete-live-acceptance-pending",
       "requires": ["core"],
       "reads": ["armor", "cyberwarePhysiology"],
       "owns": ["weapon-projectile-profiles", "ammunition-profiles", "hit-region-routing", "penetration", "terminal-impact-result", "player-npc-physical-symmetry"],
@@ -51,7 +51,7 @@
       "developmentGate": "armor",
       "playerFacingToggle": false,
       "releaseEnabled": true,
-      "currentActivation": "staged-disabled",
+      "currentActivation": "owned-source-complete-live-acceptance-pending",
       "requires": ["core"],
       "reads": [],
       "owns": ["protective-item-classification", "regional-coverage", "projectile-dependent-protection", "armor-wear"],
@@ -63,25 +63,25 @@
       "developmentGate": "cyberwarePhysiology",
       "playerFacingToggle": false,
       "releaseEnabled": true,
-      "currentActivation": "partial-model-only",
+      "currentActivation": "narrow-structural-source-complete-live-acceptance-pending",
       "requires": ["core"],
       "reads": [],
-      "owns": ["cybernetic-protection", "cybernetic-structural-injury", "physiology-relevant-cyberware-effects"],
-      "internalFacets": [],
-      "isolationContract": "Development isolation removes added structural/physiological cyberware consequences. The module never becomes a generic cyberware rebalance."
+      "owns": ["cybernetic-hit-material", "cybernetic-structural-injury", "mechanical-care-boundary"],
+      "internalFacets": ["structuralDamage"],
+      "isolationContract": "The current authored scope is narrow: cyberware/metal hit structure can receive distinct chrome damage and require mechanical care. It is not a generic cyberware rebalance and future physiology additions require explicit model justification."
     },
     {
       "id": "presentation",
       "developmentGate": "presentation",
       "playerFacingToggle": false,
       "releaseEnabled": true,
-      "currentActivation": "owned-runtime-rewrite-required",
+      "currentActivation": "owned-source-complete-live-acceptance-pending",
       "requires": ["core"],
       "reads": ["body", "injury", "armor", "combat"],
-      "owns": ["realpass-status-presentation", "npc-nameplates", "healthbar-suppression", "realpass-owned-hud-presentation", "scanner-integration"],
-      "internalFacets": ["nameplates", "statusCues"],
+      "owns": ["biology-interface", "qualitative-body-state", "scanned-civilian-name-fallback", "healthbar-suppression", "native-scanner-preservation"],
+      "internalFacets": ["biology", "nameplates", "statusCues", "healthbarSuppression"],
       "fixedReleaseChoices": {"traditionalActorHealthBars": false, "nativeModernScanner": true},
-      "isolationContract": "Presentation can be isolated for development without changing simulation. Release uses the accepted realpass presentation and never imports E3 runtime content."
+      "isolationContract": "Presentation can be isolated for development without changing simulation. Release uses realpass-owned presentation plus native Cyberpunk UI behavior and never imports source-mod runtime content."
     },
     {
       "id": "diagnostics",
@@ -115,7 +115,7 @@
     "Every retained gameplay feature maps to exactly one owning realpass module.",
     "Presentation may read simulation state but must not become a simulation authority.",
     "Out-of-scope inherited features are absent from the distributed runtime.",
-    "Dark Future and Project E3 HUD are reference-only and forbidden from owned-runtime manifests.",
-    "Development activation gates stay closed until the corresponding native acceptance gate is satisfied."
+    "Source/reference gameplay mods are forbidden from owned-runtime manifests.",
+    "Development activation gates stay closed in canonical source and are opened only in an immutable exact candidate until native acceptance is satisfied."
   ]
 }

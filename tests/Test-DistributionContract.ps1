@@ -7,7 +7,7 @@ $distribution = Get-Content -Raw -LiteralPath $path | ConvertFrom-Json
 if ($distribution.schemaVersion -ne 1 -or $distribution.product -ne 'realpass') { throw 'Unexpected distribution contract.' }
 if ($distribution.target.experience -ne 'one-download-normal-launch') { throw 'Release UX target drifted.' }
 if ($distribution.target.specialLauncherRequiredAfterInstall -ne $false) { throw 'realpass must not require a permanent special launcher.' }
-if ($distribution.releaseGate.publicPlayableArtifactReady -ne $false) { throw 'Public playable artifact must remain gated until explicit release acceptance.' }
+if ($distribution.releaseGate.publicPlayableArtifactReady -ne $false) { throw 'Public playable artifact must remain gated until explicit live/release acceptance.' }
 
 $components = @{}
 foreach ($component in @($distribution.components)) {
@@ -19,15 +19,18 @@ foreach ($component in @($distribution.components)) {
     }
 }
 
-foreach ($required in @('realpass-project-original','red4ext','redscript','darkfuture','project-e3-hud','cyberpunk-game-files')) {
+foreach ($required in @('realpass-project-original','redscript','red4ext','archivexl','tweakxl','codeware','mod-settings','input-loader','darkfuture','project-e3-hud','cyberpunk-game-files')) {
     if (-not $components.ContainsKey($required)) { throw "Distribution component missing: $required" }
 }
 if ($components['realpass-project-original'].status -ne 'allowed') { throw 'Project-original runtime must remain bundleable.' }
-if ($components['project-e3-hud'].status -ne 'blocked') { throw 'Project E3 HUD must remain blocked under current recorded terms.' }
-if ($components['project-e3-hud'].artifactPolicy -match '^bundle$') { throw 'Project E3 HUD cannot be directly bundled under current recorded terms.' }
-if ($components['cyberpunk-game-files'].status -ne 'blocked' -or $components['cyberpunk-game-files'].artifactPolicy -ne 'never-bundle') {
-    throw 'Game files must never enter a realpass artifact.'
+if ($components['redscript'].status -ne 'allowed') { throw 'Pinned redscript is the required generic runtime and must be bundleable.' }
+foreach ($id in @('red4ext','archivexl','tweakxl','codeware','mod-settings','input-loader')) {
+    if ($components[$id].status -ne 'not-required') { throw "Historical framework still appears required by the owned runtime: $id" }
 }
+foreach ($id in @('darkfuture','project-e3-hud','cyberpunk-game-files')) {
+    if ($components[$id].status -ne 'blocked') { throw "Forbidden runtime component is not blocked: $id" }
+}
+if ($components['cyberpunk-game-files'].artifactPolicy -ne 'never-bundle') { throw 'Game files must never enter a realpass artifact.' }
 
 $forbidden = @($distribution.forbiddenArtifactPatterns)
 foreach ($pattern in @('Cyberpunk2077.exe','final.redscripts','UserSettings.json','*.sav','vendor/**','ReferenceMods/**')) {
@@ -35,8 +38,11 @@ foreach ($pattern in @('Cyberpunk2077.exe','final.redscripts','UserSettings.json
 }
 
 $mustPass = @($distribution.releaseGate.mustPass)
-foreach ($gate in @('dependency-license-and-transitive-notice-audit','no-blocked-assets-in-artifact','native-body-acceptance','native-combat-injury-acceptance','artifact-hash-and-content-verification')) {
+foreach ($gate in @('dependency-license-and-notice-audit','no-blocked-or-unrequired-runtime-in-artifact','native-body-acceptance','native-combat-injury-acceptance','native-presentation-acceptance','artifact-hash-and-content-verification')) {
     if ($mustPass -notcontains $gate) { throw "Release gate missing: $gate" }
 }
+if (($distribution.artifactRequirements -join ' ') -notmatch 'project-original realpass payload plus the pinned redscript runtime') {
+    throw 'Distribution artifact requirements do not lock the minimal runtime set.'
+}
 
-Write-Host "PASS: realpass distribution contract ($($components.Count) component policies, $($forbidden.Count) forbidden patterns)."
+Write-Host "PASS: realpass standalone distribution contract ($($components.Count) component policies, $($forbidden.Count) forbidden patterns); only realpass + redscript are allowed runtime components."

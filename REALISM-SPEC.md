@@ -1,134 +1,176 @@
 # realpass specification
 
+Last updated: 2026-09-14
+Canonical intent: `AGREED-GOALS.md` takes precedence over this implementation specification.
+
 ## Product definition
 
-realpass is one coherent realism pass for Cyberpunk 2077 + Phantom Liberty. It is not a curated stack, a compatibility preset, or a reskin of other gameplay/presentation mods. The gameplay and presentation behavior that defines realpass must be authored in this repository and owned by realpass. Other mods may be studied as references and may have informed design questions, but their gameplay scripts, archives, assets and runtime state are not part of the finished product.
+realpass is one coherent realism pass for Cyberpunk 2077 + Phantom Liberty. It is not a curated stack, a compatibility preset, or a reskin of other gameplay/presentation mods. Gameplay and presentation behavior that defines realpass is authored in this repository and owned by realpass. Other mods may be studied as references, but their gameplay scripts, archives, assets and runtime state are not part of the finished product.
 
-The target is not "hardcore mode" and not a general rebalance. The target is plausible cause and effect: bodies need food, water, sleep and recovery; exertion has consequences; bullets interact with clothing, armor, cyberware and tissue; injuries impair and can require treatment; presentation removes unnecessary gamey abstraction where doing so remains usable.
+The target is plausible cause and effect rather than difficulty for its own sake: bodies need food, water, sleep and recovery; exertion has consequences; bullets interact with clothing, armor, cyberware and tissue; injuries impair and can require treatment; presentation removes unnecessary RPG abstraction while keeping the game usable.
 
-### One authored experience
+## One authored experience
 
-Development remains modular because isolated gates make calibration, fault-finding and regression testing possible. **The released mod is not modular from the player's perspective.** A normal release enables the complete accepted realpass experience as one authored balance. There is no public menu for disabling combat, needs, injury, armor or other core authorities and no collection of balance sliders that lets two realpass players effectively run different games.
+Development is modular so isolated gates can support calibration, fault-finding and regression testing. **The released mod is not modular from the player's perspective.** A normal release enables the complete accepted realpass experience as one authored balance. There is no public menu for disabling body, combat, injury, armor or other core authorities and no balance-slider matrix that produces materially different simulations.
 
-Development-only gates and diagnostics may temporarily isolate a subsystem. They are build/test controls, not player preferences. Accessibility options are considered separately only when they do not change simulation authority or balance. Traditional actor health bars are intentionally not part of the authored realpass presentation.
+Diagnostics and internal gates are development controls only. Accessibility options may be considered separately only when they do not create different simulation authority. Traditional actor health bars are intentionally absent from the authored presentation.
 
-## Runtime ownership rule
+## Runtime ownership
 
-Gameplay and presentation runtime code must be project-original realpass code. Generic modding frameworks may remain when they provide only infrastructure such as script loading, data loading, UI primitives or input plumbing. A framework must not own realpass gameplay policy or simulation state.
+Gameplay and presentation runtime code is project-original realpass code. Generic tooling may remain only when it supplies plumbing that the runtime actually uses.
 
-Dark Future and Project E3 HUD are reference/inspiration sources only for the finished architecture. They may remain represented in provenance, historical recipes and research notes, but an owned-runtime test or release build must fail closed if it contains their scripts, archives, assets, tweak payloads or persistent-system dependencies.
+The current owned live-test candidate is deliberately minimal: **project-original realpass REDscript plus pinned redscript**. It has no executing source-mod runtime and no production dependency on RED4ext, ArchiveXL, TweakXL, Codeware, Mod Settings or Input Loader. Historical/reference profiles remain only as development history.
 
-This ownership rule is stricter than licensing. Code being legally adaptable does not make it appropriate to use as realpass runtime code.
+The owned builder fails closed on source-mod imports, source-mod presentation identity and retired prototype files. The exact candidate must compile against the installed Cyberpunk 2077 2.31 script bundle before deployment.
 
-## Vanilla-first replacement rule
+## Vanilla-first replacement
 
-realpass should alter the **minimum necessary layer** of the vanilla game. Keep CDPR's existing names, item identities, animations, screens, assets and interaction structures whenever they can host the realism model cleanly. Replace the mechanic underneath them instead of inventing a parallel branded ecosystem.
+realpass alters the minimum necessary layer of vanilla Cyberpunk. Keep CDPR names, item identities, animations, screens, assets and interaction structures wherever they can cleanly host the realism model. Replace mechanics underneath them rather than constructing a parallel branded ecosystem.
 
 Examples:
 
-- MaxDoc stays MaxDoc; realpass changes what its inhaler does rather than renaming another item into a "Trauma Kit".
-- Bounce Back stays Bounce Back and Health Booster stays Health Booster; their realistic roles are authored separately rather than aliased together.
-- The stock Cyberware/body screen remains the shell for Condition inspection/treatment instead of shipping a separate medical menu where the vanilla shell already provides the right body/zoom language.
-- The native modern scanner remains authoritative instead of restoring a reference mod's scanner replacement.
+- MaxDoc stays MaxDoc. Its vanilla inhaler/use flow is retained while realpass replaces magical HP restoration with analgesia.
+- Bounce Back and Health Booster retain their vanilla names and remain separate items; they are never silently aliased to MaxDoc or imported source-mod concepts.
+- **Biology** is the realpass body-state surface. Cyberware remains equipment-focused; ripperdoc context may expose a Biology professional-care doorway without turning Cyberware into the body-state owner.
+- `Eat…` and `Drink…` in Biology enumerate the actual carried inventory and call Cyberpunk's own consumable action. Backpack and Biology are two routes into the same item transaction, not two inventories.
+- The native modern scanner/quickhack flow remains authoritative. realpass only adds narrow owned presentation behavior where explicitly desired.
 
-This rule is both a product goal and a stability strategy. Prefer semantic hooks at stable native action/controller boundaries feeding realpass-owned models. Avoid full resource replacements, duplicated vanilla state and variant-by-variant patches unless the vanilla surface cannot support the accepted behavior.
+This is also the patch-resilience strategy: prefer semantic native hooks and small dynamic UI seams feeding stable realpass models over broad resource replacements or duplicated vanilla state.
 
-## Scope boundary
+## Scope
 
 ### In scope
 
-- Basic needs and physiology: nutrition, hydration, sleep/fatigue, exertion, recovery, delayed elimination, and hygiene only where it can be represented without constant busywork.
-- Injury and treatment: regional injury, blood loss, impairment, stabilization, treatment and recovery.
-- Realistic combat: projectile/ammunition behavior, hit region, penetration, armor coverage, cybernetic structure, tissue injury, incapacitation and death.
-- Clothing and armor as physical equipment. Ordinary clothing is clothing; ballistic protection comes from actual protective equipment and only where that protection is present.
-- Cyberware where it changes a relevant physical or biological subsystem.
-- Sparse presentation changes that support the realism model, including a realpass-owned HUD/nameplate treatment, readable NPC identity and removal of unnecessary RPG clutter.
+- one physiological body: nutrition, hydration, sleep/fatigue, exertion, digestion/elimination, recovery and restrained hygiene where retained;
+- regional injury, blood loss, pain, impairment, field care, professional care and recovery;
+- physical projectile/ammunition/impact behavior and realistic injury consequences;
+- physical armor/clothing coverage and wear;
+- cyberware where it changes relevant structure or physiology;
+- sparse presentation supporting the simulation: Biology, actor-healthbar removal, readable scanned civilian identity where stock rules permit, and native scanner compatibility;
+- attended-development diagnostics that are off in ordinary play.
 
-### Explicitly not part of the realism pass
+### Explicitly out of scope
 
-- Weather simulation or weather control.
-- Economy overhauls, arbitrary scarcity systems, price rebalancing or unrelated inventory difficulty.
-- Added random encounters, travel restrictions, summon currencies or other difficulty-for-difficulty's-sake systems.
-- A new outfit/transmog/wardrobe mechanic. realpass does not treat "outfit" as a separate simulation layer: clothing is clothing and armor is armor. Appearance-only systems supplied by the base game are not an authority that realpass should expand into.
-- Features inherited from source/reference mods merely because they exist.
-- A public subsystem-toggle menu whose purpose is to let players opt out of core realpass simulation.
+- weather control;
+- economy overhaul, arbitrary scarcity or price rebalance;
+- added hardship encounters;
+- fast-travel/travel restrictions;
+- vehicle summon currencies/limits;
+- broad addiction/humanity/cyberpsychosis systems absent a new explicit decision;
+- a new outfit/transmog simulation layer;
+- generic carry/stamina hardship disconnected from the authored body;
+- public subsystem toggles or balance-slider matrices;
+- features retained merely because a reference mod had them.
 
-A mechanic belongs only if it serves the single physical model. Development modularity is a validation technique, not a justification for shipping optional feature sprawl.
+## Authority boundaries
 
-## Internal authority boundaries
+1. **Body** owns the shared physiological clock/state, intake, sleep, exertion, digestion/elimination and recovery inputs.
+2. **Injury** owns regional tissue/bone/chrome damage, bleeding, impairment, stabilization, treatment and recovery state.
+3. **Combat** owns projectile/ammunition profiles, physical impact routing and wound proposals.
+4. **Armor** owns protective classification, regional coverage, projectile-dependent protection and wear.
+5. **Cyberware physiology** is intentionally narrow: cybernetic hit shapes may produce structural chrome injury and mechanical repair requirements; it is not a generic cyberware rebalance.
+6. **Presentation** reads the above authorities but never mutates them as a substitute for gameplay logic.
+7. **Diagnostics** expose exact internal values only for attended development/calibration.
 
-The implementation keeps clear internal authorities so they can be independently tested and repaired during development:
+Each physical phenomenon has one authority. Presentation does not become a second model and source/reference mods do not remain hidden authorities.
 
-1. **Needs / body** — food, water, sleep, exertion, elimination and recovery.
-2. **Injury** — regional injury, bleeding, impairment, stabilization and healing.
-3. **Ballistics / combat** — weapon, ammunition, penetration, hit-region and terminal-effect rules.
-4. **Armor / clothing** — physical coverage, protection and wear; no generic clothing armor.
-5. **Cyberware physiology** — only physical/biological consequences relevant to the above systems.
-6. **Presentation** — HUD, nameplates, inspection/status surfaces and removal of gamey clutter.
-7. **Diagnostics** — development-only observability, off in normal play.
+## Body and needs principles
 
-Each phenomenon has one authority. Internal development gates must leave clean state when disabled, but final release configuration enables the accepted gameplay/presentation authorities together.
+Normal presentation follows:
 
-## Simulation principles
+`hidden biological state -> perceptible/knowable interpretation -> Biology UI and/or embodied gameplay consequences`
 
-1. Relative biological timing matters more than survival-meter pressure.
-2. State changes must form causal chains: intake → absorption → body state → delayed waste; exertion → heat and resource use; wake time → fatigue → sleep debt and recovery; injury → impairment → treatment → recovery.
-3. Exact values may exist internally, but normal play should communicate state mainly through animation, audio, movement, stamina, contextual effects, and subtle HUD cues.
-4. Cyberware modifies the relevant biological or structural subsystem; it is not a generic stat bonus.
-5. Player and NPC physical rules should be as symmetrical as the engine permits.
-6. Prefer one authoritative model per phenomenon. Reference mods may inform questions and edge cases but never remain a hidden second authority.
-7. Prefer direct native game signals and thin realpass adapters over broad gameplay-mod hosts.
-8. Prefer preserving vanilla identity and replacing behavior under it over renaming/rebuilding a parallel item/UI ecosystem.
+Exact quantities may exist internally. They are not permanent player meters merely because they exist.
 
-## Human timescale guardrails
+Guardrails:
 
-- No starvation over a handful of in-world hours.
-- No dangerous dehydration after ordinary short activity.
-- Bladder filling follows fluid absorption with delay and baseline production.
-- Digestion and bowel state are not one-to-one reactions to individual food items.
-- Sleep need follows time awake, exertion, stimulants, injury, prior sleep, and accumulated debt.
-- Hygiene and elimination systems are rejected if their best achievable implementation is constant busywork.
+- no starvation over a handful of in-world hours;
+- no dangerous dehydration after ordinary short activity;
+- fluid intake absorbs before it fills the bladder;
+- digestion/bowel state is delayed and aggregated rather than one-to-one with each food item;
+- sleep pressure reflects time awake, prior rest, exertion and injury rather than an arbitrary energy bar;
+- hygiene/elimination remain only while they can be represented without constant busywork;
+- food/drink effects enter the shared body through the same completed stock consumable action whether selected from Backpack or Biology.
 
-Numeric calibration is intentionally deferred until the selected time-scale authority and needs implementation are measured in game. Every chosen multiplier must be recorded with its real-time and in-world-time interpretation.
+Numeric coefficients remain game abstractions requiring attended calibration; they are not clinical claims.
 
 ## Combat model
 
-Target pipeline:
+Target causal chain:
 
-`weapon → projectile/ammunition → impact region → clothing/material → ballistic armor → cybernetic structure → tissue injury → physiological consequence`
+`weapon/projectile -> impact region -> encountered material/protection -> cybernetic structure and/or tissue -> regional injury -> whole-body consequence -> treatment/recovery`
 
 Required qualities:
 
-- Minimize level-based damage scaling and health inflation.
-- Unarmored head and center-mass rifle hits are normally catastrophic or immediately incapacitating.
-- Weapon categories differ by projectile behavior, controllability, capacity, and terminal effect—not only DPS.
-- Protection applies where protective equipment is actually present.
-- Ordinary clothing supplies negligible ballistic protection.
-- Armor has projectile-dependent penetration limits and preferably degradation.
-- Unprotected limbs remain vulnerable; injury affects locomotion or weapon use where feasible.
-- Getting shot must resolve through the physical pipeline rather than through a generic damage sponge whenever the engine permits.
-- Avoid stacked damage, armor, or injury overhauls; realpass is the sole authority for the phenomena it owns.
+- ordinary humans do not become level-based bullet sponges;
+- physical equivalence should produce comparable injury for V and supported human NPCs;
+- protection applies only where genuinely protective equipment/structure is encountered;
+- ordinary clothing is not generic armor;
+- armor has projectile-dependent protection and wear;
+- cyberware/metal hit shapes can produce structural chrome damage distinct from biological trauma;
+- unprotected limbs remain vulnerable and regional injury can impair locomotion/weapon handling;
+- authored boss/quest/immortality/nonlethal protections remain respected by the native acceptance boundary;
+- native HP is an output/engine-compatibility channel, not the causal wound model.
 
-## Presentation
+## Injury, pain and care
 
-Use **realpass** as the mod's in-game display name. Preserve authored weather while completing presentation, physiology and combat.
+- Regional injury remains authoritative for head, torso, left/right arms and left/right legs.
+- Whole-body blood deficit/recovery is separate from any one region.
+- Pain is derived from physical injury, not native HP.
+- MaxDoc is analgesia only; it does not heal tissue/bone, stop bleeding, replace blood or repair chrome.
+- Analgesia has diminishing returns and overuse/disorientation consequences.
+- Dressing/support are timed field actions using separate supplies and safe-context checks.
+- Clinical biological care and mechanical cyberware repair are distinct.
+- Professional intervention does not erase time-dependent biological recovery.
 
-- Recreate only the selected E3-era ideas we actually want with realpass-owned code/assets; do not depend on Project E3 HUD at runtime.
-- Keep superior modern game functionality such as the modern scanner/quickhack flow.
-- Retain readable names above NPCs when appropriate using a realpass-owned implementation.
-- Remove traditional actor health bars, unnecessary floating numbers and RPG clutter.
-- Do not expose every need as a permanent percentage dashboard.
-- Exact diagnostic state belongs in a development/status inspection surface, not the primary play HUD.
-- Presentation is subordinate to simulation: a visual feature should not become a second gameplay system.
+## Biology presentation
+
+Biology answers what V can currently perceive, know or reasonably infer about their body.
+
+It contains:
+
+- qualitative bodily needs/sensations;
+- meaningful current effects such as pain/analgesia/disorientation;
+- active conditions only; healthy regions stay quiet;
+- selected-condition explanation and applicable field care;
+- `Eat…` / `Drink…` filtered views over actual carried items.
+
+In ripperdoc context, Biology also exposes only model-approved clinical/mechanical professional actions. Cyberware continues to serve its vanilla equipment role.
+
+No normal Biology view exposes raw body percentages, exact bladder volume, exact calorie balance, exact bleed rate, analgesic load or native HP.
+
+## Other presentation
+
+- Keep the modern native scanner/quickhack flow.
+- Scanned ordinary civilians may receive a readable name fallback only when the stock nameplate/scanner policy allows it; authored hidden/alternative/quest identities remain protected.
+- Hide traditional actor HP feedback while preserving non-health information and objective/vehicle durability where needed.
+- Avoid floating-number/RPG clutter when it does not communicate the physical model.
+- Use existing native visual/weapon behavior for pain/disorientation where safe rather than inventing permanent custom meters.
+
+## Distribution and development workflow
+
+The development candidate is produced from the repository source tree, not the installed mod stack. Canonical body/combat gates remain fail-closed in source and are opened only in immutable staged copies for an exact candidate.
+
+The normal completion flow is:
+
+1. cloud-safe source/model/contracts CI passes;
+2. build the complete owned candidate;
+3. exact-compile it against the installed Cyberpunk 2077 2.31 base script bundle;
+4. plan/install through the flat owned-file installer;
+5. verify the installed hashes and absence of retired/source-mod runtime residue;
+6. launch normally through Steam for an attended broad test.
+
+No custom persistent launcher, background watcher/service or redundant save-backup chain is part of realpass.
 
 ## Acceptance questions for every mechanic
 
 - What real or internally plausible process is represented?
-- Does its timescale remain credible relative to other systems?
-- Does it duplicate an existing authority?
-- Does it create arbitrary punishment without a physical rationale?
-- Is it actually in scope, or merely inherited from a reference mod?
-- Is the executing implementation physically ours in the repository?
-- Does it preserve the vanilla identity/surface where that surface remains useful?
-- Can it be isolated internally for testing without becoming a public gameplay option?
-- Does the final locked configuration preserve Phantom Liberty quest integrity and acceptable script latency?
+- Does its timescale remain credible relative to the other systems?
+- Does it duplicate another authority?
+- Does it create arbitrary punishment without physical rationale?
+- Is it in scope or merely inherited from a reference?
+- Is the executing implementation owned by realpass?
+- Does it preserve vanilla identity/surface where useful?
+- Is exact internal state kept out of normal UI unless V could reasonably know it?
+- Does it respect authored quest/boss/nonlethal protections?
+- Can the full locked experience remain compatible with Phantom Liberty and acceptable script latency?

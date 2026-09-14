@@ -4,23 +4,25 @@
   "target": {
     "experience": "one-download-normal-launch",
     "preferredInstall": "game-root-shaped-zip",
-    "fallbackInstall": "single-bootstrap-installer-only-if-licensing-or-update-safety-requires-it",
+    "fallbackInstall": "single-bootstrap-installer-only-if-update-safety-requires-it",
     "normalLaunch": "Steam / normal Cyberpunk 2077 executable",
     "specialLauncherRequiredAfterInstall": false
   },
   "releaseGate": {
     "publicPlayableArtifactReady": false,
-    "reason": "Current source/local integration relies on third-party integration material whose public redistribution and standalone replacement are not fully resolved; native gameplay acceptance is also incomplete.",
+    "reason": "The owned source and minimal runtime profile are assembled, but the completion candidate still requires fresh exact Cyberpunk 2077 2.31 compilation, attended native gameplay/save/quest/performance acceptance, final calibration and final archive/notices/checksum verification before a public playable release.",
     "mustPass": [
       "runtime-module-contract",
       "scope-audit",
-      "dependency-license-and-transitive-notice-audit",
-      "no-blocked-assets-in-artifact",
+      "dependency-license-and-notice-audit",
+      "no-blocked-or-unrequired-runtime-in-artifact",
       "offline-tests-and-script-compilation",
       "native-body-acceptance",
       "native-combat-injury-acceptance",
+      "native-presentation-acceptance",
       "save-reload-and-upgrade-acceptance",
       "phantom-liberty-critical-path-acceptance",
+      "performance-acceptance",
       "artifact-hash-and-content-verification"
     ]
   },
@@ -31,79 +33,79 @@
       "licenseClass": "project-original",
       "artifactPolicy": "bundle",
       "status": "allowed",
-      "notes": "Only runtime files needed by the selected build belong in the player artifact; tests, reports, staging state and source-only tooling stay out."
-    },
-    {
-      "id": "red4ext",
-      "source": "manifest/components.json",
-      "licenseClass": "MIT-plus-third-party-notices",
-      "artifactPolicy": "candidate-bundle-after-transitive-notice-audit",
-      "status": "conditional",
-      "notes": "Recorded license permits redistribution with notices; bundled third-party notices still require release audit."
+      "notes": "Only the accepted runtime payload belongs in a player artifact; tests, reports, staging and source-only tooling stay out."
     },
     {
       "id": "redscript",
       "source": "manifest/components.json",
       "licenseClass": "MIT",
-      "artifactPolicy": "candidate-bundle-after-notice-audit",
-      "status": "conditional",
-      "notes": "Prefer pinned, hash-verified official archive contents if bundling is approved."
+      "artifactPolicy": "bundle-pinned-runtime-with-license-after-live-acceptance",
+      "status": "allowed",
+      "notes": "The current owned candidate uses REDscript as its only generic runtime/compiler plumbing. Bundle the pinned official Windows payload and required MIT notice in the final one-download package after live acceptance."
+    },
+    {
+      "id": "red4ext",
+      "source": "manifest/components.json",
+      "licenseClass": "MIT-plus-third-party-notices",
+      "artifactPolicy": "do-not-bundle-unless-a-future-owned-source-dependency-is-introduced",
+      "status": "not-required",
+      "notes": "No current realpass production source imports RED4ext APIs and the owned live-test profile no longer stages it."
     },
     {
       "id": "archivexl",
       "source": "manifest/components.json",
       "licenseClass": "MIT-plus-third-party-notices",
-      "artifactPolicy": "candidate-bundle-after-transitive-notice-audit",
-      "status": "conditional",
-      "notes": "Do not include unrelated framework extras merely because they ship in the upstream archive unless they are required by the framework."
+      "artifactPolicy": "do-not-bundle",
+      "status": "not-required",
+      "notes": "No current realpass production source/resource path requires ArchiveXL."
     },
     {
       "id": "tweakxl",
       "source": "manifest/components.json",
       "licenseClass": "MIT-plus-third-party-notices",
-      "artifactPolicy": "candidate-bundle-after-transitive-notice-audit",
-      "status": "conditional",
-      "notes": "Bundle only if required by the final realpass runtime."
+      "artifactPolicy": "do-not-bundle",
+      "status": "not-required",
+      "notes": "No current realpass production source/data path requires TweakXL."
     },
     {
       "id": "codeware",
       "source": "manifest/components.json",
       "licenseClass": "MIT-plus-third-party-notices",
-      "artifactPolicy": "candidate-bundle-after-transitive-notice-audit",
-      "status": "conditional",
-      "notes": "If the final settings/UI no longer requires it, remove rather than carrying it as baggage."
+      "artifactPolicy": "do-not-bundle",
+      "status": "not-required",
+      "notes": "The owned dynamic Biology/nameplate UI uses native Ink/REDscript APIs and has no Codeware import."
     },
     {
       "id": "mod-settings",
       "source": "manifest/components.json",
       "licenseClass": "MIT",
-      "artifactPolicy": "candidate-bundle-after-notice-audit",
-      "status": "conditional",
-      "notes": "Currently expected to support one realpass settings surface; reassess if a smaller native settings implementation replaces it."
+      "artifactPolicy": "do-not-bundle",
+      "status": "not-required",
+      "notes": "Core gameplay configuration is a locked authored experience; the retired player gameplay-settings surface is not a runtime dependency."
     },
     {
       "id": "input-loader",
       "source": "manifest/components.json",
       "licenseClass": "MIT",
-      "artifactPolicy": "candidate-bundle-after-notice-audit",
-      "status": "conditional",
-      "notes": "Retain only if final realpass controls require it. Never package the user's live inputUserMappings.xml."
+      "artifactPolicy": "do-not-bundle",
+      "status": "not-required",
+      "notes": "The current owned runtime adds no custom input binding requiring Input Loader."
     },
     {
       "id": "darkfuture",
-      "source": "Dark Future 2.0 adaptations",
-      "licenseClass": "CC-BY-SA-4.0-for-recorded-adaptations",
-      "artifactPolicy": "adapt-or-replace; do-not-assume-full-upstream-archive-is-cleared",
-      "status": "conditional",
-      "notes": "Current body integration uses Dark Future as a host. Final single-mod work should retain only in-scope adapted material with required attribution/share-alike compliance or replace it with realpass-owned equivalents."
+      "source": "historical/reference adaptations",
+      "licenseClass": "reference-only-for-final-runtime",
+      "artifactPolicy": "never-bundle-in-realpass-runtime",
+      "status": "blocked",
+      "notes": "Historical research/provenance may remain in the repository, but executing Dark Future content is forbidden from owned/live/public realpass candidates."
     },
     {
       "id": "project-e3-hud",
-      "source": "Virtuoso75 / Project E3 - HUD",
+      "source": "historical/reference presentation",
       "licenseClass": "author-specific-permissions",
-      "artifactPolicy": "do-not-bundle-under-current-recorded-terms",
+      "artifactPolicy": "never-bundle-in-realpass-runtime",
       "status": "blocked",
-      "notes": "Current recorded permission model requires the original mod and prohibits standalone redistribution of modified assets. Final one-download realpass therefore needs a realpass-owned/recreated presentation path or separately obtained permission."
+      "notes": "Accepted presentation behavior is now recreated with realpass-owned source plus stock Cyberpunk UI. Original/modified Project E3 runtime assets remain forbidden from the standalone artifact."
     },
     {
       "id": "cyberpunk-game-files",
@@ -111,7 +113,7 @@
       "licenseClass": "proprietary-game-content",
       "artifactPolicy": "never-bundle",
       "status": "blocked",
-      "notes": "No Cyberpunk executable, stock archives, compiled cache, saves or user settings enter the release artifact."
+      "notes": "No Cyberpunk executable, stock archives, compiled cache, saves or user settings enter a realpass artifact."
     }
   ],
   "forbiddenArtifactPatterns": [
@@ -132,10 +134,11 @@
   ],
   "artifactRequirements": [
     "Game-root-relative paths only for runtime payload.",
-    "A short INSTALL.txt at the archive root explains where to extract and how to launch normally.",
-    "A VERSION/BUILD identifier and SHA-256 checksum are generated by CI.",
-    "Required license and attribution notices are included without development-only files.",
+    "The final artifact contains only allowed runtime components: project-original realpass payload plus the pinned redscript runtime selected by the release profile.",
+    "A short INSTALL.txt at the archive root explains game-root extraction, ordinary Steam launch and uninstall/repair expectations.",
+    "A VERSION/BUILD identifier and SHA-256 checksum are generated deterministically.",
+    "Required redscript MIT notice and realpass notices are included without development-only files.",
     "The artifact content list is generated and verified before upload.",
-    "Blocked dependencies cause the public-playable release job to fail closed rather than silently producing a partial mod."
+    "Blocked or not-required components cause the public-playable release job to fail closed rather than silently expanding the dependency stack."
   ]
 }

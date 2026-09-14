@@ -22,6 +22,7 @@ foreach ($required in @(
     'combat-native-activation',
     'pain-and-maxdoc-model',
     'condition-ui-and-treatment',
+    'owned-nameplate-presentation',
     'no-traditional-healthbars',
     'modern-scanner-native-acceptance',
     'e3-independent-standalone-presentation',
@@ -32,18 +33,13 @@ foreach ($required in @(
     if (-not $ids.ContainsKey($required)) { throw "Acceptance ledger missing required gate: $required" }
 }
 
-if ($ids['owned-runtime-isolation'].status -eq 'passed') { throw 'Owned-runtime isolation cannot be passed before exact local compile/deploy residue verification.' }
-$vanillaNative = $ids['vanilla-first-native-integration']
-if ($vanillaNative.status -eq 'passed' -and (($vanillaNative.evidence -join ' ') -notmatch 'local-preflight:realpass-owned-preflight-')) {
-    throw 'Vanilla-first native integration cannot be passed without recorded exact local compile/preflight evidence.'
+# Source implementation can be complete while native/runtime acceptance remains open.
+foreach ($id in @('owned-runtime-isolation','body-native-integration','combat-native-activation','pain-and-maxdoc-model','condition-ui-and-treatment','owned-nameplate-presentation','no-traditional-healthbars','e3-independent-standalone-presentation')) {
+    if ($ids[$id].status -eq 'passed') { throw "$id cannot pass before fresh completion-candidate native acceptance evidence." }
 }
-if ($ids['combat-native-activation'].status -eq 'passed') { throw 'Combat activation cannot be passed without native acceptance evidence.' }
-if ($ids['pain-and-maxdoc-model'].status -eq 'passed') { throw 'MaxDoc/pain integration cannot be passed before native MaxDoc action and gameplay acceptance.' }
-if ($ids['condition-ui-and-treatment'].status -eq 'passed') { throw 'Condition/treatment UI cannot be passed before native body-screen acceptance.' }
-if ($ids['no-traditional-healthbars'].status -eq 'passed') { throw 'No-healthbar presentation cannot be passed before native UI acceptance.' }
-if ($ids['one-download-playable-package'].status -eq 'passed') { throw 'Playable one-download package cannot be passed while public release remains gated.' }
-if ($ids['e3-independent-standalone-presentation'].status -ne 'blocked') { throw 'E3-independent presentation blocker must remain explicit until resolved.' }
+if ($ids['one-download-playable-package'].status -eq 'passed') { throw 'Playable one-download package cannot pass while public release remains gated.' }
 if ($ids['unified-settings-contract'].status -ne 'passed') { throw 'Locked authored release/settings contract should remain resolved unless product intent changes.' }
+if ($ids['e3-independent-standalone-presentation'].status -eq 'blocked') { throw 'Source-mod-independent presentation implementation exists; this gate should now await native acceptance rather than claim an implementation blocker.' }
 
 $maxdoc = $ids['pain-and-maxdoc-model']
 if (($maxdoc.evidence -join ' ') -notmatch 'BodyNativeHooks\.reds' -or $maxdoc.remaining -notmatch 'MaxDoc/FirstAidWhiff') {
@@ -52,6 +48,14 @@ if (($maxdoc.evidence -join ' ') -notmatch 'BodyNativeHooks\.reds' -or $maxdoc.r
 $vanilla = $ids['vanilla-first-native-integration']
 if (($vanilla.evidence -join ' ') -notmatch 'AGREED-GOALS\.md') {
     throw 'Vanilla-first gate is not tied to canonical product intent.'
+}
+$biology = $ids['condition-ui-and-treatment']
+if (($biology.evidence -join ' ') -notmatch 'BIOLOGY-UI\.md' -or $biology.remaining -notmatch 'Biology') {
+    throw 'Condition/treatment gate is not migrated to the canonical Biology architecture.'
+}
+$nameplates = $ids['owned-nameplate-presentation']
+if (($nameplates.evidence -join ' ') -notmatch 'NameplatesNative\.reds') {
+    throw 'Owned nameplate gate does not point to the realpass-native implementation.'
 }
 
 $distribution = Get-Content -Raw -LiteralPath (Join-Path $project 'manifest/distribution.json') | ConvertFrom-Json

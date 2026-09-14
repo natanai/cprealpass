@@ -1,94 +1,132 @@
 # realpass project status
 
-Last updated: 2026-09-13
-Working branch: `chatgpt-continuation`
+Last updated: 2026-09-14
 Canonical product goals: `AGREED-GOALS.md`
+Current milestone: complete owned candidate for fresh local compile/deploy/live acceptance
 
-## Release target
+## Milestone status
 
-realpass is intended to become one coherent Cyberpunk 2077 + Phantom Liberty realism mod with a **realpass-owned executing runtime**. Dark Future and Project E3 HUD are reference/inspiration only; an accepted owned-runtime candidate may not require their scripts, assets, state machines, save state or gameplay/UI authority.
+**Repository-side live-test milestone: complete pending exact-head CI/merge.**
 
-The project is explicitly **vanilla-first**: preserve CDPR item/system identities, names, animations, screens and assets wherever practical, and replace underlying behavior only where realism requires it. Do not import another mod's renames. MaxDoc remains MaxDoc; Bounce Back remains Bounce Back; Health Booster remains Health Booster.
+**1.0 release-readiness estimate: 50% (unchanged until live/native gates close).**
 
-The target player experience is: download one release package, copy/extract it into the Cyberpunk 2077 game root (or run one equally simple installer if dependency licensing technically requires that route), then launch normally through Steam. No Vortex knowledge, source-mod stack management or persistent realpass launcher should be required.
+Those are intentionally different measures. The implementation, architecture, source ownership, cloud-safe contracts and local operator path needed to produce the next broad candidate are now present in the repository. The remaining high-value evidence can only come from the installed Cyberpunk 2077 2.31 environment: fresh exact compile, deployment, live interaction/rendering, physical gameplay calibration, persistence, quest compatibility and performance.
 
-The release is a fixed authored experience rather than a player-configurable module collection. Development builds retain internal gates so engineers can isolate body/combat/injury/presentation problems, but a normal release enables the accepted physical model together and keeps diagnostics off.
+A source-complete candidate is not a gameplay-accepted release. Do not raise the 1.0 percentage merely because more source was written.
 
-For the full current product decisions and precedence rules, read `AGREED-GOALS.md` first.
+## Product target
 
-## Overall completion estimate
+realpass is one coherent Cyberpunk 2077 + Phantom Liberty realism overhaul with a **realpass-owned executing gameplay/presentation runtime**.
 
-**50% toward a first credible 1.0 release.**
+Core rules:
 
-The owned runtime has now passed the first exact local Cyberpunk 2.31 compile/preflight on the user's installed game. That closes the former compiler/signature gate and justifies restoring some of the readiness credit that was removed when the project abandoned Dark Future/Project E3 runtime ownership. The estimate remains conservative because nothing from this owned candidate has yet been deployed or observed in live gameplay.
+- vanilla-first: preserve CDPR names, item identities, animations, screens and interaction flows where they can host the physical model;
+- one authored release experience, not a player-configurable collection of gameplay modules;
+- physical combat and injury are causal, regional and material-aware rather than level/HP-sponge driven;
+- body simulation may be numerically deep internally, while the player experiences plausible sensations/consequences rather than arbitrary meters;
+- **Backpack = possessions; Biology = embodied state**;
+- Cyberware remains equipment-focused; a ripperdoc may expose contextual Biology professional care;
+- the modern native scanner/quickhack flow remains authoritative;
+- traditional actor HP bars remain hidden while unrelated objective/vehicle/RAM/status information stays usable;
+- MaxDoc remains MaxDoc and is modeled as analgesia, not magical tissue/blood/chrome repair;
+- normal installation/launch should become one package + ordinary Steam launch, without Vortex knowledge or a persistent custom launcher.
 
-| Workstream | Weight | Current completion | Weighted contribution | Notes |
-| --- | ---: | ---: | ---: | --- |
-| Scope, architecture and authority ownership | 10% | 95% | 9.5% | Product scope, fixed-release philosophy, vanilla-first identity and owned-runtime requirement are explicit. |
-| Body / needs / sleep / exertion | 20% | 55% | 11.0% | Original models plus native runtime/hooks now exact-compile in the complete owned candidate; live behavior/calibration is still pending. |
-| Combat / injury / blood loss / armor / pain | 25% | 45% | 11.25% | Original causal models and native adapters exact-compile together; physical outcomes, armor, pain/MaxDoc and treatment still need attended gameplay acceptance. |
-| Fixed release profile / development gates | 10% | 55% | 5.5% | Architecture treats modularity as development-only; player gameplay/balance settings are retired from the product path. |
-| Presentation / Condition UI / scanner / nameplates | 10% | 35% | 3.5% | No-healthbar and owned Cyberware/Condition adapters exact-compile; live rendering/interaction and E3-independent nameplates remain unaccepted. |
-| Distribution / one-package installation | 10% | 25% | 2.5% | Owned build/preflight plus a fast flat install/removal path exists; public packaging is still blocked by live acceptance and final dependency audit. |
-| Native gameplay, save and quest validation | 10% | 20% | 2.0% | Exact local compile/preflight is now proven; first owned-runtime deployment, save/reload, combat/body/Condition behavior and quest compatibility are still ahead. |
-| Documentation / handoff / reproducibility | 5% | 95% | 4.75% | Goals, architecture/status/worklog, native-seam policy and attended acceptance path preserve current intent and reproducible evidence. |
-| **Total** | **100%** |  | **50.0%** | |
+## Current owned runtime
 
-## Current known-good state
+The completion candidate is intentionally minimal:
 
-- `main` remains the local-agent baseline through `938c8b9`, including the modern-scanner restoration candidate and earlier presentation fixes.
-- `chatgpt-continuation` contains the clarified realism scope, internal modular development architecture, fixed-release direction, vanilla-first identity rule, ownership policy work and extensive original body/combat/injury models.
-- `AGREED-GOALS.md` is the canonical user-intent ledger and supersedes conflicting older design text.
-- Core realpass source includes original models for body/needs, ballistics/impact, localized injuries, blood loss, armor wear, impairment, field care, professional biological/mechanical care, pain/analgesia, injury provenance and NPC injury progression.
-- The body runtime has direct native Cyberpunk lifecycle/consumable/time-skip hooks (`BodyNativeHooks.reds` plus realpass-owned body runtime/state) rather than using Dark Future as the body host.
-- The production source tree is guarded by runtime-origin policy: owned gameplay source cannot import/use Dark Future or Project E3 as an executing runtime host.
-- The obsolete Health-Booster-as-"Trauma Kit" field-care interceptor, Dark Future-derived localization layer and backpack `FIELD CARE` popup have been removed from production source rather than merely hidden from the candidate. Git history remains available if their old behavior needs to be studied.
-- `Build-OwnedAcceptance.ps1` now compiles the complete current production REDscript tree and fails if retired bridge/prototype files reappear. There is no grandfathered production-source exception for those paths.
-- `manifest/native-seams.json` plus `Test-NativeSeamPolicy.ps1` make patch-sensitive native-hook files explicit. Core simulation/model examples are forbidden from acquiring `@wrapMethod`/`@replaceMethod`/`@addMethod`/`@addField` hooks without an intentional seam-policy change.
-- MaxDoc is mapped by its **vanilla** `FirstAidWhiff` consumable identity at the native `UseHealChargeAction` status-effect boundary. The intended realpass effect is analgesia only; the stock HP-regeneration effect is skipped while the vanilla item identity/use flow is retained. Bounce Back/Health Booster are not aliases for MaxDoc and await their own realistic roles.
-- `FieldCareActionRuntime.reds` uses native menu/gameplay state rather than Dark Future services. Dressing and limb support use separate field-supply paths; MaxDoc is not wound-care currency.
-- Bounded player injury provenance records explanatory metadata only after an authoritative wound commit; it does not own damage/treatment state.
-- `ConditionPresentation.reds` projects regional injury + provenance + qualitative pain into condition descriptors without reading native HP.
-- `ConditionNativeUI.reds` contains the first owned native `CYBERWARE | CONDITION` slice on the stock Cyberware/ripperdoc controller, including active-condition listing, stock paper-doll selection/zoom calls, field-care controls and ripperdoc clinical/mechanical controls. It now exact-compiles against the user's installed 2.31 scripts; live rendering/input acceptance is still pending.
-- `docs/CONDITION-UI.md` defines the final injury UX: vanilla Cyberware/body shell, `CYBERWARE | CONDITION`, condition entries anchored to anatomy, native paper-doll zoom where possible, cause/protection explanation, field care in ordinary context and professional/mechanical care in ripperdoc context.
-- `Build-OwnedRuntimeProfile.ps1` layers only the pinned generic `RED4ext + redscript` base under the owned source candidate, rejects Dark Future/Project E3/Mod Settings/Input Loader payloads, and exact-compiles the final deployment manifest.
-- `Prepare-OwnedSession.ps1` now uses `Install-OwnedRuntime.ps1` for the development install path. It exact-compiles first, plans only the current flat payload, directly replaces the current realpass-owned script namespace, removes known retired Dark Future/Project E3 runtime residue, verifies every copied payload hash, records one flat `owned-current.json`, and checks source-mod isolation. It does **not** traverse old rollback chains or create an extra local save backup.
-- `Remove-OwnedRuntime.ps1` is the lightweight realpass cleanup path. It removes recorded realpass-installed files whose hashes still match. If stock game bytes ever need repair, use Steam **Verify Files** or reinstall; Steam verification is not expected to remove arbitrary extra mod files on its own.
-- On 2026-09-13, owned preflight build `realpass-owned-preflight-20260913-201539-52d9961b` passed all 42 cloud-safe/offline checks and exact-compiled **42 project-original REDscript sources** against the installed Cyberpunk 2.31 scripts. The final deployable owned profile also exact-compiled with **50 files**. The game cache was not modified and nothing was deployed or launched.
-- Traditional actor health bars remain outside the authored presentation target; generic objective/vehicle durability indicators are not blanket-suppressed.
-- Exact-head cloud CI is required before moving to local acceptance; cloud success remains architecture/model evidence only, not gameplay acceptance.
+- project-original `r6/scripts/CyberpunkRealism/*.reds` runtime;
+- pinned **redscript** plumbing only.
 
-## Principal release blockers
+The owned profile does **not** require RED4ext, ArchiveXL, TweakXL, Codeware, Mod Settings or Input Loader. Dark Future and Project E3 remain historical/reference material only and are forbidden from owned/live/public runtime manifests.
 
-1. **First owned-runtime live deployment and smoke test.** Exact compilation is now clean. The next gate is the fast flat `Prepare-OwnedSession.ps1 -Deploy` install followed by a manual launch through Steam and a short smoke test proving the game boots, scripts load and the owned runtime is actually active.
-2. **Cyberware/Condition live acceptance.** The agreed Condition mode exact-compiles, but its dynamic Ink layout, `CYBERWARE | CONDITION` toggle, active-condition list, paper-doll zoom behavior and treatment controls must be verified in the stock screen.
-3. **First attended combat/injury/pain/treatment acceptance.** Validate physical combat, armor, wounds, bleeding, impairment, pain/MaxDoc, no-healthbar feedback, Condition treatment and persistence together.
-4. **Provenance-to-UI acceptance.** Verify persistence, cause wording and left/right regional association in the live Condition interface without exposing raw simulation numbers.
-5. **Body native calibration.** Validate real game clock rate, consumption, sleep/wait distinction, exertion, washing/bathroom interactions and save/reload under the owned runtime.
-6. **Special combat compatibility.** Validate bosses/MaxTac, authored immunity/quest protections, nonlethal paths, NPC persistence/AI effects and Phantom Liberty critical sequences.
-7. **E3-independent presentation.** Recreate only desired nameplate/HUD ideas with realpass-owned implementation; keep the native modern scanner authoritative.
-8. **Player release artifact.** After runtime ownership and native behavior stabilize, produce the deterministic game-root-shaped release with hashes/notices/ownership records and a simple install/update/uninstall path.
+Canonical body/combat activation remains fail-closed in repository source. `Build-OwnedAcceptance.ps1` opens those gates only in immutable staged copies for an exact candidate, and `Build-OwnedRuntimeProfile.ps1` exact-compiles both the owned source candidate and final redscript-only deployment profile before install.
 
-## Immediate priority order
+## Implemented authorities
 
-1. Treat `AGREED-GOALS.md` as the first read for every agent and keep it synchronized when the user makes a new explicit product decision.
-2. Keep the cloud-owned-path suite green and use it to reject architecture regressions, including native-hook code leaking out of the explicit seam allowlist.
-3. Run the first **fast owned deployment** with `Prepare-OwnedSession.ps1 -Deploy`. It should exact-compile, install only the current 50-file owned profile, clean retired source-mod residue, verify installed bytes and stop at `READY` without walking historical rollback receipts or copying saves.
-4. If deployment reports `READY`, launch Cyberpunk normally through Steam and perform a short boot/load/save smoke test before deliberately exercising combat/body/Condition systems.
-5. Then run one broad attended combat + injury + pain + Condition treatment session using `docs/ATTENDED-ACCEPTANCE.md` as the checklist.
-6. Convert native/runtime failures into narrow adapter/model/acceptance issues; do not solve them by reintroducing source-mod ownership, item renames or generic health-sponge scaling.
+### Body
+
+Project-original shared physiology/time state covers nutrition, hydration, sleep/wake pressure, exertion, digestion/elimination, recovery and restrained hygiene interactions. Native lifecycle, completed consumable, wait/sleep and interaction adapters feed the same body authority.
+
+### Combat / armor / injury
+
+The owned pipeline includes projectile/weapon/ammunition profiles, hit region, protective coverage, penetration/impact, regional tissue/bone/chrome wound routing, blood loss, impairment, armor wear, pain/analgesia, field care, professional biological/mechanical care, recovery, injury provenance and supported NPC progression.
+
+Native authored boss/quest/immortality/nonlethal safeguards remain the final compatibility boundary.
+
+### Biology presentation
+
+`BiologyPresentation.reds` and `BiologyNativeUI.reds` implement the canonical body-state surface.
+
+- qualitative bodily needs/effects rather than raw percentages;
+- active conditions only; healthy regions stay quiet;
+- condition detail reads authoritative RealPass injury/provenance/pain state;
+- `Eat…` / `Drink…` enumerate actual carried stacks;
+- food preserves stock `Eat` actions, drinks preserve stock `Drink` actions, and generic `Consume` is only the stock fallback;
+- stock item localization/quantities remain authoritative;
+- completed stock `ConsumeAction` remains the single intake adapter into the RealPass body;
+- dressing/support use the shared timed field-care runtime;
+- ripperdoc-only Biology professional care uses the shared professional-care runtime;
+- Biology closes/clears its picker when the native hub deactivates, preventing root-level UI leakage into other fullscreen menus.
+
+The superseded `ConditionNativeUI.reds` / `CYBERWARE | CONDITION` implementation has been removed from production source.
+
+### Presentation / scanner / names
+
+- `NoHealthbars.reds` suppresses known actor-health visibility paths without blanket-hiding unrelated HUD state.
+- The native modern scanner/quickhack flow is preserved by not replacing it.
+- `NameplatesNative.reds` provides a narrow scanned-civilian public-name fallback before the stock renderer runs. It requires stock crowd-nameplate/scanner permission, scan completion, no hidden/alternative/quest identity, and never becomes a second nameplate renderer.
+
+## Build / install / recovery path
+
+The normal local acceptance entry point is:
+
+```powershell
+pwsh ./tools/Prepare-OwnedSession.ps1
+```
+
+It runs cloud-safe repository checks, creates a fresh immutable build ID, acquires/stages pinned redscript only, builds the complete project-original source tree, exact-compiles against the installed Cyberpunk 2077 2.31 base script bundle, exact-compiles the final deployment manifest, and plans the flat install without changing the game.
+
+If that passes:
+
+```powershell
+pwsh ./tools/Prepare-OwnedSession.ps1 -Deploy
+```
+
+The deploy path installs only the exact current manifest payload, verifies copied hashes, records `owned-current.json`, removes known retired/source-mod runtime residue, verifies residue absence and stops without launching Cyberpunk.
+
+`Remove-OwnedRuntime.ps1` removes matching RealPass-owned extra files. Steam **Verify Files** or reinstall remains the stock-game repair authority. The accepted development path does not maintain a redundant RealPass save-backup/rollback chain and does not start background services/watchers/loggers.
+
+## Evidence already obtained
+
+- Pure-model/property/architecture tests cover body, sleep, clock, combat, ballistics, wound routing, injury, blood loss, armor wear, field care, professional care, pain, injury effects, NPC progression, runtime ownership, settings/release policy, artifact policy and no-healthbar behavior.
+- A previous owned source candidate exact-compiled successfully against Nat's installed Cyberpunk 2077 2.31 environment on 2026-09-13. That compile predates the final Biology/nameplate completion and therefore remains evidence for the broader owned architecture, **not** compile proof for the current head.
+- The completion branch has repeatedly passed cloud CI during the migration; the final merge gate requires a green run for the exact final branch head.
+- Public current/decompiled Cyberpunk script references were used to audit the new native boundaries, including `MenuHubLogicController`, `RipperDocGameController`, `TransactionSystem.GetItemList/GetItemQuantity`, `ItemActionsHelper` Eat/Drink/Consume paths, item-name localization, Ink text/widget APIs, `NameplateVisualsLogicController.SetVisualData`, quest-target access, hide-name flags, alternative identities and stock scanner visibility policy.
+
+## Remaining gates — deliberately local/live
+
+The repository should not invent more speculative architecture to substitute for these checks:
+
+1. **Fresh exact current-head compile.** The new Biology and owned nameplate seams must compile against Nat's installed 2.31 scripts.
+2. **Flat deployment + boot.** Verify exact installed hashes, no retired/source-mod runtime residue, normal Steam startup and save load.
+3. **Biology acceptance.** Layout/input, hub lifecycle, actual-inventory Eat/Drink, qualitative needs/conditions, field care and ripperdoc professional care.
+4. **Body calibration.** Consumption/absorption, game-time progression, exertion/recovery, wait vs sleep, bathroom/washing and save/reload.
+5. **Combat/injury/pain acceptance.** Physical hit routing, armor coverage/wear, regional impairment, bleeding, MaxDoc analgesia/overuse, treatment and persistence in both V and ordinary human NPC directions.
+6. **Presentation acceptance.** Actor-health suppression, native scanner/quickhacks, scanned-civilian naming and no hidden/quest/alternative identity leakage.
+7. **Special compatibility.** Bosses/MaxTac, authored protections, nonlethal paths, drones/mechanical targets, companions, base-game and Phantom Liberty critical sequences.
+8. **Performance.** No severe script errors, runaway callbacks/widgets, obvious latency regression or quest blockers over an attended session.
+9. **Release packaging.** Only after native acceptance: final calibration, notices/checksums and deterministic one-download player artifact.
+
+`docs/ATTENDED-ACCEPTANCE.md` is the canonical broad live-test checklist.
 
 ## Rules for future agents
 
-- **Read `AGREED-GOALS.md` first.** Then read this file, `docs/WORKLOG.md`, `REALISM-SPEC.md`, `docs/MODULAR-ARCHITECTURE.md`, `docs/COMBAT-CALIBRATION.md` and relevant acceptance docs before changing behavior.
-- If an older document conflicts with a locked goal in `AGREED-GOALS.md`, update the older document; do not reinterpret the goal to preserve legacy implementation.
-- Update `AGREED-GOALS.md` whenever the user explicitly agrees to a new product goal. Give new decisions stable `G-###` identifiers.
-- Preserve vanilla item/system identity unless a new explicit user decision says otherwise. Change mechanics under CDPR identities rather than importing source-mod names.
-- Keep patch-sensitive hooks at explicit native seams. Do not move engine-version-specific annotations/types into pure simulation models merely because it is convenient.
-- Update completion percentages only when a real release gate closes/reopens and explain the change in `docs/WORKLOG.md`.
-- Do not label any candidate “owned-runtime” while Dark Future/Project E3 executing content remains required.
-- Do not treat a successful exact compile as gameplay validation; the first owned deployment and attended live session are now the next authority.
-- Keep game files, saves, downloaded dependencies, generated staging state and local install-state files out of the public repository.
-- Do not reintroduce heavy local rollback/save-backup machinery into the normal development path unless the project owner explicitly asks for it. Flat owned-file tracking plus Steam repair is the accepted recovery model.
-- No unattended game launch, background watcher/logger/service or scheduled task may be introduced for testing.
-- Prefer coherent reviewable batches over speculative patches.
+- Read `AGREED-GOALS.md` first. Explicit newer user decisions supersede stale implementation text.
+- Do not restore Dark Future/Project E3 executing ownership or obsolete framework dependencies to solve a local native failure.
+- Preserve vanilla identities and interactions when changing the underlying mechanic is sufficient.
+- Keep patch-sensitive engine hooks in `manifest/native-seams.json`; stable models remain engine-independent.
+- Do not interpret cloud CI or compilation as gameplay acceptance.
+- Do not expose internal body/injury numbers merely because the simulation tracks them.
+- Do not reintroduce public core-system toggles, generic health-sponge scaling, redundant save-backup machinery, unattended launch automation or background monitoring.
+- Live failures should become narrow native-seam/model/calibration issues and be fixed against concrete evidence.
