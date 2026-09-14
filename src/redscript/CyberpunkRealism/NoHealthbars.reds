@@ -1,26 +1,42 @@
-// realpass presentation: no traditional actor health bars.
+// realpass presentation policy for traditional actor health bars.
+//
+// Final RealPass presentation is injury/body-state led rather than HP-meter led,
+// but attended development must not remove the player's only useful feedback before
+// the replacement Biology/HUD/gameplay cues have actually been accepted in-game.
+// Suppression is therefore replacement-gated instead of blindly always-on.
 //
 // Keep non-health information (RAM, buffs, names, scanner data, status cues) owned
-// by their native/presentation systems. This file suppresses continuous HP bars,
-// HP numbers/previews, the dedicated boss-health HUD and dedicated companion actor
-// health HUD. The simulation and native damage systems remain authoritative;
-// hiding a bar must never change HP.
-//
-// Hook signatures are verified against Cyberpunk 2077 script sources and again by
-// local compilation before an attended profile can be deployed.
+// by their native/presentation systems. When an accepted replacement exists this
+// file suppresses continuous HP bars, HP numbers/previews, the dedicated boss-health
+// HUD and dedicated companion actor-health HUD without changing simulation state.
 module CyberpunkRealism.Presentation
 
-public class CRHealthbarPresentationPolicy extends IScriptable {
-  // realpass' authored default is an information-sparse, injury-led combat read.
-  // A future settings adapter may expose this as presentation.traditionalHealthBars.
-  public static func ShowTraditionalHealthBars() -> Bool {
+public class CRFeedbackReadiness extends IScriptable {
+  // These are acceptance gates, not player settings and not balance controls.
+  // Change each to true only after an attended build proves the corresponding
+  // replacement feedback remains understandable during ordinary play/combat.
+  public static func PlayerHealthReplacementAccepted() -> Bool {
+    return false;
+  }
+
+  public static func NPCHealthReplacementAccepted() -> Bool {
     return false;
   }
 }
 
+public class CRHealthbarPresentationPolicy extends IScriptable {
+  public static func ShowTraditionalPlayerHealthBars() -> Bool {
+    return !CRFeedbackReadiness.PlayerHealthReplacementAccepted();
+  }
+
+  public static func ShowTraditionalNPCHealthBars() -> Bool {
+    return !CRFeedbackReadiness.NPCHealthReplacementAccepted();
+  }
+}
+
 @addMethod(healthbarWidgetGameController)
-private func CRHideTraditionalPlayerHealth() -> Void {
-  if CRHealthbarPresentationPolicy.ShowTraditionalHealthBars() {
+private func CRApplyPlayerHealthPresentation() -> Void {
+  if CRHealthbarPresentationPolicy.ShowTraditionalPlayerHealthBars() {
     return;
   }
   // Hide only health-specific children. Do not hide the controller root: RAM,
@@ -37,43 +53,39 @@ private func CRHideTraditionalPlayerHealth() -> Void {
 @wrapMethod(healthbarWidgetGameController)
 protected cb func OnInitialize() -> Bool {
   let result: Bool = wrappedMethod();
-  this.CRHideTraditionalPlayerHealth();
+  this.CRApplyPlayerHealthPresentation();
   return result;
 }
 
 @wrapMethod(healthbarWidgetGameController)
 protected cb func OnUpdateHealthBarVisibility() -> Bool {
   let result: Bool = wrappedMethod();
-  this.CRHideTraditionalPlayerHealth();
+  this.CRApplyPlayerHealthPresentation();
   return result;
 }
 
 // Overclock has a direct visibility path which can bypass the generic update
-// callback. Re-apply suppression after native handling so RAM/overclock behavior is
-// preserved while HP stays unknown.
+// callback. Re-apply accepted suppression after native handling while preserving
+// ordinary native behavior during the transitional fallback period.
 @wrapMethod(healthbarWidgetGameController)
 public final func EvaluateHealthBarVisibility(isInOverclockedState: Bool) -> Void {
   wrappedMethod(isInOverclockedState);
-  this.CRHideTraditionalPlayerHealth();
+  this.CRApplyPlayerHealthPresentation();
 }
 
-// Overshield changes have their own evaluator/listener path as well. The shield is
-// still simulated; only its continuous bar is suppressed with ordinary HP.
 @wrapMethod(healthbarWidgetGameController)
 public final func EvaluateOvershieldBarVisibility() -> Void {
   wrappedMethod();
-  this.CRHideTraditionalPlayerHealth();
+  this.CRApplyPlayerHealthPresentation();
 }
 
 @addMethod(NameplateVisualsLogicController)
-private func CRHideTraditionalNPCHealth() -> Void {
-  if CRHealthbarPresentationPolicy.ShowTraditionalHealthBars() {
+private func CRApplyNPCHealthPresentation() -> Void {
+  if CRHealthbarPresentationPolicy.ShowTraditionalNPCHealthBars() {
     return;
   }
   this.m_healthbarVisible = false;
   inkWidgetRef.SetVisible(this.m_healthbarWidget, false);
-  // E3/native layouts can keep damage-preview children outside the visible fill.
-  // Suppress them too so the removed HP bar is not reconstructed by preview UI.
   inkWidgetRef.SetVisible(this.m_damagePreviewWrapper, false);
   inkWidgetRef.SetVisible(this.m_damagePreviewWidget, false);
   inkWidgetRef.SetVisible(this.m_damagePreviewArrow, false);
@@ -82,34 +94,29 @@ private func CRHideTraditionalNPCHealth() -> Void {
 @wrapMethod(NameplateVisualsLogicController)
 private final func UpdateHealthbarVisibility() -> Void {
   wrappedMethod();
-  this.CRHideTraditionalNPCHealth();
+  this.CRApplyNPCHealthPresentation();
 }
 
 @wrapMethod(NameplateVisualsLogicController)
 public final func SetVisualData(puppet: ref<GameObject>, const incomingData: script_ref<NPCNextToTheCrosshair>, opt isNewNpc: Bool) -> Void {
   wrappedMethod(puppet, incomingData, isNewNpc);
-  this.CRHideTraditionalNPCHealth();
+  this.CRApplyNPCHealthPresentation();
 }
 
 @wrapMethod(BossHealthBarGameController)
 private final func ShowBossHealthBar(puppet: ref<NPCPuppet>, useSilentUpdate: Bool) -> Void {
-  if CRHealthbarPresentationPolicy.ShowTraditionalHealthBars() {
+  if CRHealthbarPresentationPolicy.ShowTraditionalNPCHealthBars() {
     wrappedMethod(puppet, useSilentUpdate);
     return;
   }
-  // Keep native boss/quest state untouched while preventing the dedicated HP HUD.
-  // HideBossHealthBar owns listener/animation cleanup in the native controller.
   this.HideBossHealthBar();
   this.GetRootWidget().SetVisible(false);
 }
 
-// The Flathead/companion actor HUD is a separate dedicated healthbar controller,
-// not an objective/vehicle-health system. Keep its native state/listeners intact but
-// suppress the visible actor HP readout under the same authored policy.
 @wrapMethod(CompanionHealthBarGameController)
 protected cb func OnFlatheadStatusChanged(value: Bool) -> Bool {
   let result: Bool = wrappedMethod(value);
-  if !CRHealthbarPresentationPolicy.ShowTraditionalHealthBars() {
+  if !CRHealthbarPresentationPolicy.ShowTraditionalNPCHealthBars() {
     this.GetRootWidget().SetVisible(false);
   }
   return result;
