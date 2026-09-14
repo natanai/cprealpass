@@ -118,32 +118,42 @@ Do not blanket-hide mission-objective or vehicle durability indicators merely be
 V's body is modeled at minimum as six regions: head, torso, left/right arm, left/right leg. A region may independently track biological tissue damage, bone damage, cyberware damage, external bleeding, internal bleeding, support/stabilization and clinical-care state. Whole-body blood loss/recovery is tracked separately.
 
 ### G-041 — Detailed simulation internally, qualitative diagnosis externally — LOCKED
-The model may use exact internal values. Normal player presentation should translate them into understandable condition language rather than expose raw simulation percentages/rates as a replacement health meter.
+The model may use exact internal values. Normal gameplay and Biology's unzoomed overview should translate them into understandable condition language rather than expose raw simulation percentages/rates as replacement health meters.
 
 Examples: minor/moderate/severe trauma, external bleeding, suspected internal injury, impaired function, supported fracture, damaged chrome.
+
+A player who **deliberately drills into a body system or selected region** may inspect exact authoritative values as restrained bars/numbers. Those values are inspection depth, not the primary communication layer and not a second state authority.
 
 ### G-042 — Physical consequences communicate injury during combat — LOCKED
 During a fight the player should mostly learn that something is wrong through believable consequences: movement impairment, stamina loss, degraded weapon handling/reload, pain, bleeding/weakness and similar effects—not through an exact HP readout.
 
-### G-043 — Biology is the canonical realpass player-facing body interface — LOCKED
-The menu screen previously treated as **Conditions** becomes **Biology** and is the canonical home for realpass player-facing bodily simulation: needs, sensations, injury/conditions, pain/analgesia, elimination, fatigue/rest, hygiene where retained, and other embodied state that V could reasonably perceive or know.
+### G-043 — Biology owns the shared body/anatomy screen; Cyberware is a Biology submode — LOCKED
+The top-level hub destination currently labeled **CYBERWARE** should become **BIOLOGY** while reusing the stock `cyberware_equip` body/anatomy fullscreen as the technical shell.
 
-The prior plan to make the Cyberware screen the canonical `CYBERWARE | CONDITION` interface is superseded. Cyberware should remain focused on its vanilla equipment purpose. Stock body/anatomical presentation may still be reused where it genuinely helps a Biology detail view, but Biology does not conceptually live under Cyberware.
+The player-facing hierarchy is:
+
+`BIOLOGY -> shared body/anatomy shell -> BIOLOGY | CYBERWARE`
+
+Biology is the parent concept because it owns V's embodied state: needs, sensations, injury/conditions, pain/analgesia, elimination, fatigue/rest, recovery, hygiene where retained, and relevant biological/cybernetic body state. **Cyberware is installed equipment within that body**, so it remains fully accessible as an internal mode/subcategory rather than owning the body screen.
+
+Normal hub access should default to Biology. A direct ripperdoc/vendor context may default the internal mode to Cyberware for usability while preserving Biology as the parent screen.
 
 ### G-044 — Conditions are a subsection of Biology, not the screen itself — LOCKED
 **Conditions** remains useful language for meaningful injury, illness, impairment, diagnosed/recognized pathology and cyberware/body damage. It is one subsection or mode within Biology rather than the name or total scope of the body screen.
 
 Biology may organize player-facing information into restrained groups such as bodily needs/sensations, active conditions, effects and context-relevant responses. Exact visual grouping is open to native calibration.
 
-### G-045 — Biology shows perceptible/knowable state, not a wall of body meters — LOCKED
-Healthy, irrelevant or currently imperceptible state should remain visually quiet. The UI should surface things such as `thirsty`, `very hungry`, `need to urinate`, `exhausted`, `bleeding`, `dizzy`, `impaired` or a recognized active condition when those states are meaningful.
+### G-045 — Biology overview is qualitative; exact bars belong only to deliberate drill-down — LOCKED
+Healthy, irrelevant or currently imperceptible state should remain visually quiet. The unzoomed Biology view should surface things such as `thirsty`, `very hungry`, `need to urinate`, `exhausted`, `bleeding`, `dizzy`, `impaired` or a recognized active condition when those states are meaningful.
 
-Do not replace the removed HP bar with hydration, hunger, fatigue, pain, blood, bladder or similar percentage bars. Internal numeric state may remain exact and high-resolution without being exposed directly in normal play.
+Do **not** replace the removed HP bar with an always-visible hydration/hunger/fatigue/pain/blood/bladder meter wall. Exact values may be displayed after a player intentionally selects/zooms into a relevant body system or region, including as bars useful for testing and deep inspection. Those bars must read the authoritative model directly and disappear again at the overview/gameplay level.
 
-### G-046 — Anatomical drill-down is optional presentation language, not UI ownership — LOCKED
-For localized injury/condition detail, reuse CDPR's anatomical/body drill-down or paper-doll language where it is robust and useful. That reuse does **not** make Cyberware the owner of the Biology experience.
+### G-046 — Reuse Cyberpunk's native body nodes/zooms as Biology's interaction language — LOCKED
+Biology should reuse the existing Cyberware screen's central body silhouette, anatomical/system anchors, hover highlighting, node interaction and zoom-in/zoom-out language where technically robust.
 
-If vanilla provides only grouped anatomy such as Arms/Legs, realpass may distinguish left/right conditions within that grouped view rather than inventing fragile custom camera assets.
+In Biology mode, stock cyberware slot contents may be hidden while anatomically useful categories become Biology nodes. Existing labels such as Arms, Skeleton, Nervous System, Integumentary System, Circulatory System and Legs are valuable native language. Cyberware-specific categories should be relabeled or omitted only when realpass has an authoritative body concept behind the replacement; do not invent physiology merely to fill every vanilla slot.
+
+Switching to the internal **CYBERWARE** mode must restore the ordinary Cyberpunk cyberware equipment/slot experience without duplicating or rewriting its inventory authority.
 
 ### G-047 — Injury detail explains what happened — LOCKED
 The zoomed condition view should explain, in restrained player-facing language:
@@ -237,6 +247,10 @@ Biology must not maintain a duplicate food/medical inventory. Selecting or consu
 ### G-065 — Needs are not continuously entitled to screen space — LOCKED
 A need does not need a permanent row merely because the simulation tracks it. If V has no meaningful hunger, thirst, bladder/bowel pressure, fatigue or other perceptible concern, Biology may omit or quiet that state. As a need becomes meaningful, presentation may progress from subtle sensation to explicit qualitative language to gameplay consequences according to the model.
 
+### G-066 — Detailed values are secondary; polling Biology should never be required — LOCKED
+The game should communicate important bodily state effectively enough that players do **not** feel compelled to repeatedly open Biology and inspect every detailed bar just to know whether V needs food, water, rest, a bathroom, care or attention to an injury.
+
+Drill-down numbers/bars answer *what exactly is happening?* and help calibration/testing. Gameplay consequences and qualitative presentation should already answer *do I need to care about this now?* If repeated meter polling becomes optimal play, improve the embodied communication rather than promoting the bars to the overview/HUD.
 
 ---
 
@@ -249,7 +263,7 @@ Keep Cyberpunk's modern scanner/quickhack behavior rather than restoring Project
 Useful E3-era HUD/nameplate ideas may be recreated with realpass-owned code/assets, but Project E3 runtime assets/scripts may not be required by the finished mod.
 
 ### G-072 — Presentation serves the simulation — LOCKED
-UI should communicate what V could reasonably perceive/diagnose without becoming a dense spreadsheet or permanent RPG meter wall. Detailed exact numerical state belongs in development diagnostics, not normal play.
+UI should communicate what V could reasonably perceive/diagnose without becoming a dense spreadsheet or permanent RPG meter wall. Exact numerical state may be available in **deliberate Biology drill-down inspection** and development diagnostics, but not as always-visible gameplay/HUD or overview telemetry.
 
 ---
 
@@ -304,7 +318,7 @@ These are **not** permission to change the locked goals above. They are implemen
 - exact realistic realpass mechanics for vanilla Bounce Back and Health Booster; preserve their vanilla names/identity while these remain unresolved;
 - exact field-supply item/data implementation for dressings and limb supports;
 - exact Biology typography, grouping, colors, widget positions and animation timing;
-- exact native shell/asset strategy for the standalone Biology screen, provided the final executing UI remains realpass-owned;
+- exact Biology node-to-model mapping, selective reuse/relabeling of Cyberware categories, and detailed-bar presentation within the shared body/anatomy shell;
 - exact qualitative thresholds/cue escalation for hunger, thirst, elimination, fatigue, hygiene and other bodily sensations;
 - the minimal set of generic frameworks actually required by the final owned runtime;
 - exact professional-care cost/time/economy integration, provided it does not become an economy overhaul;
