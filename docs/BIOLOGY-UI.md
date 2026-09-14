@@ -1,6 +1,6 @@
 # realpass Biology interface
 
-Status: canonical player-facing body/needs UI design; presentation migration active; native standalone shell acceptance pending
+Status: canonical player-facing body/needs UI; owned native source implemented; exact local compile and attended acceptance pending
 Last updated: 2026-09-14
 Governing goals: `AGREED-GOALS.md` G-033, G-040 through G-049, G-055 through G-065, and G-072
 
@@ -30,104 +30,124 @@ Exact values remain appropriate for model logic, save migration, forecasting and
 
 ## Biology information architecture
 
-Exact visual grouping remains open to attended native calibration, but the conceptual hierarchy is:
+The owned native implementation is intentionally dynamic REDscript rather than a wholesale replacement of a stock `.inkwidget`. Exact spacing/typography remain attended calibration details, but the conceptual hierarchy is fixed.
 
 ### Bodily needs / sensations
 
 Qualitative, currently meaningful states such as thirsty, hungry, tired, urinary/bowel pressure, hygiene sensation where retained, and other future physiological sensations only when backed by the realpass model.
 
-These are **not permanent meters**. If no need is meaningfully perceptible, the screen may omit or quiet it.
+These are **not permanent meters**. If no need is meaningfully perceptible, the screen quiets it.
 
 ### Conditions
 
 Conditions are meaningful active injury, impairment, illness/pathology when modeled, recognized physiological effects, or cyberware/body damage. Healthy regions remain visually quiet.
 
-Regional injury remains authoritative at minimum for head, torso, left/right arms and left/right legs. A Biology condition can still use stock anatomical drill-down/paper-doll language where robust, but that is presentation reuse rather than Cyberware owning the interface.
+Regional injury remains authoritative at minimum for head, torso, left/right arms and left/right legs. Conditions are selectable in Biology and show the existing qualitative detail projection; the former Cyberware-mounted `CYBERWARE | CONDITION` prototype has been removed from production source.
 
 ### Effects
 
-Perceptible state that is useful to distinguish from an underlying condition, for example pain/analgesia, dizziness/disorientation or another model-backed transient effect. Avoid duplicate bars or second damage systems.
+Perceptible state useful to distinguish from the underlying condition, currently including meaningful pain, MaxDoc analgesia and analgesic-overuse disorientation. These remain qualitative and never become a second damage system.
 
 ### Contextual responses
 
 Biology is primarily observational. An action appears because a bodily state makes it relevant, not because every possible command needs a permanent button.
 
-Examples:
+Current source behavior includes:
 
 - `Hungry -> Eat…`
 - `Thirsty -> Drink…`
-- an applicable wound -> field-care options;
-- an appropriate professional context -> clinical/mechanical care.
+- an applicable wound -> dressing/support actions;
+- ripperdoc context -> clinical/mechanical professional care when the model says it can help.
 
 ## Inventory boundary
 
-Biology must never create a second food, drink or medical inventory.
+Biology never creates a second food, drink or medical inventory.
 
-`Eat…`, `Drink…` and treatment selection are **filtered views into actual carried items**. Backpack/inventory remains the source of truth for item identity and quantity, and consumption/treatment must use the ordinary authoritative transaction path.
+`Eat…` and `Drink…` enumerate the player's **actual carried item stacks** through the stock transaction system, filter those records through `CRItemServing`, and then invoke Cyberpunk's own `ItemActionsHelper.ConsumeItem(...)`. The existing `ConsumeAction.CompleteAction` adapter observes the successfully completed stock action and submits that same record to the realpass body runtime.
 
-This means a food item can be reached from either direction without duplicating state:
+Biology therefore does not manually subtract items and does not call the body-consumption method directly.
+
+A food item can be reached from either direction without duplicated state:
 
 - Backpack: *I have an apple; use it.*
 - Biology: *I am hungry; show me applicable food I actually have.*
 
-Both routes resolve to the same item and the same realpass serving/intake behavior.
+Both routes resolve to the same stock consumable transaction and the same realpass serving/intake behavior.
 
 ## What leaves Backpack
 
-Realpass-owned player-facing physiology should not be injected into Backpack: hydration/hunger state, fatigue, elimination, pain/injury severity, blood/body-health summaries, field-care body dashboards, or survival-bar serving previews.
+Realpass-owned player-facing physiology is not injected into Backpack: hydration/hunger state, fatigue, elimination, pain/injury severity, blood/body-health summaries, field-care body dashboards, or survival-bar serving previews.
 
 Inventory information that genuinely describes possessions may remain. A future physical encumbrance/capacity representation, if retained, must be justified as inventory/equipment information rather than smuggling the body dashboard back into Backpack.
 
-The development patch `config/patches/darkfuture-body-previews.json` has been narrowed accordingly: it retains time-skip forecast correctness but no longer injects realpass body UI into Dark Future Backpack screens.
+The development patch `config/patches/darkfuture-body-previews.json` is narrowed accordingly: it retains time-skip forecast correctness but no longer injects realpass body UI into Dark Future Backpack screens. That patch remains migration/reference material rather than a release runtime dependency.
 
 ## Qualitative body projection
 
-`BodyStatusPresentation.reds` is now the player-facing qualitative projection for needs. Its current thresholds are **provisional presentation calibration**, not clinical claims. It intentionally converts hidden body state into phrases and suppresses healthy regional injury rows.
+`BodyStatusPresentation.reds` is the player-facing qualitative projection for needs. Its thresholds are **provisional presentation calibration**, not clinical claims. It converts hidden body state into phrases and suppresses healthy regional injury rows.
 
-Current development language includes hunger, thirst, fatigue, urinary/bowel pressure and hygiene perception. Exact fluid, calorie, bladder-volume and sleep-pressure numbers are no longer normal player-facing output. Serving forecasts likewise describe likely relevance to hunger/thirst without printing hidden ml/kcal quantities.
+Current development language includes hunger, thirst, fatigue, urinary/bowel pressure and hygiene perception. Exact fluid, calorie, bladder-volume and sleep-pressure numbers are not normal player-facing output. Serving forecasts likewise describe likely relevance to hunger/thirst without printing hidden ml/kcal quantities.
+
+`BiologyPresentation.reds` composes that need projection with active regional conditions and perceptible pain/analgesia effects. It also produces only qualitative action relevance (`showEat`, `showDrink`) rather than exposing the underlying meter values to the UI.
+
+## Native Biology surfaces
+
+`BiologyNativeUI.reds` is the owned native seam.
+
+### Ordinary hub context
+
+A **BIOLOGY** entry opens the Biology panel and shows current body sensations, meaningful effects and active conditions. Selecting a condition shows its qualitative state, function, pain/cause explanation, field-care guidance and professional-care guidance.
+
+Applicable dressing/support actions enter the existing interruptible field-care runtime. The action remains queued while a menu is open; once the player closes menus it progresses only while the runtime's safety/movement/hands checks continue to pass.
+
+### Ripperdoc context
+
+The vanilla Cyberware screen remains an equipment screen. In actual `CyberwareScreenType.Ripperdoc` context, a separate **BIOLOGY** professional-care entry exposes the same active-condition language and only the clinical/mechanical actions the respective models currently consider useful.
+
+This is intentionally not a `CYBERWARE | CONDITION` mode. It gives a professional provider a Biology doorway without making Cyberware the owner of body state.
 
 ## Communicating urgency outside Biology
 
 Biology is the place the player may deliberately inspect their body; it should not become the only place the body exists.
 
-As a state becomes important, the preferred escalation is some combination of subtle embodied cue, qualitative Biology entry, stronger visual/audio/control/performance consequence when physiologically justified, and urgent impairment only when the underlying model warrants it.
-
-The exact cue mapping remains calibration work. Do not invent effects merely to make a number noticeable.
+Existing injury/pain mechanics already communicate substantial states through impairment, bleeding consequences, native weapon handling changes and analgesic-disorientation visuals. For hunger/thirst/elimination/fatigue specifically, additional non-menu cue mapping remains a **live calibration question**, not an unimplemented architectural dependency: do not invent audiovisual effects merely to make hidden values noticeable.
 
 ## Conditions and injury detail
 
-The prior condition-detail principles still apply inside Biology: region and condition type, approximate severity/current state, likely cause/time/protection context when provenance supports it, biological vs cybernetic damage, external vs internal bleeding, pain and functional consequences actually applied, plausible field care, and professional biological or mechanical care where context permits.
+Condition detail inside Biology includes region and condition type, approximate severity/current state, likely cause/protection context when provenance supports it, biological vs cybernetic damage, external vs internal bleeding, pain and functional consequences actually applied, plausible field care, and professional biological or mechanical care where context permits.
 
 Normal presentation does not expose raw injury percentages, exact bleed rates, analgesic load or native HP.
 
 ## Cyberware boundary
 
-Cyberware returns to its normal equipment purpose. The earlier source prototype in `ConditionNativeUI.reds` that mounts `CYBERWARE | CONDITION` on `RipperDocGameController` is now **legacy migration code, not canonical architecture**.
+Cyberware retains its vanilla equipment purpose. `ConditionNativeUI.reds` has been removed from production source. No `CYBERWARE | CONDITION` switch is part of the owned candidate.
 
-Do not expand that prototype. The replacement Biology shell should be realpass-owned and patch-resilient. It may reuse stable stock body/anatomical widgets or drill-down behavior, but should not require another gameplay mod's Conditions UI at release.
+The ripperdoc Biology doorway is a contextual care surface only; it does not replace/dim Cyberware slots or take over the Cyberware navigation model.
 
 ## Current implementation status
 
 Implemented in source/design:
 
-1. Canonical goals ledger now makes Biology the body-interface owner and supersedes `CYBERWARE | CONDITION`.
+1. Canonical goals ledger makes Biology the body-interface owner and supersedes `CYBERWARE | CONDITION`.
 2. Realpass body-status presentation is qualitative rather than raw-number body telemetry.
 3. Healthy regional injury rows are suppressed from the general body summary.
 4. Normal serving forecast text no longer exposes ml/kcal quantities.
 5. Dark Future Backpack migration patches no longer inject RealPass body status, field-care widgets or body-meter food previews.
 6. Time-skip body forecasting remains intact because it is simulation correctness rather than Backpack presentation.
-7. `BiologyPresentation.reds` provides a realpass-owned qualitative Biology view-model over current needs and active conditions.
+7. `BiologyPresentation.reds` provides a realpass-owned qualitative view model over current needs, effects and active conditions.
+8. `BiologyNativeUI.reds` mounts the ordinary Biology panel on the native hub.
+9. `Eat…` / `Drink…` enumerate actual carried items and invoke the stock consumable action instead of maintaining duplicate inventory state.
+10. Active conditions are selectable in Biology and use existing realpass condition/provenance projection.
+11. Field-care actions originate in Biology and still commit through the shared field-care/body runtime.
+12. Ripperdoc context exposes model-approved clinical/mechanical care through a Biology professional-care panel.
+13. The old Cyberware-mounted Condition native prototype is removed from production source.
 
-Still pending native implementation/acceptance:
+Still pending **acceptance/calibration**, not architecture:
 
-1. Replace/rename the currently visible Conditions shell with the final **Biology** screen in the owned runtime.
-2. Build the Biology layout/groups against the accepted native shell.
-3. Implement context-filtered carried-item lists for `Eat…` and `Drink…` using the authoritative inventory transaction path.
-4. Move field/professional condition actions into Biology and retire the old Cyberware-mounted Condition prototype.
-5. Add/calibrate non-menu embodied cues for needs where justified by the simulation.
-6. Exact-compile/preflight and attended-test the complete native candidate against the installed Cyberpunk 2.31 environment.
-
-Do not mark the Biology migration complete merely because the projection/docs are correct; the visible native screen and inventory actions require attended acceptance.
+1. Exact-compile the completed owned source candidate against the installed Cyberpunk 2077 2.31 scripts/framework environment.
+2. Deploy the exact compiled candidate with the flat owned-file installer and verify installed hashes/source-mod residue checks.
+3. Attend one broad live session to verify Biology layout/input, actual item use/animation, field-care menu boundary, ripperdoc context, body/combat/injury/pain/save/reload/time progression and ordinary quest/Phantom Liberty compatibility.
+4. Calibrate spacing/typography and any additional need-state embodied cues only from that live evidence.
 
 ## Acceptance criteria
 
@@ -143,6 +163,6 @@ Biology is accepted only when an attended build demonstrates all of the followin
 8. `Eat…` and `Drink…` show only applicable items actually carried by V and do not create duplicate inventory state.
 9. Selecting an item from Biology uses the same authoritative item/consumption path as using that item from inventory.
 10. Field/professional care remains context-valid and transactional.
-11. Urgent body state can communicate through believable gameplay/visual/audio consequences rather than requiring constant menu checking.
+11. Important body state is also communicated by existing justified gameplay consequences where those consequences exist; no permanent needs meter is introduced to compensate for missing calibration.
 12. No Dark Future/Project E3 executing UI/runtime is required by the release implementation.
 13. Save/reload and time progression preserve the single shared physiological body.
