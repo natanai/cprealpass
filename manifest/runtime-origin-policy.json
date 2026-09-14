@@ -9,7 +9,7 @@
     "publicBalanceSliders": false,
     "traditionalActorHealthBars": false,
     "diagnostics": "development-only",
-    "note": "Internal module gates may exist during development and acceptance, but a release build enables the complete accepted realpass experience as one product."
+    "note": "Internal module gates may exist during development and acceptance, but a release build enables the complete accepted realpass experience as one product. Mod Settings may expose presence/status plus explicitly accepted binary presentation/accessibility preferences without changing that simulation."
   },
   "vanillaFirst": {
     "preserveUsefulIdentity": true,
@@ -31,6 +31,20 @@
     "allowedInfrastructureClass": "generic-framework",
     "frameworkRule": "A framework may expose APIs, script loading, data loading, UI primitives or input plumbing. It may not supply the body, combat, injury, armor, presentation or progression behavior that defines realpass.",
     "referenceRule": "Third-party gameplay/presentation mods may be studied and retained as provenance/reference records, but their scripts, archives, tweak payloads and assets may not be executed or packaged by an owned-runtime test or release build."
+  },
+  "genericInfrastructure": {
+    "requiredForCurrentOwnedCandidate": [
+      "redscript",
+      "red4ext",
+      "archivexl",
+      "mod-settings"
+    ],
+    "currentlyNotRequired": [
+      "tweakxl",
+      "codeware",
+      "input-loader"
+    ],
+    "modSettingsBoundary": "Mod Settings provides only the RealPass presence/read-only feature ledger and explicitly accepted binary presentation/accessibility preferences. RealPass-owned source defines all labels, policy and preference effects; Mod Settings is not a body, injury, combat, armor, progression or balance authority."
   },
   "forbiddenRuntimeComponents": [
     "darkfuture",
@@ -56,6 +70,7 @@
     "Development gates are not player preferences and must not become a release configuration menu.",
     "A development candidate advertised as owned-runtime must fail closed if Dark Future or Project E3 is present in its deployment manifest.",
     "A development candidate advertised as owned-runtime must preserve vanilla item/system identity and reject inherited source-mod item renames.",
+    "The current owned candidate may stage only the generic infrastructure explicitly listed as required; adding another framework requires an owned-source need and synchronized contract change.",
     "Reference recipes may remain in the repository for historical provenance but may not feed the owned-runtime builder.",
     "No source-mod save state may be required to initialize a clean realpass save/runtime."
   ],
@@ -64,6 +79,7 @@
     "The release has one authored balance rather than exposing subsystem disable switches.",
     "Accessibility controls may exist only when they do not change simulation authority or balance; traditional actor health bars are intentionally not part of the authored realpass presentation.",
     "External gameplay/presentation mods are optional user choices outside realpass and are not prerequisites, bundled payloads or hidden runtime hosts.",
+    "Generic framework dependencies may be bundled only when explicitly required as infrastructure and properly licensed/noticed; they never become gameplay/presentation policy owners.",
     "Vanilla item/system identities are preserved unless a future explicit product goal authorizes a replacement identity.",
     "Every runtime file in the realpass-owned payload must have explicit provenance."
   ]
