@@ -21,6 +21,7 @@ if ($manifest.gameVersion -ne $actualVersion) { throw "Game version mismatch: ex
 function Remove-KnownRetiredRuntime([string]$root) {
     foreach ($relative in @(
         'r6/scripts/CyberpunkRealism',
+        'r6/scripts/realpass',
         'r6/tweaks/CyberpunkRealism',
         'r6/scripts/Dark Future',
         'r6/tweaks/Dark Future',
@@ -96,7 +97,7 @@ try {
     }
     Write-JsonFile $state $statePath
 
-    Write-Host 'Fast install: clearing only realpass-owned script namespaces and retired Dark Future/Project E3 runtime residue...'
+    Write-Host 'Fast install: clearing current/retired realpass script namespaces and retired Dark Future/Project E3 runtime residue...'
     Remove-KnownRetiredRuntime $GameRoot
 
     for ($i = 0; $i -lt $plan.Count; $i++) {
