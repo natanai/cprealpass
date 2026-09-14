@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "id": "darkfuture-body-previews-v1",
+  "id": "darkfuture-body-previews-v2",
   "component": "darkfuture",
   "sourceVersion": "2.0-release",
   "license": "CC-BY-SA-4.0",
   "sourceUrl": "https://github.com/DarkFortuneTeller/DarkFuture/tree/2.0-release",
-  "description": "Use copied shared-body state for sleep and intake forecasts, add inventory body status, and suppress unavailable forecasts.",
+  "description": "Use copied shared-body state only for time-skip forecasting. RealPass bodily state and intake presentation no longer live in Backpack; player-facing physiology belongs in Biology.",
   "patches": [
     {
       "destination": "r6/scripts/Dark Future/Gameplay/DFInteractionSystem.reds",
@@ -29,73 +29,6 @@
         {
           "find": "if  this.NerveSystem.GetNeedStageAtValue(calculatedNerveAtHour) < 3 {",
           "replace": "if IsDefined(crBodyForecast) || this.NerveSystem.GetNeedStageAtValue(calculatedNerveAtHour) < 3 {",
-          "expectedOccurrences": 1
-        }
-      ]
-    },
-    {
-      "destination": "r6/scripts/Dark Future/UI/DFBackpackMenuUI.reds",
-      "expectedSha256": "74575FE712D025FDB172CF243C558BF489E5CB168E8E6B467A6410FC1DE5854D",
-      "edits": [
-        {
-          "find": "import DarkFuture.Logging.*",
-          "replace": "import DarkFuture.Logging.*\nimport DarkFuture.UI.CRBodyPreviewUI\nimport DarkFuture.UI.CRFieldCareUI",
-          "expectedOccurrences": 1
-        },
-        {
-          "find": "protected cb func OnItemDisplayHoverOut(evt: ref<ItemDisplayHoverOutEvent>) -> Bool {",
-          "replace": "protected cb func OnItemDisplayHoverOut(evt: ref<ItemDisplayHoverOutEvent>) -> Bool {\n    CRBodyPreviewUI.ShowCurrent(this.crBodyNote);",
-          "expectedOccurrences": 1
-        },
-        {
-          "find": "// Show the increase in Hydration and Nutrition if player's Nerve is not too low.\r\n\t\t\t\tif this.NerveSystem.GetHasNausea() {\r\n\t\t\t\t\tthis.hydrationBar.SetUpdatedValue(this.HydrationSystem.GetNeedValue(), this.HydrationSystem.GetNeedMax());\r\n\t\t\t\t\tthis.nutritionBar.SetUpdatedValue(this.NutritionSystem.GetNeedValue(), this.NutritionSystem.GetNeedMax());\r\n\t\t\t\t} else {\r\n\t\t\t\t\tthis.hydrationBar.SetUpdatedValue(this.HydrationSystem.GetNeedValue() + needsData.hydration.value, MinF(MaxF(needsData.hydration.ceiling, this.HydrationSystem.GetNeedValue()), this.HydrationSystem.GetNeedMax()));\r\n\t\t\t\t\tthis.nutritionBar.SetUpdatedValue(this.NutritionSystem.GetNeedValue() + needsData.nutrition.value, MinF(MaxF(needsData.nutrition.ceiling, this.NutritionSystem.GetNeedValue()), this.NutritionSystem.GetNeedMax()));\r\n\t\t\t\t}\r\n\r\n\t\t\t\t// Show the change in Energy if player meets the energy management effect criteria.\r\n\t\t\t\t// If this item is coffee or an energy drink, and the player has nausea, don't show the energy improvement.\r\n\t\t\t\tif this.NerveSystem.GetHasNausea() && needsData.hydration.value > 0.0 {\r\n\t\t\t\t\tthis.energyBar.SetUpdatedValue(this.EnergySystem.GetNeedValue(), this.EnergySystem.GetNeedMax());\r\n\t\t\t\t} else {\r\n\t\t\t\t\tthis.energyBar.SetUpdatedValue(this.EnergySystem.GetNeedValue() + this.EnergySystem.GetItemEnergyChangePreviewAmount(itemRecord, needsData), this.HydrationSystem.GetNeedMax());\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t",
-          "replace": "if !CRBodyPreviewUI.Preview(this.crBodyNote, itemRecord, this.hydrationBar, this.nutritionBar, this.energyBar) {\n// Show the increase in Hydration and Nutrition if player's Nerve is not too low.\r\n\t\t\t\tif this.NerveSystem.GetHasNausea() {\r\n\t\t\t\t\tthis.hydrationBar.SetUpdatedValue(this.HydrationSystem.GetNeedValue(), this.HydrationSystem.GetNeedMax());\r\n\t\t\t\t\tthis.nutritionBar.SetUpdatedValue(this.NutritionSystem.GetNeedValue(), this.NutritionSystem.GetNeedMax());\r\n\t\t\t\t} else {\r\n\t\t\t\t\tthis.hydrationBar.SetUpdatedValue(this.HydrationSystem.GetNeedValue() + needsData.hydration.value, MinF(MaxF(needsData.hydration.ceiling, this.HydrationSystem.GetNeedValue()), this.HydrationSystem.GetNeedMax()));\r\n\t\t\t\t\tthis.nutritionBar.SetUpdatedValue(this.NutritionSystem.GetNeedValue() + needsData.nutrition.value, MinF(MaxF(needsData.nutrition.ceiling, this.NutritionSystem.GetNeedValue()), this.NutritionSystem.GetNeedMax()));\r\n\t\t\t\t}\r\n\r\n\t\t\t\t// Show the change in Energy if player meets the energy management effect criteria.\r\n\t\t\t\t// If this item is coffee or an energy drink, and the player has nausea, don't show the energy improvement.\r\n\t\t\t\tif this.NerveSystem.GetHasNausea() && needsData.hydration.value > 0.0 {\r\n\t\t\t\t\tthis.energyBar.SetUpdatedValue(this.EnergySystem.GetNeedValue(), this.EnergySystem.GetNeedMax());\r\n\t\t\t\t} else {\r\n\t\t\t\t\tthis.energyBar.SetUpdatedValue(this.EnergySystem.GetNeedValue() + this.EnergySystem.GetItemEnergyChangePreviewAmount(itemRecord, needsData), this.HydrationSystem.GetNeedMax());\r\n\t\t\t\t}\r\n\t\t\t\t\r\n\t\t\t\t\n                }\n                ",
-          "expectedOccurrences": 1
-        },
-        {
-          "find": "this.energyBar.Init(barSetupData);",
-          "replace": "this.energyBar.Init(barSetupData);\n    this.crBodyNote = CRBodyPreviewUI.Create(this.barCluster);\n    this.crFieldCare = CRFieldCareUI.Create(this.barCluster, this.crBodyNote);",
-          "expectedOccurrences": 1
-        },
-        {
-          "find": "private final func SetOriginalValuesInUI() -> Void {",
-          "replace": "private final func SetOriginalValuesInUI() -> Void {\n    CRBodyPreviewUI.ShowCurrent(this.crBodyNote);",
-          "expectedOccurrences": 1
-        },
-        {
-          "find": "private let GameStateService: wref<DFGameStateService>;",
-          "replace": "private let GameStateService: wref<DFGameStateService>;\n\n@addField(BackpackMainGameController)\nprivate let crBodyNote: ref<inkText>;\n\n@addField(BackpackMainGameController)\nprivate let crFieldCare: ref<CRFieldCareUI>;",
-          "expectedOccurrences": 1
-        }
-      ]
-    },
-    {
-      "destination": "r6/scripts/Dark Future/UI/DFRevisedBackpackMenuUI.reds",
-      "expectedSha256": "59C122783FACE22BC32FB817BCF1D3FCCB0ACAFD47D907098EC3A60F73C47378",
-      "edits": [
-        {
-          "find": "public final class DFRevisedBackpackUISystem extends DFSystem {",
-          "replace": "public final class DFRevisedBackpackUISystem extends DFSystem {\n    private let crBodyNote: ref<inkText>;\n    private let crFieldCare: ref<CRFieldCareUI>;",
-          "expectedOccurrences": 1
-        },
-        {
-          "find": "public final func OnRevisedBackpackItemHoverOut() -> Void {",
-          "replace": "public final func OnRevisedBackpackItemHoverOut() -> Void {\n    CRBodyPreviewUI.ShowCurrent(this.crBodyNote);",
-          "expectedOccurrences": 1
-        },
-        {
-          "find": "// Show the increase in Hydration and Nutrition if player's Nerve is not too low.\r\n                    if this.NerveSystem.GetHasNausea() {\r\n                        this.hydrationBar.SetUpdatedValue(this.HydrationSystem.GetNeedValue(), this.HydrationSystem.GetNeedMax());\r\n                        this.nutritionBar.SetUpdatedValue(this.NutritionSystem.GetNeedValue(), this.NutritionSystem.GetNeedMax());\r\n                    } else {\r\n                        this.hydrationBar.SetUpdatedValue(this.HydrationSystem.GetNeedValue() + needsData.hydration.value, MinF(MaxF(needsData.hydration.ceiling, this.HydrationSystem.GetNeedValue()), this.HydrationSystem.GetNeedMax()));\r\n\t\t\t\t\t    this.nutritionBar.SetUpdatedValue(this.NutritionSystem.GetNeedValue() + needsData.nutrition.value, MinF(MaxF(needsData.nutrition.ceiling, this.NutritionSystem.GetNeedValue()), this.NutritionSystem.GetNeedMax()));\r\n                    }\r\n\r\n                    // Show the change in Energy if player meets the energy management effect criteria.\r\n                    // If this item is coffee or an energy drink, and the player has nausea, don't show the energy improvement.\r\n                    if this.NerveSystem.GetHasNausea() && needsData.hydration.value > 0.0 {\r\n                        this.energyBar.SetUpdatedValue(this.EnergySystem.GetNeedValue(), this.HydrationSystem.GetNeedMax());\r\n                    } else {\r\n                        this.energyBar.SetUpdatedValue(this.EnergySystem.GetNeedValue() + this.EnergySystem.GetItemEnergyChangePreviewAmount(itemRecord, needsData), this.HydrationSystem.GetNeedMax());\r\n                    }\r\n                    \r\n                    ",
-          "replace": "if !CRBodyPreviewUI.Preview(this.crBodyNote, itemRecord, this.hydrationBar, this.nutritionBar, this.energyBar) {\n// Show the increase in Hydration and Nutrition if player's Nerve is not too low.\r\n                    if this.NerveSystem.GetHasNausea() {\r\n                        this.hydrationBar.SetUpdatedValue(this.HydrationSystem.GetNeedValue(), this.HydrationSystem.GetNeedMax());\r\n                        this.nutritionBar.SetUpdatedValue(this.NutritionSystem.GetNeedValue(), this.NutritionSystem.GetNeedMax());\r\n                    } else {\r\n                        this.hydrationBar.SetUpdatedValue(this.HydrationSystem.GetNeedValue() + needsData.hydration.value, MinF(MaxF(needsData.hydration.ceiling, this.HydrationSystem.GetNeedValue()), this.HydrationSystem.GetNeedMax()));\r\n\t\t\t\t\t    this.nutritionBar.SetUpdatedValue(this.NutritionSystem.GetNeedValue() + needsData.nutrition.value, MinF(MaxF(needsData.nutrition.ceiling, this.NutritionSystem.GetNeedValue()), this.NutritionSystem.GetNeedMax()));\r\n                    }\r\n\r\n                    // Show the change in Energy if player meets the energy management effect criteria.\r\n                    // If this item is coffee or an energy drink, and the player has nausea, don't show the energy improvement.\r\n                    if this.NerveSystem.GetHasNausea() && needsData.hydration.value > 0.0 {\r\n                        this.energyBar.SetUpdatedValue(this.EnergySystem.GetNeedValue(), this.HydrationSystem.GetNeedMax());\r\n                    } else {\r\n                        this.energyBar.SetUpdatedValue(this.EnergySystem.GetNeedValue() + this.EnergySystem.GetItemEnergyChangePreviewAmount(itemRecord, needsData), this.HydrationSystem.GetNeedMax());\r\n                    }\r\n                    \r\n                    \n                }\n                ",
-          "expectedOccurrences": 1
-        },
-        {
-          "find": "this.energyBar.Init(barSetupData);",
-          "replace": "this.energyBar.Init(barSetupData);\n    this.crBodyNote = CRBodyPreviewUI.Create(this.barCluster);\n    this.crFieldCare = CRFieldCareUI.Create(this.barCluster, this.crBodyNote);",
-          "expectedOccurrences": 1
-        },
-        {
-          "find": "private final func SetOriginalValuesInUI() -> Void {",
-          "replace": "private final func SetOriginalValuesInUI() -> Void {\n    CRBodyPreviewUI.ShowCurrent(this.crBodyNote);",
           "expectedOccurrences": 1
         }
       ]
