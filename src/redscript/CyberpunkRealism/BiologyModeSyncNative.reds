@@ -2,9 +2,26 @@
 // Biology/Cyberware mode controls without giving this layer simulation authority.
 module CyberpunkRealism.Presentation
 
+@addField(CyberwareInventoryMiniGrid)
+private let crBiologyStockLabelCallbacksSuspended: Bool;
+
 @addMethod(CyberwareInventoryMiniGrid)
 public final func CRSetBiologyLabelInteractive(active: Bool) -> Void {
   inkTextRef.SetInteractive(this.m_label, active);
+  // The stock label callback opens cyberware-category tooltips. While this same label
+  // is serving as a Biology body node, suspend only those two callbacks; restore them
+  // exactly once when Cyberware mode returns.
+  if active && !this.crBiologyStockLabelCallbacksSuspended {
+    inkTextRef.UnregisterFromCallback(this.m_label, n"OnHoverOver", this, n"OnHoverOverCategoryLabel");
+    inkTextRef.UnregisterFromCallback(this.m_label, n"OnHoverOut", this, n"OnHoverOutCategoryLabel");
+    this.crBiologyStockLabelCallbacksSuspended = true;
+  } else {
+    if !active && this.crBiologyStockLabelCallbacksSuspended {
+      inkTextRef.RegisterToCallback(this.m_label, n"OnHoverOver", this, n"OnHoverOverCategoryLabel");
+      inkTextRef.RegisterToCallback(this.m_label, n"OnHoverOut", this, n"OnHoverOutCategoryLabel");
+      this.crBiologyStockLabelCallbacksSuspended = false;
+    }
+  }
 }
 
 @addMethod(RipperDocGameController)
