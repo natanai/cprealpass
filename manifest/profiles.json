@@ -5,6 +5,12 @@
       "red4ext",
       "redscript"
     ],
+    "m1-owned-settings": [
+      "red4ext",
+      "redscript",
+      "archivexl",
+      "mod-settings"
+    ],
     "m1-support": [
       "red4ext",
       "redscript",
