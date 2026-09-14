@@ -1,0 +1,15 @@
+﻿{
+    "generatedUtc":  "2026-09-14T23:50:52.8803385Z",
+    "game":  {
+                 "name":  "Cyberpunk 2077",
+                 "version":  "2.31",
+                 "executableVersion":  "3.0.5294808"
+             },
+    "counts":  {
+                   "files":  5128,
+                   "archives":  59,
+                   "redscriptFiles":  56,
+                   "tweakFiles":  1
+               },
+    "note":  "Generated from the user\u0027s local installation. Absolute machine paths intentionally omitted."
+}
