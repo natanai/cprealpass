@@ -40,7 +40,7 @@ Check ($biologyDoc.Contains('Backpack = possessions.')) 'Biology contract does n
 Check ($biologyDoc.Contains('Biology = embodied state.')) 'Biology contract does not establish Biology as the body-state owner.'
 Check ($biologyDoc.Contains('Conditions remain an important Biology subsection')) 'Biology contract does not retain active conditions.'
 Check ($biologyDoc.Contains('not permanent meters')) 'Biology contract regressed to permanent needs meters.'
-Check ($biologyDoc.Contains('filtered views into actual carried items')) 'Biology item actions risk becoming a duplicate inventory.'
+Check ($biologyDoc.Contains('never creates a second food, drink or medical inventory') -and $biologyDoc.Contains('actual carried item stacks')) 'Biology item actions risk becoming a duplicate inventory.'
 
 # Biology view model is qualitative and composes body/condition/pain projections.
 Check ($biologyPresentation.Contains('public class CRBiologyViewModel')) 'Biology qualitative view-model is missing.'
