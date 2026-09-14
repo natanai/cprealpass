@@ -29,6 +29,7 @@ $tests = @(
     'Test-PackageMetadata.ps1',
     'Test-RuntimePolicyModel.ps1',
     'Test-NoHealthbars.ps1',
+    'Test-PhysicalOutfits.ps1',
     'Test-BodyModel.ps1',
     'Test-BodyInputs.ps1',
     'Test-BodyPresentation.ps1',

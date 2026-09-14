@@ -88,6 +88,11 @@ Do **not** add or retain systems merely because a source/reference mod had them.
 ### G-022 — Clothes are clothes; armor is armor — LOCKED
 Appearance and protection are separate concepts. Ordinary clothing does not become meaningful ballistic armor because it occupies an equipment slot. Protective equipment protects according to actual construction, threat resistance, coverage and condition.
 
+### G-023 — Vanilla Outfits become physical equipment loadouts, not cosmetic transmog — LOCKED
+Preserve the familiar vanilla Outfit convenience where feasible, but applying an Outfit must equip the actual owned wearable items recorded for that loadout. The item V visibly wears and the item encountered by armor/protection logic must be the same physical equipped object; a parallel cosmetic override must not remain authoritative.
+
+A saved item that is no longer physically available must not be conjured, substituted, or silently represented by appearance only. Remote stash teleport is not assumed. Quest/special-equipment restrictions and scripted outfit states must fail safely or retain native authority rather than being broken by the loadout adapter.
+
 ---
 
 ## Combat
@@ -250,6 +255,16 @@ Useful E3-era HUD/nameplate ideas may be recreated with realpass-owned code/asse
 
 ### G-072 — Presentation serves the simulation — LOCKED
 UI should communicate what V could reasonably perceive/diagnose without becoming a dense spreadsheet or permanent RPG meter wall. Detailed exact numerical state belongs in development diagnostics, not normal play.
+
+### G-073 — RealPass has a constrained Mod Settings presence, not a balance console — LOCKED
+RealPass should appear in the game's Mod Settings surface so a player can confirm the mod is active and read a concise, descriptive feature ledger of the major systems RealPass currently owns. The ledger is read-only product/status language, not patch notes, diagnostics, or hidden-state telemetry.
+
+Player preferences may exist only as binary ON/OFF presentation or accessibility channels that leave the authored physical simulation unchanged. Numeric tuning controls, rate/multiplier sliders, and switches that disable body, injury, combat, armor, bleeding, recovery, cyberware physiology, or other core authorities are forbidden in ordinary player settings. A given RealPass version keeps one fixed physical simulation regardless of those presentation-only preferences.
+
+### G-074 — Traditional health feedback is removed only when its replacement is actually usable — LOCKED
+The final presentation target remains no traditional actor HP bars under G-033, but development suppression is replacement-gated. Do not remove the player's only useful health/needs feedback before the corresponding RealPass Biology/HUD/gameplay cues have been accepted in attended play.
+
+Temporary vanilla fallback feedback is allowed while replacements are incomplete; its presence is not the final design. Once a replacement channel is demonstrably usable, suppress the corresponding stock indicator without inventing duplicate RealPass percentage bars merely to replace it.
 
 ---
 

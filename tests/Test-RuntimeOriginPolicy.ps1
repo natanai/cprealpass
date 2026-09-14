@@ -14,7 +14,9 @@ Check ($policy.releaseExperience.allOrNothing -eq $true) 'Release must be all-or
 Check ($policy.releaseExperience.publicGameplayToggles -eq $false) 'Public gameplay toggles are forbidden for release.'
 Check ($policy.releaseExperience.publicBalanceSliders -eq $false) 'Public balance sliders are forbidden for release.'
 Check ($policy.releaseExperience.traditionalActorHealthBars -eq $false) 'Traditional actor health bars must remain absent in the authored release.'
+Check ($policy.releaseExperience.note -match '(?i)Mod Settings' -and $policy.releaseExperience.note -match '(?i)presentation/accessibility') 'Release note does not distinguish constrained settings preferences from simulation configuration.'
 Check ($policy.runtimeOwnership.gameplayAndPresentationRequiredOrigin -eq 'project-original') 'Gameplay/presentation runtime is not constrained to project-original code.'
+Check ($policy.runtimeOwnership.allowedInfrastructureClass -eq 'generic-framework') 'Generic framework infrastructure class is no longer explicit.'
 Check ($policy.vanillaFirst.preserveUsefulIdentity -eq $true -and $policy.vanillaFirst.preserveUsefulNativeShells -eq $true -and $policy.vanillaFirst.preferSemanticNativeHooks -eq $true) 'Vanilla-first stability policy is not active.'
 $medicalExamples = @($policy.vanillaFirst.medicalIdentityExamples) -join ' '
 Check ($medicalExamples -match 'MaxDoc' -and $medicalExamples -match 'FirstAidWhiff' -and $medicalExamples -match 'Bounce Back' -and $medicalExamples -match 'Health Booster') 'Vanilla medical identities are not explicit in runtime policy.'
@@ -28,8 +30,20 @@ foreach ($needle in @('Trauma Kit','UseTraumaKit')) {
     Check (@($policy.vanillaFirst.forbiddenOwnedSourceIdentityPatterns) -contains $needle) "Forbidden source-mod identity rule missing: $needle"
 }
 
-# The redistribution-safe package is the first machine-readable production-source
-# inventory. It must never list a source-mod runtime payload or a non-original file.
+$requiredInfrastructure = @($policy.genericInfrastructure.requiredForCurrentOwnedCandidate)
+foreach ($component in @('redscript','red4ext','archivexl','mod-settings')) {
+    Check ($requiredInfrastructure -contains $component) "Required generic infrastructure missing from runtime-origin policy: $component"
+}
+$notRequiredInfrastructure = @($policy.genericInfrastructure.currentlyNotRequired)
+foreach ($component in @('tweakxl','codeware','input-loader')) {
+    Check ($notRequiredInfrastructure -contains $component) "Unneeded generic infrastructure is not explicitly excluded: $component"
+}
+Check ($policy.genericInfrastructure.modSettingsBoundary -match '(?i)presence/read-only feature ledger') 'Mod Settings boundary lost the read-only feature ledger.'
+Check ($policy.genericInfrastructure.modSettingsBoundary -match '(?i)not a body, injury, combat, armor, progression or balance authority') 'Mod Settings boundary no longer forbids simulation ownership.'
+
+# The redistribution-safe package is a model/source handoff inventory rather than the
+# live candidate. Every file in that package must still be project-original and must
+# not smuggle source-mod runtime material back into production.
 $package = Get-Content -Raw -LiteralPath (Join-Path $project 'manifest/package.json') | ConvertFrom-Json
 foreach ($file in @($package.files)) {
     Check ($file.origin -eq 'project-original') "Package includes non-original source: $($file.source)"
@@ -62,4 +76,4 @@ if ($violations.Count -gt 0) {
     throw "Production candidate source violates owned-runtime policy:`n - $($violations -join "`n - ")"
 }
 
-Write-Host "PASS: $script:checks owned-runtime policy checks; release is locked, vanilla-first, retired prototype source is absent, and production source contains no Dark Future/E3 ownership or source-mod item identity."
+Write-Host "PASS: $script:checks owned-runtime policy checks; release is locked, vanilla-first, generic settings infrastructure is constrained, retired prototype source is absent, and production source contains no Dark Future/E3 ownership or source-mod item identity."

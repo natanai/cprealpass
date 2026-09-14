@@ -37,9 +37,11 @@ foreach ($required in @(
     'darkfuture-fast-travel-restrictions',
     'darkfuture-economy-prices',
     'source-mod-outfit-transmog-layer',
+    'realpass-physical-outfit-loadouts',
     'e3-npc-nameplates',
     'e3-hud-aesthetic',
     'e3-scanner-overrides',
+    'realpass-settings-presence',
     'realpass-body-model',
     'realpass-ballistics-wounds',
     'realpass-regional-injury-care',
@@ -72,8 +74,8 @@ foreach ($id in @('darkfuture-basic-needs','darkfuture-needs-ui','darkfuture-con
     if ($ids[$id].disposition -ne 'replace') { throw "Source-mod runtime behavior must be replaced, not adapted/retained: $id" }
 }
 
-foreach ($id in @('realpass-body-model','realpass-ballistics-wounds','realpass-regional-injury-care','realpass-pain-maxdoc','realpass-physical-protection')) {
-    if ($ids[$id].disposition -ne 'retain' -or $ids[$id].source -ne 'project-original') { throw "Project-original core feature is not retained as project-original: $id" }
+foreach ($id in @('realpass-physical-outfit-loadouts','realpass-settings-presence','realpass-body-model','realpass-ballistics-wounds','realpass-regional-injury-care','realpass-pain-maxdoc','realpass-physical-protection')) {
+    if ($ids[$id].disposition -ne 'retain' -or $ids[$id].source -ne 'project-original') { throw "Project-original feature is not retained as project-original: $id" }
 }
 if ($ids['e3-npc-nameplates'].disposition -ne 'replace' -or $ids['e3-hud-aesthetic'].disposition -ne 'replace') {
     throw 'E3-dependent presentation must be replaced by realpass-owned behavior before standalone release.'
@@ -88,4 +90,16 @@ if ($ids['realpass-pain-maxdoc'].targetState -notmatch 'MaxDoc/FirstAidWhiff' -o
     throw 'Vanilla medical-item identity is not explicit in feature inventory.'
 }
 
-Write-Host "PASS: realpass vanilla-first feature consolidation inventory ($($features.Count) tracked features)."
+$outfit = $ids['realpass-physical-outfit-loadouts']
+if ($outfit.owner -ne 'armor' -or $outfit.targetState -notmatch '(?i)actual carried items' -or $outfit.targetState -notmatch '(?i)stash' -or $outfit.targetState -notmatch '(?i)transmog') {
+    throw 'Physical Outfit feature does not preserve actual carried-equipment/protection identity without stash/transmog authority.'
+}
+if ($ids['source-mod-outfit-transmog-layer'].disposition -ne 'remove') {
+    throw 'Parallel source-mod transmog authority must remain removed even though vanilla Outfit UX is retained as physical loadouts.'
+}
+$settings = $ids['realpass-settings-presence']
+if ($settings.owner -ne 'presentation' -or $settings.currentState -notmatch '(?i)ledger' -or $settings.currentState -notmatch '(?i)no numeric balance' -or $settings.targetState -notmatch '(?i)without changing') {
+    throw 'RealPass settings feature drifted from constrained presence/ledger/presentation ownership.'
+}
+
+Write-Host "PASS: realpass vanilla-first feature consolidation inventory ($($features.Count) tracked features), including owned physical Outfit loadouts and constrained settings presence."

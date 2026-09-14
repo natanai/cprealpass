@@ -16,15 +16,17 @@ if ((Test-Path -LiteralPath $output) -or (Test-Path -LiteralPath $report)) {
     throw 'Build ID already exists; owned runtime profiles are immutable. Use a new BuildId.'
 }
 
-# realpass currently uses only REDscript language/runtime plumbing. No owned source
-# imports RED4ext/ArchiveXL/TweakXL/Codeware/Mod Settings/Input Loader APIs, so the
-# live-test profile deliberately does not carry those historical framework layers.
-$genericIds = @('redscript')
+# Generic plumbing only. Mod Settings is intentionally present again because the
+# accepted product surface uses it for runtime presence, a concise read-only-ish
+# feature ledger and binary presentation/accessibility preferences. ArchiveXL is a
+# declared dependency of the pinned Mod Settings release. None of these components
+# owns RealPass simulation policy.
+$genericIds = @('red4ext','redscript','archivexl','mod-settings')
 & "$PSScriptRoot\Acquire-Components.ps1" -ComponentIds $genericIds
-if ($LASTEXITCODE -ne 0) { throw 'REDscript acquisition/verification failed.' }
-& "$PSScriptRoot\Stage-Components.ps1" -Profile 'm1-base'
-if ($LASTEXITCODE -ne 0) { throw 'REDscript staging failed.' }
-$genericManifestPath = Resolve-SafeChildPath $project 'manifest/m1-base.deployment.json'
+if ($LASTEXITCODE -ne 0) { throw 'Generic framework acquisition/verification failed.' }
+& "$PSScriptRoot\Stage-Components.ps1" -Profile 'm1-owned-settings'
+if ($LASTEXITCODE -ne 0) { throw 'Generic framework staging failed.' }
+$genericManifestPath = Resolve-SafeChildPath $project 'manifest/m1-owned-settings.deployment.json'
 $genericManifest = Get-Content -Raw -LiteralPath $genericManifestPath | ConvertFrom-Json
 
 $unexpected = @($genericManifest.files | Where-Object { [string]$_.component -notin $genericIds })
@@ -43,7 +45,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Owned source candidate failed exact compilatio
 $coreManifestPath = Resolve-SafeChildPath $project ('manifest/' + $coreBuildId + '.deployment.json')
 $coreManifest = Get-Content -Raw -LiteralPath $coreManifestPath | ConvertFrom-Json
 if (-not $coreManifest.ownedRuntime -or $coreManifest.gameVersion -ne $genericManifest.gameVersion) {
-    throw 'Owned source candidate and REDscript runtime base disagree on ownership or game version.'
+    throw 'Owned source candidate and generic runtime base disagree on ownership or game version.'
 }
 
 $files = [Collections.Generic.List[object]]::new()
@@ -67,9 +69,12 @@ foreach ($entry in @($genericManifest.files) + @($coreManifest.files)) {
     })
 }
 
-foreach ($forbidden in @('darkfuture','dark future','project e3','project-e3','red4ext','archivexl','tweakxl','codeware','mod-settings','input-loader')) {
+# Source/reference gameplay or presentation hosts remain forbidden. Mod Settings is
+# no longer forbidden because it is now an explicitly accepted generic UI/persistence
+# provider; it must still never own RealPass gameplay policy.
+foreach ($forbidden in @('darkfuture','dark future','project e3','project-e3','input-loader')) {
     $hit = @($files | Where-Object { ([string]$_.component).ToLowerInvariant().Contains($forbidden) -or ([string]$_.destination).ToLowerInvariant().Contains($forbidden) })
-    if ($hit.Count -gt 0) { throw "Forbidden or unnecessary runtime content leaked into owned profile: $($hit[0].destination)" }
+    if ($hit.Count -gt 0) { throw "Forbidden runtime content leaked into owned profile: $($hit[0].destination)" }
 }
 
 $manifest = [ordered]@{
@@ -95,11 +100,12 @@ $record = [ordered]@{
     diagnosticsEnabled = [bool]$Diagnostics
     genericComponents = $genericIds
     sourceModsRequired = @()
+    settingsProvider = 'mod-settings'
     coreBuildId = $coreBuildId
     fileCount = $files.Count
     manifestPath = $outputRelative
-    scope = 'Deployable development profile containing project-original realpass REDscript plus pinned redscript plumbing only. No source-mod runtime, RED4ext-family framework, settings framework, or input-loader content is required by this candidate. Does not deploy or launch the game.'
+    scope = 'Deployable development profile containing project-original RealPass runtime plus pinned RED4ext/redscript/ArchiveXL/Mod Settings plumbing. Mod Settings provides status/ledger and binary presentation preferences only. No Dark Future, Project E3 or Input Loader runtime content. Does not deploy or launch the game.'
 }
 Write-JsonFile $record $report
-Write-Host "PASS: deployable owned runtime profile $BuildId compiled with $($files.Count) files using only project-original realpass source plus redscript. Nothing was deployed or launched."
+Write-Host "PASS: deployable owned runtime profile $BuildId compiled with $($files.Count) files. Nothing was deployed or launched."
 return $outputRelative

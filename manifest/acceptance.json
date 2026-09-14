@@ -21,22 +21,22 @@
       "id": "unified-settings-contract",
       "area": "settings",
       "status": "passed",
-      "evidence": ["manifest/settings.json", "src/redscript/CyberpunkRealism/RuntimePolicyModel.reds", "tests/Test-SettingsContract.ps1", "tests/Test-SettingsRuntimeSurface.ps1"],
-      "remaining": "Preserve the fixed authored release profile; internal gates remain tooling-only."
+      "evidence": ["AGREED-GOALS.md", "docs/SETTINGS-ARCHITECTURE.md", "manifest/settings.json", "src/redscript/CyberpunkRealism/RealpassSettings.reds", "src/redscript/CyberpunkRealism/RuntimePolicyModel.reds", "tests/Test-SettingsContract.ps1", "tests/Test-SettingsRuntimeSurface.ps1"],
+      "remaining": "The policy is resolved: preserve one fixed authored physical simulation, expose only the managed feature ledger and binary presentation/accessibility preferences, and fresh-compile/render that constrained surface locally."
     },
     {
       "id": "owned-runtime-isolation",
       "area": "architecture",
       "status": "partial",
       "evidence": ["manifest/runtime-origin-policy.json", "tests/Test-RuntimeOriginPolicy.ps1", "tools/Build-OwnedAcceptance.ps1", "tools/Build-OwnedRuntimeProfile.ps1", "tools/Install-OwnedRuntime.ps1", "tools/Remove-OwnedRuntime.ps1", "tools/Prepare-OwnedSession.ps1", "tests/Test-OwnedAcceptanceBuilder.ps1", "tests/Test-OwnedSessionTool.ps1"],
-      "remaining": "Fresh-exact-compile and install the completion candidate locally, then verify the installed owned-current manifest and absence of retired/source-mod runtime residue."
+      "remaining": "Fresh-exact-compile and install the integrated candidate locally, then verify the installed owned-current manifest and absence of retired/source-mod runtime residue. Generic redscript/RED4ext/ArchiveXL/Mod Settings plumbing is permitted only for infrastructure, not gameplay ownership."
     },
     {
       "id": "vanilla-first-native-integration",
       "area": "architecture",
       "status": "partial",
-      "evidence": ["AGREED-GOALS.md", "REALISM-SPEC.md", "manifest/feature-inventory.json", "src/redscript/CyberpunkRealism/BodyNativeHooks.reds", "src/redscript/CyberpunkRealism/BiologyNativeUI.reds", "src/redscript/CyberpunkRealism/NameplatesNative.reds", "tests/Test-ConditionArchitecture.ps1", "tests/Test-PainArchitecture.ps1"],
-      "remaining": "The owned integration is implemented in source; the new Biology/nameplate seams require fresh exact 2.31 compile and attended native behavior acceptance."
+      "evidence": ["AGREED-GOALS.md", "REALISM-SPEC.md", "manifest/feature-inventory.json", "src/redscript/CyberpunkRealism/BodyNativeHooks.reds", "src/redscript/CyberpunkRealism/BiologyNativeUI.reds", "src/redscript/CyberpunkRealism/NameplatesNative.reds", "src/redscript/CyberpunkRealism/PhysicalOutfits.reds", "tests/Test-ConditionArchitecture.ps1", "tests/Test-PainArchitecture.ps1", "tests/Test-PhysicalOutfits.ps1"],
+      "remaining": "The owned integration is implemented in source; the Biology/nameplate/physical-Outfit seams require fresh exact 2.31 compile and attended native behavior acceptance."
     },
     {
       "id": "body-pure-model",
@@ -50,7 +50,7 @@
       "area": "body",
       "status": "partial",
       "evidence": ["src/redscript/CyberpunkRealism/BodyRuntime.reds", "src/redscript/CyberpunkRealism/BodyNativeHooks.reds", "src/redscript/CyberpunkRealism/BodyInteractionRuntime.reds", "src/redscript/CyberpunkRealism/BiologyNativeUI.reds", "tools/Build-OwnedAcceptance.ps1", "tools/Prepare-OwnedSession.ps1", "docs/ATTENDED-ACCEPTANCE.md"],
-      "remaining": "Fresh-compile the completion candidate and attend consumption, exertion, wait/sleep, bathroom/washing, lifecycle, body clock, Biology actions and save/reload."
+      "remaining": "Fresh-compile the integrated candidate and attend consumption, exertion, wait/sleep, bathroom/washing, lifecycle, body clock, Biology actions and save/reload."
     },
     {
       "id": "combat-impact-and-ballistics-model",
@@ -77,8 +77,15 @@
       "id": "armor-coverage-and-wear-model",
       "area": "combat",
       "status": "partial",
-      "evidence": ["src/redscript/CyberpunkRealism/ArmorWearModel.reds", "src/redscript/CyberpunkRealism/ArmorWearNative.reds", "src/redscript/CyberpunkRealism/StockProtectionCatalog.reds", "tests/Test-ArmorWear.ps1", "tests/Test-BallisticProfiles.ps1"],
-      "remaining": "Validate actual equipped item identity, visual/regional coverage, protection mapping, wear behavior and coefficients in game."
+      "evidence": ["src/redscript/CyberpunkRealism/ArmorWearModel.reds", "src/redscript/CyberpunkRealism/ArmorWearNative.reds", "src/redscript/CyberpunkRealism/StockProtectionCatalog.reds", "src/redscript/CyberpunkRealism/PhysicalOutfits.reds", "tests/Test-ArmorWear.ps1", "tests/Test-BallisticProfiles.ps1", "tests/Test-PhysicalOutfits.ps1"],
+      "remaining": "Validate actual equipped item identity, visual/regional coverage, protection mapping, wear behavior and coefficients in game, including clothing equipped through saved physical Outfit loadouts."
+    },
+    {
+      "id": "physical-outfit-loadouts",
+      "area": "equipment",
+      "status": "partial",
+      "evidence": ["AGREED-GOALS.md", "src/redscript/CyberpunkRealism/PhysicalOutfits.reds", "manifest/native-seams.json", "tests/Test-PhysicalOutfits.ps1", "docs/NONBIOLOGY-WORKPLAN.md"],
+      "remaining": "Fresh-compile and attend Outfit application with carried gear, duplicate item records, saved items later sold/removed, empty slots, armor wear/protection identity, wardrobe-disabled states and quest/special UnequipBlocked equipment. No missing item may be conjured or pulled remotely from stash."
     },
     {
       "id": "combat-native-activation",
@@ -112,8 +119,8 @@
       "id": "no-traditional-healthbars",
       "area": "presentation",
       "status": "partial",
-      "evidence": ["src/redscript/CyberpunkRealism/NoHealthbars.reds", "manifest/settings.json", "manifest/runtime-modules.json", "tests/Test-NoHealthbars.ps1", "tools/Build-OwnedAcceptance.ps1", "docs/ATTENDED-ACCEPTANCE.md"],
-      "remaining": "Verify V, ordinary NPC, boss/MaxTac and companion HP UI stays hidden through normal damage/Overclock/overshield paths while RAM, buffs, names, scanner and required objective/vehicle durability UI remain usable."
+      "evidence": ["AGREED-GOALS.md", "src/redscript/CyberpunkRealism/NoHealthbars.reds", "manifest/settings.json", "manifest/runtime-modules.json", "tests/Test-NoHealthbars.ps1", "tests/Test-ActivationGates.ps1", "tools/Build-OwnedAcceptance.ps1", "docs/NONBIOLOGY-WORKPLAN.md"],
+      "remaining": "Replacement-readiness gates intentionally remain false during development, so native actor-health feedback remains available. Attend Biology/gameplay feedback first; only after replacement cues are usable should the player/NPC suppression gates be accepted. Then verify HP UI stays hidden through normal damage/Overclock/overshield paths while RAM, buffs, names, scanner and required objective/vehicle durability UI remain usable."
     },
     {
       "id": "modern-scanner-native-acceptance",
@@ -127,35 +134,35 @@
       "area": "presentation",
       "status": "partial",
       "evidence": ["AGREED-GOALS.md", "src/redscript/CyberpunkRealism/BiologyNativeUI.reds", "src/redscript/CyberpunkRealism/NameplatesNative.reds", "src/redscript/CyberpunkRealism/NoHealthbars.reds", "manifest/runtime-origin-policy.json", "manifest/feature-inventory.json"],
-      "remaining": "The accepted presentation behavior is now source-mod-independent in source. Fresh exact compile/live acceptance must confirm the owned seams render correctly before this gate passes."
+      "remaining": "The accepted presentation behavior is source-mod-independent in source. Fresh exact compile/live acceptance must confirm the owned seams render correctly; temporary native HP fallback during replacement acceptance is intentional and is not Project E3 ownership."
     },
     {
       "id": "distribution-contract-and-deny-policy",
       "area": "distribution",
       "status": "passed",
       "evidence": ["manifest/distribution.json", "tests/Test-DistributionContract.ps1", "tools/Test-ArtifactPolicy.ps1", "tests/Test-ArtifactPolicy.ps1"],
-      "remaining": "Apply the deny policy to every candidate/public artifact."
+      "remaining": "Apply the deny policy to every candidate/public artifact and keep the allowed generic settings dependency set synchronized with the accepted profile."
     },
     {
       "id": "cloud-safe-ci",
       "area": "distribution",
       "status": "partial",
       "evidence": [".github/workflows/ci.yml", "tests/Run-CI.ps1", "tests/Test-OwnedAcceptanceBuilder.ps1", "tests/Test-OwnedSessionTool.ps1"],
-      "remaining": "The final completion-branch head must be green after all source/contract/tooling changes. Cloud CI cannot substitute for local game compilation."
+      "remaining": "The exact integrated non-Biology branch head must be green after all source/contract/tooling changes. Cloud CI cannot substitute for local game compilation."
     },
     {
       "id": "dependency-redistribution-audit",
       "area": "distribution",
       "status": "partial",
       "evidence": ["manifest/components.json", "manifest/profiles.json", "manifest/distribution.json", "THIRD_PARTY.md", "LICENSES/", "tools/Build-OwnedRuntimeProfile.ps1"],
-      "remaining": "The live candidate has been reduced to realpass-owned source plus pinned redscript only. Before public release, include the required redscript MIT notice and verify the final archive contents/checksum."
+      "remaining": "The live candidate requires project-original RealPass source plus pinned redscript, RED4ext, ArchiveXL and Mod Settings generic plumbing. Before public release, re-audit each pinned payload, include all required MIT/third-party notices, and verify the final archive contents/checksum. TweakXL, Codeware and Input Loader remain excluded."
     },
     {
       "id": "one-download-playable-package",
       "area": "distribution",
       "status": "blocked",
       "evidence": ["docs/RELEASE-ARCHITECTURE.md", "manifest/distribution.json", "tools/Finalize-PlayerPackage.ps1"],
-      "remaining": "Blocked intentionally until native acceptance. After live validation, assemble the deterministic game-root package with realpass runtime, required redscript plumbing/notices, install instructions and checksums."
+      "remaining": "Blocked intentionally until native acceptance. After live validation, assemble the deterministic game-root package with RealPass runtime, pinned redscript/RED4ext/ArchiveXL/Mod Settings plumbing and notices, install instructions and checksums."
     },
     {
       "id": "save-reload-upgrade-uninstall",
@@ -169,14 +176,14 @@
       "area": "compatibility",
       "status": "pending",
       "evidence": ["AGREED-GOALS.md", "REALISM-SPEC.md", "docs/ROADMAP.md", "docs/ATTENDED-ACCEPTANCE.md"],
-      "remaining": "Test critical Phantom Liberty/base-game sequences and authored combat/immortality exceptions with the full owned candidate enabled."
+      "remaining": "Test critical Phantom Liberty/base-game sequences and authored combat/immortality exceptions with the full owned candidate enabled, including special wardrobe/equipment states."
     },
     {
       "id": "performance-and-script-latency",
       "area": "compatibility",
       "status": "pending",
       "evidence": ["REALISM-SPEC.md", "docs/ATTENDED-ACCEPTANCE.md"],
-      "remaining": "Measure live script cost with body/NPC/combat/presentation systems enabled during attended play; no unattended profilers/watchers/background recorders."
+      "remaining": "Measure live script cost with body/NPC/combat/presentation/settings/physical-Outfit systems enabled during attended play; no unattended profilers/watchers/background recorders."
     }
   ]
 }

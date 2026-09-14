@@ -16,31 +16,34 @@ $profiles = Get-Content -Raw -LiteralPath $profilesPath | ConvertFrom-Json
 $script:checks = 0
 function Check($condition,[string]$message) { if (-not $condition) { throw $message }; $script:checks++ }
 
-# Selective acquisition is required so the owned path never downloads reference
-# gameplay mods or unused frameworks merely because they remain in the historical catalog.
+# Keep the minimal REDscript-only profile available for source-only/native work,
+# while the deployable settings candidate carries only the generic dependencies
+# required by the accepted Mod Settings presentation surface.
 Check ($acquire.Contains('[string[]]$ComponentIds')) 'Component acquisition has no selective owned-runtime path.'
 Check ($acquire.Contains('Add-ComponentWithDependencies')) 'Selective acquisition does not close dependency requirements.'
 Check ($acquire.Contains('$selected.ContainsKey')) 'Selective acquisition does not deduplicate dependency traversal.'
 Check (@($profiles.profiles.'m1-base').Count -eq 1 -and @($profiles.profiles.'m1-base')[0] -eq 'redscript') 'Owned m1-base profile is not reduced to redscript only.'
+Check (@($profiles.profiles.'m1-owned-settings') -join ',' -eq 'red4ext,redscript,archivexl,mod-settings') 'Owned settings profile does not contain the narrow accepted generic dependency set.'
 
 foreach ($needle in @(
-    "`$genericIds = @('redscript')",
+    "`$genericIds = @('red4ext','redscript','archivexl','mod-settings')",
     'Acquire-Components.ps1',
     'Stage-Components.ps1',
-    "-Profile 'm1-base'",
+    "-Profile 'm1-owned-settings'",
     'Build-OwnedAcceptance.ps1',
     "profile = 'owned-runtime-development'",
     'Compile-Profile.ps1',
-    'sourceModsRequired = @()'
+    'sourceModsRequired = @()',
+    "settingsProvider = 'mod-settings'"
 )) {
     Check ($builder.Contains($needle)) "Owned deployable-profile invariant missing: $needle"
 }
-Check (-not $builder.Contains("`$genericIds = @('red4ext','redscript')")) 'Owned runtime still carries RED4ext without a source dependency.'
 Check ($builder.Contains("component = [string]`$entry.component")) 'Owned profile does not preserve per-file component ownership.'
 Check ($builder.Contains("origin = `$(if (`$entry.PSObject.Properties.Name -contains 'origin')")) 'Owned profile does not preserve file provenance.'
-foreach ($forbidden in @('darkfuture','project e3','red4ext','archivexl','tweakxl','codeware','mod-settings','input-loader')) {
-    Check ($builder.Contains($forbidden)) "Owned deployable profile lost forbidden/unneeded payload guard: $forbidden"
+foreach ($forbidden in @('darkfuture','project e3','input-loader')) {
+    Check ($builder.Contains($forbidden)) "Owned deployable profile lost forbidden payload guard: $forbidden"
 }
+Check (-not ($builder -match "foreach \(\`\$forbidden in @\([^\)]*'mod-settings'")) 'Owned deployable profile still treats the accepted settings provider as forbidden runtime content.'
 foreach ($danger in @('Deploy.ps1','Upgrade.ps1','Start-Process','Register-ScheduledTask','New-Service')) {
     Check (-not $builder.Contains($danger)) "Owned profile builder gained live/unattended side effect: $danger"
 }
@@ -86,4 +89,4 @@ foreach ($text in @($session,$installer,$remover)) {
     }
 }
 
-Write-Host "PASS: $script:checks minimal redscript-only owned runtime build/install orchestration checks."
+Write-Host "PASS: $script:checks fast owned runtime build/install orchestration checks with a redscript-only base and constrained Mod Settings plumbing."
