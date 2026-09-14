@@ -515,6 +515,22 @@ protected cb func OnCRBiologyCare(evt: ref<inkPointerEvent>) -> Bool {
 }
 
 @wrapMethod(MenuHubLogicController)
+public final func SetActive(isActive: Bool) -> Void {
+  wrappedMethod(isActive);
+  if !IsDefined(this.crBiologyPanel) || !IsDefined(this.crBiologyButton) {
+    return;
+  }
+  if !isActive {
+    this.crBiologyPickerMode = 0;
+    this.CRBiologyHideItemRows();
+    this.crBiologyPanel.SetVisible(false);
+    this.crBiologyButton.SetVisible(false);
+  } else {
+    this.crBiologyButton.SetVisible(!this.crBiologyPanel.IsVisible());
+  }
+}
+
+@wrapMethod(MenuHubLogicController)
 protected cb func OnInitialize() -> Bool {
   let result: Bool = wrappedMethod();
   this.crBiologySelectedRegion = 0;
