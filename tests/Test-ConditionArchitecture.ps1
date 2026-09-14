@@ -53,14 +53,20 @@ Check (-not $biologyPresentation.Contains('gamedataStatType.Health')) 'Biology d
 Check (-not $biologyPresentation.Contains('bladderMl')) 'Biology view model directly exposes hidden elimination quantities.'
 
 # Native Biology is an owned hub surface. Intake enumerates actual carried items and
-# invokes the stock consumable action; it must never remove inventory and then fake a
-# second body-only consumption path.
+# invokes the item's real stock Eat/Drink action where present, with Consume only as
+# the stock fallback. It must never subtract inventory and fake a body-only use.
 Check ($biologyNative.Contains('@wrapMethod(MenuHubLogicController)')) 'Biology is not mounted into the native hub.'
 Check ($biologyNative.Contains('"BIOLOGY"')) 'Biology does not identify itself to the player.'
 Check ($biologyNative.Contains('GameInstance.GetTransactionSystem(GetGameInstance()).GetItemList(player, items)')) 'Biology does not enumerate the actual carried inventory.'
+Check ($biologyNative.Contains('GameInstance.GetTransactionSystem(GetGameInstance()).GetItemQuantity(player, itemID)')) 'Biology item picker is not showing quantities from the authoritative carried stack.'
 Check ($biologyNative.Contains('CRItemServing.Resolve(record)')) 'Biology inventory picker does not use the shared serving classification.'
-Check ($biologyNative.Contains('ItemActionsHelper.GetConsumeAction') -and $biologyNative.Contains('ItemActionsHelper.ConsumeItem')) 'Biology does not route Eat/Drink through Cyberpunk consumable actions.'
-Check (-not $biologyNative.Contains('RemoveItem(')) 'Biology directly removes inventory instead of using the native consumable transaction.'
+Check ($biologyNative.Contains('ItemActionsHelper.GetEatAction') -and $biologyNative.Contains('ItemActionsHelper.EatItem')) 'Biology food path does not preserve Cyberpunk Eat actions.'
+Check ($biologyNative.Contains('ItemActionsHelper.GetDrinkAction') -and $biologyNative.Contains('ItemActionsHelper.DrinkItem')) 'Biology drink path does not preserve Cyberpunk Drink actions.'
+Check ($biologyNative.Contains('ItemActionsHelper.GetConsumeAction') -and $biologyNative.Contains('ItemActionsHelper.ConsumeItem')) 'Biology lost the stock generic Consume fallback.'
+Check ($biologyNative.Contains('GetLocalizedItemNameByCName(record.DisplayName())')) 'Biology item picker is not using the stock item-name localization path.'
+Check ($biologyNative.Contains('CRBiologyItemHasNativeAction') -and $biologyNative.Contains('CRBiologyUseNativeItemAction')) 'Biology does not validate/use the same native action family exposed by the selected item.'
+Check (-not $biologyNative.Contains('GetLocalizedTextByKey(record.DisplayName())')) 'Biology reintroduced the wrong localization helper for Item_Record.DisplayName().' 
+Check (-not $biologyNative.Contains('RemoveItem(')) 'Biology directly removes inventory instead of using the native item transaction.'
 Check (-not $biologyNative.Contains('CRBodyRuntime.Get().Consume(')) 'Biology bypasses the native completed-consumption adapter.'
 Check ($biologyNative.Contains('CRBodyRuntime.Get().UseFieldCare')) 'Biology does not initiate shared field-care runtime actions.'
 Check ($biologyNative.Contains('CRProfessionalCareRuntime.Complete')) 'Biology has no professional-care completion path.'
