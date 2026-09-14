@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "purpose": "Consolidation ledger for behavior once explored through source/reference mods. Dark Future and Project E3 are reference/inspiration only; no executing gameplay or presentation behavior from them is part of the owned realpass target. realpass starts from vanilla Cyberpunk identities and substitutes project-original mechanics where realism requires it.",
+  "purpose": "Consolidation ledger for behavior once explored through source/reference mods. Source/reference mods are inspiration/history only; no executing gameplay or presentation behavior from them is part of the owned realpass target. realpass starts from vanilla Cyberpunk identities and substitutes project-original mechanics where realism requires it.",
   "allowedDispositions": ["retain", "replace", "remove", "development-only"],
   "features": [
     {
@@ -9,8 +9,8 @@
       "phenomenon": "hydration/nutrition/energy presentation and integration patterns",
       "owner": "body",
       "disposition": "replace",
-      "currentState": "historical/reference implementation only; owned runtime is moving to direct vanilla hooks",
-      "targetState": "realpass owns physiology, state, timing and native adapters; no Dark Future runtime required"
+      "currentState": "replaced by the project-original shared body/runtime and direct vanilla consumable/time/lifecycle adapters",
+      "targetState": "realpass owns physiology, state, timing and native adapters; no source-mod runtime required"
     },
     {
       "id": "darkfuture-needs-ui",
@@ -18,8 +18,8 @@
       "phenomenon": "contextual needs visibility ideas",
       "owner": "presentation",
       "disposition": "replace",
-      "currentState": "reference/prototype evidence only",
-      "targetState": "realpass-owned restrained presentation attached to vanilla UI surfaces where practical"
+      "currentState": "replaced by qualitative Biology presentation; Backpack body-dashboard injection retired",
+      "targetState": "Biology communicates player-knowable body state without permanent survival meters"
     },
     {
       "id": "darkfuture-consumable-intake",
@@ -27,7 +27,7 @@
       "phenomenon": "food/drink events entering physiology",
       "owner": "body",
       "disposition": "replace",
-      "currentState": "owned BodyNativeHooks now observes stock Cyberpunk consumable actions directly",
+      "currentState": "owned BodyNativeHooks observes stock Cyberpunk consumable actions directly; Biology uses the same stock item transaction",
       "targetState": "vanilla consumable identity/action -> thin realpass adapter -> ordered realpass body model"
     },
     {
@@ -36,13 +36,13 @@
       "phenomenon": "generic HP-derived injury condition",
       "owner": "injury",
       "disposition": "replace",
-      "currentState": "not an accepted owned-runtime authority",
-      "targetState": "localized realpass wound/injury authority plus Condition UI only"
+      "currentState": "replaced by regional realpass injury authority, bounded provenance and Biology condition presentation",
+      "targetState": "localized physical injury authority plus qualitative Biology condition detail"
     },
     {
       "id": "darkfuture-item-renames",
       "source": "Dark Future 2.0",
-      "phenomenon": "renaming/recasting vanilla medical items such as Health Booster into different concepts",
+      "phenomenon": "renaming/recasting vanilla medical items into different concepts",
       "owner": null,
       "disposition": "remove",
       "currentState": "explicitly rejected by canonical goal G-004",
@@ -136,7 +136,7 @@
       "owner": null,
       "disposition": "remove",
       "currentState": "out of scope",
-      "targetState": "not part of realpass; cyberware module is physical/physiological only"
+      "targetState": "not part of realpass; cyberware scope is physical/physiological only"
     },
     {
       "id": "darkfuture-addictions",
@@ -180,17 +180,17 @@
       "phenomenon": "readable NPC names/focus presentation idea",
       "owner": "presentation",
       "disposition": "replace",
-      "currentState": "historical local adaptation/reference only",
-      "targetState": "realpass-owned implementation using vanilla signals/assets where practical; no E3 runtime required"
+      "currentState": "replaced by project-original NameplatesNative fallback over stock nameplate/scanner policy",
+      "targetState": "stock renderer/visibility authority plus narrow realpass scanned-civilian public-name fallback; no source-mod runtime/assets"
     },
     {
       "id": "e3-hud-aesthetic",
       "source": "Project E3 - HUD",
-      "phenomenon": "selected HUD presentation ideas",
+      "phenomenon": "selected restrained HUD presentation ideas",
       "owner": "presentation",
       "disposition": "replace",
-      "currentState": "reference only for the owned-runtime target",
-      "targetState": "recreate only accepted presentation behavior with realpass-owned code/assets or vanilla UI composition"
+      "currentState": "accepted behavior is now expressed through stock modern UI plus realpass-owned Biology/nameplate/healthbar seams; no broad HUD replacement is required",
+      "targetState": "retain only explicitly accepted presentation behavior using vanilla UI composition and realpass-owned code"
     },
     {
       "id": "e3-scanner-overrides",
@@ -198,7 +198,7 @@
       "phenomenon": "scanner/quickhack replacement",
       "owner": "presentation",
       "disposition": "remove",
-      "currentState": "explicitly rejected for the owned runtime",
+      "currentState": "removed from the owned runtime target",
       "targetState": "native modern scanner/quickhack presentation remains authoritative"
     },
     {
@@ -207,26 +207,26 @@
       "phenomenon": "body resources, sleep, exertion, digestion/elimination and recovery",
       "owner": "body",
       "disposition": "retain",
-      "currentState": "project-original model/runtime implemented; owned native activation pending exact acceptance",
+      "currentState": "project-original model/runtime/native adapters and Biology projection implemented; completed candidate requires fresh exact compile/live acceptance",
       "targetState": "single authored body authority active as part of the all-or-nothing release"
     },
     {
       "id": "realpass-ballistics-wounds",
       "source": "project-original",
-      "phenomenon": "projectile/armor/region/tissue injury pipeline",
+      "phenomenon": "projectile/armor/region/tissue-or-chrome injury pipeline",
       "owner": "combat",
       "disposition": "retain",
-      "currentState": "models/native bridges staged; activation gated",
+      "currentState": "models/native bridges implemented behind canonical fail-closed gates; candidate builder opens them in immutable staged copies",
       "targetState": "one realistic combat pipeline feeding injury authority"
     },
     {
       "id": "realpass-regional-injury-care",
       "source": "project-original",
-      "phenomenon": "localized wounds, blood loss, impairment, treatment and recovery",
+      "phenomenon": "localized wounds, blood loss, pain, impairment, treatment and recovery",
       "owner": "injury",
       "disposition": "retain",
-      "currentState": "models/native/Condition UI adapters staged; activation gated",
-      "targetState": "single injury authority for V and supported human NPCs"
+      "currentState": "models/native adapters, provenance, field/professional care and Biology condition presentation implemented; live acceptance pending",
+      "targetState": "single regional injury authority for V and supported human NPCs"
     },
     {
       "id": "realpass-pain-maxdoc",
@@ -234,7 +234,7 @@
       "phenomenon": "injury-derived pain, MaxDoc analgesia, diminishing returns and analgesic overuse",
       "owner": "injury",
       "disposition": "retain",
-      "currentState": "pure model and native adapter authored; local exact compile/gameplay acceptance pending",
+      "currentState": "model and native adapter authored; completed candidate requires fresh local exact compile/gameplay acceptance",
       "targetState": "vanilla MaxDoc/FirstAidWhiff identity and native use flow retained while realpass replaces its HP-regeneration effect with pain-only analgesia"
     },
     {
@@ -243,7 +243,7 @@
       "phenomenon": "regional protective coverage and armor wear",
       "owner": "armor",
       "disposition": "retain",
-      "currentState": "stock mapping and wear model implemented with provisional coefficients",
+      "currentState": "stock mapping and wear model/native commit implemented with provisional coefficients; live equipment/coverage calibration pending",
       "targetState": "visual/equipment-validated physical coverage; ordinary clothing supplies negligible ballistic protection"
     },
     {
@@ -252,7 +252,7 @@
       "phenomenon": "finite attended calibration visibility",
       "owner": "diagnostics",
       "disposition": "development-only",
-      "currentState": "off by default",
+      "currentState": "off by default and enabled only by an explicit candidate-build flag",
       "targetState": "remain off in normal play and never become a background service"
     }
   ]
