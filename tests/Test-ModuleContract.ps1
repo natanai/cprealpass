@@ -46,12 +46,29 @@ foreach ($id in @('body','injury','combat','armor','cyberwarePhysiology','presen
     if ($ids[$id].releaseEnabled -ne $true) { throw "Gameplay/presentation authority is not locked on for release: $id" }
 }
 if ($ids.diagnostics.releaseEnabled -ne $false) { throw 'Diagnostics must be locked off for release.' }
-if ($ids.presentation.fixedReleaseChoices.traditionalActorHealthBars -ne $false) { throw 'Traditional actor health bars must be locked off.' }
+if ($ids.presentation.fixedReleaseChoices.traditionalActorHealthBars -ne $false) { throw 'Traditional actor health bars must be locked off in the final authored release.' }
 if ($ids.presentation.fixedReleaseChoices.nativeModernScanner -ne $true) { throw 'Modern native scanner must remain the release authority.' }
 
 $outOfScope = @($contract.outOfScope)
 foreach ($forbidden in @('weather-control','economy-rebalance','added-outfit-or-transmog-system','public-gameplay-module-toggles','public-balance-slider-matrix')) {
     if ($outOfScope -notcontains $forbidden) { throw "Scope exclusion missing: $forbidden" }
+}
+
+if (@($ids.armor.owns) -notcontains 'physical-outfit-equipment-identity') {
+    throw 'Armor/equipment authority does not own physical Outfit equipment identity.'
+}
+if ($ids.armor.isolationContract -notmatch '(?i)actual carried clothing' -or $ids.armor.isolationContract -notmatch '(?i)transmog') {
+    throw 'Armor module does not distinguish physical vanilla Outfit loadouts from forbidden transmog authority.'
+}
+foreach ($owned in @('settings-presence-ledger','presentation-accessibility-preferences')) {
+    if (@($ids.presentation.owns) -notcontains $owned) { throw "Presentation module lost constrained settings ownership: $owned" }
+}
+if ($ids.presentation.isolationContract -notmatch '(?i)Mod Settings' -or $ids.presentation.isolationContract -notmatch '(?i)never simulation authority') {
+    throw 'Presentation module no longer constrains Mod Settings to non-simulation behavior.'
+}
+$releaseRules = @($contract.releaseRules) -join ' '
+if ($releaseRules -notmatch '(?i)actual carried equipment' -or $releaseRules -notmatch '(?i)presentation/accessibility preferences') {
+    throw 'Release rules do not preserve physical Outfit and constrained settings boundaries.'
 }
 
 # Hard-requirement graph must remain acyclic. Read-only presentation dependencies
@@ -68,4 +85,4 @@ function Visit([string]$id, [hashtable]$visiting, [hashtable]$visited) {
 $visited = @{}
 foreach ($id in $required) { Visit $id @{} $visited }
 
-Write-Host "PASS: realpass internal module contract ($($modules.Count) authorities); accepted release gameplay is locked on, diagnostics off, no public subsystem toggles."
+Write-Host "PASS: realpass internal module contract ($($modules.Count) authorities); accepted release gameplay is locked on, diagnostics off, physical Outfit identity belongs to armor/equipment, and settings remain presentation-only."
