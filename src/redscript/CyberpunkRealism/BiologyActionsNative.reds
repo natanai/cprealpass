@@ -339,7 +339,7 @@ protected cb func OnCRBioItem(evt: ref<inkPointerEvent>) -> Bool {
         this.crBioActionStatus.SetText("That carried item cannot be eaten or drunk right now.");
       }
       this.crBioPickerMode = 0;
-      this.CRBioRefreshBiologyActions();
+      this.CRRefreshBiologyActions();
       this.CRRefreshBiologyOverview();
       evt.Handle();
       return true;
@@ -360,7 +360,7 @@ protected cb func OnCRBioCondition(evt: ref<inkPointerEvent>) -> Bool {
     if target == this.crBioConditionRows[i] {
       this.crBioSelectedRegion = i + 1;
       this.crBioActionStatus.SetText("");
-      this.CRBioRefreshBiologyActions();
+      this.CRRefreshBiologyActions();
       evt.Handle();
       return true;
     }
@@ -397,7 +397,7 @@ protected cb func OnCRBioCare(evt: ref<inkPointerEvent>) -> Bool {
   }
   let result: Int32 = CRBodyRuntime.Get().UseFieldCare(this.crBioSelectedRegion, kind);
   this.crBioActionStatus.SetText(this.CRBioCareFeedback(result));
-  this.CRBioRefreshBiologyActions();
+  this.CRRefreshBiologyActions();
   this.CRRefreshBiologyOverview();
   evt.Handle();
   return true;
@@ -424,7 +424,7 @@ protected cb func OnCRBioProfessional(evt: ref<inkPointerEvent>) -> Bool {
   } else {
     this.crBioActionStatus.SetText("Professional care could not be completed. No injury state changed.");
   }
-  this.CRBioRefreshBiologyActions();
+  this.CRRefreshBiologyActions();
   this.CRRefreshBiologyOverview();
   evt.Handle();
   return true;
@@ -436,7 +436,7 @@ protected cb func OnInitialize() -> Bool {
   this.crBioPickerMode = 0;
   this.crBioSelectedRegion = 0;
   this.CRBioCreateActions();
-  this.CRBioRefreshBiologyActions();
+  this.CRRefreshBiologyActions();
   return result;
 }
 
