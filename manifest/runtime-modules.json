@@ -54,9 +54,9 @@
       "currentActivation": "owned-source-complete-live-acceptance-pending",
       "requires": ["core"],
       "reads": [],
-      "owns": ["protective-item-classification", "regional-coverage", "projectile-dependent-protection", "armor-wear"],
-      "internalFacets": ["wear"],
-      "isolationContract": "Development isolation adds no realpass interception/wear. Release always uses accepted physical protection rules; ordinary clothing never becomes generic armor."
+      "owns": ["protective-item-classification", "regional-coverage", "projectile-dependent-protection", "armor-wear", "physical-outfit-equipment-identity"],
+      "internalFacets": ["wear", "physicalOutfitLoadouts"],
+      "isolationContract": "Development isolation adds no realpass interception/wear. Release always uses accepted physical protection rules; ordinary clothing never becomes generic armor. Vanilla Outfit convenience may equip actual carried clothing, but no separate cosmetic/transmog authority may determine protection."
     },
     {
       "id": "cyberwarePhysiology",
@@ -78,10 +78,10 @@
       "currentActivation": "owned-source-complete-live-acceptance-pending",
       "requires": ["core"],
       "reads": ["body", "injury", "armor", "combat"],
-      "owns": ["biology-interface", "qualitative-body-state", "scanned-civilian-name-fallback", "healthbar-suppression", "native-scanner-preservation"],
-      "internalFacets": ["biology", "nameplates", "statusCues", "healthbarSuppression"],
+      "owns": ["biology-interface", "qualitative-body-state", "scanned-civilian-name-fallback", "healthbar-suppression", "native-scanner-preservation", "settings-presence-ledger", "presentation-accessibility-preferences"],
+      "internalFacets": ["biology", "nameplates", "statusCues", "healthbarSuppression", "settingsSurface"],
       "fixedReleaseChoices": {"traditionalActorHealthBars": false, "nativeModernScanner": true},
-      "isolationContract": "Presentation can be isolated for development without changing simulation. Release uses realpass-owned presentation plus native Cyberpunk UI behavior and never imports source-mod runtime content."
+      "isolationContract": "Presentation can be isolated for development without changing simulation. Release uses realpass-owned presentation plus native Cyberpunk UI behavior and never imports source-mod runtime content. Mod Settings may expose status/ledger text and explicitly accepted presentation/accessibility booleans, never simulation authority or balance."
     },
     {
       "id": "diagnostics",
@@ -114,6 +114,8 @@
     "Internal module gates are development tools, not player preferences.",
     "Every retained gameplay feature maps to exactly one owning realpass module.",
     "Presentation may read simulation state but must not become a simulation authority.",
+    "Vanilla Outfit convenience may be retained only as physical loadout application over actual carried equipment; a parallel transmog/protection authority is out of scope.",
+    "Mod Settings presence/ledger and accepted binary presentation/accessibility preferences may not alter core simulation authority or balance.",
     "Out-of-scope inherited features are absent from the distributed runtime.",
     "Source/reference gameplay mods are forbidden from owned-runtime manifests.",
     "Development activation gates stay closed in canonical source and are opened only in an immutable exact candidate until native acceptance is satisfied."
