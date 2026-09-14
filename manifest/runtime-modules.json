@@ -81,7 +81,7 @@
       "owns": ["biology-parent-body-shell", "cyberware-biology-submode", "qualitative-body-overview", "deliberate-biology-drilldown", "contextual-biology-actions", "scanned-civilian-name-fallback", "healthbar-suppression", "native-scanner-preservation", "settings-presence-ledger", "presentation-accessibility-preferences"],
       "internalFacets": ["biology", "cyberwareShell", "detailInspection", "nameplates", "statusCues", "healthbarSuppression", "settingsSurface"],
       "fixedReleaseChoices": {"traditionalActorHealthBars": false, "nativeModernScanner": true},
-      "isolationContract": "Presentation can be isolated for development without changing simulation. Biology reuses the stock cyberware_equip anatomy shell, Cyberware remains an internal equipment mode, detail bars read authoritative state only, Mod Settings may expose status/ledger text and explicitly accepted presentation/accessibility booleans, and no source-mod runtime owns presentation behavior."
+      "isolationContract": "Presentation can be isolated for development without changing simulation. Biology reuses the stock cyberware_equip anatomy shell, Cyberware remains an internal equipment mode, detail bars read authoritative state only, and no source-mod runtime owns presentation behavior. Mod Settings may expose status/ledger text and explicitly accepted presentation/accessibility booleans, but are never simulation authority."
     },
     {
       "id": "diagnostics",
