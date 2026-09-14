@@ -4,6 +4,7 @@
 // status effect (and therefore without inheriting alcohol's unrelated gameplay).
 import CyberpunkRealism.Physiology.*
 import CyberpunkRealism.Integration.*
+import CyberpunkRealism.Settings.*
 
 public class CRPainModifierSet extends IScriptable {
   private let slots: array<ref<CRInjuryModifierSlot>>;
@@ -109,7 +110,9 @@ public class CRPainNativeEffects extends IScriptable {
       player.crPainModifiers = new CRPainModifierSet();
     }
     let ok: Bool = player.crPainModifiers.Sync(player, pain);
-    CRPainNativeEffects.SyncIntoxication(player, pain.intoxication, true);
+    // Player preference gates only the presentation loop. It deliberately does not
+    // change pain, analgesic load, injury or pain-derived weapon handling.
+    CRPainNativeEffects.SyncIntoxication(player, pain.intoxication, CRRealpassSettings.ShowFullscreenDisorientationEffects());
     return ok;
   }
 }
