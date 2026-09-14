@@ -1,7 +1,7 @@
 // Project-original scanned-civilian name fallback.
-// Extends only the stock name data handed to the stock nameplate renderer. It does
-// not ship or depend on Project E3 assets/controllers and does not reveal authored
-// hidden identities, alternative names, quest targets or globally disabled names.
+// Extends only the stock name data handed to the stock nameplate renderer. It has
+// no source-mod runtime dependency and does not reveal authored hidden identities,
+// alternative names, quest targets or globally disabled names.
 module CyberpunkRealism.Presentation
 
 @addMethod(NameplateVisualsLogicController)
