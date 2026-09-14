@@ -15,6 +15,7 @@ $tests = @(
     'Test-NativeSeamPolicy.ps1',
     'Test-ConditionArchitecture.ps1',
     'Test-PainArchitecture.ps1',
+    'Test-OwnedNameplates.ps1',
     'Test-DistributionContract.ps1',
     'Test-InstallContract.ps1',
     'Test-FeatureInventory.ps1',
