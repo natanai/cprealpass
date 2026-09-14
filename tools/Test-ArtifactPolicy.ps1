@@ -22,8 +22,6 @@ function Normalize-Relative([string]$full) {
 function Matches-PolicyPattern([string]$relative, [string]$pattern) {
     $candidate = $relative.Replace('\','/').TrimStart('/').ToLowerInvariant()
     $rule = $pattern.Replace('\','/').TrimStart('/').ToLowerInvariant()
-    # Rules without a slash are filename rules and must catch the file anywhere
-    # in the artifact (for example Cyberpunk2077.exe, *.sav or .env*).
     if (-not $rule.Contains('/')) {
         return [IO.Path]::GetFileName($candidate) -like $rule
     }
@@ -39,23 +37,22 @@ foreach ($file in $files) {
             $violations.Add("forbidden-path:$relative matches $pattern")
         }
     }
-    # Explicit secret/private-key extensions are denied even if a future contract
-    # accidentally drops the corresponding wildcard.
     if ($relative -match '(?i)(^|/)(\.env(?:\..*)?|.*\.(pem|key))$') {
         $violations.Add("secret-like-file:$relative")
     }
 }
 
-# If an artifact exposes component provenance, reject any component currently
-# blocked by the distribution contract. The scanner supports the two intended
-# provenance shapes: {components:[{id:...}]} and a bare array of IDs/objects.
+# Provenance is authoritative for the component set in a finalized artifact. A
+# component can be excluded either because it is forbidden (source/game content) or
+# because the current authored runtime simply does not require it. Both cases must
+# fail closed so the one-download package cannot silently grow an obsolete mod stack.
 $provenanceCandidates = @(
     'realpass/provenance.json',
     'realpass/provenance/components.json',
     'provenance.json',
     'provenance/components.json'
 )
-$blocked = @($distribution.components | Where-Object status -eq 'blocked' | ForEach-Object id)
+$disallowed = @($distribution.components | Where-Object { $_.status -in @('blocked','not-required') } | ForEach-Object id)
 foreach ($candidate in $provenanceCandidates) {
     $full = Join-Path $rootFull $candidate
     if (-not (Test-Path -LiteralPath $full -PathType Leaf)) { continue }
@@ -63,8 +60,8 @@ foreach ($candidate in $provenanceCandidates) {
     $entries = if ($null -ne $data.components) { @($data.components) } else { @($data) }
     foreach ($entry in $entries) {
         $id = if ($entry -is [string]) { $entry } else { $entry.id }
-        if (-not [string]::IsNullOrWhiteSpace($id) -and $blocked -contains $id) {
-            $violations.Add("blocked-component:$id declared by $candidate")
+        if (-not [string]::IsNullOrWhiteSpace($id) -and $disallowed -contains $id) {
+            $violations.Add("disallowed-component:$id declared by $candidate")
         }
     }
 }

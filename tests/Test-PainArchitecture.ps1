@@ -12,7 +12,7 @@ $injuryEffectsNative = Get-Content -Raw -LiteralPath (Join-Path $project 'src/re
 $bodyHooks = Get-Content -Raw -LiteralPath (Join-Path $project 'src/redscript/CyberpunkRealism/BodyNativeHooks.reds')
 $fieldCare = Get-Content -Raw -LiteralPath (Join-Path $project 'src/redscript/CyberpunkRealism/FieldCareRuntime.reds')
 $conditionPresentation = Get-Content -Raw -LiteralPath (Join-Path $project 'src/redscript/CyberpunkRealism/ConditionPresentation.reds')
-$conditionUI = Get-Content -Raw -LiteralPath (Join-Path $project 'src/redscript/CyberpunkRealism/ConditionNativeUI.reds')
+$biologyUI = Get-Content -Raw -LiteralPath (Join-Path $project 'src/redscript/CyberpunkRealism/BiologyNativeUI.reds')
 
 foreach ($goal in @('G-004','G-054','G-055','G-056','G-057')) {
     Check ($goals.Contains($goal)) "Canonical vanilla-first/pain goal missing: $goal"
@@ -27,7 +27,7 @@ Check (-not $painModel.Contains('CRInjuryModel.Treat(') -and -not $painModel.Con
 Check ($painModel.Contains('UseMaxDoc') -and -not $painModel.Contains('UseTraumaKit')) 'Pain model does not preserve vanilla MaxDoc identity.'
 
 # Analgesia decays against CRBodyRuntime elapsed body time; no second timer or
-# Dark Future state may own the effect. REDscript 2.31 does not accept a unary
+# source-mod state may own the effect. REDscript 2.31 does not accept a unary
 # negative expression as a persistent-field constant initializer, so anchoring is
 # represented explicitly rather than by a -1.0 sentinel.
 Check ($painRuntime.Contains('body.elapsedHours') -and $painRuntime.Contains('CRPainModel.Advance')) 'Analgesia is not synchronized to the shared body clock.'
@@ -46,13 +46,13 @@ Check ($bodyHooks.Contains('gamedataConsumableBaseName.FirstAidWhiff')) 'Vanilla
 Check ($bodyHooks.Contains('CRPainRuntime.Get().UseMaxDoc()')) 'Native MaxDoc use does not route to pain runtime.'
 Check ($bodyHooks.Contains('CRPainNativeEffects.Refresh(local, true)')) 'Accepted MaxDoc use does not reconstruct pain/intoxication feedback immediately.'
 Check (-not $bodyHooks.Contains('gamedataConsumableBaseName.HealthBooster')) 'Health Booster is still being repurposed as MaxDoc analgesia.'
-Check (-not $bodyHooks.Contains('UseTraumaKit')) 'Dark Future Trauma Kit naming leaked into the native pain adapter.'
+Check (-not $bodyHooks.Contains('UseTraumaKit')) 'Source-mod medical naming leaked into the native pain adapter.'
 
 # Field wound treatment uses separate supplies. This assertion is deliberately
 # cross-layer so a future refactor cannot silently turn MaxDoc into a bandage.
 Check (-not $fieldCare.Contains('Items.HealthBooster')) 'Field care still spends Health Boosters as wound supplies.'
 Check ($fieldCare.Contains('Items.GenericJunkItem4') -and $fieldCare.Contains('Items.CommonMaterial1')) 'Dressing/support do not have distinct field supplies.'
-Check (-not $conditionUI.Contains('No trauma kit available')) 'Condition field-care feedback still describes wound supplies as Trauma Kits.'
+Check (-not $biologyUI.Contains('No trauma kit available')) 'Biology field-care feedback describes wound supplies as a source-mod Trauma Kit.'
 
 # Native pain effects use weapon sway and CDPR's existing fullscreen drunk loops,
 # but do not apply BaseStatusEffect.Drunk and inherit alcohol gameplay packages.
@@ -66,11 +66,11 @@ Check (-not $painNative.Contains('gamedataStatPoolType.Health') -and -not $painN
 Check (-not $painNative.Contains('@wrapMethod(CRInjuryEffectsRuntime)')) 'Pain reintroduced a REDscript-incompatible wrapper around a project-defined runtime.'
 Check ($injuryEffectsNative.Contains('CRPainNativeEffects.Refresh(localPlayer')) 'Pain is not refreshed from the owned transient-injury reconstruction boundary.'
 
-# Condition mode must expose the qualitative projection rather than calculating a
+# Biology renders the qualitative condition pain projection rather than calculating a
 # second pain value or presenting a numeric pain meter.
 Check ($conditionPresentation.Contains('public let painText: String') -and $conditionPresentation.Contains('CRPainRuntime.Get().Read()')) 'Condition descriptor is not sourced from the owned pain projection.'
 Check ($conditionPresentation.Contains('MaxDoc analgesia') -and -not $conditionPresentation.Contains('Trauma Kit analgesia')) 'Condition copy does not preserve vanilla MaxDoc terminology.'
-Check ($conditionUI.Contains('crConditionPain') -and $conditionUI.Contains('this.crConditionPain.SetText(descriptor.painText)')) 'Condition UI does not render qualitative pain state.'
-Check (-not $conditionUI.Contains('PAIN: ') -and -not $conditionUI.Contains('pain.perceivedPain')) 'Condition UI computes or exposes a raw pain meter instead of rendering the projection.'
+Check ($biologyUI.Contains('crBiologyDetailPain') -and $biologyUI.Contains('this.crBiologyDetailPain.SetText(descriptor.painText)')) 'Biology UI does not render qualitative pain state.'
+Check (-not $biologyUI.Contains('PAIN: ') -and -not $biologyUI.Contains('pain.perceivedPain')) 'Biology native UI computes or exposes a raw pain meter instead of rendering the projection.'
 
-Write-Host "PASS: $script:checks vanilla-MaxDoc analgesia ownership, immediate feedback, REDscript-compatible clock/refresh boundaries, and Condition rendering architecture checks."
+Write-Host "PASS: $script:checks vanilla-MaxDoc analgesia ownership, immediate feedback, REDscript-compatible clock/refresh boundaries, and Biology rendering architecture checks."

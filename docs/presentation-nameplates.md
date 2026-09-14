@@ -1,51 +1,59 @@
-# realpass scanned NPC names
+# realpass scanned civilian names
 
-The preceding E3 integration could draw a narrow empty name frame because its border/background are separate from the native display-name widget. The native projection can hide the name while the E3 replacement still displays its frame. The integration also removed every fallback for an empty native focus-data name.
+Status: project-original native source implemented; fresh exact compile and attended acceptance pending
+Last updated: 2026-09-14
 
-The patch restores a public entity display name only for a scanned ordinary civilian using the exact UINameplate.CrowdSettings record. This selectively extends generic crowd presentation. It does not change UINameplate.Disabled, QuestSettings, custom hidden records, or global TweakDB defaults.
+## Product intent
 
-The fallback requires:
+realpass keeps Cyberpunk's stock nameplate renderer and visibility policy. The only added behavior is a narrow fallback for an ordinary civilian who has been successfully scanned but whose stock focus-data name is empty even though the public crowd identity is allowed.
 
-- An attached, scanned civilian that is not the current quest target.
-- An enabled, exact UINameplate.CrowdSettings record.
-- Neither the hide_nametag character flag nor the dynamic Puppet.HideNameplate flag.
-- A valid persistent state without an alternative identity.
-- A scanner preset that permits names, including any forced scanner preset.
+The implementation is `src/redscript/CyberpunkRealism/NameplatesNative.reds`. It does not ship a replacement nameplate widget/archive and does not depend on a reference HUD runtime.
 
-A nonempty native focus name takes priority. The fallback reads only GameObject.GetDisplayName(), the public API used by the native civilian scanner. It does not traverse full-name, affiliation, archetype or alternative-name records. If no legitimate name is available, the name text and both E3 decorations are hidden together.
+## Permission boundary
 
-The projection wrapper refreshes the name before the stock IsAnyElementVisible check. This allows completion of a scan to recover from a previously hidden frame without relying on another focus-data event. It then executes the entire native projection callback and keeps its outer visibility decision. The only added display-name permission is the scanned generic-crowd case above. Native distance/projection, mounting, dialogue, rewindable scene sections and dynamic hiding continue to suppress the whole plate.
+The fallback requires all of the following:
 
-The game setting for NPC names, forced visual hiding, defeated actors, turrets, and E3 boss versus ordinary name decoration are also respected.
+- target is an attached `NPCPuppet`;
+- target has been scanned;
+- target is a civilian;
+- target is not the current quest target;
+- neither `hide_nametag` nor the dynamic `Puppet.HideNameplate` flag hides identity;
+- `Character_Record.UiNameplate()` exists, is enabled, and is exactly `UINameplate.CrowdSettings`;
+- the puppet persistent state exists and does not advertise an alternative identity;
+- the effective scanner visibility preset (including a forced preset) allows the name.
 
-## Local source evidence
+If stock `NPCNextToTheCrosshair.name` is already nonempty, it always wins. The fallback reads only `GameObject.GetDisplayName()` and assigns it to the incoming stock focus/nameplate data before the original `NameplateVisualsLogicController.SetVisualData(...)` runs.
 
-All references below are to the locally decoded Cyberpunk 2077 2.31 scripts in staging/game-api-6316aafc68ee4fd9b68f3fdf41d14342/game.reds.
+Because the stock renderer still executes, its distance/projection/dialogue/mounting/defeated-state/settings/visibility behavior remains authoritative. realpass does not directly show the name text widget, frame, health bar or attitude decorations.
 
-- Lines 258016–258044: NPCNextToTheCrosshair.name is a native-produced field. Redscript does not establish that it is always populated.
-- Lines 122639–122668: the NPC scanner respects name-preset visibility and alternative identities; a civilian without a record display name uses GetDisplayName().
-- Lines 391885–391967: the native projection enforces record policy, mounting, dialogue/scene and hidden-name flags, then independently sets m_displayName.
-- Lines 392307–392358: visual data updates call name coloring, element visibility and health visibility.
-- Lines 392414–392419: the native NPC names setting triggers a visual data refresh.
-- E3 reference nameplateVisuals.reds, SetElementVisibility: the name frame is shown for every non-turret, even for an empty final name. Its vendor/friendly branch repeats the unconditional name visibility.
+## What this deliberately does not do
 
-These source facts explain two failure paths consistent with the screenshot. The screenshot alone does not identify the focused NPC's exact TweakDB record or prove the archive's text/font binding. The patch retains the original E3 font, font styles and layout; those asset properties still need visual verification.
+- reveal quest-hidden or custom/alternative identities;
+- invent names from archetype, affiliation or other hidden records;
+- restore a reference mod's nameplate assets;
+- force names globally;
+- change NPC attitude/health presentation;
+- override the player's stock NPC-name setting;
+- create a second scanner/nameplate controller.
 
-## Builder integration (implemented)
+## Public native API evidence
 
-1. Preserve the existing E3 reference hash validation, minimal settings and inert blanket NPC YAML files.
-2. Run the current builder's native-name replacement and notice insertion first.
-3. Apply config/patches/realpass-e3-nameplates.json to the prepared nameplateVisuals.reds content. Its expected SHA-256 is the existing rc2 adapted source, 792A9BE253328163809DCB2F12E4BEE063A47762E5F8C9EE272F6CE6B45EB969. Require every exact occurrence count.
-4. Copy patches/project-e3-hud/realpassNameplates.reds into the new staged payload at the recipe's supportDestination, r6/scripts/realpass/Presentation/realpassNameplates.reds. Add exactly one script/manifest entry and hash both this support source and recipe in provenance.
-5. Keep the current removal of the original E3 projection wrapper. The support script provides the new constrained wrapper.
-6. Include the patch source and recipe in local bundle provenance. Preserve the required-original/local-only status of the E3-containing bundle.
-7. Update E3 staging tests: the new wrapper lives in its own support file; the GetCustom method retains native-data precedence but now has a scanned-crowd fallback. Total E3 additions become 37 files / 23 scripts.
+The stock 2.31 nameplate controller exposes `SetVisualData(puppet, incomingData, opt isNewNpc)` and renders `incomingData.name`; stock visibility remains a separate decision. This makes enriching an otherwise-empty permitted public name before calling `wrappedMethod` narrower and more patch-resilient than replacing the entire nameplate resource/controller.
 
-Do not overwrite old candidates or the running installation. The nameplate correction entered realpass-presentation-rc3-quiet, with 226 payload files and 115 scripts. A subsequent screenshot confirmed the readable scanned name Carolyn Veranes. The current rc4 modern-scanner candidate retains the same nameplate sources and assets. The earlier nameplate-only manifest is a separate compile fixture.
+The precise installed 2.31 signature still belongs to the exact-compile gate. `NameplatesNative.reds` is registered in `manifest/native-seams.json` so a future game API change fails at the explicit boundary rather than silently altering simulation logic.
 
-## Verification
+## Acceptance
 
-- tests/Test-RealpassNameplates.ps1: 63 checks execute the actual resolver replacement, added helpers and projection wrapper using controlled native API/widget fixtures. Both separate native display-name references and references that alias the text widget are covered.
-- Complete candidate compilation: 115 sources, zero errors, the same nine existing dependency warnings.
-- Offline tests alone do not validate game rendering, actual crowd record assignment or saves. A later user screenshot confirms a readable scanned civilian name in one native case; other identity restrictions and dialogue transitions still need native acceptance.
-- The next combined test should scan an ordinary civilian, release the scanner and focus them, then look away/back. Check a friendly/quest NPC too, and confirm that dialogue still hides the overhead name.
+Attend at least these cases with the owned candidate:
+
+1. scan an ordinary unnamed civilian and confirm an allowed public name appears/readably persists through focus changes;
+2. ordinary civilian before scan does not gain the fallback merely from proximity;
+3. quest target remains governed by stock quest presentation;
+4. NPC with an alternative identity retains the alternative/hidden behavior;
+5. `hide_nametag` / dynamic HideNameplate still suppress identity;
+6. dialogue/scene transitions retain native visibility behavior;
+7. friendly/neutral/hostile attitudes still render with stock rules;
+8. actor-healthbar suppression does not remove the name/scanner text;
+9. look away/back and scanner open/close do not leave stale names.
+
+Previous screenshots from the retired integration demonstrated that readable scanned civilian names are desirable, but they are not acceptance evidence for this new owned implementation.
