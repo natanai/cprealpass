@@ -188,6 +188,16 @@ Current authority: G-093, `AGENTS.md`, `docs/PARALLEL-AGENT-WORKFLOW.md`.
 
 Current authority: `docs/E3-PRESENTATION.md`, `docs/E3-COMPONENT-MAPPING.md`, and issue #40.
 
+### 2026-09-15 — date-only — local operator commands must self-bootstrap and return evidence files
+
+**Earlier misunderstanding:** local instructions assumed a durable checkout such as `C:\Games\CyberpunkRealism`, and diagnostic failures were commonly handed back by asking the user to copy/paste large PowerShell transcripts into chat.
+
+**User correction:** there is no permanent local repository path. Before any repo-dependent local command, inspect `C:\Games` for an existing `natanai/cprealpass` checkout; if none exists, create a uniquely signed clone automatically. Branch-specific audits/tests should use their own uniquely signed disposable checkout/worktree. Local evidence commands should always generate a plain-text `.txt` report that the user attaches back to the owning ChatGPT thread instead of pasting terminal output.
+
+**Do not repeat:** do not recreate the retired `C:\Games\CyberpunkRealism` convention, do not make the user manually prepare a repo before a routine evidence command, and do not make pasted console transcripts the normal evidence-return path.
+
+Current authority: `docs/LOCAL-OPERATOR-COMMANDS.md`, `tools/Audit-GameContracts.ps1`, and the local-operator/game-contract CI tests.
+
 ---
 
 ## Current product snapshot
@@ -211,6 +221,7 @@ This section is intentionally short. The detailed requirements remain in `AGREED
 - Vanilla Outfits are being reinterpreted as physical equipment loadouts, not a separate cosmetic protection authority.
 - Broad acceptance is release-shaped and launched normally through Steam; milestone clean-room reinstalls are periodic/structural rather than required every iteration.
 - Direct installed-game evidence outranks community examples for foundational native/REDmod contracts when a targeted local probe is practical.
+- Local repo paths are disposable/discovered at runtime; local evidence is returned as generated `.txt` reports rather than pasted terminal logs.
 - Patch-sensitive logic belongs in small explicit compatibility seams; the simulation core should survive ordinary game patches unchanged.
 - Large separable work should use parallel branches/agents and converge in `main` before combined attended testing.
 
@@ -220,7 +231,7 @@ When the user changes, narrows, reverses or corrects a product decision:
 
 1. update `AGREED-GOALS.md` if the current requirement changed;
 2. append a timestamped entry here describing both the superseded interpretation and the correction;
-3. update the affected focused architecture doc and machine-readable contract/test in the same batch;
+3. update the affected focused architecture doc and relevant contract/test in the same batch;
 4. remove any obsolete active workplan/instruction packet that now contradicts the canonical set;
 5. when the work is large and separable, provide parallel branch handoffs under `docs/PARALLEL-AGENT-WORKFLOW.md`;
 6. do not erase Git history merely to make the current tree clean.
