@@ -93,7 +93,14 @@ pwsh ./tools/Refresh-LocalGameReference.ps1 `
   -GamePath 'C:\Games\Steam\steamapps\common\Cyberpunk 2077'
 ```
 
-When a meaningful current state should be sent to GitHub for remote agents/history, use the repository-owned publishing tool documented in `docs/LOCAL-OPERATOR-COMMANDS.md`. It publishes derived metadata only and does not upload proprietary game files.
+When a meaningful current state should be sent to GitHub for remote agents/history, use the repository-owned running snapshot publisher:
+
+```powershell
+pwsh ./tools/Publish-LocalGameReferenceSnapshot.ps1 `
+  -GamePath 'C:\Games\Steam\steamapps\common\Cyberpunk 2077'
+```
+
+`Publish-LocalGameReferenceSnapshot.ps1` publishes derived metadata only and does not upload proprietary game files.
 
 ### Known-clean vanilla baseline
 
