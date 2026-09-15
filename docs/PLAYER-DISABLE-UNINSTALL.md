@@ -17,7 +17,7 @@ Disable is not uninstall. Uninstall is not save rollback.
 
 ## Launcher-OFF runtime audit
 
-The integrated candidate is REDmod-first but not REDmod-only. Therefore launcher OFF cannot be implemented by assuming every supplemental path disappears.
+The integrated candidate is REDmod-first but not REDmod-only. Therefore launcher OFF cannot be implemented by assuming every supplemental path disappears. Biology-owned loose REDscript and retained generic framework components **may still load** while the Biology REDmod package is disabled, so none of those supplemental paths can be activation authority.
 
 | Package/runtime family | Location in current artifact | Can exist/load with REDlauncher mods OFF? | Biology-off implication |
 | --- | --- | --- | --- |
@@ -105,7 +105,9 @@ This is intentionally more conservative than the developer clean-room reset. `Re
 
 ## REDmod refresh after hard uninstall
 
-After Biology-owned payload removal, the uninstaller invokes the official supported tool with an explicit root:
+The player front-end performs exact-file removal first, then checks whether Biology-specific namespaces still contain residual content. It invokes the official REDmod tool only when `mods/Biology` is actually gone. If changed, untracked, or otherwise unresolved content keeps `mods/Biology` present, REDmod refresh is deliberately withheld and the result is reported as a partial uninstall requiring manual review; automatically redeploying a partial Biology package could reactivate it.
+
+For a clean removal, the refresh uses the official supported tool with an explicit root:
 
 ```text
 tools/redmod/bin/redMod.exe deploy -root=<Cyberpunk 2077>
@@ -115,7 +117,7 @@ Refresh outcomes are fail-closed:
 
 - if other `mods/*/info.json` REDmods remain, success requires REDmod to report a completed deploy stage;
 - if no other REDmods remain, the official `No mods found, no deployment is needed` outcome is accepted;
-- nonzero exit, wrong-root evidence, missing official executable, or ambiguous success is reported as a refresh failure/manual-review condition.
+- nonzero exit, wrong-root evidence, missing official executable, ambiguous success, or residual Biology namespace content is reported as a refresh failure/manual-review condition.
 
 The uninstaller never recursively deletes `r6/cache/modded` or any other shared REDmod cache root. Attended hard-uninstall acceptance must prove that no stale Biology marker/behavior survives the official refresh.
 
@@ -127,7 +129,7 @@ The binary is compiled directly into the staging root **before** its SHA-256 is 
 
 ## Automated safety tests
 
-`tests/Test-PlayerUninstaller.ps1` compiles/runs `tests/BiologyUninstallCoreTests.cs` on Windows CI. Cases include happy exact-hash Biology deletion, generic/shared dependency preservation, unrelated mod and save preservation, changed-file refusal, change-after-planning refusal, missing-file reporting, unsafe-path and case-insensitive duplicate rejection, non-Biology receipt rejection, forged game-executable ownership rejection, generic dependency owner validation, surgical preference removal, and REDmod refresh success/failure classification.
+`tests/Test-PlayerUninstaller.ps1` compiles/runs `tests/BiologyUninstallCoreTests.cs` on Windows CI. Cases include happy exact-hash Biology deletion, unchanged and changed generic/shared dependency preservation, unrelated mod and save preservation, changed-file refusal, change-after-planning refusal, missing-file reporting, unsafe-path and case-insensitive duplicate rejection, malformed/unsupported receipt policy rejection, non-Biology receipt rejection, forged game-executable ownership rejection, generic dependency owner validation, default preference preservation, surgical opt-in preference removal, bounded empty-directory cleanup, REDmod refresh success/failure classification, and a front-end contract that forbids REDmod redeploy while `mods/Biology` residue remains.
 
 `tests/Test-PlayerDisableContract.ps1` separately asserts launcher marker/accessor/package coupling and that the package builder includes both the marker and uninstaller.
 
@@ -141,8 +143,8 @@ CI, C# planner tests and exact REDscript compilation do **not** close live accep
 4. OFF -> ON + relaunch: Biology returns and preserved Biology preference/state behaves as intended.
 5. Double-click `Uninstall Biology.exe`: no shell/dev tooling required; exact Biology-owned files are removed, saves remain, preferences remain by default, generic/shared dependencies remain.
 6. Repeat with opt-in preference removal: only Biology's Mod Settings section is removed.
-7. Changed Biology-owned fixture: uninstaller refuses that file and preserves the receipt/manual-review evidence.
-8. Another harmless REDmod installed: uninstall refresh redeploys it and does not remove/disable it.
+7. Changed Biology-owned fixture: uninstaller refuses that file and preserves the receipt/manual-review evidence; if the residual file is under `mods/Biology`, REDmod refresh is withheld rather than redeploying a partial package.
+8. Another harmless REDmod installed: clean Biology removal refresh redeploys it and does not remove/disable it.
 9. No other REDmods installed: official no-mod refresh outcome leaves no stale Biology activation/behavior without recursive cache deletion.
 10. Normal game launch/save load after hard uninstall remains healthy.
 
