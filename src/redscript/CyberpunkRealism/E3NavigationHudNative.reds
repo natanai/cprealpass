@@ -1,10 +1,6 @@
 // Biology-owned red/minimal navigation framing on Cyberpunk's native navigation host.
-//
-// Project E3 used IronsightGameController plus archive-owned compass widgets. Biology
-// deliberately does not reproduce that archive or its route/mappin authority. This
-// seam keeps the current 2.31 navigation data/controller and contributes only the
-// visual composition required to stop the native minimap/navigation corner reading as
-// an unrelated retail HUD island. Scanner/quickhack controllers are not referenced.
+// Native route/mappin/navigation information remains authoritative. Biology only
+// changes the persistent neutral-HUD visual language; scanner/quickhack is untouched.
 module CyberpunkRealism.Presentation
 
 import CyberpunkRealism.Settings.*
@@ -18,7 +14,7 @@ private final func CRCreateBiologyE3NavFrame() -> Void {
     return;
   }
 
-  let root: ref<inkCompoundWidget> = this.GetRootWidget() as inkCompoundWidget;
+  let root: ref<inkCompoundWidget> = this.GetRootCompoundWidget();
   if !IsDefined(root) {
     return;
   }
@@ -30,7 +26,6 @@ private final func CRCreateBiologyE3NavFrame() -> Void {
   this.crBiologyE3NavFrame.SetVAlign(inkEVerticalAlign.Top);
   this.crBiologyE3NavFrame.SetSize(Vector2(520.0, 286.0));
   this.crBiologyE3NavFrame.SetTranslation(-28.0, 28.0);
-  this.crBiologyE3NavFrame.SetAffectsLayoutWhenHidden(false);
   this.crBiologyE3NavFrame.Reparent(root, -1);
 
   CRBiologyE3Primitives.AddRect(this.crBiologyE3NavFrame, n"CRBiologyE3NavTop", 74.0, 0.0, 420.0, 3.0, 0.92);
@@ -43,9 +38,11 @@ private final func CRCreateBiologyE3NavFrame() -> Void {
 
 @addMethod(IronsightGameController)
 private final func CRRefreshBiologyE3NavFrame() -> Void {
+  let enabled: Bool = CRRealpassSettings.UseE3FirstPersonHudVisuals(GetGameInstance());
   this.CRCreateBiologyE3NavFrame();
+  CRBiologyE3Primitives.TintNeutralHudRoot(this.GetRootWidget(), enabled);
   if IsDefined(this.crBiologyE3NavFrame) {
-    this.crBiologyE3NavFrame.SetVisible(CRRealpassSettings.UseE3FirstPersonHudVisuals(GetGameInstance()));
+    this.crBiologyE3NavFrame.SetVisible(enabled);
   }
 }
 
