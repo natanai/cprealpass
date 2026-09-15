@@ -3,12 +3,12 @@
   "product": "realpass",
   "surface": {
     "provider": "mod-settings",
-    "purpose": "runtime-presence, concise feature ledger, and binary presentation/accessibility preferences only",
+    "purpose": "binary presentation/accessibility preferences only",
     "publicGameplaySettings": false,
     "publicBalanceSettings": false,
     "publicPresentationPreferences": true,
     "persistenceOwner": "mod-settings",
-    "notes": "A RealPass version keeps one authored physical simulation. The public surface may describe active authorities and toggle presentation channels, but never rebalance or disable the underlying simulation."
+    "notes": "A RealPass version keeps one authored physical simulation. Mod Settings may toggle presentation channels only; simulation status/ownership remains a RealPass manifest/Biology concern rather than a faux-editable settings ledger."
   },
   "featureLedger": [
     "runtime-active",
