@@ -17,15 +17,17 @@ $repoUrl = 'https://github.com/natanai/cprealpass.git'
 $repoPattern = '(?i)(?:github\.com[/:])natanai/cprealpass(?:\.git)?$'
 $seedRepo = $null
 $auditRoot = $null
+$fetchedHead = $null
+$auditExit = $null
 $failed = $false
 
 function Add-Evidence([string]$text) {
     Add-Content -LiteralPath $reportPath -Value $text -Encoding utf8
 }
 
-function Invoke-GitSafe([string[]]$Arguments, [switch]$Echo) {
+function Invoke-NativeSafe([string]$FilePath,[string[]]$Arguments,[switch]$Echo) {
     $psi = [Diagnostics.ProcessStartInfo]::new()
-    $psi.FileName = 'git'
+    $psi.FileName = $FilePath
     $psi.UseShellExecute = $false
     $psi.RedirectStandardOutput = $true
     $psi.RedirectStandardError = $true
@@ -38,7 +40,7 @@ function Invoke-GitSafe([string[]]$Arguments, [switch]$Echo) {
     $stderr = ''
     $exitCode = $null
     try {
-        if (-not $process.Start()) { throw 'Unable to start git process.' }
+        if (-not $process.Start()) { throw "Unable to start native process: $FilePath" }
         $stdout = $process.StandardOutput.ReadToEnd()
         $stderr = $process.StandardError.ReadToEnd()
         $process.WaitForExit()
@@ -63,6 +65,10 @@ function Invoke-GitSafe([string[]]$Arguments, [switch]$Echo) {
         StdErr = $stderr
         Output = @($combined)
     }
+}
+
+function Invoke-GitSafe([string[]]$Arguments,[switch]$Echo) {
+    Invoke-NativeSafe -FilePath 'git' -Arguments $Arguments -Echo:$Echo
 }
 
 function Get-CprealpassSeed {
@@ -112,6 +118,7 @@ if (-not (Test-Path -LiteralPath $GamesRoot -PathType Container)) {
     ('Branch: ' + $Branch),
     ('Expected head: ' + $ExpectedHead),
     ('Game: ' + $GamePath),
+    'Policy: branch checkout is disposable; the installed game is read-only for this audit.',
     ''
 ) | Set-Content -LiteralPath $reportPath -Encoding utf8
 
@@ -119,6 +126,13 @@ try {
     if (-not (Get-Command git -ErrorAction SilentlyContinue)) { throw 'git is not available on PATH.' }
     if (-not (Get-Command pwsh -ErrorAction SilentlyContinue)) { throw 'PowerShell 7 (pwsh) is not available on PATH.' }
     if (-not (Test-Path -LiteralPath $GamePath -PathType Container)) { throw "Cyberpunk game directory does not exist: $GamePath" }
+
+    $gameExe = Join-Path $GamePath 'bin\x64\Cyberpunk2077.exe'
+    if (-not (Test-Path -LiteralPath $gameExe -PathType Leaf)) { throw "Cyberpunk executable does not exist: $gameExe" }
+    $gameVersion = (Get-Item -LiteralPath $gameExe).VersionInfo.ProductVersion
+    $gameSha256 = (Get-FileHash -LiteralPath $gameExe -Algorithm SHA256).Hash
+    Add-Evidence "Cyberpunk product version: $gameVersion"
+    Add-Evidence "Cyberpunk executable SHA-256: $gameSha256"
 
     $seedRepo = Get-CprealpassSeed
 
@@ -160,30 +174,43 @@ try {
     Write-Host "AUDIT HEAD:     $ExpectedHead" -ForegroundColor Cyan
     Write-Host ''
 
-    & pwsh -NoLogo -NoProfile -File (Join-Path $auditRoot 'tools\Audit-PresentationContracts.ps1') -GamePath $GamePath -ReportPath $reportPath
-    $auditExit = $LASTEXITCODE
+    Add-Evidence ''
+    Add-Evidence '=== INNER PRESENTATION AUDIT PROCESS OUTPUT ==='
+    $auditProcess = Invoke-NativeSafe -FilePath 'pwsh' -Arguments @(
+        '-NoLogo','-NoProfile','-File',(Join-Path $auditRoot 'tools\Audit-PresentationContracts.ps1'),
+        '-GamePath',$GamePath,
+        '-ReportPath',$reportPath
+    ) -Echo
+    $auditExit = $auditProcess.ExitCode
 
     Add-Evidence ''
     Add-Evidence '=== LOCAL AUDIT BOOTSTRAP CONTEXT ==='
     Add-Evidence "Seed checkout: $seedRepo"
     Add-Evidence "Disposable audit checkout: $auditRoot"
     Add-Evidence "Requested branch: $Branch"
+    Add-Evidence "Fetched head: $fetchedHead"
     Add-Evidence "Audited head: $ExpectedHead"
     Add-Evidence "Audit process exit code: $auditExit"
     Add-Evidence ('Completed: ' + [DateTime]::Now.ToString('o'))
 
-    if ($auditExit -ne 0) { throw "Presentation audit returned exit code $auditExit." }
+    if ($auditExit -ne 0) {
+        throw "Presentation audit returned exit code $auditExit. See INNER PRESENTATION AUDIT PROCESS OUTPUT above for captured stdout/stderr and child error evidence."
+    }
 } catch {
     $failed = $true
     Add-Evidence ''
     Add-Evidence '=== LOCAL AUDIT BOOTSTRAP FAILURE ==='
     Add-Evidence ('Time: ' + [DateTime]::Now.ToString('o'))
+    Add-Evidence ('Exception type: ' + $_.Exception.GetType().FullName)
     Add-Evidence ('Error: ' + $_.Exception.Message)
     Add-Evidence "Seed checkout: $seedRepo"
     Add-Evidence "Disposable audit checkout: $auditRoot"
+    Add-Evidence "Requested branch: $Branch"
+    Add-Evidence "Fetched head: $fetchedHead"
     Add-Evidence "Expected head: $ExpectedHead"
+    Add-Evidence "Audit process exit code: $auditExit"
     Write-Host ''
-    Write-Host 'The audit encountered a failure. The text report contains the evidence.' -ForegroundColor Yellow
+    Write-Host 'The audit encountered a failure. The text report contains the child stdout/stderr and exception evidence.' -ForegroundColor Yellow
 } finally {
     Write-Host ''
     Write-Host '============================================================' -ForegroundColor Cyan
