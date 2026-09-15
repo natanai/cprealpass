@@ -75,10 +75,14 @@ Require $reset 'Compare-GameToVanillaBaseline\.ps1' 'Biology reset must finish w
 Require $reset 'MILESTONE CLEAN-ROOM' 'Biology reset must fail closed to milestone mode.'
 Require $legacyReset 'realpass\\build-manifest\.json' 'Legacy reset must remain available for the prior package during PKG-06 transition.'
 
-Require $package 'game-root-shaped|game-root-shaped Biology' 'Integrated Biology builder must remain release-shaped.'
+# Release-shape is asserted from the builder's actual output mechanics rather than a
+# comment/label: it materializes game-root relative paths and compresses that root.
+Require $package 'mods/Biology/info\.json' 'Integrated package must include official Biology REDmod identity.'
+Require $package 'r6/scripts/CyberpunkRealism|runtimeManifest\.files' 'Integrated package must consume the compiled Biology runtime destinations.'
+Require $package 'Compress-Archive' 'Integrated Biology builder must emit a player-shaped ZIP.'
+Require $package 'BIOLOGY-VERSION\.txt' 'Integrated package must emit Biology release metadata at archive root.'
 Require $package 'Nothing was deployed or launched' 'Integrated builder must remain non-deploying.'
 Require $package 'Build-OwnedRuntimeProfile\.ps1' 'Integrated builder must exact-compile the complete runtime profile before artifact emission.'
-Require $package 'mods/Biology/info\.json' 'Integrated package must include official Biology REDmod identity.'
 Require $package 'biology/build-manifest\.json' 'Integrated package must emit exact Biology ownership metadata.'
 Require $package 'approved-dependency-owned' 'Integrated package must account for supplemental framework files individually.'
 Require $package 'sourceModsRequired = @\(\)' 'Integrated package must require no source gameplay/presentation mod runtime.'
@@ -90,8 +94,6 @@ Require $deploy '''-root=\$game''' 'Deterministic deploy helper must pass explic
 Require $deploy '2\.3\.1\.0' 'Deploy helper must guard directly evidenced REDmod file version.'
 Require $deploy '2\.31' 'Deploy helper must guard directly evidenced REDmod product version.'
 
-# A fresh clone must exact-compile without carrying a developer binary in Git. The
-# pinned redscript CLI remains a local build dependency and is hash-verified.
 Require $compile 'redscript-cli\.exe' 'Compile profile must use the pinned redscript CLI.'
 Require $compile 'https://github\.com/jac3km4/redscript/releases/download/v0\.5\.31/redscript-cli\.exe' 'Fresh-clone compile must acquire the pinned official redscript CLI asset.'
 Require $compile 'CDCBED2E0C943322BBCBBAC4A9C62EF29ADC5620E4B0934F0D2A31A8282B5B62' 'Pinned redscript CLI digest changed or disappeared.'
