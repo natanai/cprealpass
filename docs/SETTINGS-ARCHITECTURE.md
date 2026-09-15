@@ -26,7 +26,7 @@ Preferred result:
 - remove ArchiveXL/RED4ext dependencies that existed only to support Mod Settings when no other accepted feature needs them;
 - keep the public preference semantics unchanged regardless of provider.
 
-Do **not** preserve a framework stack merely to host two booleans.
+Do not preserve a framework stack merely to host two booleans.
 
 ## Release behavior
 
