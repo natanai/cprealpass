@@ -1,8 +1,51 @@
 # RealPass agent instructions
 
-Last updated: **2026-09-14 20:36 CDT (UTC-05:00)**
+Last updated: **2026-09-14 21:00 CDT (UTC-05:00)**
 
 RealPass is a foundational Cyberpunk 2077 realism overhaul. The project is intentionally designed so ordinary game patches should affect a small compatibility boundary rather than force broad rewrites.
+
+## TEST HANDOFF GATE — read before telling the user a build is ready to test
+
+Every user-facing live-test handoff MUST explicitly classify the requested test as one of these two modes:
+
+### 1. ITERATION TEST
+
+Use this for focused feature/UI/gameplay iteration when there has been no game patch, framework/package-layout change, or other structural reason to distrust the existing vanilla baseline.
+
+Rules:
+
+- The local RealPass repository/workspace is disposable. **Use a fresh clone/download of current canonical `main` for every user-facing test build.** Do not ask the user to repair, switch, stash, or carry forward an old local worktree as the normal test path.
+- A Cyberpunk reinstall is **not** required for every iteration.
+- Reusing the game installation is allowed only when the previous RealPass test package is accounted for by its installed `realpass/build-manifest.json` and the game can be returned to the recorded vanilla baseline without unexplained extra or modified files.
+- Use the baseline/reset tooling documented in `docs/CLEAN-ROOM-TESTING.md`. If the reset cannot prove the game is back at baseline, stop and escalate to a milestone clean-room test instead of layering another build over uncertain residue.
+- Build and install the same game-root-shaped package intended for players. Do not use a long-lived developer deployment as the ordinary attended-test path.
+
+### 2. MILESTONE CLEAN-ROOM TEST
+
+Use this for large milestones, major structural/package changes, Cyberpunk patches, bundled framework changes, dependency changes, unexplained baseline drift, or any test where stale files could plausibly invalidate the result.
+
+Rules:
+
+- uninstall Cyberpunk 2077 in Steam;
+- delete any residual `Cyberpunk 2077` game directory after uninstall;
+- reinstall through Steam;
+- optionally launch vanilla once and exit;
+- capture/refresh the GitHub-safe vanilla baseline before adding RealPass;
+- use a fresh clone/download of current canonical `main`;
+- build a game-root-shaped RealPass test ZIP and merge it into the clean game exactly as a player would.
+
+### Mandatory wording in a test handoff
+
+Before saying “ready to test”, “launch it”, or equivalent, the agent must state:
+
+1. **Test mode:** `ITERATION` or `MILESTONE CLEAN-ROOM`.
+2. **Source state:** the exact `main` commit/revision being tested.
+3. **Game-state evidence:** either “verified against recorded vanilla baseline” or why a milestone reinstall is required.
+4. **Artifact:** the release-shaped ZIP/package being tested, not an accumulated repo/game state.
+
+Do not casually instruct the user to reinstall Cyberpunk for every small change, and do not casually reuse an unknown modded game directory. The baseline exists specifically to distinguish those cases.
+
+See `docs/CLEAN-ROOM-TESTING.md` before giving live-test instructions.
 
 ## Read order — do this before changing scope or architecture
 
@@ -42,10 +85,13 @@ Known Windows paths:
 - safe selective extraction area: `C:\Games\CyberpunkRealism\game-reference\extracted`
 - local generated indexes: `C:\Games\CyberpunkRealism\game-reference\index`
 - GitHub-safe derived snapshot: `reference\cyberpunk\`
+- GitHub-safe vanilla baseline: `reference\cyberpunk\vanilla-baseline\`
 
 `game-reference\live` points at the real game installation. Treat it as **read-only** during investigation. Never ask the user to edit/delete/rename/repack through that junction merely to inspect something.
 
 The `game-reference/` tree is intentionally excluded from Git. Commit only redistribution-safe derived metadata, RealPass conclusions, compatibility probes, tests, and our own code/docs — never proprietary Cyberpunk archives, executables, DLLs, textures, audio, meshes, or bulk extracted content.
+
+The tracked vanilla baseline contains only relative paths, sizes, hashes, version/timestamp metadata, and similar derived information. It must never contain the game files themselves.
 
 ## Preferred proactive compatibility audit
 
@@ -124,22 +170,18 @@ small semantic compatibility adapter
 native Cyberpunk contract
 ```
 
-## Broad attended testing is clean-room
+## Attended testing uses fresh source and an explicit game-state tier
 
-A full build/live-test/acceptance pass is release-shaped:
+For **every user-facing attended build test**, use a fresh clone/download of canonical `main` and a generated game-root-shaped package.
 
-1. Cyberpunk is closed.
-2. Use fresh/canonical `main` source rather than an accumulated developer worktree.
-3. Restore the game directory to a genuinely vanilla baseline; Steam Verify alone is not assumed to remove arbitrary extra mod files.
-4. Build a game-root-shaped test artifact with `tools/Build-CleanRoomTestPackage.ps1`.
-5. Merge/copy that artifact into the vanilla game root as a player would.
-6. Launch normally through Steam.
-7. Test that exact package.
-8. Repeat from fresh source + vanilla game for the next broad candidate.
+The game itself has two valid tiers:
 
-Narrow read-only probes, exact compile checks, and focused debugging do not require a full reinstall when installed mod residue cannot affect the result.
+- **Iteration tier:** reuse the installed game only after removing the prior package by its installed manifest and proving the remaining files match the recorded vanilla baseline.
+- **Milestone clean-room tier:** uninstall, delete residual game directory, reinstall, refresh/capture baseline, then apply the generated package.
 
-Do not present `Prepare-OwnedSession.ps1 -Deploy` as the canonical broad acceptance path. It may remain useful for narrow developer iteration.
+Narrow read-only probes, exact compile checks, and focused debugging are not user-facing build tests and do not require a fresh repo or game reset when local residue cannot affect the answer.
+
+Do not present `Prepare-OwnedSession.ps1 -Deploy` as the canonical user-facing acceptance path. It may remain useful for narrow developer investigation.
 
 See `docs/CLEAN-ROOM-TESTING.md`.
 
@@ -153,7 +195,7 @@ See `docs/CLEAN-ROOM-TESTING.md`.
 - The modern scanner/quickhack experience remains native.
 - Backpack = possessions; Biology = embodied state; Cyberware = installed equipment.
 - Biology stays inspectable while healthy. `STABLE`/quiet overview does not mean hidden nodes or no drill-down.
-- Broad acceptance is clean-room and package-shaped.
+- User-facing test builds always come from fresh canonical source; milestone clean-room reinstall is periodic/structural, not required for every small iteration.
 - The user does not want an extra RealPass-managed save-backup chain for ordinary development testing.
 
 If any of those sound surprising, read `docs/DECISION-HISTORY.md` before changing them.
