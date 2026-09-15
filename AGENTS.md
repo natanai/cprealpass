@@ -165,12 +165,13 @@ Do not claim Biology can universally overpower every possible third-party mod. B
 
 For questions about what the supported game build actually contains, exposes, names, calls, stores, or does, use this order:
 
-1. repository-owned code/tests and `reference/cyberpunk/`;
-2. targeted direct inspection of the user's installed Cyberpunk build;
-3. official CDPR/REDmod/framework/tool documentation and release notes;
-4. web/community examples as secondary evidence.
+1. repository-owned code/tests and already-recorded `reference/cyberpunk/` evidence;
+2. the user's installed official REDmod decompiled script tree under `C:\Games\Steam\steamapps\common\Cyberpunk 2077\tools\redmod\scripts` for readable script classes, events, fields, inheritance and controller/lifecycle ownership;
+3. targeted direct inspection/extraction of the installed Cyberpunk build and exact compile against its `r6\cache\final.redscripts` where appropriate;
+4. official CDPR/REDmod/framework/tool documentation and release notes;
+5. web/community examples as secondary evidence.
 
-**Do not use internet search as a substitute for a small direct game-file inspection when the installed build can answer the question more authoritatively.**
+**Do not use internet search or a community script dump as a substitute for the installed REDmod script tree when that tree can answer the native-script question directly.** Community/source-mod code may suggest a candidate seam, but current installed-game REDmod evidence should confirm foundational class/signature/ownership assumptions before implementation, and exact compilation should validate the resulting Biology seam afterward.
 
 If correctness depends on a vanilla class, method, event, record, resource path, controller, callback, state-machine path, widget ownership rule, REDmod deployment result or other game-internal fact and the tracked snapshot is insufficient, ask the user for a targeted local probe instead of guessing.
 
@@ -179,6 +180,8 @@ If correctness depends on a vanilla class, method, event, record, resource path,
 Known stable Windows path:
 
 - Cyberpunk 2077: `C:\Games\Steam\steamapps\common\Cyberpunk 2077`
+- official installed REDmod decompiled scripts: `C:\Games\Steam\steamapps\common\Cyberpunk 2077\tools\redmod\scripts`
+- compiled native script bundle used for exact compatibility: `C:\Games\Steam\steamapps\common\Cyberpunk 2077\r6\cache\final.redscripts`
 
 Repository/workspace paths are **not stable**. For attended milestones, prefer a disposable workspace such as:
 
@@ -197,7 +200,7 @@ Within whichever checkout is active:
 
 If a checkout contains `game-reference\live`, it points at the real game installation. Treat it as **read-only** during investigation. Never ask the user to edit/delete/rename/repack through that junction merely to inspect something.
 
-The tracked vanilla baseline contains only derived metadata (paths, sizes, hashes, versions/timestamps), never proprietary game content.
+The tracked vanilla baseline contains only derived metadata (paths, sizes, hashes, versions/timestamps), never proprietary game content. Bulk decompiled REDmod game scripts also stay local; record only narrow signatures/conclusions needed by Biology.
 
 ## Preferred proactive compatibility audit
 
@@ -209,20 +212,21 @@ pwsh ./tools/Audit-GameContracts.ps1 -GamePath 'C:\Games\Steam\steamapps\common\
 
 A successful audit is not runtime acceptance, but it should catch signature/type/linkage changes and refresh durable evidence.
 
-For a narrow implementation question, prefer a smaller targeted probe rather than repeatedly running a broad audit or unpacking large archives.
+For a narrow implementation question, prefer a smaller targeted REDmod-script probe rather than repeatedly running a broad audit or unpacking large archives.
 
 ## How to ask the user for local evidence
 
 When a local probe would materially improve the work:
 
 1. check `docs/LOCAL-OPERATOR-COMMANDS.md` first and use the catalogued command whenever one exists;
-2. give one copy/paste-ready command/block only when needed;
-3. use known absolute paths when possible;
-4. make it read-only whenever possible;
-5. explain exactly what uncertainty it resolves;
-6. filter large output locally or write it to a file before asking the user to return it;
-7. prefer paths, hashes, symbol names, record IDs, metadata and narrow tool output over proprietary file contents;
-8. record durable conclusions in tracked code/docs/tests so another agent does not rediscover them.
+2. for native script questions, inspect/search the installed official REDmod script tree first when it can answer the question;
+3. give one copy/paste-ready command/block only when needed;
+4. use known absolute paths when possible;
+5. make it read-only whenever possible;
+6. explain exactly what uncertainty it resolves;
+7. generate a plain-text `.txt` evidence report for the user to attach back rather than asking for pasted terminal output;
+8. prefer paths, hashes, symbol names, record IDs, metadata and narrow tool output over proprietary file contents;
+9. record durable conclusions in tracked code/docs/tests so another agent does not rediscover them.
 
 ## Patch-resilience design rules
 
