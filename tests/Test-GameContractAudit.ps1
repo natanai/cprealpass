@@ -2,8 +2,14 @@ $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot\..\tools\Common.ps1"
 $project = Get-ProjectRoot
 $path = Join-Path $project 'tools/Audit-GameContracts.ps1'
-if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw 'Missing proactive local game contract audit tool.' }
+$presentationPath = Join-Path $project 'tools/Audit-PresentationContracts.ps1'
+$probePath = Join-Path $project 'tools/Probe-PresentationNativeContracts.ps1'
+foreach ($required in @($path,$presentationPath,$probePath)) {
+    if (-not (Test-Path -LiteralPath $required -PathType Leaf)) { throw "Missing proactive local game contract audit tool: $required" }
+}
 $source = Get-Content -Raw -LiteralPath $path
+$presentation = Get-Content -Raw -LiteralPath $presentationPath
+$probe = Get-Content -Raw -LiteralPath $probePath
 $script:checks = 0
 function Check($condition,[string]$message) { if (-not $condition) { throw $message }; $script:checks++ }
 
@@ -52,6 +58,7 @@ foreach ($forbidden in @(
     'Upgrade.ps1'
 )) {
     Check (-not $source.Contains($forbidden)) "Read-only game audit gained a forbidden game/runtime side effect: $forbidden"
+    Check (-not $probe.Contains($forbidden)) "Read-only presentation probe gained a forbidden game/runtime side effect: $forbidden"
 }
 
 Check ($source.Contains("scope = 'Static/native contract compatibility audit.")) 'Audit report does not state its limited evidence scope.'
@@ -63,4 +70,17 @@ Check ($source.Contains('FAIL: Biology native-contract audit did not complete.')
 Check ($source.Contains('PASS: Biology native-contract audit completed.')) 'Audit text evidence does not clearly preserve success outcome.'
 Check ($source.Contains('Return that .txt file')) 'Audit does not instruct the operator to return the text evidence file.'
 
-Write-Host "PASS: $script:checks proactive game-contract audit policy checks, including checkout-relative repo discovery and user-returned text evidence."
+# Presentation-specific local evidence combines the exact compile with a read-only
+# symbol/signature search over CDPR's installed REDmod decompiled scripts.
+foreach ($needle in @('Audit-GameContracts.ps1','Probe-PresentationNativeContracts.ps1','presentation-local-audit-','LOCAL EVIDENCE REPORT:','Attach that .txt file','PRESENTATION LOCAL AUDIT RESULT')) {
+    Check ($presentation.Contains($needle)) "Presentation local audit wrapper lost required behavior: $needle"
+}
+Check ($presentation.Contains('-ReportPath $ReportPath')) 'Presentation wrapper does not consolidate exact-compile output into its single text evidence report.'
+Check ($probe.Contains("tools\\redmod\\scripts")) 'Presentation native probe is not grounded in the installed official REDmod decompiled scripts.'
+foreach ($needle in @('MinimapContainerController','IronsightGameController','QuestTrackerGameController','WeaponRosterGameController','HotkeysWidgetController','CrosshairGameController_Tech_Hex','NpcNameplateGameController','NameplateVisualsLogicController','OnScreenProjectionUpdate','OnCompassUpdate')) {
+    Check ($probe.Contains($needle)) "Presentation native probe no longer checks required current-game symbol: $needle"
+}
+Check ($probe.Contains('GetRelativePath')) 'Presentation probe should return narrow relative script-path evidence rather than proprietary file dumps.'
+Check ($probe.Contains('Read-only symbol/signature evidence only')) 'Presentation probe does not state its read-only narrow-evidence boundary.'
+
+Write-Host "PASS: $script:checks proactive game-contract audit policy checks, including checkout-relative repo discovery, exact compile text evidence, and installed-2.31 presentation symbol probing."
