@@ -1,9 +1,10 @@
-// Biology-owned E3-inspired NPC nameplate treatment.
+// Biology-owned E3-inspired ambient NPC nameplate treatment.
 //
-// Native identity/visibility rules remain authoritative. NameplatesNative.reds may
-// supply an otherwise-missing scanned civilian display name; this file only adds a
-// thin Biology-owned red frame to a nameplate that the native controller is already
-// rendering. It never reads health values or owns scanner/quickhack UI.
+// Native identity, projection, distance and visibility remain authoritative. Biology
+// adds the red/minimal nameplate language and ensures the native display-name surface
+// is available during ordinary focus when the native character nameplate record allows
+// it. NameplatesNative.reds resolves a permitted public civilian name without requiring
+// scanner mode; richer native focus identity acquired later by scanning always wins.
 module CyberpunkRealism.Presentation
 
 import CyberpunkRealism.Settings.*
@@ -17,7 +18,7 @@ private final func CRBiologyE3NameplateRect(name: CName, x: Float, y: Float, wid
   widget.SetName(name);
   widget.SetSize(Vector2(width, height));
   widget.SetTranslation(x, y);
-  widget.SetTintColor(new HDRColor(1.1761, 0.1400, 0.1200, 1.0));
+  widget.SetTintColor(CRBiologyE3Primitives.Red());
   widget.SetOpacity(opacity);
   widget.Reparent(this.crBiologyE3NameplateFrame, -1);
   return widget;
@@ -39,43 +40,93 @@ private final func CRCreateBiologyE3Nameplate() -> Void {
   this.crBiologyE3NameplateFrame.SetAnchor(inkEAnchor.Centered);
   this.crBiologyE3NameplateFrame.SetHAlign(inkEHorizontalAlign.Center);
   this.crBiologyE3NameplateFrame.SetVAlign(inkEVerticalAlign.Center);
-  this.crBiologyE3NameplateFrame.SetSize(Vector2(360.0, 58.0));
+  this.crBiologyE3NameplateFrame.SetSize(Vector2(430.0, 72.0));
   this.crBiologyE3NameplateFrame.Reparent(root, -1);
 
-  // Open, asymmetric rails preserve the stock text and native state colors while
-  // making the optional Biology presentation visibly different from vanilla.
-  this.CRBiologyE3NameplateRect(n"CRBiologyE3NameplateTop", 0.0, 0.0, 252.0, 2.0, 0.94);
-  this.CRBiologyE3NameplateRect(n"CRBiologyE3NameplateLeft", 0.0, 0.0, 2.0, 42.0, 0.94);
-  this.CRBiologyE3NameplateRect(n"CRBiologyE3NameplateBottom", 22.0, 42.0, 148.0, 2.0, 0.78);
-  this.CRBiologyE3NameplateRect(n"CRBiologyE3NameplateAccent", 265.0, 0.0, 20.0, 5.0, 1.00);
-  this.CRBiologyE3NameplateRect(n"CRBiologyE3NameplateTick", 294.0, 0.0, 9.0, 2.0, 0.58);
+  // A complete open bracket around the native identity text, not a combat-health strip.
+  this.CRBiologyE3NameplateRect(n"CRBiologyE3NameplateTop", 0.0, 0.0, 318.0, 2.0, 0.94);
+  this.CRBiologyE3NameplateRect(n"CRBiologyE3NameplateLeft", 0.0, 0.0, 2.0, 52.0, 0.94);
+  this.CRBiologyE3NameplateRect(n"CRBiologyE3NameplateBottom", 22.0, 52.0, 214.0, 2.0, 0.78);
+  this.CRBiologyE3NameplateRect(n"CRBiologyE3NameplateAccent", 330.0, 0.0, 24.0, 6.0, 1.00);
+  this.CRBiologyE3NameplateRect(n"CRBiologyE3NameplateTick", 366.0, 0.0, 13.0, 2.0, 0.58);
 
   let label: ref<inkText> = new inkText();
   label.SetName(n"CRBiologyE3NameplateLabel");
-  label.SetText("BIO // ID");
+  label.SetText("ID // SUBJECT");
   label.SetFontFamily("base\\gameplay\\gui\\fonts\\raj\\raj.inkfontfamily");
   label.SetFontStyle(n"Regular");
-  label.SetFontSize(12);
+  label.SetFontSize(11);
   label.SetFitToContent(true);
-  label.SetTranslation(266.0, 9.0);
-  label.SetTintColor(new HDRColor(1.1761, 0.1400, 0.1200, 1.0));
-  label.SetOpacity(0.72);
+  label.SetTranslation(330.0, 10.0);
+  label.SetTintColor(CRBiologyE3Primitives.Red());
+  label.SetOpacity(0.66);
   label.Reparent(this.crBiologyE3NameplateFrame, -1);
 }
 
 @addMethod(NameplateVisualsLogicController)
-private final func CRRefreshBiologyE3Nameplate(puppet: ref<GameObject>) -> Void {
+public final func CRRefreshBiologyE3Nameplate(puppet: ref<GameObject>, data: NPCNextToTheCrosshair) -> Void {
+  let e3Enabled: Bool = IsDefined(puppet) && CRRealpassSettings.UseE3FirstPersonHudVisuals(puppet.GetGame());
+  let name: String = this.CRResolveBiologyAmbientName(puppet, data);
+  let showName: Bool = e3Enabled && IsStringValid(name);
+  let nameText: ref<inkText>;
+  let nameFrame: ref<inkBorder>;
+
   this.CRCreateBiologyE3Nameplate();
-  if !IsDefined(this.crBiologyE3NameplateFrame) {
-    return;
+  if IsDefined(this.crBiologyE3NameplateFrame) {
+    this.crBiologyE3NameplateFrame.SetVisible(showName);
   }
 
-  let visible: Bool = IsDefined(puppet) && CRRealpassSettings.UseE3FirstPersonHudVisuals(puppet.GetGame());
-  this.crBiologyE3NameplateFrame.SetVisible(visible);
+  // These are native 2.31 NameplateVisualsLogicController refs used by the preserved
+  // Project E3 source; no Project E3-added field is required here.
+  nameText = inkWidgetRef.Get(this.m_nameTextMain) as inkText;
+  if IsDefined(nameText) {
+    if showName {
+      nameText.SetText(name);
+      nameText.SetLetterCase(textLetterCase.UpperCase);
+      nameText.SetFontStyle(n"Medium");
+      nameText.SetTintColor(CRBiologyE3Primitives.Red());
+      nameText.SetVisible(true);
+    }
+  }
+
+  nameFrame = inkWidgetRef.Get(this.m_nameFrame) as inkBorder;
+  if IsDefined(nameFrame) && showName {
+    nameFrame.SetTintColor(CRBiologyE3Primitives.Red());
+    nameFrame.SetOpacity(0.78);
+    nameFrame.SetVisible(true);
+  }
 }
 
 @wrapMethod(NameplateVisualsLogicController)
 public final func SetVisualData(puppet: ref<GameObject>, const incomingData: script_ref<NPCNextToTheCrosshair>, opt isNewNpc: Bool) -> Void {
+  let data: NPCNextToTheCrosshair = Deref(incomingData);
   wrappedMethod(puppet, incomingData, isNewNpc);
-  this.CRRefreshBiologyE3Nameplate(puppet);
+  this.CRRefreshBiologyE3Nameplate(puppet, data);
+}
+
+// Project E3 2.31.p2 used this exact native screen-projection seam to make the current
+// nameplate display-name widget available whenever the native nameplate record is
+// enabled. Biology keeps the same narrow lifecycle idea without its replacement
+// archive, health meter, level display, or scanner implementation.
+@wrapMethod(NpcNameplateGameController)
+protected cb func OnScreenProjectionUpdate(projections: ref<gameuiScreenProjectionsData>) -> Void {
+  let buffered: ref<GameObject>;
+  let data: NPCNextToTheCrosshair;
+  wrappedMethod(projections);
+
+  buffered = this.m_bufferedGameObject;
+  if !IsDefined(buffered) || !CRRealpassSettings.UseE3FirstPersonHudVisuals(buffered.GetGame()) {
+    return;
+  }
+
+  if this.GetNameplateVisible() && IsDefined(this.m_bufferedCharacterNamePlateRecord) && this.m_bufferedCharacterNamePlateRecord.Enabled() {
+    // This changes presentation visibility only. The actual string still comes from
+    // native focus data or the tightly permissioned public-crowd fallback.
+    inkWidgetRef.SetVisible(this.m_displayName, true);
+    if IsDefined(this.m_visualController) {
+      data.npc = buffered;
+      data.name = "";
+      this.m_visualController.CRRefreshBiologyE3Nameplate(buffered, data);
+    }
+  }
 }
