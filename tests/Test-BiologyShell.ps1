@@ -10,8 +10,10 @@ $shellPath = Join-Path $project 'src/redscript/CyberpunkRealism/BiologyCyberware
 $detailPath = Join-Path $project 'src/redscript/CyberpunkRealism/BiologyDetailPresentation.reds'
 $actionsPath = Join-Path $project 'src/redscript/CyberpunkRealism/BiologyActionsNative.reds'
 $syncPath = Join-Path $project 'src/redscript/CyberpunkRealism/BiologyModeSyncNative.reds'
+$hubPath = Join-Path $project 'src/redscript/CyberpunkRealism/BiologyRadialHubNative.reds'
+$livePath = Join-Path $project 'src/redscript/CyberpunkRealism/BiologyLivePresentationNative.reds'
 $oldPath = Join-Path $project 'src/redscript/CyberpunkRealism/BiologyNativeUI.reds'
-foreach ($path in @($shellPath,$detailPath,$actionsPath,$syncPath)) {
+foreach ($path in @($shellPath,$detailPath,$actionsPath,$syncPath,$hubPath,$livePath)) {
     Check (Test-Path -LiteralPath $path) "Missing revised Biology shell source: $path"
 }
 Check (-not (Test-Path -LiteralPath $oldPath)) 'Invisible floating BiologyNativeUI prototype remains in production source.'
@@ -20,6 +22,8 @@ $shell = Get-Content -Raw -LiteralPath $shellPath
 $detail = Get-Content -Raw -LiteralPath $detailPath
 $actions = Get-Content -Raw -LiteralPath $actionsPath
 $sync = Get-Content -Raw -LiteralPath $syncPath
+$hub = Get-Content -Raw -LiteralPath $hubPath
+$live = Get-Content -Raw -LiteralPath $livePath
 
 foreach ($goal in @('G-041','G-043','G-045','G-046','G-063','G-064','G-066','G-072')) {
     Check ($goals.Contains($goal)) "Shared Biology/Cyberware goal missing: $goal"
@@ -29,17 +33,15 @@ Check ($doc.Contains('top hub -> BIOLOGY -> shared body/anatomy shell -> BIOLOGY
 Check ($doc.Contains('players should not feel that they need to poll Biology')) 'Biology UI doc lost the no-meter-polling acceptance principle.'
 Check ($doc.Contains('Deliberate drill-down') -and $doc.Contains('exact authoritative values')) 'Biology doc does not distinguish overview from exact drill-down.'
 
-# Reuse the stock hub routing: relabel the existing Cyberware menu data instead of
-# inventing a second fullscreen/menu identifier. The installed 2.31 compiler proved
-# MenuHubLogicController.SetMenusData has the three-argument signature below; the
-# radial hub has the separate five-argument overload in BiologyRadialHubNative.reds.
-Check ($shell.Contains('@wrapMethod(MenuHubLogicController)')) 'Biology does not hook the stock hub label boundary.'
-Check ($shell.Contains('public final func SetMenusData(menuData: ref<MenuDataBuilder>, perkPoints: Int32, attrPoints: Int32) -> Void')) 'Biology hub wrapper drifted from the verified Cyberpunk 2.31 MenuHubLogicController signature.'
-Check ($shell.Contains('wrappedMethod(menuData, perkPoints, attrPoints)')) 'Biology hub wrapper does not call the verified stock SetMenusData signature.'
-Check (-not $shell.Contains('tarotIsBlocked: Bool, mapIsBlocked: Bool, perkPoints: Int32, attrPoints: Int32')) 'Biology shell reintroduced the RadialMenuHub SetMenusData signature on MenuHubLogicController.'
+# Live acceptance showed that re-running individual hub SetMenusData methods can hit
+# secondary/hidden menu representations. Relabel at the visible MenuItemController
+# render boundary instead while preserving Cyberware's identifier/fullscreen route.
+Check ($hub.Contains('@wrapMethod(MenuItemController)')) 'Top/menu Biology label is not bound at MenuItemController.Init.'
+Check ($hub.Contains('@wrapMethod(RadialMenuItemController)')) 'Radial Biology label is not bound at RadialMenuItemController.Init.'
+Check ($hub.Contains('Deref(menuData).identifier == EnumInt(HubMenuItems.Cyberware)')) 'Biology label wrapper does not narrowly target the stock Cyberware identifier.'
+Check ($hub.Contains('inkTextRef.SetText(this.m_label, "BIOLOGY")')) 'Visible stock Cyberware menu labels are not rewritten to Biology.'
+Check (-not $hub.Contains('SetMenusData(')) 'Biology label fix regressed to a specific hub-controller SetMenusData seam.'
 Check ($shell.Contains('HubMenuItems.Cyberware')) 'Biology does not reuse the stock Cyberware hub destination.'
-Check ($shell.Contains('biologyData.label = "BIOLOGY"')) 'Stock Cyberware hub destination is not relabeled Biology.'
-Check ($shell.Contains('HubMenuUtils.SetMenuData(this.m_btnCyberware, biologyData)')) 'Relabeled Biology data is not put back on the stock Cyberware button.'
 Check (-not $shell.Contains('OpenMenuRequest') -and -not $shell.Contains('fullscreenName')) 'Biology shell invented a parallel fullscreen route instead of reusing stock cyberware_equip.'
 
 # Biology/Cyberware are sibling modes within one body screen, with normal hub entry
@@ -50,6 +52,19 @@ Check ($shell.Contains('this.m_gridContainer, false') -and $shell.Contains('this
 Check ($shell.Contains('this.UpdateTitle(this.GetAreaHeader(area))')) 'Cyberware mode does not restore the stock category label through the verified minigrid instance helper.'
 Check (-not $shell.Contains('this.UpdateTitle(GetAreaHeader(area))')) 'Cyberware label restore regressed to an unresolved global GetAreaHeader call.'
 Check ($shell.Contains('CRSetStockMetersVisible(!biology)')) 'Biology mode leaves cyberware-specific stock meters visible.'
+
+# Live screenshots proved OnInitialize is too early: the stock controller asynchronously
+# populates all ten category minigrids and only then calls InitializeEquipmentMinigrids.
+# Reapply the selected mode at that exact native completion boundary and lift dynamic
+# overlays into the same visible root layer used by established Ripperdoc UI additions.
+Check ($live.Contains('@wrapMethod(RipperDocGameController)')) 'Biology live lifecycle seam does not wrap RipperDocGameController.'
+Check ($live.Contains('private final func InitializeEquipmentMinigrids() -> Void')) 'Biology does not wait for the stock minigrid-completion boundary.'
+Check ($live.Contains('wrappedMethod();')) 'Biology minigrid lifecycle wrapper does not preserve stock initialization.'
+Check ($live.Contains('CRApplyBiologyShellMode(this.crBiologyShellMode)')) 'Late minigrid completion does not reapply the selected Biology/Cyberware mode.'
+Check ($live.Contains('CRSyncBiologyNodeInteractivity(this.crBiologyShellMode)')) 'Late minigrid completion does not synchronize Biology node interactivity.'
+Check ($live.Contains('CRRefreshBiologyActions()')) 'Late minigrid completion does not refresh Biology contextual actions.'
+Check ($live.Contains('CRPromoteBiologyOverlay')) 'Biology does not promote its dynamic overlay after stock UI construction.'
+Check ($live.Contains('Reparent(root, 5)')) 'Biology overlay is not moved onto the proven visible Ripperdoc root layer.'
 
 # Native anatomy interaction language is reused rather than simulated by another body widget.
 Check ($shell.Contains('this.m_animationController.StartHover(evt.area)')) 'Biology nodes do not use stock body hover animation.'
@@ -83,4 +98,4 @@ Check ($actions.Contains('this.CRRefreshBiologyActions();')) 'Biology action cal
 Check (-not $actions.Contains('CRBioRefreshBiologyActions')) 'Biology actions contain the unresolved stale refresh-method spelling caught by the installed compiler.'
 Check ($sync.Contains('CRRefreshBiologyActions')) 'Mode changes do not synchronize contextual action visibility.'
 
-Write-Host "PASS: $script:checks shared Biology parent/Cyberware submode, verified 2.31 hub/minigrid seams, native anatomy reuse, drill-down metrics, and contextual action checks."
+Write-Host "PASS: $script:checks live-validated Biology parent/Cyberware submode, controller-level menu labels, late native minigrid lifecycle, native anatomy reuse, drill-down metrics, and contextual actions."
