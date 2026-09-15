@@ -94,7 +94,7 @@ Check ($localReference.Contains('Do not assume or recreate `C:\Games\CyberpunkRe
 # official-path-first requirement. The exact heading/wording is allowed to evolve.
 Check ($migration.Contains('Official-source-first investigation gate')) 'REDmod migration no longer declares the official-source-first investigation gate.'
 Check ($migration.Contains('tools\redmod\bin\redMod.exe')) 'REDmod migration no longer requires direct consideration of the installed official executable.'
-Check ($migration.Contains('modding ecosystem already “solved”')) 'REDmod migration no longer warns against inheriting community architecture by popularity.'
+Check ($migration -match '(?is)community/modder solution|modding ecosystem.{0,80}solved') 'REDmod migration no longer warns against inheriting community architecture by popularity.'
 Check ($migration.Contains('After directly checking the official/native option')) 'REDSCRIPT-BETTER/native fallback decisions are no longer conditioned on direct official-route investigation.'
 Check ($migration.Contains('official Cyberpunk/REDmod capabilities are directly investigated')) 'Migration acceptance no longer requires direct official capability investigation.'
 
