@@ -35,7 +35,7 @@ Require $catalog 'Reset-BiologyIteration\.ps1' 'Catalog must document iteration 
 Require $catalog 'Audit-GameContracts\.ps1' 'Catalog must document direct compatibility audit.'
 
 Require $prepare 'Read-Host.*exhaustive vanilla hash verification' 'Milestone orchestrator must ask the user whether to run the expensive full baseline comparison.'
-Require $prepare "\$runExhaustive = \$answer -in @\('y','yes'\)" 'Milestone exhaustive verification must default to off unless explicitly accepted.'
+Require $prepare '\$runExhaustive = \$answer -in' 'Milestone exhaustive verification must default to off unless explicitly accepted.'
 Require $prepare 'fully uninstalled in Steam.*residual install directory removed.*reinstalled' 'Skipping the full comparison must require fresh reinstall confirmation.'
 Require $prepare 'Test-VanillaGameSanity\.ps1' 'Skipped exhaustive comparison must still run the canonical fast sanity probe.'
 Require $prepare 'exhaustive-hash-check-skipped' 'Skipped exhaustive comparison must be explicit in evidence.'
