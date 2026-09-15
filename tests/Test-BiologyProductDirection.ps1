@@ -22,6 +22,7 @@ $release = Read 'docs/RELEASE-ARCHITECTURE.md'
 $settings = Read 'docs/SETTINGS-ARCHITECTURE.md'
 $history = Read 'docs/DECISION-HISTORY.md'
 $rootRoadmap = Read 'ROADMAP.md'
+$operator = Read 'docs/LOCAL-OPERATOR-COMMANDS.md'
 
 Require $agents '^# Biology agent instructions' 'AGENTS.md must identify Biology as the current product.'
 Require $agents 'PARALLEL WORK GATE' 'AGENTS.md must make parallel work a prominent gate.'
@@ -37,15 +38,22 @@ Require $goals 'G-013 — Official REDmod is the preferred final packaging/runti
 Require $goals 'G-014 — Minimize dependency depth' 'Goals must lock dependency minimization.'
 Require $goals 'G-015 — Biology is authoritative where it intentionally overlaps' 'Goals must describe bounded authoritative overlap.'
 Require $goals 'G-016 — Final package identity should be self-contained and obvious' 'Goals must require self-contained package identity.'
+Require $goals 'G-017 — Investigate Cyberpunk/CDPR''s official capability before inheriting the modding ecosystem''s workaround' 'Goals must lock official-source-first investigation before community workaround adoption.'
 Require $goals 'G-093 — Parallel agents are a normal project resource' 'Goals must preserve parallel-development policy.'
 
 foreach ($classification in @('REDMOD-NATIVE','REDMOD-POSSIBLE-BUT-BRITTLE','REDSCRIPT-BETTER','REQUIRES-NATIVE-EXTENSION','REMOVE/RETHINK','UNKNOWN — NEEDS DIRECT GAME PROBE')) {
     Require $migration ([regex]::Escape($classification)) "Missing REDmod routing classification: $classification"
 }
-Require $migration 'REDmod-first does not mean REDmod-only' 'Migration architecture must explicitly reject ideological REDmod-only routing.'
+Require $migration 'Official-source-first investigation gate' 'Migration architecture must define the official-source-first investigation gate.'
+Require $migration 'community/modder solution.*not evidence|Established community practice is not proof' 'Migration architecture must reject community convention as proof of necessity.'
+Require $migration 'Probe-OfficialRedmod\.ps1' 'Migration architecture must expose the direct installed REDmod capability probe.'
+Require $migration 'REDmod-first does not mean REDmod-only|Official-source-first does \*\*not\*\* mean blindly' 'Migration architecture must explicitly reject ideological REDmod-only routing.'
 Require $migration 'does not survive because an older build happened to use it|does not survive merely because' 'Migration architecture must reject inherited dependency entitlement.'
 Require $migration 'does \*\*not\*\* define current worker branch names|does not.*current worker branch names' 'Architecture docs must not become a stale active branch ledger.'
 Require $migration 'Uninstall Biology\.exe' 'Migration architecture must include the player-facing hard-uninstall target.'
+
+Require $operator 'Command 9 — ask the installed official REDmod tool what it can do' 'Operator catalog must provide a direct official REDmod probe.'
+Require $operator 'community.*fallback|community/modder route is necessary' 'Operator catalog must treat community practice as fallback evidence.'
 
 Require $parallel 'Core rule' 'Parallel workflow must define proactive splitting.'
 Require $parallel 'When not to split' 'Parallel workflow must define unsafe parallelism.'
@@ -70,10 +78,11 @@ Require $settings 'Do not preserve a framework stack merely to host two booleans
 Require $history 'the product is named Biology' 'Decision history must record the product rename.'
 Require $history 'multi-agent parallel branches are the normal workflow' 'Decision history must record the parallel-development decision.'
 Require $history 'official REDmod should be the default route' 'Decision history must record the REDmod-first correction.'
+Require $history 'official Cyberpunk/REDmod capability must be investigated before inheriting the modder workaround' 'Decision history must record the strengthened official-source-first correction.'
 
 $activeDocs = @($rootRoadmap,$roadmap,$migration,$parallel) -join "`n"
 foreach ($oldBranch in @('agent/redmod-foundation','agent/biology-ui-runtime','agent/presentation-hud-nameplates')) {
     Reject $activeDocs ([regex]::Escape($oldBranch)) "Current product/workflow docs still advertise merged branch: $oldBranch"
 }
 
-Write-Host 'PASS: Biology identity, REDmod-first architecture, current attended follow-ups, uninstallability and branch-agnostic parallel workflow are canonical.'
+Write-Host 'PASS: Biology identity, official-source-first REDmod investigation, REDmod-first architecture, current attended follow-ups, uninstallability and branch-agnostic parallel workflow are canonical.'
