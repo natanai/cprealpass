@@ -1,38 +1,32 @@
-# realpass test tiers
+# Biology test tiers
 
-realpass has two deliberately different test tiers. Future agents must not confuse a green cloud run with native Cyberpunk acceptance, and must not make GitHub Actions depend on local/generated/third-party files that are intentionally excluded from the public repository.
+Biology uses two deliberately different evidence tiers. A green cloud run is not native Cyberpunk acceptance, and local gameplay evidence must come from the current canonical `main` build rather than a stale branch or accumulated developer install.
 
 ## Tier 1 — public-source / cloud-safe
 
-`Run-CI.ps1` is the authoritative Tier 1 runner. Every test listed there must reproduce from a fresh checkout using only tracked project-original source, contracts and fixtures. It may create ignored temporary staging/report files during the job, but it must not require:
+`Run-CI.ps1` is the authoritative Tier 1 runner. Every listed test must reproduce from a fresh checkout using only tracked project-original source, contracts and fixtures. It must not require the Cyberpunk installation, user saves, generated deployment state, third-party source trees, network acquisition, unattended game launch, background services, watchers, recorders or scheduled jobs.
 
-- the Cyberpunk installation or `final.redscripts`;
-- user saves or deployment receipts;
-- generated `manifest/*.deployment.json` files;
-- `vendor/` or `ReferenceMods/` content;
-- acquired Dark Future / Project E3 source that is intentionally excluded from the public tree;
-- network acquisition, unattended game launch, services, watchers, recorders or scheduled jobs.
+Tier 1 covers model invariants, contracts, runtime-origin policy, native-seam confinement, package policy and source-level orchestration safety. Passing Tier 1 means the source is internally coherent enough to proceed to local gates; it does not prove native compilation, rendering or gameplay behavior.
 
-Tier 1 covers model invariants, contract integrity, runtime-origin/vanilla-identity policy, native-seam confinement, no-healthbar ownership, safe-package policy, packaging metadata, and source-level orchestration safety. A green Tier 1 run means the public source is internally coherent enough to proceed to the local gates. It is **not** evidence that redscript compiles against the installed game or that a feature renders/plays correctly.
+## Tier 2 — local compatibility / attended acceptance
 
-## Tier 2 — local integration / native acceptance
+For user-facing gameplay testing, follow `../docs/CLEAN-ROOM-TESTING.md` and the rules in `../AGENTS.md`.
 
-Local tests are allowed to consume the user's hash-pinned generic runtime dependencies, generated deployment manifests, Cyberpunk 2077 2.31 script bundle and reversible deployment state. Historical source-mod integration tests may remain useful as reference evidence, but they are not the current production path and must never make Dark Future or Project E3 runtime prerequisites of an owned candidate.
-
-A local-only test stays local-only when its purpose is to validate the actual installed-game binding rather than a project-original pure model. Do **not** solve a missing CI dependency by committing third-party source, game files, generated deployment manifests or machine-specific state.
-
-The broad attended gameplay gate is documented in `../docs/ATTENDED-ACCEPTANCE.md`. `../tools/Prepare-OwnedSession.ps1` is the current orchestration entry point. With no `-Deploy`, it builds the complete current project-original REDscript candidate, opens only the immutable test gates, exact-compiles against the installed game and runs a deployment transaction preflight without modifying Cyberpunk. Actual deployment requires explicit `-Deploy`, creates a verified save backup first, verifies the resulting deployment receipt, rejects Dark Future/Project E3 executing residue, and still does not launch the game.
-
-The owned builder deliberately compiles the complete current production REDscript tree. Superseded bridge/popup/localization sources are removed from production rather than silently excluded from the candidate. `manifest/native-seams.json` and `Test-NativeSeamPolicy.ps1` additionally keep Cyberpunk-version-sensitive hook annotations confined to explicit boundary adapters so pure simulation models do not gradually become patch-coupled.
+- Use a fresh clone/download of canonical `main` for every attended build.
+- Classify the session as either an iteration test or milestone clean-room test.
+- Use the recorded vanilla baseline/reset workflow when reusing the installed game.
+- Build and install the same release-shaped candidate intended for players; do not treat an accumulated developer deployment as the canonical attended-test path.
+- Save/reload remains an important persistence test, but Biology must not create, require or gate ordinary local deployment on an additional Biology-managed save backup. Existing external/cloud save protection is the accepted policy in `AGREED-GOALS.md`.
+- Do not launch Cyberpunk unattended or create background helpers.
 
 ## Evidence rule
 
-When recording a result, say which tier supplied the evidence. Use wording such as:
+Use precise labels when recording results:
 
 - **offline passed** — project model/contract/fixture checks passed;
-- **compiled locally** — exact generated profile compiled against the installed game;
-- **deployed/rollback verified** — file transaction and recovery were verified;
+- **compiled locally** — exact project source compiled against the installed supported game;
+- **baseline verified** — the reusable installation matches the recorded vanilla baseline, or a milestone clean-room reinstall was performed;
 - **attended native passed** — the player actually observed the behavior in Cyberpunk;
-- **release ready** — all required native, compatibility, licensing and packaging gates are satisfied.
+- **release ready** — all required native, compatibility, packaging and licensing gates are satisfied.
 
-Never promote `partial`/`pending` acceptance gates merely because a lower tier is green.
+Never promote a lower-tier result into gameplay acceptance.
