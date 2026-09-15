@@ -45,6 +45,8 @@ With E3 presentation **Off** while Biology remains enabled:
 
 ## Attended evidence and correction
 
+### 2026-09-15 attended pre-REDmod evidence
+
 The exact REDmod-first milestone runtime artifact built from `8cf045664b5e4d8b4b014edfc98bf2f8eb270ba5` on Cyberpunk 2077 2.31 proved official Biology REDmod recognition/deployment, but presentation acceptance failed.
 
 Observed:
@@ -57,7 +59,7 @@ Observed:
 - E3 OFF removed that red strip, proving at least partial toggle gating;
 - the current modern scanner/quickhack presentation remained intact and is an explicit PASS.
 
-Do not use health-bar suppression, the narrow cop strip, or the earlier incorrect civilian-nameplate interpretation as evidence that E3 presentation succeeded.
+Do not count health-bar suppression as evidence that the E3 presentation works. Likewise, the narrow cop strip and the earlier incorrect civilian-nameplate interpretation are not evidence that E3 presentation succeeded.
 
 ## Nameplate knowledge boundary
 
