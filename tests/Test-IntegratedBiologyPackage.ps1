@@ -31,19 +31,19 @@ Check ($package.redmod.deployCommand -match 'deploy -root=<Cyberpunk 2077>') 'Pa
 # the hard gate rather than pretending CI is a runtime compiler. A locally emitted ZIP
 # must have passed Build-OwnedRuntimeProfile + its exact compile report checks.
 Check ($builder.Contains('Build-OwnedRuntimeProfile.ps1')) 'Integrated builder bypasses the exact-compiled owned runtime profile.'
-Check ($builder.Contains("reports\\compile-") -or $builder.Contains("reports\compile-")) 'Integrated builder does not consume the exact compile report.'
+Check ($builder -match 'reports[\\/]compile-') 'Integrated builder does not consume the exact compile report.'
 Check ($builder.Contains('$compileReport.passed -ne $true')) 'Integrated builder does not fail closed on compile result.'
 Check ($builder.Contains('$compileReport.exitCode -ne 0')) 'Integrated builder does not require compiler exit code zero.'
 Check ($builder.Contains('$compileReport.outputPresent -ne $true')) 'Integrated builder does not require compiler output.'
-Check ($builder.Contains("$gameVersion -ne '2.31'")) 'Integrated builder does not pin the supported game version.'
+Check ($builder -match '\$gameVersion\s+-ne\s+''2\.31''') 'Integrated builder does not pin the supported game version.'
 Check ($builder.Contains("'mods/Biology/info.json'")) 'Integrated builder does not include official Biology REDmod metadata.'
-Check ($builder.Contains("'r6/scripts/CyberpunkRealism'" ) -or $builder.Contains('r6/scripts/CyberpunkRealism/')) 'Integrated builder does not include Biology-owned supplemental REDscript runtime.'
-Check ($builder.Contains("$expectedRetained = @('redscript','red4ext','archivexl','mod-settings')")) 'Integrated builder retained dependency set is not exact/fail-closed.'
+Check ($builder -match 'r6/scripts/CyberpunkRealism') 'Integrated builder does not include Biology-owned supplemental REDscript runtime.'
+Check ($builder -match '\$expectedRetained\s*=\s*@\(''redscript'',''red4ext'',''archivexl'',''mod-settings''\)') 'Integrated builder retained dependency set is not exact/fail-closed.'
 foreach ($blocked in @('tweakxl','codeware','input-loader','darkfuture','project-e3')) {
     Check ($builder.ToLowerInvariant().Contains($blocked)) "Integrated builder does not explicitly reject/exclude $blocked."
 }
-Check ($builder.Contains('biology/build-manifest.json') -or $builder.Contains("'biology/build-manifest.json'")) 'Integrated owner manifest is not generated.'
-Check ($builder.Contains('biology/provenance.json') -or $builder.Contains("'biology/provenance.json'")) 'Integrated provenance is not generated.'
+Check ($builder.Contains('biology/build-manifest.json')) 'Integrated owner manifest is not generated.'
+Check ($builder.Contains('biology/provenance.json')) 'Integrated provenance is not generated.'
 Check ($builder.Contains('BIOLOGY-VERSION.txt')) 'Integrated Biology version marker is missing.'
 Check ($builder.Contains('SHA256SUMS.txt')) 'Integrated checksums are missing.'
 Check ($builder.Contains('playableRuntimeIncluded = $true')) 'Integrated artifact does not declare that playable runtime is included.'
@@ -52,8 +52,8 @@ Check (-not $builder.Contains('Build-RedmodFoundation.ps1')) 'Playable builder d
 
 # Deployment helper must only call the directly evidenced official REDmod path and
 # must never rely on the working directory/default-root heuristic.
-Check ($deploy.Contains("tools\\redmod\\bin\\redMod.exe") -or $deploy.Contains("tools\redmod\bin\redMod.exe")) 'Deploy helper does not use the official probed REDmod executable.'
-Check ($deploy.Contains("'-root=$game'") -or $deploy.Contains('"-root=$game"')) 'Deploy helper does not pass an explicit game root.'
+Check ($deploy -match 'tools\\redmod\\bin\\redMod\.exe') 'Deploy helper does not use the official probed REDmod executable.'
+Check ($deploy -match '''-root=\$game''') 'Deploy helper does not pass an explicit game root.'
 Check ($deploy.Contains("FileVersion -ne '2.3.1.0'")) 'Deploy helper does not guard the directly evidenced REDmod file version.'
 Check ($deploy.Contains("ProductVersion -ne '2.31'")) 'Deploy helper does not guard the directly evidenced REDmod product version.'
 
