@@ -8,6 +8,8 @@ $policyPath = Join-Path $project 'src/redscript/CyberpunkRealism/RuntimePolicyMo
 $policy = Get-Content -Raw -LiteralPath $policyPath
 $painPath = Join-Path $project 'src/redscript/CyberpunkRealism/PainNativeEffects.reds'
 $pain = Get-Content -Raw -LiteralPath $painPath
+$nameplatePath = Join-Path $project 'src/redscript/CyberpunkRealism/NameplatesNative.reds'
+$nameplates = Get-Content -Raw -LiteralPath $nameplatePath
 $profileBuilder = Get-Content -Raw -LiteralPath (Join-Path $project 'tools/Build-OwnedRuntimeProfile.ps1')
 $profiles = Get-Content -Raw -LiteralPath (Join-Path $project 'manifest/profiles.json') | ConvertFrom-Json
 $script:checks = 0
@@ -17,25 +19,33 @@ Check ($contract.schemaVersion -eq 3) 'Configuration contract is not the current
 Check ($contract.surface.provider -eq 'mod-settings') 'RealPass is not configured to identify itself in Mod Settings.'
 Check ($contract.surface.publicGameplaySettings -eq $false) 'Public gameplay settings are enabled.'
 Check ($contract.surface.publicBalanceSettings -eq $false) 'Public balance settings are enabled.'
-Check ($contract.surface.publicPresentationPreferences -eq $true) 'Accepted binary presentation preferences are not represented.'
+Check ($contract.surface.publicPresentationPreferences -eq $true) 'Accepted binary presentation preference is not represented.'
 Check (Test-Path -LiteralPath $surfacePath) 'RealPass Mod Settings runtime-property surface is missing.'
 
-# Runtime source may declare ModSettings.* metadata, but it should not import or call
-# the provider as a simulation-policy owner.
 Check ($surface.Contains('@runtimeProperty("ModSettings.mod", "RealPass")')) 'RealPass settings metadata does not register a visible mod.'
-Check (-not ($surface -match '(?m)^\s*import\s+ModSettings')) 'RealPass settings surface directly imports the provider API.'
-Check (-not ($surface -match '(?m)(?<!["''])\bModSettings\.(?:Register|Unregister|GetInstance|GetVars|AcceptChanges|RejectChanges)\b')) 'RealPass settings surface directly couples simulation to provider methods.'
-Check ($surface.Contains('CRRealpassManagedState')) 'Feature ledger does not use an effectively immutable one-value state.'
-Check ($surface.Contains('fullscreenDisorientationEffects: Bool = true;')) 'Accepted binary presentation preference is missing.'
+Check ($surface.Contains('public class CRRealpassSettings extends ScriptableSystem')) 'RealPass settings are not hosted by a ScriptableSystem singleton.'
+Check ($surface.Contains('e3FirstPersonHudVisuals: Bool = true;')) 'E3 first-person HUD setting is missing or does not default on.'
+Check ($surface.Contains('ModSettings.RegisterListenerToClass(this)')) 'RealPass settings are not registered for live Mod Settings updates.'
+Check ($surface.Contains('ModSettings.UnregisterListenerToClass(this)')) 'RealPass settings do not unregister cleanly.'
+Check ($surface.Contains('@if(ModuleExists("ModSettingsModule"))')) 'Mod Settings listener calls are not guarded by provider availability.'
+Check (-not ($surface -match '(?m)^\s*import\s+ModSettings')) 'RealPass settings source imports provider internals directly.'
+# Only listener lifecycle calls are allowed. RealPass policy must never query/drive the provider as simulation authority.
+Check (-not ($surface -match '(?m)(?<!["''])\bModSettings\.(?:GetInstance|GetMods|GetCategories|GetVars|AcceptChanges|RejectChanges|RestoreDefaults)\b')) 'RealPass settings source directly couples policy to Mod Settings internals.'
 Check (-not ($surface -match '(?m)public\s+let\s+\w+\s*:\s*(?:Float|Int32|Uint32)\b')) 'Numeric settings leaked into the public surface.'
+$boolFields = @([regex]::Matches($surface,'(?m)public\s+let\s+(?<name>\w+)\s*:\s*Bool\b') | ForEach-Object { $_.Groups['name'].Value })
+Check ($boolFields.Count -eq 1 -and $boolFields[0] -eq 'e3FirstPersonHudVisuals') 'RealPass has more than the single accepted E3 HUD toggle.'
 
 Check (-not $policy.Contains('traditionalHealthBarsEnabled')) 'Traditional healthbar player preference survived in runtime policy.'
 Check ($policy.Contains('public static func TraditionalHealthBars') -and $policy.Contains('return false;')) 'Final no-healthbar authored release decision is not fixed in policy.'
 
-# The first public boolean must gate only the native disorientation presentation;
-# pain/weapon modifiers continue regardless of that preference.
-Check ($pain.Contains('CRRealpassSettings.ShowFullscreenDisorientationEffects()')) 'Fullscreen disorientation preference is not consumed by its presentation seam.'
-Check ($pain.Contains('player.crPainModifiers.Sync(player, pain)')) 'Pain-derived weapon handling was accidentally placed behind the preference.'
+# Analgesic-overuse presentation is authored behavior, not a second player setting.
+Check (-not $pain.Contains('CRRealpassSettings')) 'Pain presentation is still coupled to the public settings surface.'
+Check ($pain.Contains('CRPainNativeEffects.SyncIntoxication(player, pain.intoxication)')) 'Authored analgesic-overuse presentation call is missing.'
+Check ($pain.Contains('player.crPainModifiers.Sync(player, pain)')) 'Pain-derived weapon handling was accidentally removed.'
+
+# The sole setting must already be consumed by an owned presentation seam. Full red
+# E3 styling is an attended/native implementation target, but the toggle boundary is live.
+Check ($nameplates.Contains('CRRealpassSettings.UseE3FirstPersonHudVisuals()')) 'E3 presentation preference is not consumed by the owned nameplate seam.'
 
 $ownedProfile = @($profiles.profiles.'m1-owned-settings')
 foreach ($component in @('red4ext','redscript','archivexl','mod-settings')) {
@@ -53,6 +63,7 @@ foreach ($id in @('body','injury','combat','armor','cyberwarePhysiology','presen
 }
 Check ($contract.releaseProfile.diagnostics -eq $false) 'Release diagnostics not locked off.'
 Check ($contract.releaseProfile.traditionalActorHealthBarsFinalTarget -eq $false) 'Final release target re-enabled traditional actor health bars.'
+Check ($contract.releaseProfile.e3InspiredFirstPersonHud -eq $true -and $contract.releaseProfile.e3InspiredNpcNameplates -eq $true) 'E3-inspired authored presentation target is not locked on.'
 Check ($contract.developmentFeedbackFallback.traditionalPlayerHealthBarsVisibleUntilReplacementAccepted -eq $true) 'Transitional player feedback fallback is not explicit.'
 
-Write-Host "PASS: $script:checks constrained Mod Settings runtime-surface checks; RealPass is visible, its ledger is descriptive, its only editable control is presentation-only, and the owned profile includes only justified generic plumbing."
+Write-Host "PASS: $script:checks constrained Mod Settings checks; the sole editable setting is the RealPass-owned E3 first-person HUD/nameplate presentation toggle and all simulation authority remains fixed."
