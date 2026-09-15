@@ -1,7 +1,7 @@
 # Biology decision and correction history
 
 Status: **canonical chronology of product decisions and user corrections**
-Last updated: **2026-09-14**
+Last updated: **2026-09-15**
 
 This document answers a different question from `AGREED-GOALS.md`:
 
@@ -178,6 +178,16 @@ Current authority: G-001, G-005, `docs/BIOLOGY-REDMOD-MIGRATION.md`.
 
 Current authority: G-093, `AGENTS.md`, `docs/PARALLEL-AGENT-WORKFLOW.md`.
 
+### 2026-09-15 — date-only — Project E3 scope is the neutral persistent HUD plus nameplates, not a broad UI port
+
+**Earlier misunderstanding:** treating the supplied Project E3 component inventory as a feature checklist risked expanding the Biology presentation lane into dialogue choices, interaction menus, activity-log replacement, phone UI, the old scanner, and other contextual Project E3 systems.
+
+**User correction:** Biology is borrowing only the recognizable red/minimal **neutral first-person HUD** and **NPC nameplates**. The neutral HUD explicitly includes the top-right quest/objective tracker because it is present through ordinary gameplay, along with navigation/minimap, weapon/ammo, quick-slot/D-pad, applicable ordinary crosshair/focus, and Biology's existing lower-left treatment. The modern scanner/quickhack UI remains authoritative.
+
+**Do not repeat:** do not infer implementation scope from the breadth of the Project E3 archive. Its complete inventory is archaeology/reference evidence, not a porting backlog. Do not add dialogue, interaction, activity-log, phone, or old-scanner behavior under the E3 presentation toggle unless the user separately asks for those systems later.
+
+Current authority: `docs/E3-PRESENTATION.md`, `docs/E3-COMPONENT-MAPPING.md`, and issue #40.
+
 ---
 
 ## Current product snapshot
@@ -197,7 +207,7 @@ This section is intentionally short. The detailed requirements remain in `AGREED
 - MaxDoc remains MaxDoc and acts as analgesia rather than magical wound repair.
 - Traditional actor HP presentation is hidden while Biology is enabled.
 - Public preferences remain minimal; Mod Settings itself is no longer a required provider.
-- Biology targets an owned red E3-inspired first-person HUD/nameplate language while preserving the modern scanner.
+- Biology targets an owned red E3-inspired neutral persistent first-person HUD/nameplate language while preserving the modern scanner.
 - Vanilla Outfits are being reinterpreted as physical equipment loadouts, not a separate cosmetic protection authority.
 - Broad acceptance is release-shaped and launched normally through Steam; milestone clean-room reinstalls are periodic/structural rather than required every iteration.
 - Direct installed-game evidence outranks community examples for foundational native/REDmod contracts when a targeted local probe is practical.
