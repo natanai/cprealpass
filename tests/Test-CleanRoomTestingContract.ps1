@@ -75,8 +75,6 @@ Require $reset 'Compare-GameToVanillaBaseline\.ps1' 'Biology reset must finish w
 Require $reset 'MILESTONE CLEAN-ROOM' 'Biology reset must fail closed to milestone mode.'
 Require $legacyReset 'realpass\\build-manifest\.json' 'Legacy reset must remain available for the prior package during PKG-06 transition.'
 
-# Release-shape is asserted from the builder's actual output mechanics rather than a
-# comment/label: it materializes game-root relative paths and compresses that root.
 Require $package 'mods/Biology/info\.json' 'Integrated package must include official Biology REDmod identity.'
 Require $package 'r6/scripts/CyberpunkRealism|runtimeManifest\.files' 'Integrated package must consume the compiled Biology runtime destinations.'
 Require $package 'Compress-Archive' 'Integrated Biology builder must emit a player-shaped ZIP.'
@@ -90,7 +88,7 @@ Require $legacyPackage 'Build-OwnedRuntimeProfile\.ps1' 'Known-working old route
 
 Require $deploy 'redMod\.exe' 'Deterministic deploy helper must call official REDmod.'
 Require $deploy '''deploy''' 'Deterministic deploy helper must call the deploy module.'
-Require $deploy '''-root=\$game''' 'Deterministic deploy helper must pass explicit game root.'
+Require $deploy '-root=\$game' 'Deterministic deploy helper must pass explicit game root.'
 Require $deploy '2\.3\.1\.0' 'Deploy helper must guard directly evidenced REDmod file version.'
 Require $deploy '2\.31' 'Deploy helper must guard directly evidenced REDmod product version.'
 
