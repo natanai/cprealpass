@@ -1,14 +1,15 @@
 {
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "product": "realpass",
   "surface": {
     "provider": "mod-settings",
-    "purpose": "one presentation-only toggle for the RealPass-owned E3-inspired first-person HUD/nameplate layer",
+    "purpose": "a global RealPass master switch plus one E3-inspired presentation preference",
     "publicGameplaySettings": false,
     "publicBalanceSettings": false,
+    "publicMasterEnable": true,
     "publicPresentationPreferences": true,
     "persistenceOwner": "mod-settings",
-    "notes": "A RealPass version keeps one authored physical simulation. The sole editable public setting controls only the E3-inspired HUD/nameplate presentation and never changes simulation authority."
+    "notes": "When RealPass is enabled, one authored physical simulation runs with no subsystem or balance tuning. The global master switch may disable the complete overhaul; the only other editable setting controls the E3-inspired HUD/nameplate presentation."
   },
   "featureLedger": [],
   "releaseProfile": {
@@ -25,17 +26,24 @@
     "e3InspiredNpcNameplates": true
   },
   "developmentFeedbackFallback": {
-    "traditionalPlayerHealthBarsVisibleUntilReplacementAccepted": true,
-    "traditionalNpcHealthBarsVisibleUntilReplacementAccepted": true,
-    "rule": "Do not remove a useful native indicator before the corresponding RealPass Biology/HUD/gameplay feedback has passed attended acceptance. This is a development transition rule, not the final presentation target."
+    "traditionalPlayerHealthBarsVisibleUntilReplacementAccepted": false,
+    "traditionalNpcHealthBarsVisibleUntilReplacementAccepted": false,
+    "rule": "Attended feedback explicitly accepted barless actor presentation for RealPass-on play. Turning the global RealPass master switch off restores native HUD/nameplate behavior."
   },
   "publicControls": [
+    {
+      "id": "realpass.enabled",
+      "type": "bool",
+      "default": true,
+      "authority": "global-master",
+      "description": "Turns the complete RealPass overhaul on or off. Reload the current save after changing it so every adapter begins from the same state."
+    },
     {
       "id": "presentation.e3-first-person-hud-visuals",
       "type": "bool",
       "default": true,
       "authority": "presentation-only",
-      "description": "Toggles the RealPass-owned red E3-inspired first-person HUD and NPC-nameplate visual layer. The physical simulation and modern scanner remain unchanged."
+      "description": "Toggles the red E3-inspired first-person HUD and NPC-nameplate visual layer. The physical simulation and modern scanner remain unchanged."
     }
   ],
   "developmentProfileKeys": [
@@ -50,8 +58,9 @@
   "developmentRules": [
     "Development profile keys exist only to isolate authorities during compilation, calibration and attended diagnosis.",
     "A release builder fixes gameplay/presentation authority keys to the release profile and diagnostics off.",
-    "Development authority gates are never persisted as normal player preferences.",
-    "The E3-inspired HUD preference may suppress only the RealPass visual skin/nameplate presentation; underlying physical state and consequences continue unchanged."
+    "Individual development authority gates are never persisted as normal player preferences.",
+    "The global RealPass master switch is the sole player control allowed to stop the authored overhaul as a whole.",
+    "The E3-inspired HUD preference may suppress only the E3-inspired visual skin/nameplate presentation; underlying physical state and consequences continue unchanged while RealPass remains enabled."
   ],
   "forbiddenPublicSettings": [
     "body.enabled",
@@ -78,5 +87,5 @@
     "cosmetic-transmog-authority"
   ],
   "numericPublicBalanceControlsAllowed": false,
-  "binaryPreferenceRule": "The sole public boolean changes only the RealPass-owned E3-inspired HUD/nameplate presentation and cannot change physical state, rates, damage, protection, injury, pain state, treatment, recovery or other simulation authority."
+  "binaryPreferenceRule": "Public booleans are limited to the complete RealPass master switch and the E3-inspired presentation preference. No individual physical authority, rate, damage, protection, injury, pain, treatment or recovery parameter is player-tunable."
 }
