@@ -8,13 +8,20 @@ public class CRBodyRuntimeMasterPolicy extends IScriptable {
   public static func Enabled() -> Bool {
     return CRBodyRuntimePolicy.Enabled() && CRRealpassSettings.IsEnabled(GetGameInstance());
   }
+
+  public static func Ready() -> Bool {
+    return CRBiologyRuntimeAvailability.EnsureActive();
+  }
 }
 
 @wrapMethod(PlayerPuppet)
 protected cb func OnGameAttached() -> Bool {
   let result: Bool = wrappedMethod();
   if !this.IsReplacer() && CRBodyRuntimeMasterPolicy.Enabled() {
-    CRBodyRuntime.Get().Activate();
+    // Normal session startup path. EnsureActive is intentionally safe to call again
+    // from presentation/native action boundaries if save/system ordering caused this
+    // edge to run before the ScriptableSystem was ready.
+    CRBodyRuntimeMasterPolicy.Ready();
   }
   return result;
 }
@@ -32,7 +39,7 @@ public func CompleteAction(gameInstance: GameInstance) -> Void {
   let record: wref<Item_Record> = TweakDBInterface.GetItemRecord(tdbid);
   wrappedMethod(gameInstance);
 
-  if !CRBodyRuntimeMasterPolicy.Enabled() || !IsDefined(executor) || !executor.IsPlayer() || !IsDefined(record) {
+  if !CRBodyRuntimeMasterPolicy.Ready() || !IsDefined(executor) || !executor.IsPlayer() || !IsDefined(record) {
     return;
   }
   let local: ref<PlayerPuppet> = GameInstance.GetPlayerSystem(gameInstance).GetLocalPlayerMainGameObject() as PlayerPuppet;
@@ -57,7 +64,9 @@ protected func ProcessStatusEffects(const actionEffects: script_ref<array<wref<O
   let consumable: wref<ConsumableItem_Record>;
   let local: ref<PlayerPuppet>;
 
-  if !CRBodyRuntimeMasterPolicy.Enabled() || !IsDefined(executor) || !executor.IsPlayer() || !IsDefined(itemData) {
+  // If the Biology runtime cannot establish authoritative state, yield this action
+  // completely to vanilla instead of suppressing healing while our body is offline.
+  if !CRBodyRuntimeMasterPolicy.Ready() || !IsDefined(executor) || !executor.IsPlayer() || !IsDefined(itemData) {
     wrappedMethod(actionEffects, gameInstance);
     return;
   }
@@ -91,7 +100,7 @@ protected func ProcessStatusEffects(const actionEffects: script_ref<array<wref<O
 // that committed interval as sleep without importing another mod's sleep system.
 @wrapMethod(HubTimeSkipController)
 protected cb func OnTimeSkipButtonPressed(e: ref<inkPointerEvent>) -> Bool {
-  if CRBodyRuntimeMasterPolicy.Enabled() && e.IsAction(n"click") {
+  if CRBodyRuntimeMasterPolicy.Ready() && e.IsAction(n"click") {
     CRBodyRuntime.Get().MarkNextTimeSkipAsWait();
   }
   return wrappedMethod(e);
@@ -102,7 +111,7 @@ private let crRealpassSleeping: Bool;
 
 @wrapMethod(TimeskipGameController)
 protected cb func OnInitialize() -> Bool {
-  if CRBodyRuntimeMasterPolicy.Enabled() {
+  if CRBodyRuntimeMasterPolicy.Ready() {
     this.crRealpassSleeping = CRBodyRuntime.Get().ConsumeNextTimeSkipSleeping();
   }
   return wrappedMethod();
@@ -115,11 +124,12 @@ protected cb func OnInitialize() -> Bool {
 @wrapMethod(TimeskipGameController)
 private func Apply() -> Void {
   let hours: Int32 = this.m_hoursToSkip;
-  if CRBodyRuntimeMasterPolicy.Enabled() && hours > 0 {
+  let ready: Bool = hours > 0 && CRBodyRuntimeMasterPolicy.Ready();
+  if ready {
     CRBodyRuntime.Get().BeginSkip();
   }
   wrappedMethod();
-  if CRBodyRuntimeMasterPolicy.Enabled() && hours > 0 {
+  if ready {
     CRBodyRuntime.Get().FinishSkipHours(Cast<Float>(hours), this.crRealpassSleeping);
   }
 }
