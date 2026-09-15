@@ -1,9 +1,18 @@
 # Parallel-agent development workflow
 
 Status: **canonical collaboration policy**
-Last updated: **2026-09-14**
+Last updated: **2026-09-15**
 
 The project owner can often run **2–3 agents concurrently**. Large work should therefore be decomposed into independent branches whenever doing so improves throughput without creating unnecessary merge/conflict risk.
+
+For the current Biology REDmod refactor, the active lane definitions and handoffs live in:
+
+- `ACTIVE-REDMOD-ROADMAP.md`
+- `handoffs/REDMOD-FOUNDATION.md`
+- `handoffs/BIOLOGY-UI-RUNTIME.md`
+- `handoffs/PRESENTATION-HUD-NAMEPLATES.md`
+
+Those current attended-evidence-informed lanes supersede any older generic split.
 
 The default development pattern is:
 
@@ -44,7 +53,7 @@ Prefer parallel branches when work can be separated by a stable interface, file 
 
 - REDmod packaging/dependency migration vs gameplay simulation changes;
 - native/game-data research vs implementation;
-- Biology UI shell vs combat model/calibration;
+- Biology UI shell vs first-person presentation;
 - clothing/armor authority vs food/body-need routing;
 - build/test tooling vs runtime code;
 - documentation/contract cleanup vs a separate implementation lane;
@@ -133,42 +142,6 @@ When recommending a parallel lane, provide a handoff the user can paste into a n
 
 A good handoff is self-contained enough that the new agent does not need the original chat transcript.
 
-## Example handoff shape
-
-```text
-Work on repo natanai/cprealpass.
-Create branch: agent/redmod-package-audit
-Base: current main at <SHA>.
-
-Read first:
-- AGENTS.md
-- AGREED-GOALS.md
-- docs/BIOLOGY-REDMOD-MIGRATION.md
-- docs/PARALLEL-AGENT-WORKFLOW.md
-
-Goal:
-Classify and prototype the official REDmod packaging path for Biology.
-
-Own:
-- REDmod package skeleton and deployment tooling
-- dependency/runtime packaging inventory
-- load-order/deploy evidence
-- tests/docs for those boundaries
-
-Do not redesign:
-- body/combat equations
-- Biology UI visual layout
-- clothing mechanics
-
-Deliver:
-- branch + PR
-- classification results
-- tests/contracts
-- exact remaining blockers
-
-If direct installed-game evidence is needed, ask me for one read-only PowerShell command rather than guessing.
-```
-
 ## Progress reporting
 
 An active lane should report back with:
@@ -235,6 +208,7 @@ Particular conflict hotspots:
 
 - `AGREED-GOALS.md`;
 - `AGENTS.md`;
+- `ROADMAP.md` / `docs/ACTIVE-REDMOD-ROADMAP.md`;
 - `docs/DECISION-HISTORY.md`;
 - central runtime manifests;
 - `BodyRuntime.reds` / shared body schemas;
@@ -244,37 +218,50 @@ Particular conflict hotspots:
 
 These can still be changed in parallel when necessary, but one lane should be designated as the integration owner.
 
-## Biology REDmod migration: preferred initial split
+## Current Biology REDmod split
 
-For the current large migration described in `docs/BIOLOGY-REDMOD-MIGRATION.md`, the preferred 2–3 agent split is:
+The current split is based on actual attended failures from `PRE-REDMOD-LIVE-BASELINE-2026-09-15.md`, not just abstract subsystem boundaries.
 
-### Lane A — official REDmod/package/dependency architecture
+### Lane A — `agent/redmod-foundation`
 
 Own:
+
 - `mods/Biology` package skeleton;
 - official deploy/load/enable workflow;
 - dependency inventory and removal candidates;
 - release/install/uninstall shape;
-- load-order/conflict evidence.
+- load-order/conflict evidence;
+- package/dependency classification tooling.
 
-### Lane B — runtime seam classification/migration
+Must not redesign Biology UI/body state or E3 presentation.
 
-Own:
-- audit of current `.reds`/native hooks;
-- classification as REDMOD-NATIVE / REDMOD-POSSIBLE-BUT-BRITTLE / REDSCRIPT-BETTER / REQUIRES-NATIVE-EXTENSION / REMOVE / UNKNOWN;
-- targeted game probes for uncertain native seams;
-- low-risk runtime migrations after classification.
-
-### Lane C — Biology product/UI/settings identity
+### Lane B — `agent/biology-ui-runtime`
 
 Own:
-- player-facing rename from RealPass to Biology;
-- Biology/Cyberware hierarchy consistency;
-- provider-neutral minimal settings direction;
-- removal of stale RealPass/Mod Settings assumptions from current presentation/docs where safe;
-- no risky mass rename of internal classes merely for cosmetics.
 
-These lanes should coordinate through documented contracts rather than share a mutable local worktree.
+- Biology parent / Cyberware submode hierarchy;
+- outer/inner Biology navigation identity;
+- non-overlapping mode selector;
+- live body-state availability;
+- persistent Biology nodes and exact drill-down;
+- save/reload/time progression UI lifecycle;
+- stock Cyberware submode integrity.
+
+Must not own E3 first-person HUD/nameplates or package dependency plumbing.
+
+### Lane C — `agent/presentation-hud-nameplates`
+
+Own:
+
+- Biology-owned E3-inspired first-person HUD;
+- Biology-owned E3-inspired NPC nameplates;
+- modern scanner preservation;
+- presentation-toggle semantics and visible ON/OFF proof;
+- player-facing presentation/settings identity.
+
+Must not own the Biology body-screen shell or package dependency plumbing.
+
+See `handoffs/` for the complete copy/paste packets.
 
 ## Definition of success
 
@@ -284,5 +271,6 @@ The workflow is working when:
 - agents can work independently without silently redefining each other's scope;
 - branches are reviewable and merge in a known order;
 - canonical docs remain singular rather than forked into competing instructions;
+- attended failures are preserved as acceptance requirements rather than forgotten after refactors;
 - the user tests one coherent combined build from `main`;
 - local game state remains auditable and is not layered with mystery branch residue.
