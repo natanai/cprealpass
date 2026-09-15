@@ -5,7 +5,7 @@ $bodyPath = Join-Path $project 'src/redscript/CyberpunkRealism/BodyRuntime.reds'
 $combatPath = Join-Path $project 'src/redscript/CyberpunkRealism/CombatNativeBridge.reds'
 $bodyAttendedPath = Join-Path $project 'tools/Build-BodyAttended.ps1'
 $broadAttendedPath = Join-Path $project 'tools/Build-AttendedAcceptance.ps1'
-$sessionPath = Join-Path $project 'tools/Prepare-AttendedSession.ps1'
+$retiredSessionPath = Join-Path $project 'tools/Prepare-AttendedSession.ps1'
 $acceptancePath = Join-Path $project 'manifest/acceptance.json'
 $settingsPath = Join-Path $project 'manifest/settings.json'
 
@@ -13,7 +13,6 @@ $body = Get-Content -Raw -LiteralPath $bodyPath
 $combat = Get-Content -Raw -LiteralPath $combatPath
 $bodyAttended = Get-Content -Raw -LiteralPath $bodyAttendedPath
 $broadAttended = Get-Content -Raw -LiteralPath $broadAttendedPath
-$session = Get-Content -Raw -LiteralPath $sessionPath
 $acceptance = Get-Content -Raw -LiteralPath $acceptancePath | ConvertFrom-Json
 $settings = Get-Content -Raw -LiteralPath $settingsPath | ConvertFrom-Json
 
@@ -74,11 +73,11 @@ if ($broadAttended -match '(?i)(Deploy\.ps1|Upgrade\.ps1|Start-Process|Register-
     throw 'Broad attended builder must stage/compile only; it cannot deploy or launch.'
 }
 
-foreach ($needle in @('Upgrade.ps1','-WhatIf','if (-not $Deploy)','Backup-Saves.ps1','Verify-Deployment.ps1')) {
-    if (-not $session.Contains($needle)) { throw "Attended session deployment safety invariant missing: $needle" }
-}
-if ($session -match '(?i)(Start-Process|Register-ScheduledTask|New-Service)') {
-    throw 'Attended session tool must not launch the game or install background automation.'
+# The old integrated attended-session deployment helper is retired. Current attended
+# testing uses fresh canonical source plus the release-shaped clean-room package and
+# baseline/reset workflow; activation-gate CI must not require a deleted deploy path.
+if (Test-Path -LiteralPath $retiredSessionPath) {
+    throw 'Retired Prepare-AttendedSession.ps1 unexpectedly reappeared; attended testing must use the clean-room package path.'
 }
 
-Write-Host 'PASS: canonical body/combat/diagnostic gates remain build-controlled; RealPass-on locks all authorities together, with only a global master switch plus presentation preference exposed.'
+Write-Host 'PASS: canonical body/combat/diagnostic gates remain build-controlled; RealPass-on locks all authorities together, the retired attended-session deploy path stays absent, and only a global master switch plus presentation preference are exposed.'
