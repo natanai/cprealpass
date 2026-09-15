@@ -15,6 +15,7 @@ if (-not (Test-Path -LiteralPath $scriptRoot -PathType Container)) {
 Write-Host ''
 Write-Host '=== Supported-install presentation native-contract probe ===' -ForegroundColor Cyan
 Write-Host "Script source: $scriptRoot" -ForegroundColor DarkGray
+Write-Host 'Primary evidence is the installed official REDmod decompiled script tree.' -ForegroundColor DarkGray
 Write-Host 'Read-only symbol/signature evidence only; no game files are modified.' -ForegroundColor DarkGray
 
 $patterns = @(
@@ -26,6 +27,8 @@ $patterns = @(
     '\bclass\s+CrosshairGameController_Tech_Hex\b',
     '\bclass\s+NpcNameplateGameController\b',
     '\bclass\s+NameplateVisualsLogicController\b',
+    '\bevent\s+OnInitialize\s*\(',
+    '\bevent\s+OnPlayerAttach\s*\(',
     '\bfunc\s+OnCompassUpdate\s*\(',
     '\bfunc\s+OnPlayerAttach\s*\(',
     '\bfunc\s+GetQuestMappin\s*\(',
@@ -69,10 +72,21 @@ foreach ($hit in $deduped) {
     Write-Host ("  {0}:{1}  {2}" -f $hit.path,$hit.lineNumber,$hit.text)
 }
 
-$minimapContainerFound = @($deduped | Where-Object { $_.text -match '\bclass\s+MinimapContainerController\b' }).Count -gt 0
+$minimapRelative = 'cyberpunk/UI/widgets/minimap/minimap.script'
+$minimapHits = @($deduped | Where-Object { $_.path -eq $minimapRelative })
+$minimapContainerFound = @($minimapHits | Where-Object { $_.text -match '\bclass\s+MinimapContainerController\b' }).Count -gt 0
+$minimapInitializeFound = @($minimapHits | Where-Object { $_.text -match '\bevent\s+OnInitialize\s*\(' }).Count -gt 0
 $ironsightFound = @($deduped | Where-Object { $_.text -match '\bclass\s+IronsightGameController\b' }).Count -gt 0
+
+if (-not $minimapContainerFound) {
+    throw "Current native minimap controller was not found in installed REDmod source: $minimapRelative"
+}
+if (-not $minimapInitializeFound) {
+    throw "Current native minimap OnInitialize lifecycle was not found in installed REDmod source: $minimapRelative"
+}
 
 Write-Host ''
 Write-Host "MinimapContainerController found: $minimapContainerFound"
+Write-Host "Minimap OnInitialize found:       $minimapInitializeFound"
 Write-Host "IronsightGameController found:    $ironsightFound"
 Write-Host 'PASS: current installed REDmod script sources yielded presentation controller/signature evidence.' -ForegroundColor Green
