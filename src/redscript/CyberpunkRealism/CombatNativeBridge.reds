@@ -2,10 +2,17 @@
 // logs, timers or synthetic damage events. Physical damage/wound routing lives in CombatWoundsNative.
 import CyberpunkRealism.Combat.*
 import CyberpunkRealism.Physiology.*
+import CyberpunkRealism.Settings.*
 
 public class CRCombatRuntimePolicy extends IScriptable {
-  public static func Enabled() -> Bool {
+  // BuildEnabled is the compile-time/acceptance gate rewritten only in staged
+  // candidates. Enabled adds the player's one global RealPass master decision.
+  public static func BuildEnabled() -> Bool {
     return false;
+  }
+
+  public static func Enabled() -> Bool {
+    return CRCombatRuntimePolicy.BuildEnabled() && CRRealpassSettings.IsEnabled(GetGameInstance());
   }
 }
 

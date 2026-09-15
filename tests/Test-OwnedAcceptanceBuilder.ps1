@@ -17,7 +17,8 @@ foreach ($needle in @('DarkFuture','Project\s*E3','Codeware')) {
     Check ($source.Contains($needle)) "Owned builder lost forbidden-runtime guard: $needle"
 }
 Check ($source.Contains('import\s+ModSettings')) 'Owned builder does not reject direct Mod Settings imports.'
-# Register/Unregister listener calls are the one allowed provider lifecycle boundary.
+# Register/Unregister listener calls are the allowed provider lifecycle boundary;
+# policy may read only the RealPass-owned singleton, never provider internals.
 Check ($source.Contains('ModSettings\.(?:GetInstance|GetMods|GetCategories|GetVars|AcceptChanges|RejectChanges|RestoreDefaults)')) 'Owned builder does not reject direct Mod Settings policy/API coupling.'
 Check (-not $source.Contains('ModSettings\.(?:Register|Unregister|GetInstance')) 'Owned builder still treats allowed listener lifecycle calls as forbidden policy coupling.'
 Check (-not $source.Contains('ModSettings|Mod Settings')) 'Owned builder still blanket-rejects accepted Mod Settings runtime-property metadata.'
@@ -28,13 +29,13 @@ Check ($source.Contains("component = 'realpass-owned-runtime'")) 'Owned manifest
 Check ($source.Contains("origin = 'project-original'")) 'Owned manifest does not preserve source provenance.'
 Check ($source.Contains('ownedRuntime = $true')) 'Owned manifest/report does not assert the owned-runtime boundary.'
 Check ($source.Contains('sourceModsRequired = @()')) 'Owned report no longer records zero source-mod runtime requirements.'
-Check ($source.Contains('traditionalActorHealthBarsFinalTarget = $false')) 'Owned report lost the final no-traditional-actor-HP target.'
-Check ($source.Contains('developmentHealthbarFallbackUntilReplacementAccepted = $true')) 'Owned report does not record the transitional feedback fallback.'
+Check ($source.Contains('traditionalActorHealthBarsFinalTarget = $false')) 'Owned report lost the no-traditional-actor-HP target.'
+Check ($source.Contains('developmentHealthbarFallbackUntilReplacementAccepted = $false')) 'Owned report still claims the rejected transitional healthbar fallback is active.'
 
 foreach ($needle in @(
     "Set-PolicyOnce `$text 'CRBodyRuntimePolicy' 'Enabled' `$true 'false'",
     "Set-PolicyOnce `$text 'CRBodyTestPolicy' 'Diagnostics' ([bool]`$Diagnostics) 'false'",
-    "Set-PolicyOnce `$text 'CRCombatRuntimePolicy' 'Enabled' `$true 'false'"
+    "Set-PolicyOnce `$text 'CRCombatRuntimePolicy' 'BuildEnabled' `$true 'false'"
 )) {
     Check ($source.Contains($needle)) "Owned builder lost immutable staged policy transition: $needle"
 }
@@ -48,4 +49,4 @@ foreach ($forbidden in @('Upgrade.ps1','Deploy.ps1','Copy-Item -LiteralPath $sou
 }
 Check ($source.Contains('Nothing was deployed or launched')) 'Owned builder does not make its compile-only boundary explicit.'
 
-Write-Host "PASS: $script:checks owned acceptance-builder contract checks."
+Write-Host "PASS: $script:checks owned acceptance-builder contract checks; staged build gates coexist with the global RealPass master and accepted barless presentation."

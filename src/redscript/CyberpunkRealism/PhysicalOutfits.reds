@@ -12,9 +12,11 @@
 // is changed. Quest wardrobe blocking and UnequipBlocked equipment are respected.
 module CyberpunkRealism.Equipment
 
+import CyberpunkRealism.Settings.*
+
 public class CRPhysicalOutfitPolicy extends IScriptable {
   public static func Enabled() -> Bool {
-    return true;
+    return CRRealpassSettings.IsEnabled(GetGameInstance());
   }
 
   public static func SupportsArea(area: gamedataEquipmentArea) -> Bool {

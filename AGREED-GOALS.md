@@ -21,7 +21,9 @@ This file records the goals and product decisions explicitly agreed with the pro
 realpass is one authored Cyberpunk 2077 + Phantom Liberty realism pass, not a collection of unrelated difficulty/survival modules and not a repackaged mod stack.
 
 ### G-002 — Same realpass version means the same simulation — LOCKED
-Internal modularity is for development, calibration, isolation and debugging. A normal release is **all-or-nothing**: accepted body, injury, combat, armor, cyberware-physiology and presentation authorities run together. Players do not get a menu for disabling core authorities or changing balance values independently.
+Internal modularity is for development, calibration, isolation and debugging. With RealPass enabled, a normal release is **all-or-nothing**: accepted body, injury, combat, armor, cyberware-physiology and presentation authorities run together. Players do not get a menu for disabling core authorities independently or changing balance values.
+
+A single global **Enable RealPass** master switch may disable the entire overhaul and yield to native Cyberpunk behavior. That whole-mod switch is not permission to expose body/combat/armor/etc. as separate player-configurable modules.
 
 Diagnostics remain development-only and off in a normal release.
 
@@ -272,15 +274,20 @@ The finished implementation must be RealPass-owned and standalone: Project E3 ma
 ### G-072 — Presentation serves the simulation — LOCKED
 UI should communicate what V could reasonably perceive/diagnose without becoming a dense spreadsheet or permanent RPG meter wall. Exact numerical state may be available in **deliberate Biology drill-down inspection** and development diagnostics, but not as always-visible gameplay/HUD or overview telemetry.
 
-### G-073 — Mod Settings has exactly one player control: E3 first-person HUD visuals — LOCKED
-RealPass must appear in the game's Mod Settings surface. Its normal player-facing page contains **exactly one editable setting**: a binary **E3 first-person HUD visuals** toggle, default **On**. That toggle controls the RealPass-owned E3-inspired first-person HUD/nameplate visual layer only.
+### G-073 — Mod Settings has a whole-mod master switch plus one E3 presentation preference — LOCKED
+RealPass must appear in the game's Mod Settings surface. Its normal player-facing page contains **exactly two editable settings**, both Boolean and default **On**:
 
-Do not fill Mod Settings with fake one-value status controls, a feature ledger, patch notes, diagnostics, or implementation inventory. Numeric tuning controls, rate/multiplier sliders, and switches that disable body, injury, combat, armor, bleeding, recovery, cyberware physiology or other core authorities are forbidden. Toggling the E3 visual layer must not change the authored physical simulation or the modern scanner.
+1. **Enable RealPass** — the one global master switch for the complete overhaul. Turning it off disables RealPass as a whole and yields wrapped gameplay/presentation paths to native Cyberpunk after the current save/session is reloaded.
+2. **E3 first-person HUD visuals** — while RealPass is enabled, controls only the RealPass-owned E3-inspired first-person HUD/nameplate visual layer.
 
-### G-074 — Traditional health feedback is removed only when its replacement is actually usable — LOCKED
-The final presentation target remains no traditional actor HP bars under G-033, but development suppression is replacement-gated. Do not remove the player's only useful health/needs feedback before the corresponding RealPass Biology/HUD/gameplay cues have been accepted in attended play.
+Do not fill Mod Settings with fake one-value status controls, a feature ledger, patch notes, diagnostics, or implementation inventory. Numeric tuning controls, rate/multiplier sliders, and **individual** switches for body, injury, combat, armor, bleeding, recovery, cyberware physiology or other core authorities are forbidden. The global master is all-or-nothing; the E3 visual toggle must not change the authored physical simulation or the modern scanner.
 
-Temporary vanilla fallback feedback is allowed while replacements are incomplete; its presence is not the final design. Once a replacement channel is demonstrably usable, suppress the corresponding stock indicator without inventing duplicate RealPass percentage bars merely to replace it.
+### G-074 — RealPass-on actor presentation is barless; master-off restores native fallback — LOCKED
+The final presentation target under G-033 is now also the accepted ordinary attended behavior: while **Enable RealPass = On**, traditional actor HP bars/HP-number feedback for V and supported actors should remain suppressed where technically safe. The 2026-09-14 attended session explicitly rejected the restored native red player-health indicator as RealPass-on behavior.
+
+Do not replace that bar with a duplicate RealPass percentage meter. Continue improving Biology, E3-inspired HUD, injury, impairment, pain, bleeding and other embodied cues as the meaningful replacement channels.
+
+Turning **Enable RealPass = Off** is the native fallback boundary and may restore Cyberpunk's stock actor-health presentation. Turning only **E3 first-person HUD visuals = Off** must not re-enable traditional actor HP bars or change the physical simulation.
 
 ---
 
