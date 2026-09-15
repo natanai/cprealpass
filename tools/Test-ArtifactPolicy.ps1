@@ -9,7 +9,7 @@ $rootFull = [IO.Path]::GetFullPath($Root)
 if (-not (Test-Path -LiteralPath $rootFull -PathType Container)) { throw "Artifact root not found: $rootFull" }
 $distributionFull = Resolve-SafeChildPath $project $DistributionPath
 $distribution = Get-Content -Raw -LiteralPath $distributionFull | ConvertFrom-Json
-if ($distribution.schemaVersion -ne 1) { throw 'Unexpected distribution contract.' }
+if ($distribution.schemaVersion -notin @(1,2)) { throw 'Unexpected distribution contract.' }
 
 function Normalize-Relative([string]$full) {
     $relative = [IO.Path]::GetRelativePath($rootFull, $full).Replace('\','/')
@@ -74,8 +74,6 @@ foreach ($candidate in $provenanceCandidates) {
     }
     if ($null -ne $data.removedDependencies) {
         foreach ($id in @($data.removedDependencies)) {
-            # Removed dependencies are expected to be disallowed or absent; never
-            # interpret this documentation list as a runtime declaration.
             if ([string]::IsNullOrWhiteSpace([string]$id)) { throw "Empty removed dependency id in $candidate" }
         }
     }
