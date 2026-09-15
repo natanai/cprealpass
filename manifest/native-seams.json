@@ -18,6 +18,7 @@
     "BloodLossNative.reds",
     "BodyInteractionRuntime.reds",
     "BodyNativeHooks.reds",
+    "BodyRuntimeAuthority.reds",
     "CombatNativeBridge.reds",
     "CombatProfilesNative.reds",
     "CombatWoundsNative.reds",
