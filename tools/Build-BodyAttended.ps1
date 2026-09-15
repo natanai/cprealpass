@@ -18,7 +18,7 @@ foreach($policy in @('CRBodyRuntimePolicy')+$(if($Diagnostics){@('CRBodyTestPoli
 $combat=@($m.files|Where-Object destination -eq 'r6/scripts/CyberpunkRealism/CombatNativeBridge.reds')
 if($combat.Count -ne 1){throw 'Expected one combat policy'}
 $combatPath=Resolve-SafeChildPath $project $combat[0].source
-if((Get-Sha256 $combatPath) -ne $combat[0].sha256 -or (Get-Content -Raw $combatPath) -notmatch 'public class CRCombatRuntimePolicy extends IScriptable \{\s+public static func Enabled\(\) -> Bool \{\s+return false;'){throw 'Combat must remain disabled'}
+if((Get-Sha256 $combatPath) -ne $combat[0].sha256 -or (Get-Content -Raw $combatPath) -notmatch 'public class CRCombatRuntimePolicy extends IScriptable \{\s+.*?public static func BuildEnabled\(\) -> Bool \{\s+return false;'){throw 'Combat build gate must remain disabled'}
 $relative='staging/body-attended-'+[guid]::NewGuid().ToString('N')+'/BodyRuntime.reds'
 $target=Resolve-SafeChildPath $project $relative
 New-Item -ItemType Directory -Force (Split-Path $target -Parent)|Out-Null
@@ -28,4 +28,4 @@ $entry[0].sha256=Get-Sha256 $target
 $manifest='manifest/'+$m.buildId+'.deployment.json'
 Write-JsonFile $m (Join-Path $project $manifest)
 & "$PSScriptRoot\Compile-Profile.ps1" -ManifestPath $manifest
-Write-Host "Staged $($m.buildId): body enabled, combat disabled, diagnostics=$Diagnostics. No live deployment performed."
+Write-Host "Staged $($m.buildId): body enabled, combat build gate disabled, diagnostics=$Diagnostics. No live deployment performed."
