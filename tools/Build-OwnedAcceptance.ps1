@@ -41,7 +41,7 @@ $candidateFiles = @($sourceFiles)
 # would silently rebrand vanilla gameplay items. Mod Settings metadata plus guarded
 # RegisterListenerToClass/UnregisterListenerToClass lifecycle calls are allowed as
 # generic UI/persistence plumbing. RealPass may not query or drive Mod Settings as a
-# gameplay/simulation policy owner.
+# gameplay/simulation policy owner beyond reading the global RealPass master state.
 $forbiddenOwnedPatterns = @(
     '(?m)^\s*(?:module|import)\s+DarkFuture(?:\.|\b)',
     '(?im)Project\s*E3',
@@ -92,9 +92,9 @@ foreach ($file in $candidateFiles) {
         $stagedGates.Add([ordered]@{policy='CRBodyTestPolicy.Diagnostics';value=[bool]$Diagnostics})
     }
     if ($file.Name -eq 'CombatNativeBridge.reds') {
-        $text = Set-PolicyOnce $text 'CRCombatRuntimePolicy' 'Enabled' $true 'false'
+        $text = Set-PolicyOnce $text 'CRCombatRuntimePolicy' 'BuildEnabled' $true 'false'
         $changed = $true
-        $stagedGates.Add([ordered]@{policy='CRCombatRuntimePolicy.Enabled';value=$true})
+        $stagedGates.Add([ordered]@{policy='CRCombatRuntimePolicy.BuildEnabled';value=$true})
     }
 
     if ($changed) {
@@ -148,7 +148,7 @@ $record = [ordered]@{
     stagedGates = @($stagedGates.ToArray())
     manifestPath = $outputRelative
     traditionalActorHealthBarsFinalTarget = $false
-    developmentHealthbarFallbackUntilReplacementAccepted = $true
+    developmentHealthbarFallbackUntilReplacementAccepted = $false
     sourceModsRequired = @()
     vanillaIdentityPolicy = 'Preserve vanilla item/system identity; source-mod renames are forbidden in the owned candidate.'
     scope = 'Owned attended compile candidate only. Contains the complete current project-original RealPass REDscript tree; retired source-mod bridge/prototype files are absent; does not deploy or launch Cyberpunk. Native UI/gameplay/save/quest acceptance is still required.'
