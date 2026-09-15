@@ -123,8 +123,11 @@ $playerBuilder = Read-Tracked 'tools/Build-BiologyPackage.ps1'
 if ($playerBuilder -match '(?i)Lane C|Biology REDmod recognition/deployment.*directGameGatesRemaining|Recognition, enable/disable, relaunch persistence, clean uninstall/reset') {
     $violations.Add('Canonical Biology package builder still emits superseded lane/deployment-gate text.')
 }
-if ($playerBuilder -notmatch 'Deploy-BiologyRedmod\.ps1' -or $playerBuilder -notmatch 'Uninstall Biology\.exe') {
-    $violations.Add('Canonical Biology package output lost current deploy/uninstall guidance.')
+# The player artifact may document activation through the normal REDlauncher flow while
+# the repository-owned Deploy-BiologyRedmod helper remains the deterministic developer
+# path. Require current activation/deploy guidance plus the packaged hard-uninstall UX.
+if ($playerBuilder -notmatch '(?i)Enable mods ON|Deploy-BiologyRedmod\.ps1' -or $playerBuilder -notmatch 'Uninstall Biology\.exe') {
+    $violations.Add('Canonical Biology package output lost current deploy/activation or uninstall guidance.')
 }
 
 # Dated evidence is intentionally excluded from stale-string scanning. Historical
