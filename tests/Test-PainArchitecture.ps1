@@ -36,10 +36,13 @@ Check (-not $painRuntime.Contains('DelayCallback') -and -not $painRuntime.Contai
 Check (-not $painRuntime.Contains('DarkFuture') -and -not $painRuntime.Contains('Project E3')) 'Pain runtime depends on a source mod.'
 Check ($painRuntime.Contains('CRPainModel.UseMaxDoc(this.state)')) 'MaxDoc does not enter owned analgesia model.'
 
-# Vanilla MaxDoc identity/integration.
+# Vanilla MaxDoc identity/integration. The native action carries its real GameInstance
+# into the project-owned session resolver; no project-class redscript patch overload
+# is required to retrieve the pain authority.
 Check ($bodyHooks.Contains('@wrapMethod(UseHealChargeAction)')) 'MaxDoc is not intercepted at native healing-item action boundary.'
 Check ($bodyHooks.Contains('gamedataConsumableBaseName.FirstAidWhiff')) 'Vanilla MaxDoc/FirstAidWhiff family is not recognized.'
-Check ($bodyHooks.Contains('painRuntime = CRPainRuntime.Get(gameInstance);')) 'Native MaxDoc use does not resolve pain authority from the action-owned session.'
+Check ($bodyHooks.Contains('painRuntime = CRBiologySessionAuthority.Pain(gameInstance);')) 'Native MaxDoc use does not resolve pain authority from the action-owned session.'
+Check (-not $bodyHooks.Contains('painRuntime = CRPainRuntime.Get(gameInstance);')) 'Native MaxDoc regressed to a project-class overload that exact compilation cannot own.'
 Check ($bodyHooks.Contains('IsDefined(painRuntime) && painRuntime.UseMaxDoc()')) 'Native MaxDoc use does not route to pain runtime.'
 Check ($bodyHooks.Contains('CRPainNativeEffects.Refresh(local, true)')) 'Accepted MaxDoc use does not reconstruct pain/intoxication feedback immediately.'
 Check (-not $bodyHooks.Contains('gamedataConsumableBaseName.HealthBooster')) 'Health Booster is still repurposed as MaxDoc analgesia.'

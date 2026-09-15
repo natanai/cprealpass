@@ -9,8 +9,16 @@ public class CRBodyRuntimeMasterPolicy extends IScriptable {
     return CRBodyRuntimePolicy.Enabled() && CRRealpassSettings.IsEnabled(GetGameInstance());
   }
 
+  public static func Enabled(game: GameInstance) -> Bool {
+    return CRBodyRuntimePolicy.Enabled() && CRRealpassSettings.IsEnabled(game);
+  }
+
   public static func Ready() -> Bool {
     return CRBiologyRuntimeAvailability.EnsureActive();
+  }
+
+  public static func Ready(game: GameInstance) -> Bool {
+    return CRBiologyRuntimeAvailability.EnsureActive(game);
   }
 }
 
@@ -47,7 +55,7 @@ public func CompleteAction(gameInstance: GameInstance) -> Void {
     return;
   }
 
-  runtime = CRBodyRuntime.Get(gameInstance);
+  runtime = CRBiologySessionAuthority.Body(gameInstance);
   if IsDefined(runtime) {
     runtime.Consume(record);
   }
@@ -91,7 +99,7 @@ protected func ProcessStatusEffects(const actionEffects: script_ref<array<wref<O
   // Intentionally do NOT call wrappedMethod for MaxDoc: that is the point at which
   // vanilla FirstAidWhiff health-regeneration effects would be applied. Charge use,
   // animation and hotkey refresh remain native in UseHealChargeAction.CompleteAction.
-  painRuntime = CRPainRuntime.Get(gameInstance);
+  painRuntime = CRBiologySessionAuthority.Pain(gameInstance);
   if IsDefined(painRuntime) && painRuntime.UseMaxDoc() {
     // Consumable use is an explicit state boundary. Reconstruct transient weapon/
     // intoxication feedback now rather than waiting for a later injury/body refresh;
@@ -111,7 +119,7 @@ protected cb func OnTimeSkipButtonPressed(e: ref<inkPointerEvent>) -> Bool {
     player = this.m_gameCtrlRef.GetPlayerControlledObject();
   }
   if IsDefined(player) && CRBodyRuntimeMasterPolicy.Ready(player.GetGame()) && e.IsAction(n"click") {
-    runtime = CRBodyRuntime.Get(player.GetGame());
+    runtime = CRBiologySessionAuthority.Body(player.GetGame());
     if IsDefined(runtime) {
       runtime.MarkNextTimeSkipAsWait();
     }
@@ -127,7 +135,7 @@ protected cb func OnInitialize() -> Bool {
   let player: wref<GameObject> = this.GetPlayerControlledObject();
   let runtime: ref<CRBodyRuntime>;
   if IsDefined(player) && CRBodyRuntimeMasterPolicy.Ready(player.GetGame()) {
-    runtime = CRBodyRuntime.Get(player.GetGame());
+    runtime = CRBiologySessionAuthority.Body(player.GetGame());
     if IsDefined(runtime) {
       this.crRealpassSleeping = runtime.ConsumeNextTimeSkipSleeping();
     }
@@ -146,7 +154,7 @@ private func Apply() -> Void {
   let runtime: ref<CRBodyRuntime>;
   let ready: Bool = false;
   if hours > 0 && IsDefined(player) && CRBodyRuntimeMasterPolicy.Ready(player.GetGame()) {
-    runtime = CRBodyRuntime.Get(player.GetGame());
+    runtime = CRBiologySessionAuthority.Body(player.GetGame());
     ready = IsDefined(runtime);
   }
   if ready {

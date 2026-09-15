@@ -24,16 +24,18 @@ public class CRPainRuntime extends ScriptableSystem {
   }
 
   // Synchronize analgesic decay to the same body clock that advances hydration,
-  // sleep, wounds and blood loss. If a save/rollback rebases elapsed body time,
-  // re-anchor rather than inventing negative pharmacology time.
+  // sleep, wounds and blood loss. Use this ScriptableSystem's session when resolving
+  // the single authoritative body rather than rediscovering a global context.
   private func Sync() -> ref<CRBodyState> {
+    let bodyRuntime: ref<CRBodyRuntime>;
     let body: ref<CRBodyState>;
     let delta: Float;
     this.EnsureState();
-    if !CRBodyRuntime.Get().OwnsNeeds() {
+    bodyRuntime = CRBiologySessionAuthority.Body(this.GetGameInstance());
+    if !IsDefined(bodyRuntime) || !bodyRuntime.OwnsNeeds() {
       return null;
     }
-    body = CRBodyRuntime.Get().GetBodySnapshot();
+    body = bodyRuntime.GetBodySnapshot();
     if !IsDefined(body) || !body.initialized {
       return null;
     }
@@ -47,9 +49,6 @@ public class CRPainRuntime extends ScriptableSystem {
       if !CRPainModel.Advance(this.state, MinF(delta, 72.0)) {
         return null;
       }
-      // Extremely long offline/body jumps are already bounded elsewhere; if a
-      // future body clock can exceed 72 hours in one observation, consume it in
-      // deterministic chunks instead of creating a second timing policy.
       delta -= MinF(delta, 72.0);
       while delta > 0.0 {
         if !CRPainModel.Advance(this.state, MinF(delta, 72.0)) {

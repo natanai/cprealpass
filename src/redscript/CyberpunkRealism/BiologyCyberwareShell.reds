@@ -341,7 +341,7 @@ public final func CRBiologyInDetail() -> Bool {
 
 @addMethod(RipperDocGameController)
 public final func CRBodyShellInDetail() -> Bool {
-  return this.m_filterMode == RipperdocModes.Item
+  return Equals(this.m_filterMode, RipperdocModes.Item)
     || this.m_isInventoryOpen
     || NotEquals(this.crBiologySelectedArea, gamedataEquipmentArea.Invalid);
 }
@@ -512,10 +512,14 @@ public final func CRRefreshBiologyOverview() -> Void {
   if !IsDefined(this.crBiologyOverviewText) {
     return;
   }
-  let view: ref<CRBiologyViewModel> = CRBiologyPresentation.Current();
+  let player: wref<GameObject> = this.GetPlayerControlledObject();
+  if !IsDefined(player) {
+    this.crBiologyOverviewText.SetText("[ BIOLOGY ERROR ] BODY RUNTIME PLAYER UNAVAILABLE");
+    return;
+  }
+  let view: ref<CRBiologyViewModel> = CRBiologySessionPresentation.Current(player.GetGame());
   if !IsDefined(view) || !view.valid {
-    // #41 owns runtime registration/lifecycle. Do not disguise a missing authority as
-    // healthy state in this UI follow-up.
+    // Runtime failures remain visible; the shell never manufactures STABLE state.
     this.crBiologyOverviewText.SetText("[ BIOLOGY ERROR ] BODY STATE UNAVAILABLE");
     return;
   }
@@ -546,8 +550,14 @@ private final func CRRefreshBiologyDetail() -> Void {
     return;
   }
 
-  let detail: ref<CRBiologyDetailViewModel> = CRBiologyDetailPresentation.Current(this.crBiologySelectedArea);
+  let player: wref<GameObject> = this.GetPlayerControlledObject();
   this.CRHideMetricRows();
+  if !IsDefined(player) {
+    this.crBiologyDetailTitle.SetText(CRBiologyDetailPresentation.Label(this.crBiologySelectedArea));
+    this.crBiologyDetailSummary.SetText("[ BIOLOGY ERROR ] BODY RUNTIME PLAYER UNAVAILABLE");
+    return;
+  }
+  let detail: ref<CRBiologyDetailViewModel> = CRBiologySessionPresentation.Detail(player.GetGame(), this.crBiologySelectedArea);
   if !IsDefined(detail) || !detail.valid {
     this.crBiologyDetailTitle.SetText(CRBiologyDetailPresentation.Label(this.crBiologySelectedArea));
     this.crBiologyDetailSummary.SetText("[ BIOLOGY ERROR ] BODY DETAIL UNAVAILABLE");

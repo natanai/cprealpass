@@ -19,7 +19,15 @@ $parts+='public class CRBodyRuntime extends IScriptable {'+"`n"+($methods -join 
 $s=($parts -join "`n").Replace('extends DelayCallback','extends IScriptable').Replace('extends ScriptableSystem','extends IScriptable').Replace('wref<','ref<').Replace('private let','public let')
 $s=[regex]::Replace($s,'(?:public|private) func (\w+)\(','public static func CRInstance_$1(')
 $s=[regex]::Replace($s,'return GameInstance.GetScriptableSystemsContainer\(GetGameInstance\(\)\).+?;', 'return CareTimedFixture.runtime;')
-$s=$s.Replace('GetGameInstance()','CareTimedFixture.game').Replace('GetAllBlackboardDefs()','CareTimedFixture.defs').Replace('ToVariant(warning)','warning').Replace('GetInvalidDelayID()','0')
+# Production body methods now use their ScriptableSystem-owned session. Translate
+# that context explicitly before the generic global fixture rewrite so `this.` does
+# not become the invalid `this.CareTimedFixture` C# member path.
+$s=$s.Replace('this.GetGameInstance()','CareTimedFixture.game').Replace('GetGameInstance()','CareTimedFixture.game')
+# CommitFieldCare resolves the already-existing field-care authority from that same
+# session. The harness fixture has exactly one CRFieldCareActionRuntime instance, so
+# bind the helper lookup to it rather than reintroducing a project-class overload.
+$s=$s.Replace('CRBiologySessionAuthority.FieldCare(CareTimedFixture.game)','CareTimedFixture.runtime')
+$s=$s.Replace('GetAllBlackboardDefs()','CareTimedFixture.defs').Replace('ToVariant(warning)','warning').Replace('GetInvalidDelayID()','0')
 $generated=Join-Path $project ('staging/field-care-timed-'+[guid]::NewGuid().ToString('N')+'.reds');[IO.File]::WriteAllText($generated,$s)
 $paths=@('InjuryModel','BodyModel','SleepModel','BodyInputs','FieldCareModel','FieldCareRuntime','FieldCareActionModel')|ForEach-Object{Join-Path $project "src/redscript/CyberpunkRealism/$_.reds"}
 $code=Convert-RedscriptCore ($paths+@($generated))

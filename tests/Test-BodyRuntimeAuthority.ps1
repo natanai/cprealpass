@@ -10,38 +10,51 @@ function Read-Project([string]$relative) {
 }
 
 $authority = Read-Project 'src/redscript/CyberpunkRealism/BodyRuntimeAuthority.reds'
-$authorityAccess = Read-Project 'src/redscript/CyberpunkRealism/BodyRuntimeAuthorityAccess.reds'
-$consumer = Read-Project 'src/redscript/CyberpunkRealism/BiologyRuntimeConsumer.reds'
 $runtime = Read-Project 'src/redscript/CyberpunkRealism/BodyRuntime.reds'
-$presentation = Read-Project 'src/redscript/CyberpunkRealism/BiologyPresentation.reds'
-$bodyStatus = Read-Project 'src/redscript/CyberpunkRealism/BodyStatusPresentation.reds'
+$pain = Read-Project 'src/redscript/CyberpunkRealism/PainRuntime.reds'
+$effects = Read-Project 'src/redscript/CyberpunkRealism/InjuryEffectsNative.reds'
+$availability = Read-Project 'src/redscript/CyberpunkRealism/BiologyRuntimeAvailability.reds'
+$sessionPresentation = Read-Project 'src/redscript/CyberpunkRealism/BiologySessionPresentation.reds'
+$shell = Read-Project 'src/redscript/CyberpunkRealism/BiologyCyberwareShell.reds'
 $nativeHooks = Read-Project 'src/redscript/CyberpunkRealism/BodyNativeHooks.reds'
 $ownedBuilder = Read-Project 'tools/Build-OwnedAcceptance.ps1'
 $packageBuilder = Read-Project 'tools/Build-BiologyPackage.ps1'
 $dependencyGraph = Read-Project 'manifest/dependency-graph.json'
 
-# The body remains one persistent ScriptableSystem. This follow-up may add retrieval
-# and diagnostics, but it must not add another persistent body, UI state authority,
-# static pseudo-cache, or fallback physiology.
+# The body remains exactly one persistent Biology ScriptableSystem. Session lookup and
+# menu projection are stateless helpers, never alternate physiology authorities.
 Check ($runtime -match 'public class CRBodyRuntime extends ScriptableSystem') 'CRBodyRuntime is no longer the authoritative ScriptableSystem.'
 Check ($runtime -match 'private persistent let body: ref<CRBodyState>') 'Persistent physiology moved away from CRBodyRuntime.'
 Check ($runtime -match 'private persistent let bodySchemaVersion: Int32') 'Body save schema authority moved away from CRBodyRuntime.'
-Check ($authority -notmatch 'persistent let') 'Authority seam must not persist a second body or lifecycle state.'
-Check ($consumer -notmatch 'persistent let') 'Menu consumer seam must remain read-only/transient.'
-Check ($authority -notmatch 'static let crAuthority') 'Unsupported static ScriptableSystem cache returned.'
-Check ($consumer -notmatch 'new CRBodyState') 'Menu consumer manufactured substitute physiology.'
+Check ($authority -match 'public class CRBiologySessionAuthority extends IScriptable') 'Explicit-session authority helper is missing.'
+Check ($authority -notmatch 'persistent let') 'Session authority helper must not persist a second body or lifecycle state.'
+Check ($authority -notmatch 'new CRBodyState') 'Session authority helper manufactured substitute physiology.'
+Check ($sessionPresentation -notmatch 'persistent let') 'Session presentation helper must remain read-only/transient.'
+Check ($sessionPresentation -notmatch 'new CRBodyState') 'Session presentation helper manufactured substitute physiology.'
+Check (-not (Test-Path -LiteralPath (Join-Path $project 'src/redscript/CyberpunkRealism/BodyRuntimeAuthorityAccess.reds'))) 'Superseded project-class authority patch layer still exists.'
+Check (-not (Test-Path -LiteralPath (Join-Path $project 'src/redscript/CyberpunkRealism/BiologyRuntimeConsumer.reds'))) 'Superseded stacked Biology consumer patch layer still exists.'
 
-# Registration/retrieval contract: callers with real game ownership pass an explicit
-# GameInstance, the container is checked, and the module-qualified registered class
-# name is visible at the boundary. There is no global GetGameInstance bootstrap in
-# this explicit authority seam.
-Check ($authority -match 'public static func Get\(game: GameInstance\) -> ref<CRBodyRuntime>') 'Body authority lacks explicit GameInstance retrieval.'
-Check ($authority -match 'let container: ref<ScriptableSystemsContainer> = GameInstance\.GetScriptableSystemsContainer\(game\)') 'Body authority does not validate the supplied session container.'
+# Project-owned behavior is declared on project classes or helpers directly. The
+# authority helper itself must never masquerade as a redscript native patch surface.
+foreach ($annotation in @('@addMethod','@replaceMethod','@addField','@wrapMethod')) {
+    Check (-not $authority.Contains($annotation)) "Session authority helper contains native patch annotation: $annotation"
+}
+Check ($runtime -notmatch '@(?:addMethod|replaceMethod|addField)\(CR') 'CRBodyRuntime ownership regressed to project-class patch annotations.'
+Check ($pain -notmatch '@(?:addMethod|replaceMethod|addField)\(CR') 'CRPainRuntime ownership regressed to project-class patch annotations.'
+
+# Explicit GameInstance lookup uses the registered ScriptableSystem container and the
+# actual module-qualified class names without a pseudo-cache or global bootstrap.
+Check ($authority -match 'public static func Body\(game: GameInstance\) -> ref<CRBodyRuntime>') 'Body authority lacks explicit GameInstance retrieval.'
+Check ($authority -match 'GameInstance\.GetScriptableSystemsContainer\(game\)') 'Body authority does not validate the supplied session container.'
 Check ($authority -match 'container\.Get\(n"CyberpunkRealism\.Integration\.CRBodyRuntime"\) as CRBodyRuntime') 'Body authority does not use the registered module-qualified system name.'
-Check ($authority -match 'public static func SessionProbe\(game: GameInstance\) -> Int32') 'Body authority lacks registration/session probe.'
-Check ($authority -notmatch 'GetScriptableSystemsContainer\(GetGameInstance\(\)\)') 'Explicit authority seam regressed to parameterless global GameInstance retrieval.'
+Check ($authority -match 'public static func BodyProbe\(game: GameInstance\) -> Int32') 'Body authority lacks registration/session probe.'
+Check ($authority -notmatch 'GetGameInstance\(\)') 'Explicit authority helper regressed to parameterless global GameInstance retrieval.'
+foreach ($systemMethod in @('Pain','FieldCare','Provenance','InjuryEffects')) {
+    Check ($authority -match "public static func $systemMethod\(game: GameInstance\)") "Missing explicit-session subordinate lookup: $systemMethod"
+}
 
-# Body-owned lifecycle/time/player work must use the ScriptableSystem-owned session.
+# Body-owned lifecycle/time/player work uses the ScriptableSystem-owned session and
+# the tick callback carries the already-resolved authoritative instance.
 foreach ($required in @(
     'GetPlayerSystem\(this\.GetGameInstance\(\)\)',
     'GetBlackboardSystem\(this\.GetGameInstance\(\)\)',
@@ -49,27 +62,24 @@ foreach ($required in @(
     'GetSimTime\(this\.GetGameInstance\(\)\)',
     'GetDelaySystem\(this\.GetGameInstance\(\)\)'
 )) {
-    Check ($authority -match $required) "Session-owned body runtime path missing: $required"
+    Check ($runtime -match $required) "Session-owned body runtime path missing: $required"
 }
-Check ($authority -match '@addField\(CRBodyTickCallback\)[\s\S]*?crOwner: wref<CRBodyRuntime>') 'Tick callback does not carry the authoritative body instance.'
-Check ($authority -match '@replaceMethod\(CRBodyTickCallback\)[\s\S]*?this\.crOwner\.HandleTick') 'Tick callback still rediscovers the body globally.'
-Check ($authority -match 'EnsureActive\(this\.GetGame\(\)\)') 'Player attachment does not supply its game-owned session to Biology readiness.'
+Check ($runtime -match 'public let crOwner: wref<CRBodyRuntime>') 'Tick callback does not carry the authoritative body instance.'
+Check ($runtime -match 'this\.crOwner\.HandleTick\(this\.generation\)') 'Tick callback still rediscovers the body globally.'
+Check ($runtime -match 'callback\.crOwner = this') 'Scheduled tick does not retain the owning CRBodyRuntime.'
+Check ($runtime -match 'public func HasUnsupportedSaveVersion\(\) -> Bool') 'Unsupported-save diagnostic is no longer owned directly by CRBodyRuntime.'
+Check ($pain -match 'CRBiologySessionAuthority\.Body\(this\.GetGameInstance\(\)\)') 'Pain runtime no longer shares its own session with the body authority.'
+Check ($effects -match 'CRBiologySessionAuthority\.Body\(this\.GetGameInstance\(\)\)') 'Injury-effects runtime no longer shares its own session with the body authority.'
+Check ($effects -match 'GetPlayerSystem\(this\.GetGameInstance\(\)\)') 'Injury-effects refresh regressed to global session discovery.'
 
-# Subordinate systems must have explicit same-session retrieval paths. Their state is
-# not copied into the body or UI.
-foreach ($system in @(
-    'CRPainRuntime',
-    'CRFieldCareActionRuntime',
-    'CRInjuryProvenanceRuntime',
-    'CRInjuryEffectsRuntime'
-)) {
-    Check ($authority -match "public static func Get\(game: GameInstance\) -> ref<$system>") "Missing explicit-session retrieval for $system."
-}
-Check ($authority -match 'CRBodyRuntime\.Get\(this\.GetGameInstance\(\)\)') 'Subordinate runtime lifecycle does not resolve body from its own session.'
+# Readiness/gates accept explicit sessions directly from their owning project classes.
+Check ($availability -match 'public static func Enabled\(game: GameInstance\) -> Bool') 'Biology availability lacks explicit-session enable check.'
+Check ($availability -match 'public static func EnsureActive\(game: GameInstance\) -> Bool') 'Biology availability lacks explicit-session activation.'
+Check ($availability -match 'CRBiologySessionAuthority\.Body\(game\)') 'Biology availability does not resolve the authoritative runtime from the supplied session.'
+Check ($nativeHooks -match 'public static func Enabled\(game: GameInstance\) -> Bool') 'Master policy lacks directly owned explicit-session enable overload.'
+Check ($nativeHooks -match 'public static func Ready\(game: GameInstance\) -> Bool') 'Master policy lacks directly owned explicit-session readiness overload.'
+Check ($nativeHooks -match 'EnsureActive\(game\)') 'Master policy explicit-session readiness does not delegate to authoritative availability.'
 
-# Save/session/readiness diagnostics remain explicit failures. Healthy presentation
-# may say STABLE only after a real initialized body and real meter read.
-Check ($authorityAccess -match 'return this\.unsupportedSaveVersion') 'Unsupported-save diagnostic does not read body-owned transient readiness.'
 foreach ($reason in @(
     'BODY RUNTIME BUILD GATE CLOSED',
     'BODY RUNTIME SESSION CONTEXT UNAVAILABLE',
@@ -80,26 +90,31 @@ foreach ($reason in @(
     'BODY RUNTIME NOT INITIALIZED',
     'BODY RUNTIME NOT RUNNING'
 )) {
-    Check ($authority.Contains($reason)) "Missing explicit runtime diagnostic: $reason"
+    Check ($availability.Contains($reason)) "Missing explicit runtime diagnostic: $reason"
 }
-Check ($presentation -match 'diagnosticFailure = true') 'Biology diagnostic path no longer remains explicitly unhealthy.'
-Check ($consumer -match 'Diagnostic\(result, CRBiologyRuntimeAvailability\.FailureReason\(game\)\)') 'Explicit-session menu path hides runtime failure.'
-Check ($consumer -match 'CRBodyStatusPresentation\.BodyStatus\(game, body\)') 'Menu view does not derive status from the retrieved authoritative body.'
-Check ($consumer -match 'return "STABLE"') 'Explicit body presentation lost healthy stable state.'
-Check ($consumer -match 'if !IsDefined\(runtime\)[\s\S]*?return "BODY UNAVAILABLE"') 'STABLE can be reached without a real runtime.'
-Check ($bodyStatus -match 'if Equals\(result, ""\)[\s\S]*?return "STABLE"') 'Legacy healthy status no longer depends on evaluated body needs.'
 
-# The live Biology controller must provide a game-owned context rather than asking
-# the presentation layer to rediscover a global session. These replacements preserve
-# #39's shell/layout behavior and alter only the data-consumer seam.
-Check ($consumer -match '@replaceMethod\(RipperDocGameController\)[\s\S]*?CRRefreshBiologyOverview') 'Biology overview consumer seam is missing.'
-Check ($consumer -match 'this\.GetPlayerControlledObject\(\)') 'Biology menu does not derive context from its controlled game object.'
-Check ($consumer -match 'CRBiologyPresentation\.Current\(player\.GetGame\(\)\)') 'Biology overview does not pass the menu-owned GameInstance to the runtime.'
-Check ($consumer -match 'CRBiologyDetailPresentation\.Current\(player\.GetGame\(\), this\.crBiologySelectedArea\)') 'Biology detail does not use the same authoritative session.'
-Check ($consumer -match '\[ BIOLOGY ERROR \] BODY RUNTIME PLAYER UNAVAILABLE') 'Player-unavailable menu failure is no longer explicit.'
+# Native Biology shell owns one refresh implementation and supplies its controlled
+# player's session to the read-only session projection. #39's native anchor remains
+# authoritative; the removed #41 replacement layer must not return.
+Check ($sessionPresentation -match 'public static func Current\(game: GameInstance\) -> ref<CRBiologyViewModel>') 'Session overview projection is missing.'
+Check ($sessionPresentation -match 'public static func Detail\(game: GameInstance, area: gamedataEquipmentArea\) -> ref<CRBiologyDetailViewModel>') 'Session detail projection is missing.'
+Check ($sessionPresentation -match 'CRBiologyRuntimeAvailability\.EnsureActive\(game\)') 'Session presentation does not require authoritative readiness.'
+Check ($sessionPresentation -match 'return "STABLE"') 'Session body presentation lost healthy stable state.'
+Check ($sessionPresentation -match 'if !IsDefined\(runtime\) \|\| !IsDefined\(body\)') 'STABLE can be reached without a real runtime/body guard.'
+Check ($shell -match 'public final func CRRefreshBiologyOverview\(\) -> Void') 'Biology overview shell refresh is missing.'
+Check ($shell -match 'private final func CRRefreshBiologyDetail\(\) -> Void') 'Biology detail shell refresh is missing.'
+Check ($shell -match 'this\.GetPlayerControlledObject\(\)') 'Biology shell does not derive context from its controlled game object.'
+Check ($shell -match 'CRBiologySessionPresentation\.Current\(player\.GetGame\(\)\)') 'Biology overview does not pass the menu-owned GameInstance.'
+Check ($shell -match 'CRBiologySessionPresentation\.Detail\(player\.GetGame\(\), this\.crBiologySelectedArea\)') 'Biology detail does not use the same authoritative session.'
+Check ($shell -match '\[ BIOLOGY ERROR \] BODY RUNTIME PLAYER UNAVAILABLE') 'Player-unavailable menu failure is no longer explicit.'
+Check ($shell -match 'crBiologyNativeContent') '#39 native content anchor disappeared.'
+Check ($shell -notmatch 'crBiologyDetailPanel') 'Stale parallel Biology detail panel returned.'
+Check ($shell -notmatch '@replaceMethod\(RipperDocGameController\)') 'Biology shell refresh ownership is stacked through replacement annotations again.'
+Check ($shell -match 'Equals\(this\.m_filterMode, RipperdocModes\.Item\)') 'RipperdocModes comparison is not using compiler-supported enum equality.'
+Check ($shell -notmatch 'm_filterMode\s*==\s*RipperdocModes\.Item') 'Unsupported RipperdocModes OperatorEqual comparison returned.'
 
-# Existing save/load and time progression remain one CRBodyRuntime path. The follow-up
-# changes context ownership, not the physiology/timeskip model.
+# Existing save/load and time progression remain one CRBodyRuntime path. The repair
+# changes source ownership/context routing, not the physiology/timeskip model.
 foreach ($contract in @(
     'private func OnRestored\(saveVersion: Int32, gameVersion: Int32\)',
     'public func BeginSkip\(\)',
@@ -109,15 +124,13 @@ foreach ($contract in @(
 )) {
     Check ($runtime -match $contract) "Body lifecycle contract disappeared: $contract"
 }
-Check ($authority -match '@replaceMethod\(CRBodyRuntime\)[\s\S]*?public func BeginSkip\(\)') 'Session-owned wait/sleep begin path is missing.'
-Check ($authority -match '@replaceMethod\(CRBodyRuntime\)[\s\S]*?public func FinishSkipHours\(hoursRequested: Float, sleeping: Bool\)') 'Session-owned wait/sleep finish path is missing.'
 Check ($nativeHooks -match 'MarkNextTimeSkipAsWait\(\)') 'Wait classification hook disappeared.'
 Check ($nativeHooks -match 'FinishSkipHours\(Cast<Float>\(hours\), this\.crRealpassSleeping\)') 'Committed wait/sleep progression hook disappeared.'
+Check ($nativeHooks -match 'CRBiologySessionAuthority\.Body\(gameInstance\)') 'Native action path no longer resolves body from its explicit GameInstance.'
+Check ($nativeHooks -match 'CRBiologySessionAuthority\.Pain\(gameInstance\)') 'MaxDoc path no longer resolves pain runtime from its explicit GameInstance.'
 
-# REDmod-first packaging must include the follow-up sources in the exact owned source
-# set; it must not rely on a compile-only or stale transitional route. Codeware stays
-# explicitly non-required, which is why no authority path may depend on its global
-# GameInstance convenience guarantee.
+# REDmod-first packaging still exact-compiles the complete owned source tree and
+# remains independent of Codeware as a runtime authority.
 Check ($ownedBuilder.Contains('$sourceRoot = Resolve-SafeChildPath $project ''src/redscript/CyberpunkRealism''')) 'Owned acceptance builder source root no longer points at the complete project REDscript tree.'
 Check ($ownedBuilder.Contains('$sourceFiles = @(Get-ChildItem -LiteralPath $sourceRoot -File -Filter ''*.reds'' | Sort-Object Name)')) 'Owned acceptance builder no longer enumerates every project REDscript file.'
 Check ($packageBuilder.Contains('$runtimeManifestRelative = & "$PSScriptRoot\Build-OwnedRuntimeProfile.ps1" @profileArgs')) 'Biology package builder no longer obtains its exact runtime manifest from the owned-runtime profile builder.'
@@ -126,4 +139,4 @@ Check ($ownedBuilder -match 'exact') 'Owned-runtime builder no longer documents/
 Check ($dependencyGraph -match '"id": "codeware"[\s\S]*?"status": "not-required"') 'Dependency graph no longer records Codeware as non-required.'
 Check ($dependencyGraph -match '"id": "redscript"[\s\S]*?"status": "required-current-runtime"') 'Dependency graph no longer records redscript as required current runtime.'
 
-Write-Host "PASS: $script:checks body-runtime authority checks. Cloud/static coverage proves source and packaging contracts only; it cannot prove CP2077 2.31 live ScriptableSystem registration or attended lifecycle acceptance."
+Write-Host "PASS: $script:checks compile-valid body-runtime authority checks. Cloud/static coverage proves source ownership and packaging contracts only; CP2077 2.31 exact compilation remains the final authority."
