@@ -1,5 +1,6 @@
 $ErrorActionPreference = 'Stop'
-$project = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+. "$PSScriptRoot\..\tools\Common.ps1"
+$project = Get-ProjectRoot
 $path = Join-Path $project 'manifest/install-contract.json'
 $contract = Get-Content -Raw -LiteralPath $path | ConvertFrom-Json
 if ($contract.schemaVersion -ne 1 -or $contract.product -ne 'realpass') { throw 'Unexpected install contract.' }
@@ -30,4 +31,4 @@ foreach ($forbidden in @('saves','staging','vendor','ReferenceMods','reports','s
     if ($roots -contains $forbidden) { throw "Development/private root exposed as runtime root: $forbidden" }
 }
 
-Write-Host "PASS: game-root install contract with $($requiredRoot.Count) release metadata files, $($roots.Count) allowed runtime roots, and per-file uninstall ownership."
+Write-Host "PASS: legacy game-root install contract with $($requiredRoot.Count) release metadata files and $($roots.Count) allowed runtime roots remains intact while the REDmod-first Biology install/uninstall contract is validated separately."

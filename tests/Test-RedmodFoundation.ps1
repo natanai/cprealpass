@@ -8,10 +8,11 @@ $dependencyPath = Join-Path $project 'manifest/dependency-graph.json'
 $classificationPath = Join-Path $project 'manifest/redmod-classification.json'
 $installPath = Join-Path $project 'manifest/redmod-install-contract.json'
 $infoPath = Join-Path $project 'mods/Biology/info.json'
+$activationPath = Join-Path $project 'mods/Biology/tweaks/base/gameplay/static_data/database/items/weapons/parts/biology_activation.tweak'
 $probeEvidencePath = Join-Path $project 'docs/evidence/REDMOD-2.31-PROBE-2026-09-15.md'
 $assemblyDocPath = Join-Path $project 'docs/REDMOD-INTEGRATED-ASSEMBLY.md'
 
-foreach ($required in @($packagePath,$dependencyPath,$classificationPath,$installPath,$infoPath,$probeEvidencePath,$assemblyDocPath)) {
+foreach ($required in @($packagePath,$dependencyPath,$classificationPath,$installPath,$infoPath,$activationPath,$probeEvidencePath,$assemblyDocPath)) {
     if (-not (Test-Path -LiteralPath $required -PathType Leaf)) { throw "Missing REDmod contract/evidence file: $required" }
 }
 
@@ -20,6 +21,7 @@ $dependencies = Get-Content -Raw -LiteralPath $dependencyPath | ConvertFrom-Json
 $classifications = Get-Content -Raw -LiteralPath $classificationPath | ConvertFrom-Json
 $install = Get-Content -Raw -LiteralPath $installPath | ConvertFrom-Json
 $info = Get-Content -Raw -LiteralPath $infoPath | ConvertFrom-Json
+$activation = Get-Content -Raw -LiteralPath $activationPath
 $probeEvidence = Get-Content -Raw -LiteralPath $probeEvidencePath
 $assemblyDoc = Get-Content -Raw -LiteralPath $assemblyDocPath
 
@@ -35,6 +37,8 @@ if ($package.canonicalBuilder -ne 'tools/Build-BiologyPackage.ps1' -or $package.
 }
 if ($package.exactCompileRequiredBeforeArtifact -ne $true) { throw 'Integrated candidate may emit without exact compile.' }
 if ($package.redmod.deployCommand -notmatch 'deploy -root=<Cyberpunk 2077>') { throw 'REDmod deploy contract lost explicit root.' }
+if ($package.redmod.launcherActivationMarker -ne 'Items.BiologyLauncherActivationMarker.stackable') { throw 'REDmod package contract lost launcher activation marker.' }
+if ($activation -notmatch 'Items\.BiologyLauncherActivationMarker' -or $activation -notmatch 'stackable\s*=\s*true') { throw 'Launcher activation tweak source drifted.' }
 if ($package.redmod.observedSupportedInstall.fileVersion -ne '2.3.1.0' -or $package.redmod.observedSupportedInstall.productVersion -ne '2.31') {
     throw 'Direct REDmod 2.31 executable evidence is missing or drifted.'
 }
@@ -96,8 +100,9 @@ if ($install.redmodCli.relativeExecutable -ne 'tools/redmod/bin/redMod.exe' -or 
     throw 'Install contract lost directly probed REDmod executable facts.'
 }
 if ($install.redmodCli.deployModuleObserved -ne $true -or $install.redmodCli.requiredInvocationRule -notmatch '(?i)pass -root') { throw 'Install contract does not require explicit REDmod root.' }
-if ($install.ownerManifest.path -ne 'biology/build-manifest.json' -or $install.ownerManifest.ownerValue -ne 'Biology') { throw 'Biology ownership manifest drifted.' }
-foreach ($root in @('r6','red4ext','engine','bin')) {
+if ($install.ownerManifest.path -ne 'biology/build-manifest.json' -or $install.ownerManifest.ownerValue -ne 'Biology' -or $install.ownerManifest.schemaVersion -ne 2) { throw 'Biology ownership manifest drifted.' }
+if ($install.playerUninstaller.binary -ne 'Uninstall Biology.exe' -or $install.playerUninstaller.genericDependencies -ne 'preserve') { throw 'Player uninstaller contract drifted.' }
+foreach ($root in @('r6','red4ext','engine','bin','mods')) {
     if (@($install.neverRecursivelyOwnedRoots) -notcontains $root) { throw "Shared root lost recursive-deletion protection: $root" }
 }
 if ($install.cleanRoom.currentIntegratedAssemblyRequiresMilestoneBeforeBroadAcceptance -ne $true) { throw 'Structural integrated migration lost milestone clean-room gate.' }
@@ -106,4 +111,4 @@ if ($assemblyDoc -notmatch 'MILESTONE CLEAN-ROOM' -or $assemblyDoc -notmatch 'PK
     throw 'Integrated assembly documentation is missing canonical build, clean-room, PKG-06, or settings-owner routing.'
 }
 
-Write-Host 'PASS: Biology REDmod contracts now describe the integrated playable candidate while preserving direct-game gates and the temporary settings-provider blocker.'
+Write-Host 'PASS: Biology REDmod contracts describe the integrated playable candidate, launcher activation is REDmod-owned/fail-closed, player uninstall is conservative, and direct-game gates remain open.'

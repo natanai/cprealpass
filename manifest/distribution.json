@@ -7,12 +7,14 @@
     "officialPackageIdentity": "mods/Biology",
     "canonicalBuilder": "tools/Build-BiologyPackage.ps1",
     "normalLaunch": "Steam / supported normal Cyberpunk 2077 launch after REDmod enable/deploy",
-    "specialLauncherRequiredAfterInstall": false
+    "specialLauncherRequiredAfterInstall": false,
+    "launcherDisableExperience": "REDlauncher Enable mods OFF yields Biology-inactive native Cyberpunk behavior without uninstall",
+    "playerUninstaller": "Uninstall Biology.exe"
   },
   "releaseGate": {
     "publicPlayableArtifactReady": false,
     "candidatePlayableAfterExactCompile": true,
-    "reason": "The integrated Biology package path is now assembled and exact-compile-gated, but public release remains blocked on supported-install REDmod recognition/deployment, enable/disable and relaunch persistence, clean uninstall/reset, PKG-05 overlap evidence, combined Lane B/C attended acceptance, and final release audit.",
+    "reason": "The integrated Biology package path is assembled and exact-compile-gated, and the player disable/uninstall contract is implemented in source; public release remains blocked on supported-install attended launcher ON/OFF and self-contained uninstall acceptance plus the existing native/overlap gates.",
     "mustPass": [
       "runtime-module-contract",
       "scope-audit",
@@ -29,7 +31,8 @@
       "save-reload-and-upgrade-acceptance",
       "phantom-liberty-critical-path-acceptance",
       "performance-acceptance",
-      "artifact-hash-and-content-verification"
+      "artifact-hash-and-content-verification",
+      "player-uninstaller-safety-tests"
     ]
   },
   "components": [
@@ -39,7 +42,7 @@
       "licenseClass": "project-original",
       "artifactPolicy": "bundle",
       "status": "allowed",
-      "notes": "Complete accepted Biology runtime payload plus official mods/Biology metadata. Tests, reports, staging, reference mods and source-only tooling stay out."
+      "notes": "Biology-owned REDmod identity/activation marker plus accepted project-original runtime. Tests, reports, staging, reference mods and source-only tooling stay out."
     },
     {
       "id": "redscript",
@@ -47,7 +50,7 @@
       "licenseClass": "MIT",
       "artifactPolicy": "bundle-pinned-runtime-with-license",
       "status": "allowed",
-      "notes": "Directly required by accepted Biology-owned additive/wrapper runtime seams. Bundle only exact pinned files with required notice and per-file ownership."
+      "notes": "Directly required by accepted Biology-owned additive/wrapper runtime seams. It may still load while launcher mods are OFF, so it is never activation authority; player uninstall preserves the generic framework."
     },
     {
       "id": "red4ext",
@@ -55,7 +58,7 @@
       "licenseClass": "MIT-plus-third-party-notices",
       "artifactPolicy": "bundle-temporarily-with-required-notices",
       "status": "temporary",
-      "notes": "No Biology-owned native plugin. Retained only as transitive plumbing for ArchiveXL/Mod Settings until the Lane C settings-provider blocker is resolved."
+      "notes": "No Biology-owned native plugin. Retained only as transitive plumbing for ArchiveXL/Mod Settings; may remain loaded launcher-OFF and is preserved by player uninstall."
     },
     {
       "id": "archivexl",
@@ -63,7 +66,7 @@
       "licenseClass": "MIT-plus-third-party-notices",
       "artifactPolicy": "bundle-temporarily-with-required-notices",
       "status": "temporary",
-      "notes": "No direct Biology resource consumer. Retained only because the current accessible Mod Settings adapter depends on it."
+      "notes": "No direct Biology resource consumer. Retained only because the current Mod Settings adapter depends on it; preserve on player uninstall."
     },
     {
       "id": "mod-settings",
@@ -71,7 +74,7 @@
       "licenseClass": "MIT",
       "artifactPolicy": "bundle-temporarily-with-license",
       "status": "temporary",
-      "notes": "Current player-accessible/persistent adapter for the already provider-neutral Enable Biology and E3-inspired HUD + nameplates booleans. Remove when Lane C supplies/accepts a replacement provider or deliberate install/deploy boundary."
+      "notes": "Current provider-neutral persistent adapter for Enable Biology and E3-inspired HUD + nameplates. Saved enabled=true cannot override launcher OFF. Replacement/removal remains the presentation/settings Lane C boundary; preserve on player uninstall."
     },
     {
       "id": "tweakxl",
@@ -111,7 +114,7 @@
       "licenseClass": "author-specific-permissions",
       "artifactPolicy": "never-bundle-in-biology-runtime",
       "status": "blocked",
-      "notes": "PR #33 recreates accepted presentation with Biology-owned source plus native Cyberpunk UI. Project E3 runtime/assets remain forbidden."
+      "notes": "Biology recreates accepted presentation with project-owned source plus native Cyberpunk UI. Project E3 runtime/assets remain forbidden."
     },
     {
       "id": "cyberpunk-game-files",
@@ -119,7 +122,7 @@
       "licenseClass": "proprietary-game-content",
       "artifactPolicy": "never-bundle",
       "status": "blocked",
-      "notes": "No Cyberpunk executable, stock archive, final.redscripts, save or user settings may enter a Biology artifact. The installed final.redscripts is read only as the exact-compile base."
+      "notes": "No Cyberpunk executable, stock archive, final.redscripts, save or user settings may enter a Biology artifact."
     }
   ],
   "forbiddenArtifactPatterns": [
@@ -140,11 +143,12 @@
   ],
   "artifactRequirements": [
     "Game-root-relative paths only for runtime payload.",
-    "The official first-party REDmod identity is mods/Biology.",
+    "The official first-party REDmod identity is mods/Biology and it owns an inert activation marker used to make launcher OFF fail closed.",
     "The integrated artifact contains Biology project-original runtime plus pinned redscript and only the temporary RED4ext/ArchiveXL/Mod Settings chain still required by the unresolved settings-provider accessibility blocker.",
-    "Every installed file is represented by exact owner/component/route/replace-policy/SHA-256 metadata; shared framework roots are never recursively Biology-owned.",
-    "INSTALL.txt documents explicit REDmod -root deployment, normal Steam launch target, and remaining attended gates.",
-    "BIOLOGY-VERSION.txt, provenance, owner manifest and SHA-256 checksums are generated for the exact candidate.",
+    "Every installed file is represented by exact owner/component/route/uninstall-policy/SHA-256 metadata; shared framework roots are never recursively Biology-owned.",
+    "One hashed Uninstall Biology.exe is built into the same release artifact and consumes the matching schema-2 ownership receipt.",
+    "Player uninstall preserves generic/shared dependencies, saves and Biology preferences by default and refuses changed/ambiguous Biology-owned files.",
+    "INSTALL.txt documents the launcher ON/OFF contract, normal Steam launch target, and remaining attended gates.",
     "Required licenses and third-party notices for every bundled generic dependency are included without development-only files.",
     "Blocked or not-required components cause artifact construction to fail closed rather than silently expanding the dependency stack.",
     "Public release remains gated until direct-game and attended acceptance is recorded; successful CI/exact compilation is not live acceptance."

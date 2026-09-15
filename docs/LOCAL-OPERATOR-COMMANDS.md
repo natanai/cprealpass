@@ -141,7 +141,7 @@ pwsh ./tools/Build-BiologyPackage.ps1 `
   -GameRoot 'C:\Games\Steam\steamapps\common\Cyberpunk 2077'
 ```
 
-The builder exact-compiles the merged Biology runtime against the supported game before it emits a game-root-shaped ZIP. It does not install, deploy or launch the game.
+The builder exact-compiles the merged Biology runtime against the supported game before it emits a game-root-shaped ZIP. The same ZIP contains the REDmod activation marker, schema-2 ownership receipt, and `Uninstall Biology.exe`. It does not install, deploy or launch the game.
 
 For normal milestone preparation, prefer **Command 0**, which calls this correctly from a second pristine clone.
 
@@ -171,11 +171,28 @@ pwsh ./tools/Reset-BiologyIteration.ps1 `
   -GameRoot 'C:\Games\Steam\steamapps\common\Cyberpunk 2077'
 ```
 
-This removes only exact manifest-owned files and then performs the strict full vanilla comparison. It fails closed to milestone clean-room if anything cannot be proven safe.
+This developer reset follows the same exact-hash/fail-closed Biology ownership semantics as the player uninstaller, but it has one stronger evidence source: the recorded whole-game vanilla baseline. It may remove an unchanged generic dependency file only when that baseline proves the file was absent before Biology. It then performs the strict full vanilla comparison. It fails closed to milestone clean-room if anything cannot be proven safe.
 
 ---
 
-## Command 7 — direct compatibility audit
+## Command 7 — verify Biology-specific residue after player hard uninstall
+
+The **player-facing** hard-uninstall action is not a PowerShell command: close Cyberpunk 2077 and double-click the installed `Uninstall Biology.exe` in the game root.
+
+For a development/attended test, follow that double-click with the repository-owned read-only verifier:
+
+```powershell
+pwsh ./tools/Verify-BiologyRemoval.ps1 `
+  -GameRoot 'C:\Games\Steam\steamapps\common\Cyberpunk 2077'
+```
+
+This checks only Biology-specific runtime/package residue (`mods/Biology`, `r6/scripts/CyberpunkRealism`, Biology metadata and player uninstaller). It deliberately allows generic redscript/RED4ext/ArchiveXL/Mod Settings files because the player uninstaller preserves shared dependencies rather than guessing whether another mod needs them. It never deletes anything.
+
+Use the exhaustive baseline comparison instead only when the test specifically requires byte/file-level vanilla proof and the install is expected to contain no preserved generic frameworks or other mods.
+
+---
+
+## Command 8 — direct compatibility audit
 
 Use after a Cyberpunk patch/framework change or when a foundational native seam needs direct supported-install evidence:
 
@@ -188,7 +205,7 @@ This is investigation evidence, not attended runtime acceptance.
 
 ---
 
-## Command 8 — publish the current GitHub-safe game reference snapshot
+## Command 9 — publish the current GitHub-safe game reference snapshot
 
 Use when the current observed installation/framework state needs to be refreshed for remote agents:
 
@@ -211,5 +228,6 @@ It publishes derived metadata only, never proprietary Cyberpunk payload.
 6. Do not describe a fast sanity pass as a full baseline/hash verification.
 7. After a freshly uninstalled/residual-directory-deleted/reinstalled game, let the user choose whether the additional exhaustive hash check is worth the time. Default is **No**.
 8. Iteration cleanup on a reused install remains stricter: `Reset-BiologyIteration.ps1` must prove the return to the tracked baseline before layering another package.
-9. If a command fails, return the failure output to the owning agent; do not improvise destructive cleanup commands.
-10. If an operation becomes recurring, codify it here and in `tools/` with CI coverage before treating it as standard.
+9. After a player hard-uninstall test, prefer `Verify-BiologyRemoval.ps1` for the routine Biology-specific residue check; do not invent ad-hoc deletion commands or misclassify intentionally preserved generic dependencies as Biology residue.
+10. If a command fails, return the failure output to the owning agent; do not improvise destructive cleanup commands.
+11. If an operation becomes recurring, codify it here and in `tools/` with CI coverage before treating it as standard.

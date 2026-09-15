@@ -28,6 +28,8 @@ Check ($package.redmod.packageRoot -eq 'mods/Biology') 'Official REDmod identity
 Check ($package.redmod.deployCommand -match 'deploy -root=<Cyberpunk 2077>') 'Package contract does not require deterministic explicit REDmod root.'
 $runtimeEntry = @($package.firstPartyFiles | Where-Object { $_.component -eq 'biology-owned-runtime' })
 Check ($runtimeEntry.Count -eq 1 -and $runtimeEntry[0].destinationRoot -eq 'r6/scripts/CyberpunkRealism' -and $runtimeEntry[0].route -eq 'REDSCRIPT-BETTER') 'Package contract lost Biology-owned supplemental REDscript destination/route.'
+Check ($package.redmod.launcherActivationMarker -eq 'Items.BiologyLauncherActivationMarker.stackable') 'Package contract lost REDmod-owned launcher activation marker.'
+Check ($package.generatedMetadata.playerUninstaller -eq 'Uninstall Biology.exe') 'Package contract lost player uninstaller metadata.'
 
 Check ($builder.Contains('Build-OwnedRuntimeProfile.ps1')) 'Integrated builder bypasses the exact-compiled owned runtime profile.'
 Check ($builder -match 'reports[\\/]compile-') 'Integrated builder does not consume the exact compile report.'
@@ -46,6 +48,8 @@ Check ($builder.Contains('BIOLOGY-VERSION.txt')) 'Integrated Biology version mar
 Check ($builder.Contains('SHA256SUMS.txt')) 'Integrated checksums are missing.'
 Check ($builder.Contains('playableRuntimeIncluded = $true')) 'Integrated artifact does not declare that playable runtime is included.'
 Check ($builder.Contains('sourceModsRequired = @()')) 'Integrated artifact does not explicitly reject source-mod runtime requirements.'
+Check ($builder.Contains('Build-BiologyUninstaller.ps1') -and $builder.Contains('Uninstall Biology.exe')) 'Integrated package does not build/embed the player uninstaller.'
+Check ($builder.Contains('generic-dependency-shared')) 'Integrated package does not distinguish shared generic dependencies at uninstall time.'
 Check (-not $builder.Contains('Build-RedmodFoundation.ps1')) 'Playable builder delegates to non-playable foundation skeleton.'
 
 Check ($deploy -match 'tools\\redmod\\bin\\redMod\.exe') 'Deploy helper does not use the official probed REDmod executable.'
@@ -69,6 +73,8 @@ foreach ($id in @('darkfuture','project-e3-hud')) {
 }
 
 Check ($settings.Contains('public static func IsEnabled(game: GameInstance)')) 'Biology master semantics are not provider-neutral.'
+Check ($settings.Contains('public static func IsLauncherActivated()')) 'Biology settings semantics lost launcher activation boundary.'
+Check ($settings.Contains('Items.BiologyLauncherActivationMarker.stackable')) 'Settings accessor does not read REDmod-owned activation marker.'
 Check ($settings.Contains('public static func UseE3FirstPersonHudVisuals(game: GameInstance)')) 'E3 presentation semantics are not provider-neutral.'
 Check ($settings.Contains('@if(ModuleExists("ModSettingsModule"))')) 'Current optional settings adapter is not guarded.'
 Check ($settings.Contains('ModSettings.RegisterListenerToClass(this)')) 'Current accessible settings adapter disappeared without a replacement provider.'
@@ -78,9 +84,11 @@ Check ($doc -match 'MILESTONE CLEAN-ROOM') 'Structural integrated candidate does
 Check ($doc -match 'PKG-06') 'Transition/rollback rule is not documented.'
 
 Check ($install.ownerManifest.path -eq 'biology/build-manifest.json') 'Install contract lost exact owner manifest.'
-foreach ($root in @('bin','engine','r6','red4ext')) {
+Check ($install.ownerManifest.schemaVersion -eq 2) 'Install contract owner receipt is not schema 2.'
+Check ($install.playerUninstaller.binary -eq 'Uninstall Biology.exe') 'Install contract lost player uninstaller.'
+foreach ($root in @('bin','engine','r6','red4ext','mods')) {
     Check (@($install.neverRecursivelyOwnedRoots) -contains $root) "Install contract permits recursive ownership of shared root $root."
 }
 Check (@($install.remainingDirectGameGates).Count -ge 5) 'Direct-game gates were collapsed into source/CI assumptions.'
 
-Write-Host "PASS: $script:checks integrated Biology package checks; canonical builder is playable/REDmod-first, exact-compile-gated, dependency-minimal for current consumers, and still explicit about live-game gates."
+Write-Host "PASS: $script:checks integrated Biology package checks; canonical builder is playable/REDmod-first, exact-compile-gated, launcher-fail-closed, uninstall-safe, dependency-minimal for current consumers, and still explicit about live-game gates."

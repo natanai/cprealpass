@@ -8,6 +8,7 @@ $broadAttendedPath = Join-Path $project 'tools/Build-AttendedAcceptance.ps1'
 $retiredSessionPath = Join-Path $project 'tools/Prepare-AttendedSession.ps1'
 $acceptancePath = Join-Path $project 'manifest/acceptance.json'
 $settingsPath = Join-Path $project 'manifest/settings.json'
+$surfacePath = Join-Path $project 'src/redscript/CyberpunkRealism/RealpassSettings.reds'
 
 $body = Get-Content -Raw -LiteralPath $bodyPath
 $combat = Get-Content -Raw -LiteralPath $combatPath
@@ -15,6 +16,7 @@ $bodyAttended = Get-Content -Raw -LiteralPath $bodyAttendedPath
 $broadAttended = Get-Content -Raw -LiteralPath $broadAttendedPath
 $acceptance = Get-Content -Raw -LiteralPath $acceptancePath | ConvertFrom-Json
 $settings = Get-Content -Raw -LiteralPath $settingsPath | ConvertFrom-Json
+$surface = Get-Content -Raw -LiteralPath $surfacePath
 
 function RequireDisabledPolicy([string]$source,[string]$class,[string]$method) {
     $pattern = '(?s)public class ' + [regex]::Escape($class) + ' extends IScriptable\s*\{.*?public static func ' + [regex]::Escape($method) + '\(\) -> Bool\s*\{\s*return false;'
@@ -25,7 +27,10 @@ RequireDisabledPolicy $body 'CRBodyRuntimePolicy' 'Enabled'
 RequireDisabledPolicy $body 'CRBodyTestPolicy' 'Diagnostics'
 RequireDisabledPolicy $combat 'CRCombatRuntimePolicy' 'BuildEnabled'
 if (-not $combat.Contains('CRCombatRuntimePolicy.BuildEnabled() && CRRealpassSettings.IsEnabled(GetGameInstance())')) {
-    throw 'Combat runtime enable path does not combine the staged build gate with the global RealPass master switch.'
+    throw 'Combat runtime enable path does not combine the staged build gate with the global Biology master switch.'
+}
+if ($surface -notmatch 'if !CRRealpassSettings\.IsLauncherActivated\(\)\s*\{\s*return false;') {
+    throw 'Global Biology master switch can be enabled without the REDmod-owned launcher activation marker.'
 }
 
 $combatGate = @($acceptance.gates | Where-Object id -eq 'combat-native-activation')
@@ -50,8 +55,6 @@ foreach ($control in $controls) {
     }
 }
 
-# Legacy body-only builder may open only the body gate in generated staging and
-# must keep the combat build gate closed. It remains useful for isolated body acceptance.
 foreach ($needle in @('Parameter(Mandatory=$true)','Build ID already exists','Missing disabled policy','Combat build gate must remain disabled','body enabled, combat build gate disabled')) {
     if ($bodyAttended -notmatch [regex]::Escape($needle)) { throw "Attended body builder lost safety invariant: $needle" }
 }
@@ -73,11 +76,8 @@ if ($broadAttended -match '(?i)(Deploy\.ps1|Upgrade\.ps1|Start-Process|Register-
     throw 'Broad attended builder must stage/compile only; it cannot deploy or launch.'
 }
 
-# The old integrated attended-session deployment helper is retired. Current attended
-# testing uses fresh canonical source plus the release-shaped clean-room package and
-# baseline/reset workflow; activation-gate CI must not require a deleted deploy path.
 if (Test-Path -LiteralPath $retiredSessionPath) {
     throw 'Retired Prepare-AttendedSession.ps1 unexpectedly reappeared; attended testing must use the clean-room package path.'
 }
 
-Write-Host 'PASS: canonical body/combat/diagnostic gates remain build-controlled; RealPass-on locks all authorities together, the retired attended-session deploy path stays absent, and only a global master switch plus presentation preference are exposed.'
+Write-Host 'PASS: canonical body/combat/diagnostic gates remain build-controlled; REDmod launcher activation is an additional fail-closed master boundary, RealPass-on locks all authorities together, and only a global master switch plus presentation preference are exposed.'

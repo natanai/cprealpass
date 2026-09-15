@@ -2,22 +2,18 @@ $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot\..\tools\Common.ps1"
 $project = Get-ProjectRoot
 
-function Read([string]$relative) {
-    $path = Join-Path $project $relative
-    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Missing local-operator contract file: $relative" }
-    Get-Content -Raw -LiteralPath $path
-}
+$agents = Get-Content -Raw -LiteralPath (Join-Path $project 'AGENTS.md')
+$catalog = Get-Content -Raw -LiteralPath (Join-Path $project 'docs/LOCAL-OPERATOR-COMMANDS.md')
+$cleanRoom = Get-Content -Raw -LiteralPath (Join-Path $project 'docs/CLEAN-ROOM-TESTING.md')
+$prepare = Get-Content -Raw -LiteralPath (Join-Path $project 'tools/Prepare-BiologyMilestoneTest.ps1')
+$sanity = Get-Content -Raw -LiteralPath (Join-Path $project 'tools/Test-VanillaGameSanity.ps1')
+$compare = Get-Content -Raw -LiteralPath (Join-Path $project 'tools/Compare-GameToVanillaBaseline.ps1')
+$deploy = Get-Content -Raw -LiteralPath (Join-Path $project 'tools/Deploy-BiologyRedmod.ps1')
+$verify = Get-Content -Raw -LiteralPath (Join-Path $project 'tools/Verify-BiologyRemoval.ps1')
+
 function Require([string]$text,[string]$pattern,[string]$message) {
     if ($text -notmatch $pattern) { throw $message }
 }
-
-$agents = Read 'AGENTS.md'
-$catalog = Read 'docs/LOCAL-OPERATOR-COMMANDS.md'
-$cleanRoom = Read 'docs/CLEAN-ROOM-TESTING.md'
-$prepare = Read 'tools/Prepare-BiologyMilestoneTest.ps1'
-$sanity = Read 'tools/Test-VanillaGameSanity.ps1'
-$compare = Read 'tools/Compare-GameToVanillaBaseline.ps1'
-$deploy = Read 'tools/Deploy-BiologyRedmod.ps1'
 
 Require $agents 'LOCAL OPERATOR COMMAND GATE' 'AGENTS.md must make the local operator command catalog mandatory.'
 Require $agents 'docs/LOCAL-OPERATOR-COMMANDS\.md' 'Agents must be directed to the canonical local operator command catalog.'
@@ -33,6 +29,8 @@ Require $catalog 'Compare-GameToVanillaBaseline\.ps1' 'Catalog must retain the s
 Require $catalog 'VERIFY \[' 'Catalog must document visible durable comparison progress.'
 Require $catalog 'Capture-VanillaGameBaseline\.ps1' 'Catalog must document deliberate baseline refresh/publish rather than silently deleting that capability.'
 Require $catalog 'Reset-BiologyIteration\.ps1' 'Catalog must document iteration reset.'
+Require $catalog 'Verify-BiologyRemoval\.ps1' 'Catalog must document the canonical post-player-uninstall residue check.'
+Require $catalog 'double-click.*Uninstall Biology\.exe' 'Catalog must keep hard uninstall player-facing rather than PowerShell-driven.'
 Require $catalog 'Audit-GameContracts\.ps1' 'Catalog must document direct compatibility audit.'
 Require $catalog 'No mods found.*failure|failure.*No mods found' 'Catalog must explain that an empty REDmod set is a deployment failure for installed Biology.'
 
@@ -66,9 +64,14 @@ Require $deploy 'No mods found, no deployment is needed' 'REDmod deploy must det
 Require $deploy 'Commandlet deploy has succeeded' 'REDmod deploy must require positive deploy completion evidence.'
 Require $deploy 'Deployment is NOT accepted|not recognized as a deployable REDmod' 'REDmod deploy must fail closed on deceptive exit-zero output.'
 
+Require $verify 'mods/Biology' 'Removal verifier must inspect the official Biology REDmod package root.'
+Require $verify 'r6/scripts/CyberpunkRealism' 'Removal verifier must inspect Biology supplemental script residue.'
+Require $verify 'Generic redscript/RED4ext/ArchiveXL/Mod Settings' 'Removal verifier must distinguish preserved shared dependencies from Biology residue.'
+if ($verify -match '(?i)Remove-Item|Directory\.Delete|File\.Delete') { throw 'Removal verification must remain read-only.' }
+
 Require $cleanRoom 'exhaustive.*optional|optional.*exhaustive' 'Clean-room policy must explicitly allow the expensive hash pass to be optional after a fresh reinstall.'
 Require $cleanRoom 'fast sanity' 'Clean-room policy must define the lightweight post-reinstall evidence path.'
 Require $cleanRoom 'must not.*verified against recorded vanilla baseline|not.*verified against recorded vanilla baseline' 'Clean-room policy must prevent overclaiming when the exhaustive hash check is skipped.'
 Require $cleanRoom 'LOCAL-OPERATOR-COMMANDS\.md' 'Clean-room policy must defer routine user commands to the canonical catalog.'
 
-Write-Host 'PASS: local operator commands are standardized, milestone prep asks before expensive hashing, visible full-scan progress is enforced, and REDmod exit-zero false positives fail closed.'
+Write-Host 'PASS: local operator commands are standardized, player hard-uninstall verification is read-only/reusable, milestone prep asks before expensive hashing, visible full-scan progress is enforced, and REDmod exit-zero false positives fail closed.'

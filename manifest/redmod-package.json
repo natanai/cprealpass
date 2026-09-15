@@ -17,6 +17,8 @@
     "deployHelper": "tools/Deploy-BiologyRedmod.ps1",
     "manualModdedLaunchFlag": "-modded",
     "normalPlayerEnableRoute": "REDlauncher/Steam supported REDmod enable flow",
+    "launcherActivationMarker": "Items.BiologyLauncherActivationMarker.stackable",
+    "launcherOffContract": "activation marker absent => all Biology behavior inactive even if supplemental REDscript/frameworks remain loaded",
     "observedSupportedInstall": {
       "evidence": "docs/evidence/REDMOD-2.31-PROBE-2026-09-15.md",
       "fileVersion": "2.3.1.0",
@@ -41,12 +43,19 @@
       "route": "REDMOD-NATIVE"
     },
     {
+      "source": "mods/Biology/tweaks/base/gameplay/static_data/database/items/weapons/parts/biology_activation.tweak",
+      "destination": "mods/Biology/tweaks/base/gameplay/static_data/database/items/weapons/parts/biology_activation.tweak",
+      "owner": "Biology",
+      "component": "biology-launcher-activation",
+      "route": "REDMOD-NATIVE"
+    },
+    {
       "sourceRoot": "src/redscript/CyberpunkRealism",
       "destinationRoot": "r6/scripts/CyberpunkRealism",
       "owner": "Biology",
       "component": "biology-owned-runtime",
       "route": "REDSCRIPT-BETTER",
-      "selection": "all current .reds files accepted by tools/Build-OwnedAcceptance.ps1; runtime activation gates are opened only in immutable staged copies"
+      "selection": "all current .reds files accepted by tools/Build-OwnedAcceptance.ps1; runtime build gates are opened only in immutable staged copies; runtime behavior additionally requires the active REDmod marker"
     }
   ],
   "supplementalRuntime": {
@@ -54,25 +63,29 @@
       "includedByIntegratedArtifact": true,
       "status": "required-current-runtime",
       "route": "REDSCRIPT-BETTER",
+      "launcherOff": "may remain loaded; Biology hooks fail closed through CRRealpassSettings",
       "reason": "Merged Biology runtime and presentation use narrow additive/wrapper seams whose whole-file REDmod replacement would broaden patch/conflict surface."
     },
     "mod-settings": {
       "includedByIntegratedArtifact": true,
       "status": "temporary-retained-blocker",
       "route": "REMOVE/RETHINK",
-      "reason": "PR #33 made the two preference semantics provider-neutral but did not implement another accessible persistent settings surface. Removing Mod Settings now would remove the attended-test path for master disable and E3 ON/OFF."
+      "launcherOff": "may remain loaded; saved enabled=true cannot override absent REDmod marker",
+      "reason": "Current persistent provider for the existing two provider-neutral preferences."
     },
     "archivexl": {
       "includedByIntegratedArtifact": true,
       "status": "temporary-transitive",
       "route": "REMOVE/RETHINK",
-      "reason": "Retained solely because the current Mod Settings adapter depends on it."
+      "launcherOff": "may remain loaded; not activation authority",
+      "reason": "Retained solely because current Mod Settings depends on it."
     },
     "red4ext": {
       "includedByIntegratedArtifact": true,
       "status": "temporary-transitive",
       "route": "REMOVE/RETHINK",
-      "reason": "Retained solely as transitive plumbing for ArchiveXL/Mod Settings; Biology has no project-owned RED4ext DLL/plugin."
+      "launcherOff": "loader may remain active; not activation authority",
+      "reason": "Transitive plumbing for ArchiveXL/Mod Settings; Biology has no project-owned RED4ext plugin."
     }
   },
   "removedRuntimeDependencies": [
@@ -85,27 +98,38 @@
   "generatedMetadata": {
     "root": "biology",
     "ownerManifest": "biology/build-manifest.json",
+    "ownerManifestSchema": 2,
     "provenance": "biology/provenance.json",
     "versionFile": "BIOLOGY-VERSION.txt",
     "checksums": "SHA256SUMS.txt",
     "installInstructions": "INSTALL.txt",
-    "uninstallInstructions": "UNINSTALL.txt"
+    "uninstallInstructions": "UNINSTALL.txt",
+    "playerUninstaller": "Uninstall Biology.exe"
+  },
+  "uninstallPolicy": {
+    "biologyOwned": "delete exact-hash, allowlisted Biology paths only",
+    "genericDependencies": "preserve",
+    "changedFiles": "preserve/refuse automatic deletion",
+    "saves": "never target",
+    "preferences": "preserve by default; optional Biology section removal only",
+    "redmodRefresh": "official redMod.exe deploy with explicit root; no recursive shared-cache deletion"
   },
   "remainingDirectGameGates": [
-    "Biology REDmod recognition/deployment",
-    "enable/disable behavior",
-    "normal relaunch persistence",
-    "clean uninstall/reset",
+    "launcher activation marker compile/deploy",
+    "launcher ON Biology behavior",
+    "launcher OFF vanilla behavior with supplemental runtime still installed",
+    "normal OFF/ON relaunch persistence",
+    "self-contained hard uninstall + REDmod refresh",
     "safe PKG-05 REDmod overlap/precedence probe"
   ],
   "rules": [
-    "mods/Biology is the authoritative first-party REDmod package identity.",
+    "mods/Biology is the authoritative first-party REDmod package identity and launcher activation authority.",
     "Build-BiologyPackage.ps1 must exact-compile the complete merged REDscript runtime against the supported installed Cyberpunk 2077 2.31 bundle before it emits a playable ZIP.",
     "The build may not modify or deploy to the game installation.",
-    "Every installed payload file must be individually recorded with owner, component, route, replace policy and SHA-256; shared framework roots are never recursively Biology-owned.",
+    "Every installed payload file must be individually recorded with owner, component, route, uninstall policy and SHA-256; shared roots are never recursively Biology-owned.",
+    "Generic dependency files are inventoried for collision/update safety but preserved by normal player uninstall.",
     "No Dark Future or Project E3 executing content may enter the package.",
     "No stock Cyberpunk executable, archive, script bundle, save, settings file, or other proprietary game payload may enter the package.",
-    "Mod Settings/ArchiveXL/RED4ext remain temporary current-candidate dependencies only because the merged presentation lane has not yet supplied another accessible persistent provider for its already provider-neutral semantics.",
     "CI and exact compilation are not live-game acceptance; remaining direct-game gates stay open until the parent integration thread records them."
   ]
 }

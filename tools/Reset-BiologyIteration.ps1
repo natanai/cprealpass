@@ -23,31 +23,31 @@ if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) {
 $baseline = @(Import-Csv -LiteralPath $baselinePath)
 $baselineByPath = @{}
 foreach ($row in $baseline) {
-    $key = ([string]$row.Path).Replace('\','/')
+    $key = ([string]$row.Path).Replace('\\','/')
     $baselineByPath[$key] = $row
 }
 
 $manifest = Get-Content -Raw -LiteralPath $manifestPath | ConvertFrom-Json
-if ($manifest.schemaVersion -ne 1 -or $manifest.product -ne 'Biology' -or $manifest.playableRuntimeIncluded -ne $true -or -not $manifest.files) {
+if ($manifest.schemaVersion -ne 2 -or $manifest.product -ne 'Biology' -or $manifest.playableRuntimeIncluded -ne $true -or -not $manifest.files) {
     throw 'Installed Biology build manifest is malformed, non-playable, or unsupported. Use MILESTONE CLEAN-ROOM mode.'
 }
+if ($manifest.uninstall.biologyOwnedPolicy -ne 'biology-owned' -or $manifest.uninstall.genericDependencyPolicy -ne 'preserve') {
+    throw 'Installed Biology manifest has an unsupported uninstall-policy contract. Use MILESTONE CLEAN-ROOM mode.'
+}
 
-$owned = [Collections.Generic.List[object]]::new()
-$seen = @{}
+$removable = [Collections.Generic.List[object]]::new()
+$preservedGeneric = [Collections.Generic.List[string]]::new()
+$seen = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
 foreach ($entry in @($manifest.files)) {
-    $relative = ([string]$entry.path).Replace('\','/').TrimStart('/')
-    if ([string]::IsNullOrWhiteSpace($relative) -or $relative -match '(^|/)\.\.(/|$)' -or [IO.Path]::IsPathRooted($relative)) {
+    $relative = ([string]$entry.path).Replace('\\','/').TrimStart('/')
+    if ([string]::IsNullOrWhiteSpace($relative) -or $relative -match '(^|/)\.\.(/|$)' -or $relative -match '(^|/)\.(/|$)' -or $relative.Contains(':') -or [IO.Path]::IsPathRooted($relative)) {
         throw "Unsafe path in installed Biology manifest: $relative"
     }
-    if ($seen.ContainsKey($relative)) { throw "Duplicate path in installed Biology manifest: $relative" }
-    $seen[$relative] = $true
-    if ($baselineByPath.ContainsKey($relative)) {
-        throw "Iteration cleanup refuses to remove a package path that existed in the vanilla baseline: $relative. Use MILESTONE CLEAN-ROOM mode."
-    }
+    if (-not $seen.Add($relative)) { throw "Duplicate path in installed Biology manifest: $relative" }
     if ([string]::IsNullOrWhiteSpace([string]$entry.owner) -or [string]::IsNullOrWhiteSpace([string]$entry.component) -or [string]::IsNullOrWhiteSpace([string]$entry.route)) {
         throw "Installed Biology manifest has incomplete ownership metadata: $relative"
     }
-    if ([string]$entry.replacePolicy -notin @('biology-owned','approved-dependency-owned')) {
+    if ([string]$entry.replacePolicy -notin @('biology-owned','generic-dependency-shared')) {
         throw "Installed Biology manifest has unsupported replacement policy: $relative / $($entry.replacePolicy)"
     }
     $expected = ([string]$entry.sha256).ToUpperInvariant()
@@ -60,43 +60,59 @@ foreach ($entry in @($manifest.files)) {
     if ($actual -ne $expected) {
         throw "Installed package file changed since installation: $relative. Refusing cleanup; use MILESTONE CLEAN-ROOM mode or investigate."
     }
-    $owned.Add([pscustomobject]@{ Path=$relative; FullPath=$full })
+
+    if ([string]$entry.replacePolicy -eq 'biology-owned') {
+        if ($baselineByPath.ContainsKey($relative)) {
+            throw "Iteration cleanup refuses to remove a Biology-owned path that existed in the vanilla baseline: $relative. Use MILESTONE CLEAN-ROOM mode."
+        }
+        $removable.Add([pscustomobject]@{ Path=$relative; FullPath=$full; Policy='biology-owned' })
+    } else {
+        # Player uninstall always preserves generic dependencies. This stricter
+        # developer reset may remove an exact generic file only when the recorded
+        # pristine baseline proves Biology introduced it into this installation.
+        if ($baselineByPath.ContainsKey($relative)) {
+            $preservedGeneric.Add($relative)
+        } else {
+            $removable.Add([pscustomobject]@{ Path=$relative; FullPath=$full; Policy='generic-dependency-shared' })
+        }
+    }
 }
 
-# SHA256SUMS and the owner manifest are generated after the ordinary file list is
-# finalized. They are package metadata but cannot recursively list/hash themselves.
-$generated = @(
-    'biology/build-manifest.json',
-    'SHA256SUMS.txt'
-)
-foreach ($relative in $generated) {
-    if ($baselineByPath.ContainsKey($relative)) {
-        throw "Iteration cleanup refuses generated Biology metadata that overlaps the vanilla baseline: $relative"
-    }
+if ($baselineByPath.ContainsKey('biology/build-manifest.json')) {
+    throw 'Iteration cleanup refuses generated Biology ownership metadata that overlaps the vanilla baseline.'
 }
 
 Write-Host ''
-Write-Host "Validated $($owned.Count) installed Biology payload files against their package hashes and ownership records." -ForegroundColor Cyan
-Write-Host 'Removing only exact package-owned files that were absent from the vanilla baseline...' -ForegroundColor Cyan
+Write-Host "Validated $($manifest.files.Count) installed Biology receipt entries against hashes and ownership policy." -ForegroundColor Cyan
+Write-Host "Removing $($removable.Count) exact files; preserving $($preservedGeneric.Count) generic files that pre-existed in the vanilla baseline." -ForegroundColor Cyan
 
 $parentCandidates = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
-foreach ($entry in $owned) {
+foreach ($entry in $removable) {
+    # Re-hash immediately before deletion so a file changed after planning is never
+    # silently removed.
+    $receiptEntry = @($manifest.files | Where-Object { ([string]$_.path).Replace('\\','/') -eq $entry.Path })
+    if ($receiptEntry.Count -ne 1 -or (Get-Sha256 $entry.FullPath) -ne ([string]$receiptEntry[0].sha256).ToUpperInvariant()) {
+        throw "Installed package file changed during cleanup planning: $($entry.Path). Refusing cleanup."
+    }
     Remove-Item -LiteralPath $entry.FullPath -Force
     [void]$parentCandidates.Add((Split-Path -Parent $entry.FullPath))
 }
-foreach ($relative in $generated) {
-    $full = Resolve-SafeChildPath $game $relative
-    if (Test-Path -LiteralPath $full -PathType Leaf) {
-        Remove-Item -LiteralPath $full -Force
-        [void]$parentCandidates.Add((Split-Path -Parent $full))
-    }
+
+if (Test-Path -LiteralPath $manifestPath -PathType Leaf) {
+    Remove-Item -LiteralPath $manifestPath -Force
+    [void]$parentCandidates.Add((Split-Path -Parent $manifestPath))
 }
 
 # Remove only now-empty directories reached from files this exact package owned.
-# Shared roots are never recursively selected for deletion and traversal stops at game root.
+# Never recursively remove any root, and never climb through protected shared roots.
+$protectedTopRoots = @('bin','archive','engine','r6','red4ext','mods','LICENSES')
 foreach ($start in @($parentCandidates | Sort-Object Length -Descending)) {
     $dir = $start
     while ($dir -and -not $dir.Equals($game,[StringComparison]::OrdinalIgnoreCase)) {
+        $relativeDir = [IO.Path]::GetRelativePath($game,$dir).Replace('\\','/')
+        $top = ($relativeDir -split '/')[0]
+        if ($relativeDir -in $protectedTopRoots) { break }
+        if ($top -in $protectedTopRoots -and $relativeDir -notmatch '^(mods/Biology|r6/scripts/CyberpunkRealism|biology)(/|$)') { break }
         if (-not (Test-Path -LiteralPath $dir -PathType Container)) { break }
         $children = @(Get-ChildItem -LiteralPath $dir -Force -ErrorAction Stop)
         if ($children.Count -ne 0) { break }
@@ -106,7 +122,7 @@ foreach ($start in @($parentCandidates | Sort-Object Length -Descending)) {
 }
 
 Write-Host ''
-Write-Host 'Biology package-owned files removed. Verifying the entire game against the recorded vanilla baseline...' -ForegroundColor Cyan
+Write-Host 'Biology iteration payload removed. Verifying the entire game against the recorded vanilla baseline...' -ForegroundColor Cyan
 & "$PSScriptRoot\Compare-GameToVanillaBaseline.ps1" -GameRoot $game
 if ($LASTEXITCODE -ne 0) {
     throw 'Vanilla baseline comparison failed after Biology cleanup. Do not install another candidate over this state; use MILESTONE CLEAN-ROOM mode or investigate the exact residue.'

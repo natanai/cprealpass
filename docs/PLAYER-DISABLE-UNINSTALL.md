@@ -1,287 +1,149 @@
-# Biology player disable and uninstall contract
+# Player disable / uninstall contract
 
-Status: **canonical product target; implementation pending under issue #44**  
-Last updated: **2026-09-15**
+Status: **IMPLEMENTED IN PLAYER-UNINSTALL LANE — attended acceptance still required**  
+Issue: #44  
+Draft PR: #45  
+Target game: Cyberpunk 2077 `2.31`
 
-This document defines how Biology must behave for players who do not normally mod Cyberpunk 2077 and for attended development testing.
+## Product contract
 
-The design goal is not to imitate the most common community-mod workflow. The design goal is a predictable player experience:
+Biology has three distinct player states:
 
-- install Biology once by copying/extracting the release into the game;
-- use the familiar REDlauncher **Enable mods** choice to turn Biology gameplay on or off;
-- use a self-contained Biology uninstaller when the player wants the files removed;
-- never require a full Cyberpunk reinstall merely to remove a known Biology release.
+1. **REDlauncher Enable mods ON** — Biology's REDmod-owned activation signal is available. Biology may run, subject to the existing Biology master preference.
+2. **REDlauncher Enable mods OFF** — Biology behavior is inactive and adapters yield to native Cyberpunk behavior without uninstalling Biology. Saves, Biology state and Biology preferences remain intact.
+3. **Hard uninstall** — with the game closed, a normal player double-clicks `Uninstall Biology.exe` from the game root. No PowerShell, Git, Vortex, mod manager, or Cyberpunk reinstall is required.
 
-`docs/RELEASE-ARCHITECTURE.md`, `docs/CLEAN-ROOM-TESTING.md`, the package builder, and the installed ownership manifest must converge on this contract.
+Disable is not uninstall. Uninstall is not save rollback.
 
-## The three supported player states
+## Launcher-OFF runtime audit
 
-### 1. Biology ON
+The integrated candidate is REDmod-first but not REDmod-only. Therefore launcher OFF cannot be implemented by assuming every supplemental path disappears.
 
-Expected player action:
+| Package/runtime family | Location in current artifact | Can exist/load with REDlauncher mods OFF? | Biology-off implication |
+| --- | --- | --- | --- |
+| Biology REDmod package | `mods/Biology/**` | REDmod-controlled; this is the launcher authority | Owns the activation marker. Marker absent means Biology inactive. |
+| Biology supplemental REDscript | `r6/scripts/CyberpunkRealism/*.reds` | **Yes / must be assumed yes.** These files are outside `mods/Biology`. | Every behavior accessor must fail closed when the REDmod activation marker is absent. |
+| redscript | `engine/**`, `r6/config/cybercmd/**` | **Yes / must be assumed yes.** | May still compile/load loose Biology scripts. It is not activation authority. |
+| RED4ext | `bin/x64/winmm.dll`, `red4ext/**` | **Yes / must be assumed yes.** | Generic loader may remain active. It is not activation authority. |
+| ArchiveXL | `red4ext/plugins/ArchiveXL/**`, hints | **Yes / must be assumed yes.** | Generic/transitive settings plumbing only. It is not activation authority. |
+| Mod Settings | `red4ext/plugins/mod_settings/**` | **Yes / must be assumed yes.** | A persisted Biology `enabled=true` preference cannot override launcher OFF. |
+| Biology persistent ScriptableSystem/save state | Cyberpunk save/runtime state | May remain across disable/re-enable | State may remain stored, but hooks cannot mutate/use it while the launcher marker is absent. |
+| TweakXL / Codeware / Input Loader | not bundled by current integrated candidate | N/A for this artifact | No activation role. |
+| Dark Future / Project E3 runtime | blocked from package | N/A | No runtime authority. |
 
-```text
-Biology installed
-REDlauncher: Enable mods = ON
-launch Cyberpunk normally
-```
+The audit therefore rejects the unsafe proposition “REDmod disabled => redscript/RED4ext/ArchiveXL/Mod Settings are disabled.” The contract instead uses one REDmod-owned signal as the necessary condition for all Biology behavior.
 
-Expected result:
+## Activation mechanism
 
-- official REDmod recognizes/deploys the `Biology` package;
-- Biology simulation and presentation run according to the Biology master/presentation settings;
-- approved supplemental framework files may support Biology where still required;
-- the installed ownership manifest records the exact release payload.
-
-### 2. Vanilla-play mode
-
-Expected player action:
-
-```text
-Biology remains installed
-REDlauncher: Enable mods = OFF
-launch Cyberpunk normally
-```
-
-Expected result:
-
-- Biology behavior is inactive;
-- Biology UI/presentation hooks do not visibly alter ordinary gameplay;
-- Biology simulation does not advance or replace vanilla semantics;
-- the player can use the installed game as their convenient vanilla comparison/play path without uninstalling Biology.
-
-This state does **not** necessarily mean the game directory is byte-for-byte identical to Steam vanilla. Approved generic framework files may still be physically installed while they remain required by the package architecture.
-
-The hard requirement is behavioral:
-
-> **REDlauncher Enable mods OFF must produce vanilla-play behavior, not a partially active Biology installation.**
-
-Every executing file that can load outside the REDmod package must therefore be audited. An out-of-package Biology-owned script/hook is acceptable only if it becomes inert/fail-open to native behavior whenever Biology's REDmod activation is absent.
-
-Do not use a hidden Biology setting as a substitute for this contract. The launcher switch itself is the intended everyday soft-disable path.
-
-### 3. Fully removed
-
-Expected player action:
+The official Biology REDmod package now owns one inert TweakDB marker:
 
 ```text
-double-click Uninstall Biology.exe
+mods/Biology/tweaks/base/gameplay/static_data/database/items/weapons/parts/biology_activation.tweak
+Items.BiologyLauncherActivationMarker.stackable = true
 ```
 
-Expected result:
-
-- Biology-owned files are removed safely;
-- REDmod deployment/cache state is refreshed as required;
-- saves are untouched;
-- user preferences are preserved by default unless the player explicitly chooses to remove them;
-- changed/shared/ambiguous files are reported rather than guessed about;
-- no source repository, PowerShell, Git, Vortex, or mod manager is required;
-- a full Cyberpunk reinstall is not required.
-
-## Player release shape
-
-The exact final package may evolve, but the player-facing release should include a self-contained uninstaller and the ownership metadata it needs. Conceptually:
+`CRRealpassSettings.IsLauncherActivated()` reads that value. `CRRealpassSettings.IsEnabled(game)` is now:
 
 ```text
-Cyberpunk 2077/
-├── mods/
-│   └── Biology/
-│       └── ...
-├── <only unavoidable approved supplemental runtime files>
-└── Biology/
-    ├── Uninstall Biology.exe
-    ├── build-manifest.json or equivalent immutable ownership receipt
-    └── version metadata
+launcher marker present/true AND existing Biology master preference enabled
 ```
 
-The existing `biology/build-manifest.json` contract may be reused/evolved. Avoid maintaining two contradictory ownership manifests.
+If the marker is absent or false, `IsEnabled` returns false before consulting a persisted preference. The existing E3 presentation preference remains subordinate to `IsEnabled`; it is not a second activation mechanism.
 
-The player uninstaller must not depend on repository `tools/` or on PowerShell 7 being installed.
+This is deliberately a session/deploy boundary rather than a polling watcher. Attended testing must still prove that the exact marker tweak compiles/deploys under REDmod 2.31 and disappears/reappears as expected through the supported launcher OFF/ON flow.
 
-## Uninstaller safety contract
+### Narrow overlap with #39 / #40 / #41
 
-The uninstaller is an ownership verifier first and a deletion tool second.
+This lane changes only the shared provider-neutral activation accessor in `RealpassSettings.reds`. It does **not** redesign Biology UI (#39), E3 HUD/nameplates (#40), or body runtime authority (#41). Existing body/runtime and presentation adapters already consume `CRRealpassSettings.IsEnabled(...)` / `UseE3FirstPersonHudVisuals(...)`, so no #39/#40/#41 feature implementation is taken over here.
 
-Before deleting any ordinary payload file it must prove that the path is part of the installed Biology release and that the current file is safe to remove under the release's ownership rules.
+## Player uninstaller architecture
 
-At minimum it must:
-
-1. validate the Cyberpunk game root;
-2. refuse to operate while `Cyberpunk2077.exe` is running;
-3. load and validate the installed Biology ownership/version metadata;
-4. reject unsafe rooted or `..` paths;
-5. reject duplicate manifest paths;
-6. verify expected file hashes for Biology-owned payload before automatic deletion;
-7. understand the difference between `biology-owned` and approved generic dependency ownership;
-8. never recursively delete shared roots;
-9. remove only now-empty directories reached from files it safely removed;
-10. never touch saves;
-11. preserve settings/preferences by default;
-12. refresh official REDmod deployment state as necessary after removal;
-13. produce an explicit final report.
-
-### Changed file rule
-
-If a file recorded as Biology-owned no longer matches the installed release hash:
+The release-shaped package now contains exactly one player-facing binary at its root:
 
 ```text
-DO NOT DELETE IT AUTOMATICALLY.
+Uninstall Biology.exe
 ```
 
-Report it as changed and leave it in place by default.
+Source/toolchain:
 
-The same principle applies to files that are unexpectedly missing or whose ownership has become ambiguous.
+- deterministic planner/executor: `src/uninstaller/BiologyUninstallCore.cs`;
+- WinForms front-end/self-relocation: `src/uninstaller/BiologyUninstallerProgram.cs`;
+- build helper: `tools/Build-BiologyUninstaller.ps1`;
+- compiler: Windows .NET Framework `csc.exe` already present on the supported Windows build/runtime environment;
+- output: one EXE, no PowerShell/script/runtime sidecar required for the player workflow.
 
-This avoids destroying a later mod/update that reused or modified a path after Biology was installed.
+The installed EXE first verifies that it is the packaged root binary and that the receipt is valid, copies itself to a temporary location so the original can be removed, then presents the uninstall UI from the temporary copy.
 
-### Shared roots that must never be recursively owned
+## Receipt and deletion planner
 
-The uninstaller must never treat these shared directory roots as recursively Biology-owned merely because Biology has files beneath them:
+`biology/build-manifest.json` is schema 2 and is packaged with the same artifact as the EXE. Every payload file records relative path, SHA-256, owner, component, route, and uninstall/replace policy.
 
-- `archive`
-- `bin`
-- `engine`
-- `r6`
-- `red4ext`
-- the game-root `mods` directory
+Two policies are allowed:
 
-`mods/Biology` itself is Biology's package namespace, but removal should still be driven by its ownership/manifest contract rather than an unbounded game-root recursive delete.
+- `biology-owned` — eligible for automatic deletion only when the current SHA-256 matches **and** the path is in Biology's narrow hard-coded allowlist;
+- `generic-dependency-shared` — inventoried for package/update accounting but always preserved by the normal player uninstaller.
 
-## Bundled generic dependencies
+The executable separately constrains Biology-owned deletion to `mods/Biology/**`, `r6/scripts/CyberpunkRealism/**`, `biology/**` metadata, and exact package root files `INSTALL.txt`, `UNINSTALL.txt`, `BIOLOGY-VERSION.txt`, `SHA256SUMS.txt`, `Uninstall Biology.exe`.
 
-Current migration builds may still contain generic dependencies such as redscript, RED4ext, ArchiveXL, and Mod Settings.
+A receipt therefore cannot authorize automatic deletion of `Cyberpunk2077.exe`, a save, a generic framework file, or an arbitrary shared path merely by labeling it “Biology.”
 
-These require special care because another mod may later use the same framework.
+The planner rejects empty, rooted, UNC, traversal, alternate-data-stream/colon and case-insensitive duplicate paths. At execution time every candidate is re-hashed immediately before deletion, closing the plan/execute race. Changed Biology files are preserved and reported. If changed/failed Biology-owned files remain, the ownership receipt itself is preserved for manual review.
 
-The uninstaller must not blindly remove a generic dependency solely because Biology originally installed it if doing so could break another subsequently installed mod.
+## Directories, saves and preferences
 
-The implementation lane must define and test a conservative policy. Safe options may include, depending on the exact dependency and available evidence:
+There is no recursive directory deletion. The executor removes only now-empty descendants of `mods/Biology`, `r6/scripts/CyberpunkRealism`, and `biology`. It never recursively owns/deletes shared roots including `mods`, `r6`, `engine`, `bin`, `red4ext`, `archive`, or `LICENSES`.
 
-- remove only exact Biology-bundled dependency files when no evidence of sharing/change exists;
-- leave a changed/shared framework installed and report it;
-- progressively eliminate bundled framework dependencies so the problem disappears.
+Cyberpunk save locations are never part of the receipt or deletion allowlist.
 
-The preferred long-term architecture remains the smallest dependency graph that satisfies Biology's actual needs.
+Biology preferences are **preserved by default**. The uninstaller exposes one unchecked opt-in: remove only the `[CyberpunkRealism.Settings.CRRealpassSettings]` section from `red4ext/plugins/mod_settings/user.ini`. Other Mod Settings sections are retained. This matches the current upstream Mod Settings persistence path and remains temporary plumbing while the presentation/settings-provider blocker exists.
 
-## REDlauncher OFF activation audit
+## Generic dependency removal policy
 
-Issue #44 must inventory every current runtime path and answer:
+Normal player uninstall preserves all bundled generic dependencies (`redscript`, RED4ext, ArchiveXL, Mod Settings and their packaged license snapshots), even when their hashes still match Biology's release. The uninstaller cannot reliably prove that another installed mod does not require them, so automatic removal would be unsafe.
+
+This is intentionally more conservative than the developer clean-room reset. `Reset-BiologyIteration.ps1` has a whole-game pre-install vanilla baseline and may delete an exact generic file only when that baseline proves the file did not exist before the Biology iteration. A generic path that pre-existed is preserved; the subsequent full baseline comparison remains the authority.
+
+## REDmod refresh after hard uninstall
+
+After Biology-owned payload removal, the uninstaller invokes the official supported tool with an explicit root:
 
 ```text
-Does this file/code path still execute or alter gameplay when REDlauncher Enable mods is OFF?
+tools/redmod/bin/redMod.exe deploy -root=<Cyberpunk 2077>
 ```
 
-The audit must cover at least:
+Refresh outcomes are fail-closed:
 
-- `mods/Biology` REDmod content;
-- Biology-owned redscript source staged outside REDmod;
-- redscript framework/bootstrap behavior;
-- Mod Settings listener/config behavior;
-- ArchiveXL/RED4ext runtime behavior;
-- any loose `archive/pc/mod` Biology content if such a route exists;
-- generated/deployed REDmod cache/output state;
-- any future native extension.
+- if other `mods/*/info.json` REDmods remain, success requires REDmod to report a completed deploy stage;
+- if no other REDmods remain, the official `No mods found, no deployment is needed` outcome is accepted;
+- nonzero exit, wrong-root evidence, missing official executable, or ambiguous success is reported as a refresh failure/manual-review condition.
 
-If Biology-owned additive script code necessarily remains loadable with REDmod disabled, it must have a robust activation signal whose absent state returns native behavior. Compile-time presence alone cannot equal Biology activation.
+The uninstaller never recursively deletes `r6/cache/modded` or any other shared REDmod cache root. Attended hard-uninstall acceptance must prove that no stale Biology marker/behavior survives the official refresh.
 
-## Self-contained executable target
+## Package changes
 
-The public uninstaller should be a single Windows executable or comparably self-contained player-facing binary.
+`tools/Build-BiologyPackage.ps1` now emits one exact release-shaped ZIP containing official `mods/Biology/info.json`, the REDmod activation marker tweak, exact-compiled Biology REDscript runtime, currently retained generic dependencies, schema-2 ownership receipt/provenance, `Uninstall Biology.exe`, and package instructions/version/checksums/licenses.
 
-Implementation choice is not fixed by this document, but acceptance requires:
+The binary is compiled directly into the staging root **before** its SHA-256 is recorded. `SHA256SUMS.txt` hashes finalized pre-receipt payload; the owner receipt then inventories/hash-pins every removable/preserved payload file. The receipt cannot self-hash, so the executable independently enforces schema/product/policy/path constraints and re-hashes the receipt during execution.
 
-- no PowerShell prerequisite;
-- no Git prerequisite;
-- no repository checkout;
-- no mod manager;
-- usable by double-clicking;
-- deterministic logs/reporting;
-- automated safety tests around its deletion planner.
+## Automated safety tests
 
-A small .NET single-file executable, native executable, or another maintainable single-binary approach may be used. The implementation PR must justify the choice with respect to build reproducibility, dependency footprint, antivirus/signing implications, and patch resilience.
+`tests/Test-PlayerUninstaller.ps1` compiles/runs `tests/BiologyUninstallCoreTests.cs` on Windows CI. Cases include happy exact-hash Biology deletion, generic/shared dependency preservation, unrelated mod and save preservation, changed-file refusal, change-after-planning refusal, missing-file reporting, unsafe-path and case-insensitive duplicate rejection, non-Biology receipt rejection, forged game-executable ownership rejection, generic dependency owner validation, surgical preference removal, and REDmod refresh success/failure classification.
 
-The deletion/ownership planner should be testable independently from the UI/front-end so safety logic is not hidden inside button handlers.
+`tests/Test-PlayerDisableContract.ps1` separately asserts launcher marker/accessor/package coupling and that the package builder includes both the marker and uninstaller.
 
-## Developer reset vs player uninstall
+## Attended checks still required
 
-`tools/Reset-BiologyIteration.ps1` is currently a conservative developer cleanup implementation. It validates package hashes, removes owned payload, and then performs an exhaustive vanilla-baseline comparison.
+CI, C# planner tests and exact REDscript compilation do **not** close live acceptance. Parent integration must test the exact merged artifact in MILESTONE CLEAN-ROOM mode and record:
 
-It is valuable reference logic, but it is **not** the final player uninstaller because it:
+1. REDmod 2.31 compiles/deploys the activation tweak.
+2. REDlauncher Enable mods ON: Biology is active.
+3. REDlauncher Enable mods OFF + relaunch: Biology UI/gameplay/presentation hooks are inactive/native even though supplemental REDscript/framework files remain installed.
+4. OFF -> ON + relaunch: Biology returns and preserved Biology preference/state behaves as intended.
+5. Double-click `Uninstall Biology.exe`: no shell/dev tooling required; exact Biology-owned files are removed, saves remain, preferences remain by default, generic/shared dependencies remain.
+6. Repeat with opt-in preference removal: only Biology's Mod Settings section is removed.
+7. Changed Biology-owned fixture: uninstaller refuses that file and preserves the receipt/manual-review evidence.
+8. Another harmless REDmod installed: uninstall refresh redeploys it and does not remove/disable it.
+9. No other REDmods installed: official no-mod refresh outcome leaves no stale Biology activation/behavior without recursive cache deletion.
+10. Normal game launch/save load after hard uninstall remains healthy.
 
-- requires repository tooling and PowerShell;
-- assumes the tracked developer vanilla baseline is available;
-- performs an expensive whole-game hash pass appropriate to strict iteration proof rather than every ordinary uninstall.
-
-The player uninstaller should reuse the same safety principles without requiring the whole developer environment.
-
-After the player uninstaller exists, the developer command surface should be adjusted so routine iteration can use the same uninstall core/contract where practical instead of maintaining divergent deletion rules.
-
-## Clean-room policy after this feature
-
-A full Steam uninstall + residual directory deletion + reinstall remains a valid **milestone clean-room** tool, but it becomes exceptional.
-
-Use it for situations such as:
-
-- Cyberpunk/REDmod patched and the canonical clean reference needs refresh;
-- a structural migration moved paths that the previous ownership receipt cannot safely account for;
-- the prior manifest is missing/corrupt;
-- unexplained residue remains after safe uninstall;
-- package/framework state cannot be proven;
-- deliberate release-level from-scratch confidence testing.
-
-Do **not** require it merely because the user wants to remove a normal known Biology build.
-
-Normal development should prefer:
-
-```text
-known installed Biology release
--> safe manifest-driven uninstall/reset
--> targeted or strict verification as appropriate
--> next exact candidate
-```
-
-## Required attended acceptance
-
-Issue #44 is not complete from source tests alone.
-
-The parent integration flow must eventually test at least:
-
-### Soft-disable comparison
-
-Same installed release and save/environment:
-
-1. REDlauncher Enable mods ON -> Biology visibly/behaviorally active.
-2. Quit fully.
-3. REDlauncher Enable mods OFF -> Biology behavior inactive and vanilla presentation/gameplay restored as defined by this contract.
-4. Quit fully.
-5. REDlauncher Enable mods ON -> Biology returns without reinstall/re-extraction.
-
-### Hard uninstall
-
-From an exact release-shaped installed Biology build:
-
-1. close Cyberpunk;
-2. run `Uninstall Biology.exe` as a normal player;
-3. verify owned paths are removed;
-4. verify saves remain;
-5. verify REDmod state is coherent;
-6. launch Cyberpunk normally with Biology removed;
-7. perform targeted or strict baseline/residue verification appropriate to the milestone.
-
-### Tamper/shared-file safety
-
-Automated tests must prove the deletion planner refuses/retains changed or unsafe paths. Direct attended destructive testing of intentionally corrupted shared files is not required when deterministic tests cover the planner safely.
-
-## Failure philosophy
-
-When ownership is uncertain, Biology must fail safe rather than "clean aggressively."
-
-A partial uninstall that clearly says:
-
-```text
-Biology removed, but 2 changed files were left in place for safety.
-```
-
-is preferable to deleting another mod's file or a game file.
-
-Full reinstall remains the last-resort recovery path for genuinely unprovable state, not the default Biology uninstall mechanism.
+PKG-05 overlap/precedence and the feature-specific acceptance owned by #39/#40/#41 remain outside this lane.

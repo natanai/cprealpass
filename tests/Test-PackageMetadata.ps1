@@ -17,6 +17,7 @@ if ($readme -notmatch '(?i)does not activate gameplay') { throw 'Package README 
 if ($readme -notmatch '(?i)model/source artifact' -or $readme -notmatch 'm1-owned-settings') { throw 'Package README does not distinguish this legacy model-only artifact from the live owned settings profile.' }
 if ($distribution.product -ne 'Biology' -or $distribution.releaseGate.publicPlayableArtifactReady -ne $false) { throw 'Development source-package test assumes the current Biology public release remains gated.' }
 if ($distribution.target.canonicalBuilder -ne 'tools/Build-BiologyPackage.ps1') { throw 'Legacy development package became ambiguous with the canonical Biology player builder.' }
+if ($distribution.target.playerUninstaller -ne 'Uninstall Biology.exe') { throw 'Distribution no longer identifies the player-facing Biology uninstaller.' }
 
 $destinations = @{}
 $modules = @{}
@@ -38,8 +39,6 @@ foreach ($requiredModule in @('runtime-policy-model','body-core','combat-core','
     if (-not $modules.ContainsKey($requiredModule)) { throw "Development package lost required original module family: $requiredModule" }
 }
 if (-not $destinations.ContainsKey('r6/scripts/CyberpunkRealism/RuntimePolicyModel.reds')) { throw 'Development package does not contain the code-level runtime policy model.' }
-# This historical/model artifact deliberately excludes native adapters. The current
-# playable Biology package is built elsewhere by Build-BiologyPackage.ps1.
 if ($destinations.ContainsKey('r6/scripts/CyberpunkRealism/RealpassSettings.reds')) { throw 'Native Mod Settings adapter entered the model-only development source artifact.' }
 $requirements = @($manifest.requiredExternalComponents)
 if (-not ($requirements -contains 'redscript 0.5.31')) { throw 'Development source package lost pinned redscript prerequisite.' }
