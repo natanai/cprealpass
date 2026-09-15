@@ -4,6 +4,14 @@
   "installModel": "redmod-first-game-root-relative",
   "supportedGameVersion": "2.31",
   "officialPackageRoot": "mods/Biology",
+  "redmodCli": {
+    "relativeExecutable": "tools/redmod/bin/redMod.exe",
+    "observedFileVersion": "2.3.1.0",
+    "observedProductVersion": "2.31",
+    "deployModuleObserved": true,
+    "requiredInvocationRule": "Biology developer/install tooling must pass -root=<Cyberpunk 2077> explicitly and must not rely on REDmod's default-root heuristic.",
+    "evidence": "docs/evidence/REDMOD-2.31-PROBE-2026-09-15.md"
+  },
   "playerFlow": {
     "prerequisite": "Cyberpunk 2077 plus official REDmod support installed for the player's platform/store",
     "firstInstall": "close game; copy the release contents to the Cyberpunk 2077 root so mods/Biology lands intact; enable REDmod-compatible mods through the supported launcher/store flow; allow REDmod deployment to complete",
