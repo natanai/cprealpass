@@ -56,11 +56,12 @@ Check (-not $shell.Contains('this.UpdateTitle(GetAreaHeader(area))')) 'Cyberware
 Check ($shell.Contains('CRSetStockMetersVisible(!biology)')) 'Biology mode leaves cyberware-specific stock meters visible.'
 
 # Supported body nodes are controlled by whether RealPass models that area, not by
-# whether a current need/condition is severe. This is what makes healthy Biology
-# permanently inspectable for testing and player curiosity.
+# whether a current need/condition is severe. Overview composition may still inspect
+# hasEffects/hasConditions; node visibility itself must remain support-only.
 Check ($shell.Contains('let supported: Bool = CRBiologyDetailPresentation.Supported(area)')) 'Biology node visibility is not keyed to modeled-system support.'
+Check ($shell.Contains('this.crBiologyMode = active && supported;')) 'Biology node activation is not support-only.'
 Check ($shell.Contains('this.GetRootWidget().SetVisible(supported)')) 'Supported Biology nodes are not retained in Biology mode.'
-Check (-not $shell.Contains('hasNeeds') -and -not $shell.Contains('hasConditions')) 'Biology shell node visibility is incorrectly gated on urgent state.'
+Check (-not $shell.Contains('this.crBiologyMode = active && supported &&') -and -not $shell.Contains('SetVisible(supported &&')) 'Biology node visibility is incorrectly gated on current urgency/state.'
 
 # Native anatomy interaction language is reused rather than simulated by another body widget.
 Check ($shell.Contains('this.m_animationController.StartHover(evt.area)')) 'Biology nodes do not use stock body hover animation.'
