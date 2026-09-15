@@ -27,25 +27,7 @@ public class CRBiologyE3Primitives extends IScriptable {
     return widget;
   }
 
-  public static func AddLabel(parent: ref<inkCompoundWidget>, name: CName, text: String, x: Float, y: Float, size: Int32, opacity: Float) -> ref<inkText> {
-    let label: ref<inkText> = new inkText();
-    if !IsDefined(parent) {
-      return label;
-    }
-    label.SetName(name);
-    label.SetText(text);
-    label.SetFontFamily("base\\gameplay\\gui\\fonts\\raj\\raj.inkfontfamily");
-    label.SetFontStyle(n"Medium");
-    label.SetFontSize(size);
-    label.SetFitToContent(true);
-    label.SetTranslation(x, y);
-    label.SetTintColor(CRBiologyE3Primitives.Red());
-    label.SetOpacity(opacity);
-    label.Reparent(parent, -1);
-    return label;
-  }
-
-  public static func TintNeutralHudRoot(root: ref<inkWidget>, enabled: Bool) -> Void {
+  public static func TintNeutralHudRoot(root: wref<inkWidget>, enabled: Bool) -> Void {
     if IsDefined(root) {
       root.SetTintColor(enabled ? CRBiologyE3Primitives.Red() : CRBiologyE3Primitives.Neutral());
     }
