@@ -2,9 +2,9 @@
 //
 // Native identity, projection, distance and visibility remain authoritative. Biology
 // adds the red/minimal nameplate language and ensures the native display-name surface
-// is available during ordinary focus when the native character nameplate record allows
-// it. NameplatesNative.reds resolves a permitted public civilian name without requiring
-// scanner mode; richer native focus identity acquired later by scanning always wins.
+// is available during ordinary focus only when native-rendered identity or the narrow
+// public-crowd fallback provides a legitimate name. Scanner mode is not required for
+// that baseline; richer native identity acquired later by scanning always wins.
 module CyberpunkRealism.Presentation
 
 import CyberpunkRealism.Settings.*
@@ -52,6 +52,30 @@ private final func CRCreateBiologyE3Nameplate() -> Void {
 }
 
 @addMethod(NameplateVisualsLogicController)
+public final func CRBiologyE3CanShowAmbientName(puppet: wref<GameObject>) -> Bool {
+  let npc: wref<NPCPuppet> = puppet as NPCPuppet;
+  let renderedName: String;
+
+  if !IsDefined(puppet) || this.IsQuestTarget() {
+    return false;
+  }
+  if IsDefined(npc) {
+    if npc.GetBoolFromCharacterTweak("hide_nametag") {
+      return false;
+    }
+    if IsDefined(npc.GetBlackboard()) && npc.GetBlackboard().GetBool(GetAllBlackboardDefs().Puppet.HideNameplate) {
+      return false;
+    }
+  }
+
+  // If native focus/nameplate logic already rendered a name, Biology may present that
+  // same native-known identity. Otherwise only the permissioned public-crowd fallback
+  // can make an ambient name available.
+  renderedName = inkTextRef.GetText(this.m_nameTextMain);
+  return IsStringValid(renderedName) || this.CRPublicCrowdNameAllowed(puppet);
+}
+
+@addMethod(NameplateVisualsLogicController)
 public final func CRRefreshBiologyE3Nameplate(puppet: ref<GameObject>, data: NPCNextToTheCrosshair) -> Void {
   let e3Enabled: Bool = IsDefined(puppet) && CRRealpassSettings.UseE3FirstPersonHudVisuals(puppet.GetGame());
   let name: String = this.CRResolveBiologyAmbientName(puppet, data);
@@ -91,9 +115,8 @@ public final func SetVisualData(puppet: ref<GameObject>, const incomingData: scr
 }
 
 // Project E3 2.31.p2 used this exact native screen-projection seam to make the current
-// nameplate display-name widget available whenever the native nameplate record is
-// enabled. Biology keeps the same narrow lifecycle idea without its replacement
-// archive, health meter, level display, or scanner implementation.
+// display-name widget available while the native nameplate is projected. Biology adds
+// an identity guard so it does not turn projection visibility into identity authority.
 @wrapMethod(NpcNameplateGameController)
 protected cb func OnScreenProjectionUpdate(projections: ref<gameuiScreenProjectionsData>) -> Void {
   let buffered: wref<GameObject>;
@@ -104,9 +127,7 @@ protected cb func OnScreenProjectionUpdate(projections: ref<gameuiScreenProjecti
     return;
   }
 
-  if this.GetNameplateVisible() && IsDefined(this.m_bufferedCharacterNamePlateRecord) && this.m_bufferedCharacterNamePlateRecord.Enabled() {
-    // Presentation visibility only: the actual string remains native focus identity or
-    // the tightly permissioned public-crowd fallback populated by NameplatesNative.
+  if this.GetNameplateVisible() && IsDefined(this.m_bufferedCharacterNamePlateRecord) && this.m_bufferedCharacterNamePlateRecord.Enabled() && IsDefined(this.m_visualController) && this.m_visualController.CRBiologyE3CanShowAmbientName(buffered) {
     inkWidgetRef.SetVisible(this.m_displayName, true);
   }
 }
