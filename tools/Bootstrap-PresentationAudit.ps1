@@ -23,6 +23,81 @@ function Add-Evidence([string]$text) {
     Add-Content -LiteralPath $reportPath -Value $text -Encoding utf8
 }
 
+function Invoke-GitSafe([string[]]$Arguments, [switch]$Echo) {
+    $psi = [Diagnostics.ProcessStartInfo]::new()
+    $psi.FileName = 'git'
+    $psi.UseShellExecute = $false
+    $psi.RedirectStandardOutput = $true
+    $psi.RedirectStandardError = $true
+    $psi.CreateNoWindow = $true
+    foreach ($argument in $Arguments) { [void]$psi.ArgumentList.Add($argument) }
+
+    $process = [Diagnostics.Process]::new()
+    $process.StartInfo = $psi
+    try {
+        if (-not $process.Start()) { throw 'Unable to start git process.' }
+        $stdout = $process.StandardOutput.ReadToEnd()
+        $stderr = $process.StandardError.ReadToEnd()
+        $process.WaitForExit()
+    } finally {
+        $process.Dispose()
+    }
+
+    $combined = @()
+    if (-not [string]::IsNullOrWhiteSpace($stdout)) { $combined += @($stdout.TrimEnd() -split "`r?`n") }
+    if (-not [string]::IsNullOrWhiteSpace($stderr)) { $combined += @($stderr.TrimEnd() -split "`r?`n") }
+    if ($Echo) {
+        foreach ($line in $combined) {
+            Add-Evidence ([string]$line)
+            Write-Host $line
+        }
+    }
+
+    [pscustomobject]@{
+        ExitCode = $process.ExitCode
+        StdOut = $stdout
+        StdErr = $stderr
+        Output = @($combined)
+    }
+}
+
+function Get-CprealpassSeed {
+    foreach ($directory in @(Get-ChildItem -LiteralPath $GamesRoot -Directory -ErrorAction SilentlyContinue)) {
+        # A normal clone has .git/config. Worktrees use a .git pointer file; those are
+        # deliberately not selected as the reusable seed because their common repo may
+        # have been removed. If only worktrees remain, create a fresh signed seed clone.
+        $configPath = Join-Path $directory.FullName '.git\config'
+        if (-not (Test-Path -LiteralPath $configPath -PathType Leaf)) { continue }
+
+        try {
+            $config = Get-Content -Raw -LiteralPath $configPath -ErrorAction Stop
+        } catch {
+            Add-Evidence "Skipping unreadable Git config candidate: $($directory.FullName)"
+            continue
+        }
+
+        $urls = [regex]::Matches($config, '(?im)^\s*url\s*=\s*(?<url>.+?)\s*$')
+        $matchesRepo = $false
+        foreach ($urlMatch in $urls) {
+            $normalized = $urlMatch.Groups['url'].Value.Trim().TrimEnd('/')
+            if ($normalized -match $repoPattern) {
+                $matchesRepo = $true
+                break
+            }
+        }
+        if (-not $matchesRepo) { continue }
+
+        $check = Invoke-GitSafe -Arguments @('-C',$directory.FullName,'rev-parse','--show-toplevel')
+        if ($check.ExitCode -eq 0) {
+            return $directory.FullName
+        }
+
+        Add-Evidence "Skipping unusable cprealpass seed candidate: $($directory.FullName)"
+        foreach ($line in $check.Output) { Add-Evidence ("  git: " + [string]$line) }
+    }
+    return $null
+}
+
 if (-not (Test-Path -LiteralPath $GamesRoot -PathType Container)) {
     throw "Games root does not exist: $GamesRoot"
 }
@@ -41,33 +116,29 @@ try {
     if (-not (Get-Command pwsh -ErrorAction SilentlyContinue)) { throw 'PowerShell 7 (pwsh) is not available on PATH.' }
     if (-not (Test-Path -LiteralPath $GamePath -PathType Container)) { throw "Cyberpunk game directory does not exist: $GamePath" }
 
-    foreach ($directory in @(Get-ChildItem -LiteralPath $GamesRoot -Directory -ErrorAction SilentlyContinue)) {
-        if (-not (Test-Path -LiteralPath (Join-Path $directory.FullName '.git'))) { continue }
-        $origin = (& git -C $directory.FullName remote get-url origin 2>$null)
-        if ($LASTEXITCODE -ne 0) { continue }
-        $normalized = ([string]$origin).Trim().TrimEnd('/')
-        if ($normalized -match $repoPattern) {
-            $seedRepo = $directory.FullName
-            break
-        }
-    }
+    $seedRepo = Get-CprealpassSeed
 
     if ([string]::IsNullOrWhiteSpace($seedRepo)) {
         $seedRepo = Join-Path $GamesRoot ('cprealpass-repo-' + $signature)
-        Add-Evidence "No existing cprealpass checkout found. Cloning seed: $seedRepo"
-        & git clone $repoUrl $seedRepo 2>&1 | Tee-Object -FilePath $reportPath -Append | Write-Host
-        if ($LASTEXITCODE -ne 0) { throw "Could not clone natanai/cprealpass (git exit $LASTEXITCODE)." }
+        Add-Evidence "No usable cprealpass seed checkout found. Cloning seed: $seedRepo"
+        Write-Host "No usable cprealpass seed checkout found. Cloning: $seedRepo" -ForegroundColor Cyan
+        $clone = Invoke-GitSafe -Arguments @('clone',$repoUrl,$seedRepo) -Echo
+        if ($clone.ExitCode -ne 0) { throw "Could not clone natanai/cprealpass (git exit $($clone.ExitCode))." }
     } else {
         Add-Evidence "Existing cprealpass seed found: $seedRepo"
         Write-Host "Using existing cprealpass seed: $seedRepo"
     }
 
     Add-Evidence "Fetching branch: $Branch"
-    & git -C $seedRepo fetch origin "+refs/heads/$($Branch):refs/remotes/origin/$($Branch)" 2>&1 | Tee-Object -FilePath $reportPath -Append | Write-Host
-    if ($LASTEXITCODE -ne 0) { throw "Could not fetch $Branch (git exit $LASTEXITCODE)." }
+    $fetch = Invoke-GitSafe -Arguments @('-C',$seedRepo,'fetch','origin',("+refs/heads/{0}:refs/remotes/origin/{0}" -f $Branch)) -Echo
+    if ($fetch.ExitCode -ne 0) { throw "Could not fetch $Branch (git exit $($fetch.ExitCode))." }
 
-    $fetchedHead = (& git -C $seedRepo rev-parse "refs/remotes/origin/$Branch").Trim()
-    if ($LASTEXITCODE -ne 0) { throw 'Could not resolve fetched branch head.' }
+    $resolve = Invoke-GitSafe -Arguments @('-C',$seedRepo,'rev-parse',("refs/remotes/origin/{0}" -f $Branch))
+    if ($resolve.ExitCode -ne 0) {
+        foreach ($line in $resolve.Output) { Add-Evidence ("git: " + [string]$line) }
+        throw 'Could not resolve fetched branch head.'
+    }
+    $fetchedHead = $resolve.StdOut.Trim()
     Add-Evidence "Fetched head: $fetchedHead"
     if ($fetchedHead -ne $ExpectedHead) {
         throw "Branch head moved. Expected $ExpectedHead but fetched $fetchedHead. Refusing to audit a different revision."
@@ -77,8 +148,8 @@ try {
     if (Test-Path -LiteralPath $auditRoot) { throw "Unique audit path unexpectedly exists: $auditRoot" }
 
     Add-Evidence "Creating disposable audit checkout: $auditRoot"
-    & git -C $seedRepo worktree add --detach $auditRoot $ExpectedHead 2>&1 | Tee-Object -FilePath $reportPath -Append | Write-Host
-    if ($LASTEXITCODE -ne 0) { throw "Could not create disposable audit checkout (git exit $LASTEXITCODE)." }
+    $worktree = Invoke-GitSafe -Arguments @('-C',$seedRepo,'worktree','add','--detach',$auditRoot,$ExpectedHead) -Echo
+    if ($worktree.ExitCode -ne 0) { throw "Could not create disposable audit checkout (git exit $($worktree.ExitCode))." }
 
     Write-Host ''
     Write-Host "AUDIT CHECKOUT: $auditRoot" -ForegroundColor Cyan
