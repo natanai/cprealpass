@@ -1,170 +1,133 @@
 # Biology
 
-**Biology** is a Cyberpunk 2077 + Phantom Liberty systemic body overhaul in development. It starts from the vanilla game and replaces selected underlying mechanics with project-original physical/physiological systems while preserving CDPR names, item identities, screens, animations, inventory/equipment authority, and interaction language wherever they remain useful.
+**Biology** is a Cyberpunk 2077 + Phantom Liberty systemic body/physiology overhaul in development. It starts from the vanilla game and replaces selected mechanics with project-original physical and physiological systems while preserving CDPR names, item identities, screens, animations, inventory/equipment authority, and interaction language wherever those remain useful.
 
-The repository is still named `cprealpass`, and some internal identifiers remain `RealPass` / `CR*` during migration. Do not perform a risky mass rename merely for cosmetics. Player-facing product/package identity is **Biology**.
+The repository is still named `cprealpass`, and some internal identifiers remain `RealPass` / `CR*`. Those internal names are migration residue, not the player-facing product identity. Do not perform a risky mass rename merely for cosmetics.
 
-Biology is not a repackaged gameplay-mod stack and not a menu of arbitrary difficulty toggles. The intended release is one authored simulation: connected body/needs, regional injury and recovery, physical projectile/impact behavior, meaningful armor/clothing coverage, relevant cyberware physiology, and restrained presentation that communicates those systems.
+Biology is intended to be one authored simulation, not a repackaged gameplay-mod stack and not a menu of unrelated difficulty toggles.
 
-## READ THIS FIRST — active work
+## Read this first
 
-The project is currently beginning a **REDmod-first refactor** after a clean-room attended test of the pre-refactor runtime.
+Use current files and live GitHub issues/PRs to determine active work. Do not infer the present project state from dated baseline documents or merged worker handoffs.
 
-1. [`ROADMAP.md`](ROADMAP.md) — **current active work, next branches, and the failures observed in-game.**
-2. [`AGENTS.md`](AGENTS.md) — mandatory agent evidence, parallel-branch, direct game-inspection, and test-handoff rules.
-3. [`AGREED-GOALS.md`](AGREED-GOALS.md) — canonical current product intent. Locked goals beat old implementation notes.
-4. [`docs/PRE-REDMOD-LIVE-BASELINE-2026-09-15.md`](docs/PRE-REDMOD-LIVE-BASELINE-2026-09-15.md) — exact attended evidence from the current pre-refactor build.
-5. [`docs/ACTIVE-REDMOD-ROADMAP.md`](docs/ACTIVE-REDMOD-ROADMAP.md) — detailed issue ledger, sequencing, ownership, and acceptance criteria.
-6. [`docs/BIOLOGY-REDMOD-MIGRATION.md`](docs/BIOLOGY-REDMOD-MIGRATION.md) — REDmod-first/self-contained architecture direction and rationale.
-7. [`docs/PARALLEL-AGENT-WORKFLOW.md`](docs/PARALLEL-AGENT-WORKFLOW.md) — branch/lane/handoff/merge policy.
+1. [`AGENTS.md`](AGENTS.md) — mandatory agent workflow, evidence, local-command and attended-test rules.
+2. [`ROADMAP.md`](ROADMAP.md) — **current active work and follow-up lanes**.
+3. [`AGREED-GOALS.md`](AGREED-GOALS.md) — canonical product intent.
+4. [`docs/ACTIVE-REDMOD-ROADMAP.md`](docs/ACTIVE-REDMOD-ROADMAP.md) — current attended-follow-up ledger and acceptance gates.
+5. [`docs/BIOLOGY-REDMOD-MIGRATION.md`](docs/BIOLOGY-REDMOD-MIGRATION.md) — current REDmod-first architecture and dependency-routing policy.
+6. [`docs/INTEGRATION-ORCHESTRATOR.md`](docs/INTEGRATION-ORCHESTRATOR.md) — parent merge/test/evidence-routing policy.
+7. [`docs/LOCAL-OPERATOR-COMMANDS.md`](docs/LOCAL-OPERATOR-COMMANDS.md) — canonical user-run local command surface.
 
-Superseded handoff packets and old active-status instructions should be removed from the current tree rather than left beside canonical instructions. Git history preserves them when historical research is actually needed.
+Dated files under `docs/test-runs/` and the pre-REDmod baseline are evidence records. They are not active work instructions unless a current document explicitly points to a fact from them.
 
-## Current parallel work split
+## Current milestone state
 
-The next migration phase is intentionally suitable for **2–3 agents in parallel**:
+The first integrated REDmod-first milestone has progressed beyond the original three migration branches.
 
-- `agent/redmod-foundation` — official REDmod package/dependency foundation;
-- `agent/biology-ui-runtime` — Biology body shell, body-state lifecycle, navigation and drill-down;
-- `agent/presentation-hud-nameplates` — E3-inspired HUD, NPC nameplates, presentation settings.
+The exact attended artifact built from `8cf045664b5e4d8b4b014edfc98bf2f8eb270ba5`:
 
-Copy/paste-ready lane specifications live under [`docs/handoffs/`](docs/handoffs/).
+- exact-compiled and packaged successfully;
+- installed into a clean Cyberpunk 2077 2.31 game;
+- was recognized by official REDmod as `Biology`;
+- completed a real five-stage REDmod deployment through the corrected explicit-root helper;
+- launched into attended testing.
 
-Agents should not serialize all three lanes in one thread when parallel capacity is available, and they should not test separate branches by layering them into the same game install. Merge coherent branches into canonical `main`, then test one combined release-shaped candidate.
+That attended test then exposed the current follow-up work:
 
-## Pre-REDmod attended baseline
+- Biology menu shell/drill-down/navigation still does not reuse the native Cyberware interaction grammar cleanly;
+- Biology drill-down lacks a proper Back path and can leak Biology body visuals when switching modes from an invalid drilled-down state;
+- the body screen reports `[ BIOLOGY ERROR ] BODY RUNTIME SYSTEM MISSING` in a live session;
+- E3 presentation ON still leaves most of the ordinary first-person HUD in the modern retail layout;
+- civilians receive no ambient E3-style nameplate on ordinary look/focus, while police currently show only a narrow red strip;
+- the modern scanner/quickhack UI remains intact and is a preserve requirement;
+- player-friendly disable/hard-uninstall behavior is now an explicit release requirement.
 
-The exact clean-room candidate at `ec8ba06451c3cbacabfad24f1479e1537147d0c9` compiled, packaged, installed into a freshly baselined Cyberpunk 2.31 directory, and launched.
+See `ROADMAP.md` and the open issues rather than the original merged branch handoffs.
 
-It also established that major work remains:
+## Current active lanes
 
-- outer hub shows `BIOLOGY`, but inner navigation still says `CYBERWARE`;
-- the current `BIOLOGY | CYBERWARE` selector overlaps/fades into stock navigation;
-- Biology does not yet truly own the body shell; the screen is still fundamentally Cyberware;
-- live body state reports unavailable;
-- persistent inspectable Biology nodes/exact drill-down were not demonstrated;
-- the intended E3-style first-person HUD was not visibly present;
-- intended E3 NPC nameplates were not active;
-- the player health bar was hidden, proving some presentation code runs, but health-bar suppression alone is **not** evidence that the optional E3 presentation is working;
-- settings still expose obsolete `REALPASS` / `Enable RealPass` player-facing branding.
+The parent integration thread currently routes substantial follow-up work to dedicated branches/issues. At the time of this milestone the important lanes are:
 
-These are migration acceptance requirements, not invitations to cosmetically polish an overlay architecture that is being replaced. See the baseline and active roadmap docs above.
+- **#39** `agent/biology-ui-attended-followup` — Biology shell reuse, native drill-down/back behavior, selector visibility and mode-state cleanup;
+- **#40** `agent/presentation-attended-followup` — complete E3-inspired first-person HUD/nameplate follow-up, including Project E3 reference archaeology without runtime dependency;
+- **#41** `agent/body-runtime-attended-followup` — authoritative body runtime registration/lifecycle failure;
+- **#44** `agent/player-uninstall-vanilla-toggle` — REDlauncher-off vanilla-play behavior and a self-contained Biology uninstaller.
+
+Branches and PR numbers change. `ROADMAP.md` plus current GitHub issues/PRs are authoritative for live coordination.
 
 ## Core product rules
 
 - Executing Biology gameplay/presentation behavior must be **Biology-owned**. Dark Future and Project E3 are research/provenance references only.
-- Generic frameworks may remain only as plumbing when genuinely needed; they do not own Biology simulation policy.
 - **Backpack = possessions. Biology = embodied state. Cyberware = installed equipment.**
-- Biology is always inspectable, including when V is healthy. The healthy overview is terse (`STABLE`); exact values belong to deliberate drill-down rather than a permanent meter wall.
-- Combat is causal and physical: projectile/ammunition -> region -> encountered material/protection -> penetration/impact -> tissue/chrome injury -> physiology -> treatment/recovery.
-- Ordinary human wound severity is not meant to be driven by level-based HP-sponge scaling.
-- MaxDoc remains MaxDoc and becomes analgesia rather than magical tissue/blood/chrome repair.
-- Vanilla Outfits are being reinterpreted as **physical equipment loadouts**: the visible item and the protective equipped object must be the same physical state.
+- Biology stays inspectable while healthy. Exact body values belong behind deliberate drill-down rather than a permanent meter wall.
+- Combat is causal and physical: projectile/ammunition → region → encountered protection/material → penetration/impact → tissue/chrome injury → physiology → treatment/recovery.
+- Vanilla item names/identities should be preserved unless a later explicit decision changes them.
 - The modern Cyberpunk scanner/quickhack experience remains authoritative.
-- Traditional actor HP bars/numbers are suppressed while Biology is enabled under the current locked product goal.
-- The visual target remains a **Biology-owned red E3-inspired first-person HUD and NPC-nameplate language**, without restoring the old E3 scanner or requiring Project E3 as a runtime dependency.
+- Traditional actor HP bars/numbers remain suppressed while Biology is enabled where technically safe.
+- E3-inspired HUD/nameplate presentation is Biology-owned and optional presentation; health-bar suppression is not proof that the E3 presentation is working.
+- REDmod is the preferred package/deployment route where robust, with narrow Biology-owned wrappers/additive seams allowed when they are materially safer than whole-file replacement.
 
-Weather overhaul, economy overhaul, artificial scarcity, hardship encounters, travel restrictions, and unrelated generic difficulty mechanics remain out of scope unless a later explicit product decision changes that.
+Weather overhaul, economy overhaul, artificial scarcity, generic hardship encounters, travel restrictions, and unrelated difficulty systems remain outside the Biology product boundary unless a later explicit decision changes that.
 
-## REDmod-first direction
+## Release direction
 
-The finished release should be as close as practical to one official package:
+The preferred player-facing package remains centered on one recognizable REDmod identity:
 
 ```text
 Cyberpunk 2077/
 └── mods/
     └── Biology/
         ├── info.json
-        └── ...only the REDmod-supported content Biology actually needs
+        └── ...Biology-owned REDmod content
 ```
 
-Routing preference:
+Unavoidable supplemental framework files may live outside `mods/Biology` only when an actual current feature requires them. Every such dependency must be pinned, justified, owned in the package manifest and removable safely.
 
-1. vanilla Cyberpunk semantic authority;
-2. official REDmod where it expresses the feature cleanly;
-3. narrow Biology-owned additive/wrapper scripting when safer than whole-file REDmod script replacement;
-4. generic framework/native extension only when demonstrably necessary.
+The desired player experience is:
 
-REDmod-first does **not** mean blindly copying whole vanilla scripts merely to avoid a community framework. Patch resilience and conflict surface matter more than branding the route as official.
+1. copy/install one Biology release;
+2. use the normal REDlauncher/Steam mod-enable path;
+3. launch normally through Steam;
+4. turn REDmod off for a convenient vanilla-play mode once the activation audit proves all Biology behavior yields cleanly;
+5. use a self-contained `Uninstall Biology.exe` for hard removal rather than reinstalling the whole game.
 
-See [`docs/BIOLOGY-REDMOD-MIGRATION.md`](docs/BIOLOGY-REDMOD-MIGRATION.md).
+See `docs/RELEASE-ARCHITECTURE.md` and issue #44 for implementation status.
 
-## Player settings
+## Local game evidence and commands
 
-Biology remains one authored simulation, not a collection of gameplay-module toggles.
-
-The old pre-refactor Mod Settings page currently exposes two booleans (`Enable RealPass` and `E3 first-person HUD visuals`). That provider and wording are **transitional, not final product requirements**.
-
-The REDmod/dependency audit must decide whether:
-
-- a whole-mod runtime master switch remains useful in addition to official mod enable/disable;
-- the E3-inspired presentation preference remains as a small Biology-owned setting;
-- those preferences can move into Biology and eliminate Mod Settings/ArchiveXL/RED4ext dependency depth.
-
-Under the current product goal, turning the E3-specific visual preference off does not alter simulation and does not by itself restore actor HP bars while Biology remains enabled. The attended baseline showed that the current E3 preference has no clearly demonstrated visual success signal yet because the intended HUD/nameplate treatment is absent.
-
-See [`docs/SETTINGS-ARCHITECTURE.md`](docs/SETTINGS-ARCHITECTURE.md) and [`docs/E3-PRESENTATION.md`](docs/E3-PRESENTATION.md).
-
-## Biology screen
-
-The player-facing hierarchy is:
+The supported game installation path currently used for direct evidence is:
 
 ```text
-BIOLOGY -> shared native body/anatomy shell -> BIOLOGY | CYBERWARE
+C:\Games\Steam\steamapps\common\Cyberpunk 2077
 ```
 
-Biology owns bodily needs/sensations, injury/conditions, pain/analgesia, elimination, fatigue/rest, recovery, and relevant biological/cybernetic state. Cyberware remains the ordinary installed-equipment experience inside the shared body screen.
+Repository/workspace paths are **not stable**. Attended workspaces are disposable and milestone-specific.
 
-The overview is qualitative and terse. Supported system/region nodes stay available even when normal. Exact hydration/nutrition/blood/bleeding/pain/regional integrity and similar values may appear only after deliberate inspection.
+Before asking the user to run PowerShell/CMD, read [`docs/LOCAL-OPERATOR-COMMANDS.md`](docs/LOCAL-OPERATOR-COMMANDS.md). Do not reconstruct an old absolute checkout path or paste the internals of a repository tool into chat when a canonical command exists.
 
-The attended pre-refactor build did **not** yet achieve this hierarchy: it still showed stock Cyberware as the effective parent and reported body state unavailable. See [`docs/BIOLOGY-UI.md`](docs/BIOLOGY-UI.md).
+Foundational game-internal claims should prefer direct evidence from the supported 2.31 installation when practical. See [`docs/LOCAL-GAME-REFERENCE.md`](docs/LOCAL-GAME-REFERENCE.md) and [`docs/PATCH-RESILIENCE.md`](docs/PATCH-RESILIENCE.md).
 
-## Direct official-game evidence and patch resilience
+## Testing
 
-Remote agents cannot directly browse the user's local Cyberpunk installation, but the repository is intentionally connected to it through a read-only local evidence workflow. The tracked, redistribution-safe snapshot lives under `reference/cyberpunk/`; the real installed game remains outside Git.
+Attended testing distinguishes:
 
-For foundational questions such as a class/method signature, controller, lifecycle event, TweakDB record, resource path, or native ownership boundary, agents should prefer direct evidence from the supported installed build over old web examples when a small local probe can answer the question.
+- **ITERATION** — reuse an installation only when the prior Biology package can be safely accounted for under current cleanup policy;
+- **MILESTONE CLEAN-ROOM** — use a Steam uninstall + residual-directory deletion + reinstall for structural/package/framework/game-patch milestones or unexplained residue.
 
-The proactive compatibility command is:
+After a genuinely fresh reinstall, the extra exhaustive whole-game hash pass is optional at the user's choice; the fast-sanity result must not be mislabeled as full baseline verification.
 
-```powershell
-Set-Location 'C:\Games\CyberpunkRealism'
-pwsh ./tools/Audit-GameContracts.ps1
-```
+A full Steam reinstall is not the normal Biology uninstall mechanism. Issue #44 is establishing the player-facing disable/uninstaller path.
 
-It is read-only against the game. It refreshes the safe environment snapshot, fingerprints important official script/database boundaries, inventories Biology's native-hook surface, validates the native-seam policy, and exact-compiles project-owned REDscript against the installed Cyberpunk base script bundle. This is an early patch-breakage canary, not a substitute for live gameplay/UI/save/quest testing.
-
-For narrower questions, agents should ask for one targeted PowerShell/CMD/WolvenKit probe rather than bulk-extracting the game or guessing from community material.
-
-See [`docs/LOCAL-GAME-REFERENCE.md`](docs/LOCAL-GAME-REFERENCE.md) and [`docs/PATCH-RESILIENCE.md`](docs/PATCH-RESILIENCE.md).
-
-## Testing and distribution
-
-Attended testing uses two tiers. A full Cyberpunk reinstall is **not** required for every iteration.
-
-- **Iteration test:** fresh canonical source + reset/verify the existing game directory against the recorded vanilla baseline.
-- **Milestone clean-room:** reinstall/delete residual game directory/rebaseline when structural package/dependency changes or unexplained residue make that necessary.
-
-Broad user-facing tests should install the same release-shaped artifact intended for players, not an accumulated developer deployment.
-
-See [`docs/CLEAN-ROOM-TESTING.md`](docs/CLEAN-ROOM-TESTING.md) and [`docs/RELEASE-ARCHITECTURE.md`](docs/RELEASE-ARCHITECTURE.md).
-
-## Current implementation status
-
-Project-original source contains the body/needs clock and intake model, sleep/fatigue/exertion, digestion/elimination, ballistic/impact models, regional wounds, blood loss, impairment, armor wear, pain/analgesia, field/professional care, physical Outfit adaptation, Biology presentation/native-shell work, scanner/nameplate integration, and actor-healthbar suppression seams.
-
-The repository has also established explicit native-seam boundaries and exact-compile tooling so future Cyberpunk patches should preferentially fail at a small game-facing adapter rather than silently alter the simulation core.
-
-Source/compile correctness does not prove native UI rendering, save persistence, quest compatibility, gameplay feel, runtime performance, REDmod deployment behavior, or visual fidelity. The attended baseline intentionally records where those claims are still unproven or failed.
+See [`docs/CLEAN-ROOM-TESTING.md`](docs/CLEAN-ROOM-TESTING.md).
 
 ## Repository layout
 
-- `src/redscript` / `src/tweaks` — Biology simulation, presentation, and thin game-facing adapters (some transitional paths still use old naming).
-- `manifest` — runtime, feature, acceptance, dependency, ownership, and native-seam contracts.
-- `tests` — cloud-safe models/contracts plus local compatibility checks where appropriate.
-- `tools` — dependency acquisition, exact compilation, local game-reference audits, packaging, and development utilities.
+- `src/redscript` / `src/tweaks` — Biology simulation, presentation, and game-facing adapters.
+- `manifest` — runtime, feature, acceptance, dependency, ownership, distribution and native-seam contracts.
+- `tests` — cloud-safe models/contracts and policy guards.
+- `tools` — dependency acquisition, exact compilation, game-reference audits, packaging and developer/operator utilities.
 - `reference/cyberpunk` — redistribution-safe metadata derived from the supported installed game.
-- `docs` — current focused architecture, baseline evidence, roadmap, testing, release policy, and lane handoffs.
-- `LICENSES` / `THIRD_PARTY.md` — dependency and historical reference provenance/notice material.
+- `docs` — canonical architecture/workflow docs plus dated attended evidence.
+- `LICENSES` / `THIRD_PARTY.md` — dependency and historical-reference provenance.
 
-Downloaded frameworks, proprietary game assets, local extractions, generated staging, reports, deployment state, and saves stay outside the public repository unless represented only by safe derived metadata.
+Downloaded frameworks, proprietary Cyberpunk assets, local extractions, Project E3 reference payloads, generated staging/reports, deployment state and saves stay outside the public repository unless represented only by redistribution-safe derived metadata.
