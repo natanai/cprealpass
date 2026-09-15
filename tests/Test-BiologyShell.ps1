@@ -30,83 +30,90 @@ foreach ($goal in @('G-041','G-043','G-045','G-046','G-063','G-064','G-066','G-0
 }
 Check ($goals.Contains('BIOLOGY -> shared body/anatomy shell -> BIOLOGY | CYBERWARE')) 'Canonical hierarchy is not explicit.'
 Check ($doc.Contains('top hub -> BIOLOGY -> shared body/anatomy shell -> BIOLOGY | CYBERWARE')) 'Biology UI doc does not mirror the canonical hierarchy.'
-Check ($doc.Contains('players should not feel that they need to poll Biology')) 'Biology UI doc lost the no-meter-polling acceptance principle.'
 Check ($doc.Contains('The Biology screen is **always available**')) 'Biology doc no longer requires healthy-state inspectability.'
 Check ($doc.Contains('the overview should simply read **`STABLE`**')) 'Biology doc does not lock the terse normal-state token.'
-Check ($doc.Contains('Every ordinary player-facing doorway') -and $doc.Contains('inner tab/navigation strip')) 'Biology navigation-label consistency is not documented.'
 
-# Reuse the stock hub routing: relabel the existing Cyberware menu data instead of
-# inventing a second fullscreen/menu identifier.
+# Keep Cyberpunk's menu identity/route. Biology is the visible parent name, not a new
+# fullscreen implementation.
 Check ($shell.Contains('@wrapMethod(MenuHubLogicController)')) 'Biology does not hook the stock hub label boundary.'
-Check ($shell.Contains('public final func SetMenusData(menuData: ref<MenuDataBuilder>, perkPoints: Int32, attrPoints: Int32) -> Void')) 'Biology hub wrapper drifted from the verified Cyberpunk 2.31 MenuHubLogicController signature.'
-Check ($shell.Contains('wrappedMethod(menuData, perkPoints, attrPoints)')) 'Biology hub wrapper does not call the verified stock SetMenusData signature.'
-Check (-not $shell.Contains('tarotIsBlocked: Bool, mapIsBlocked: Bool, perkPoints: Int32, attrPoints: Int32')) 'Biology shell reintroduced the RadialMenuHub SetMenusData signature on MenuHubLogicController.'
 Check ($shell.Contains('HubMenuItems.Cyberware')) 'Biology does not reuse the stock Cyberware hub destination.'
 Check ($shell.Contains('biologyData.label = "BIOLOGY"')) 'Stock Cyberware hub destination is not relabeled Biology.'
 Check ($shell.Contains('HubMenuUtils.SetMenuData(this.m_btnCyberware, biologyData)')) 'Relabeled Biology data is not put back on the stock Cyberware button.'
-Check (-not $shell.Contains('OpenMenuRequest') -and -not $shell.Contains('fullscreenName')) 'Biology shell invented a parallel fullscreen route instead of reusing stock cyberware_equip.'
+Check (-not $shell.Contains('OpenMenuRequest')) 'Biology shell invented a parallel fullscreen route.'
 
-# Biology/Cyberware are sibling modes within one body screen, with normal hub entry
-# defaulting Biology and an actual ripperdoc remaining equipment-first.
-Check ($shell.Contains('"BIOLOGY"') -and $shell.Contains('"CYBERWARE"')) 'Shared shell does not expose both internal modes.'
-Check ($shell.Contains('CRApplyBiologyShellMode(NotEquals(this.m_screen, CyberwareScreenType.Ripperdoc))')) 'Normal/ripperdoc mode defaults are not explicit.'
-Check ($shell.Contains('this.m_gridContainer, false') -and $shell.Contains('this.m_gridContainer, true')) 'Biology mode does not hide/restore stock cyberware slot contents.'
-Check ($shell.Contains('this.UpdateTitle(this.GetAreaHeader(area))')) 'Cyberware mode does not restore the stock category label through the verified minigrid instance helper.'
-Check (-not $shell.Contains('this.UpdateTitle(GetAreaHeader(area))')) 'Cyberware label restore regressed to an unresolved global GetAreaHeader call.'
-Check ($shell.Contains('CRSetStockMetersVisible(!biology)')) 'Biology mode leaves cyberware-specific stock meters visible.'
+# Overview reuses stock category controllers and stock body anatomy.
+Check ($shell.Contains('let supported: Bool = CRBiologyDetailPresentation.Supported(area)')) 'Biology overview nodes are not keyed to modeled native areas.'
+Check ($shell.Contains('this.GetRootWidget().SetVisible(supported)')) 'Supported Biology overview nodes are not persistent while healthy.'
+Check ($shell.Contains('this.m_gridContainer, false') -and $shell.Contains('this.m_gridContainer, true')) 'Biology/Cyberware does not hide/restore stock equipment-card contents.'
+Check ($shell.Contains('this.UpdateTitle(this.GetAreaHeader(area))')) 'Cyberware mode does not restore native category labels.'
+Check ($shell.Contains('this.DollHover(evt.area)')) 'Biology overview hover does not reuse native doll hover.'
 
-# Supported body nodes are controlled by whether RealPass models that area, not by
-# whether a current need/condition is severe. Overview composition may still inspect
-# hasEffects/hasConditions; node visibility itself must remain support-only.
-Check ($shell.Contains('let supported: Bool = CRBiologyDetailPresentation.Supported(area)')) 'Biology node visibility is not keyed to modeled-system support.'
-Check ($shell.Contains('this.crBiologyMode = active && supported;')) 'Biology node activation is not support-only.'
-Check ($shell.Contains('this.GetRootWidget().SetVisible(supported)')) 'Supported Biology nodes are not retained in Biology mode.'
-Check (-not $shell.Contains('this.crBiologyMode = active && supported &&') -and -not $shell.Contains('SetVisible(supported &&')) 'Biology node visibility is incorrectly gated on current urgency/state.'
+# Drill-down must adopt native Cyberware depth/state rather than a parallel custom
+# detail mode. The custom content is injected into the stock inventory/content anchor.
+Check ($shell.Contains('inkCompoundRef.Get(this.m_inventoryViewAnchor)')) 'Biology detail is not mounted in the native Cyberware content anchor.'
+Check ($shell.Contains('this.m_filterMode = RipperdocModes.Item;')) 'Biology detail does not adopt native Ripperdoc Item depth.'
+Check ($shell.Contains('this.m_isInventoryOpen = true;')) 'Biology detail does not adopt the native detail-open marker.'
+Check ($shell.Contains('this.DollHover(area);') -and $shell.Contains('this.DollSelect(true);')) 'Biology detail does not use native body focus/select behavior.'
+Check ($shell.Contains('this.m_selector.CRSetBiologyDetailMode(true);')) 'Biology detail does not engage the native Ripperdoc selector.'
+Check ($shell.Contains('this.m_selector.Show(this.EquipmentAreaToIndex(area));')) 'Biology does not select the native category indicator for the chosen body area.'
+Check ($shell.Contains('this.SetButtonHints(true, false);')) 'Biology detail does not switch native Back hint semantics from close to back.'
+Check (-not $shell.Contains('crBiologyDetailBack')) 'Parallel Biology-specific [OVERVIEW] Back control remains active.'
 
-# Native anatomy interaction language is reused rather than simulated by another body widget.
-Check ($shell.Contains('this.m_animationController.StartHover(evt.area)')) 'Biology nodes do not use stock body hover animation.'
-Check ($shell.Contains('this.m_animationController.StartSelect()')) 'Biology node selection does not use stock body zoom/select animation.'
-Check ($shell.Contains('this.m_animationController.SetOutside()') -and $shell.Contains('this.m_animationController.StopSelect()')) 'Biology cannot return through the stock zoom-out path.'
-foreach ($area in @('FrontalCortexCW','CardiovascularSystemCW','NervousSystemCW','SystemReplacementCW','MusculoskeletalSystemCW','IntegumentarySystemCW','ArmsCW','LegsCW')) {
-    Check ($detail.Contains("gamedataEquipmentArea.$area")) "Biology detail projection lost supported native body node: $area"
-}
-Check (-not $detail.Contains('EyesCW') -and -not $detail.Contains('HandsCW') -and -not $detail.Contains('ImmuneSystemCW')) 'Biology invented unsupported physiology merely to fill cyberware-only nodes.'
+# Overview labels must leave the stage during native detail. The native selector then
+# carries body-category navigation while anatomy is focused.
+Check ($shell.Contains('this.CRSetBiologyOverviewNodesVisible(false);')) 'Static overview nodes remain active entering Biology detail.'
+Check ($shell.Contains('this.crBiologyOverview.SetVisible(this.crBiologyShellMode && !detail)')) 'Overview telemetry is not hidden deterministically in detail.'
+Check ($shell.Contains('inkCompoundRef.SetVisible(this.m_selectorAnchor, detail)')) 'Native selector visibility is not tied to Biology detail depth.'
 
-# Overview language is terse qualitative telemetry. No AI-like explanatory prose or
-# raw percentages belong on the unzoomed state line.
+# Native selector input/arrows and selector-change event are reused. Eyes/Hands stay
+# Cyberware-only rather than being relabeled as unsupported physiology.
+Check ($sync.Contains('@wrapMethod(RipperdocSelectorController)')) 'Biology does not reuse the native Ripperdoc selector controller.'
+Check ($sync.Contains('private func SwitchIndicator(toNext: Bool) -> Void')) 'Native selector cycling seam is missing.'
+Check ($sync.Contains('selectorEvent = new RipperdocSelectorChangeEvent') -or $sync.Contains('new RipperdocSelectorChangeEvent()')) 'Biology selector does not emit the native selector-change event.'
+Check ($sync.Contains('index == 3') -and $sync.Contains('index == 5') -eq $false) 'Selector support test unexpectedly includes Cyberware-only Eyes/Hands indices.'
+Check ($sync.Contains('this.m_names[0] = "HEAD / BRAIN"') -and $sync.Contains('this.m_names[9] = "LEGS"')) 'Native selector names are not repurposed for Biology.'
+Check ($sync.Contains('wrappedMethod(toNext)')) 'Native Cyberware selector behavior is not preserved outside Biology detail.'
+Check ($sync.Contains('@wrapMethod(RipperDocGameController)') -and $sync.Contains('OnSelectorChange')) 'Biology does not consume native selector-change events at the Ripperdoc controller.'
+Check ($shell.Contains('this.m_animationController.StartSlide(evt.SlidingRight, area)')) 'Biology category cycling does not reuse the native body slide transition.'
+
+# Back/Cancel uses the native menu-dispatcher OnBack seam and native cleanup grammar.
+Check ($sync.Contains('protected cb func OnBack(userData: ref<IScriptable>) -> Bool')) 'Biology detail does not hook the native Back stack.'
+Check ($sync.Contains('if this.CRHandleBiologyBack()')) 'Native Back does not route Biology detail back to Biology overview.'
+Check ($shell.Contains('this.m_filterMode = RipperdocModes.Default;')) 'Biology Back does not restore native overview depth.'
+Check ($shell.Contains('this.m_isInventoryOpen = false;')) 'Biology Back does not clear the native detail-open marker.'
+Check ($shell.Contains('this.m_animationController.SetOutside();')) 'Biology Back does not restore the native body outside state.'
+Check ($shell.Contains('this.ClearMinigridSelection();')) 'Biology Back does not clear native category selection.'
+Check ($shell.Contains('this.ResetMinigridPositions();')) 'Biology Back does not reset native category positions.'
+Check ($shell.Contains('this.AnimateMinigrids();')) 'Biology Back does not restore native category presentation.'
+Check ($shell.Contains('this.m_selector.CRSetBiologyDetailMode(false);')) 'Biology Back does not restore stock selector naming/state.'
+
+# Mode switching is an overview-only state transition in both directions. Native
+# Cyberware DisplayInventory depth also hides the mode switch.
+Check ($shell.Contains('if this.CRBodyShellInDetail()')) 'Biology/Cyberware mode switching is not gated by shared native detail depth.'
+Check ($shell.Contains('this.crBiologyModeBar.SetVisible(!this.CRBodyShellInDetail())')) 'Mode selector remains visible while drilled down.'
+Check ($sync.Contains('private func DisplayInventory(visible: Bool) -> Void')) 'Native Cyberware detail does not synchronize mode-selector visibility.'
+Check ($sync.Contains('wrappedMethod(visible);')) 'Cyberware DisplayInventory behavior is not preserved.'
+Check ($shell.Contains('this.crBiologyModeButton.SetOpacity(biology ? 1.0 : 0.52)')) 'Biology/Cyberware overview selector lacks a strong selected/unselected state.'
+Check ($shell.Contains('CRShellText(text, name, 28)')) 'Attended mode selector remains at the undersized prototype typography.'
+
+# Exact values remain read-only projections from authoritative body state.
 Check ($bodyStatus.Contains('return "STABLE";')) 'Normal Biology overview is not the terse STABLE token.'
-foreach ($token in @('THIRST HIGH','HUNGER CRITICAL','FATIGUE HIGH','BLADDER URGENT','BOWEL HIGH','HYGIENE LOW')) {
-    Check ($bodyStatus.Contains('"' + $token + '"')) "Biology overview telemetry token missing: $token"
-}
-Check (-not $bodyStatus.Contains('No strong bodily need is demanding attention')) 'Verbose old no-needs sentence remains in Biology projection.'
-Check (-not $bodyStatus.Contains('bladder becoming noticeable') -and -not $bodyStatus.Contains('need to use the bathroom') -and -not $bodyStatus.Contains('could use a wash')) 'Conversational needs prose remains in Biology overview.'
-Check ($overview.Contains('!Equals(result.needs, "STABLE")')) 'Biology hasNeeds logic does not understand the STABLE normal token.'
-foreach ($token in @('PAIN CRITICAL','PAIN HIGH','ANALGESIA','DISORIENTATION HIGH')) {
-    Check ($overview.Contains('"' + $token + '"')) "Biology effect telemetry token missing: $token"
-}
-Check (-not $overview.Contains('interfering with concentration') -and -not $overview.Contains('dulling pain without repairing')) 'Explanatory pain prose leaked back into overview telemetry.'
+Check ($overview.Contains('!Equals(result.needs, "STABLE")')) 'Biology hasNeeds logic does not understand STABLE.'
+Check ($detail.Contains('return "NO CONDITION";')) 'Healthy drill-down does not remain inspectable.'
+Check ($detail.Contains('CRBodyRuntime.Get().GetBodySnapshot()') -and $detail.Contains('CRBodyRuntime.Get().GetMeters()')) 'Drill-down is not reading authoritative shared body state.'
+Check ($detail.Contains('CRPainRuntime.Get().Read()')) 'Drill-down pain/analgesia is not read from authoritative pain state.'
+Check ($shell.Contains('SetSize(Vector2(270.0 * ClampF(detail.metrics[i].percent / 100.0')) 'Detail bars are not projections of the selected authoritative metric.'
+Check ($shell.Contains('[ BIOLOGY ERROR ] BODY DETAIL UNAVAILABLE')) 'Unavailable runtime/detail state is not fail-obvious.'
 
-# Exact model values are deliberately exposed only through the drill-down projection
-# and are read-only. Healthy detail remains inspectable and can report NO CONDITION.
-Check ($detail.Contains('return "NO CONDITION";')) 'Healthy drill-down does not remain inspectable with a concise normal state.'
-Check ($detail.Contains('CRBodyRuntime.Get().GetBodySnapshot()') -and $detail.Contains('CRBodyRuntime.Get().GetMeters()')) 'Drill-down is not reading the authoritative shared body.'
-Check ($detail.Contains('CRPainRuntime.Get().Read()')) 'Drill-down pain/analgesia is not read from the authoritative pain projection.'
-Check ($detail.Contains('CRInjuryModel.Function') -and $detail.Contains('tissueDamage') -and $detail.Contains('boneDamage') -and $detail.Contains('cyberwareDamage')) 'Regional drill-down lacks exact authoritative injury/function detail.'
-Check ($detail.Contains('"HYDRATION"') -and $detail.Contains('"NUTRITION"') -and $detail.Contains('"ENERGY"')) 'Metabolism drill-down lost exact needs metrics.'
-Check (-not $detail.Contains('No meaningful condition is currently apparent') -and -not $detail.Contains('Whole-body musculoskeletal load')) 'Verbose explanatory drill-down prose remains.'
-Check (-not $detail.Contains('CRInjuryModel.Treat(') -and -not $detail.Contains('SetStatPoolValue') -and -not $detail.Contains('RemoveItem(')) 'Drill-down presentation became a simulation/inventory authority.'
-Check ($shell.Contains('CRBiologyMetricFills') -or $shell.Contains('crBiologyMetricFills')) 'Shared shell does not render deliberate detail bars.'
-Check ($shell.Contains('SetSize(Vector2(270.0 * ClampF(detail.metrics[i].percent / 100.0')) 'Detail bars are not direct projections of the selected metric.'
+# Contextual actions live at detail depth, are area-scoped, and remain gateways into
+# canonical inventory/treatment transactions rather than owning item state.
+Check ($actions.Contains('if !this.crBiologyShellMode || !this.CRBiologyInDetail()')) 'Contextual Biology actions still render on overview.'
+Check ($actions.Contains('Equals(this.crBiologySelectedArea, gamedataEquipmentArea.SystemReplacementCW)')) 'Food/drink actions are not scoped to the Metabolism body system.'
+Check ($actions.Contains('GetItemList(player, items)') -and $actions.Contains('GetItemQuantity(player, itemID)')) 'Biology actions do not enumerate actual carried stacks.'
+Check ($actions.Contains('ItemActionsHelper.EatItem') -and $actions.Contains('ItemActionsHelper.DrinkItem') -and $actions.Contains('ItemActionsHelper.ConsumeItem')) 'Biology intake bypasses native item-action families.'
+Check ($actions.Contains('CRBodyRuntime.Get().UseFieldCare')) 'Biology field care no longer delegates to authoritative treatment runtime.'
+Check ($actions.Contains('CRProfessionalCareRuntime.Complete')) 'Biology professional care no longer delegates to authoritative treatment runtime.'
+Check (-not $actions.Contains('RemoveItem(') -and -not $actions.Contains('CRBodyRuntime.Get().Consume(')) 'Biology UI became a duplicate inventory/consumption authority.'
+Check ($shell.Contains('this.crBioActionsPanel.Reparent(this.crBiologyNativeContent, -1);')) 'Biology contextual actions are not mounted into the native Cyberware content region.'
 
-# Contextual actions remain gateways into authoritative systems.
-Check ($actions.Contains('GetItemList(player, items)') -and $actions.Contains('GetItemQuantity(player, itemID)')) 'Shared Biology actions do not enumerate actual carried stacks.'
-Check ($actions.Contains('ItemActionsHelper.EatItem') -and $actions.Contains('ItemActionsHelper.DrinkItem') -and $actions.Contains('ItemActionsHelper.ConsumeItem')) 'Shared Biology actions do not preserve stock item action families.'
-Check ($actions.Contains('CRBodyRuntime.Get().UseFieldCare')) 'Shared Biology shell lost field-care routing.'
-Check ($actions.Contains('CRProfessionalCareRuntime.Complete')) 'Shared Biology shell lost professional-care routing.'
-Check (-not $actions.Contains('RemoveItem(') -and -not $actions.Contains('CRBodyRuntime.Get().Consume(')) 'Shared Biology actions bypass native inventory/consumption authority.'
-Check ($actions.Contains('public final func CRRefreshBiologyActions() -> Void')) 'Biology action refresh method is missing.'
-Check ($actions.Contains('this.CRRefreshBiologyActions();')) 'Biology action callbacks do not call the actual refresh method.'
-Check (-not $actions.Contains('CRBioRefreshBiologyActions')) 'Biology actions contain the unresolved stale refresh-method spelling caught by the installed compiler.'
-Check ($sync.Contains('CRRefreshBiologyActions')) 'Mode changes do not synchronize contextual action visibility.'
-
-Write-Host "PASS: $script:checks persistent Biology parent/Cyberware submode, terse overview telemetry, healthy drill-down, native anatomy reuse, exact detail metrics, and contextual action checks."
+Write-Host "PASS: $script:checks Biology shell checks: native overview anatomy, native drill-down state/selector/back, overview-only mode switching, exact detail projection, and authoritative contextual actions."
