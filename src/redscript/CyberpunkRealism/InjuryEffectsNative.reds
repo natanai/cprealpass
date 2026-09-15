@@ -70,42 +70,21 @@ public class CRInjuryModifierSet extends IScriptable {
       ArrayPush(this.slots, new CRInjuryModifierSlot());
     }
     weapon = GameObject.GetActiveWeapon(actor);
-    if !this.slots[0].Sync(actor, gamedataStatType.MaxSpeed, effects.speed) {
-      ok = false;
-    }
-    if !this.slots[1].Sync(actor, gamedataStatType.Stamina, effects.stamina) {
-      ok = false;
-    }
-    if !this.slots[2].Sync(actor, gamedataStatType.StaminaRegenRate, effects.staminaRegen) {
-      ok = false;
-    }
-    if !this.slots[3].Sync(weapon, gamedataStatType.ReloadTime, effects.reload) {
-      ok = false;
-    }
-    if !this.slots[4].Sync(weapon, gamedataStatType.RecoilAngle, effects.recoil) {
-      ok = false;
-    }
-    if !this.slots[5].Sync(weapon, gamedataStatType.SpreadDefaultX, effects.spread) {
-      ok = false;
-    }
-    if !this.slots[6].Sync(weapon, gamedataStatType.SpreadDefaultY, effects.spread) {
-      ok = false;
-    }
-    if !this.slots[7].Sync(weapon, gamedataStatType.RecoilKickMin, effects.recoil) {
-      ok = false;
-    }
-    if !this.slots[8].Sync(weapon, gamedataStatType.RecoilKickMax, effects.recoil) {
-      ok = false;
-    }
-    if !this.slots[9].Sync(weapon, gamedataStatType.SpreadAdsDefaultX, effects.spread) {
-      ok = false;
-    }
-    if !this.slots[10].Sync(weapon, gamedataStatType.SpreadAdsDefaultY, effects.spread) {
-      ok = false;
-    }
+    if !this.slots[0].Sync(actor, gamedataStatType.MaxSpeed, effects.speed) { ok = false; }
+    if !this.slots[1].Sync(actor, gamedataStatType.Stamina, effects.stamina) { ok = false; }
+    if !this.slots[2].Sync(actor, gamedataStatType.StaminaRegenRate, effects.staminaRegen) { ok = false; }
+    if !this.slots[3].Sync(weapon, gamedataStatType.ReloadTime, effects.reload) { ok = false; }
+    if !this.slots[4].Sync(weapon, gamedataStatType.RecoilAngle, effects.recoil) { ok = false; }
+    if !this.slots[5].Sync(weapon, gamedataStatType.SpreadDefaultX, effects.spread) { ok = false; }
+    if !this.slots[6].Sync(weapon, gamedataStatType.SpreadDefaultY, effects.spread) { ok = false; }
+    if !this.slots[7].Sync(weapon, gamedataStatType.RecoilKickMin, effects.recoil) { ok = false; }
+    if !this.slots[8].Sync(weapon, gamedataStatType.RecoilKickMax, effects.recoil) { ok = false; }
+    if !this.slots[9].Sync(weapon, gamedataStatType.SpreadAdsDefaultX, effects.spread) { ok = false; }
+    if !this.slots[10].Sync(weapon, gamedataStatType.SpreadAdsDefaultY, effects.spread) { ok = false; }
     return ok;
   }
 }
+
 @addField(ScriptedPuppet)
 public let crInjuryModifiers: ref<CRInjuryModifierSet>;
 
@@ -147,15 +126,18 @@ public class CRInjuryEffectsBridge extends IScriptable {
     return actor.crInjuryModifiers.Sync(actor, effects);
   }
 }
+
 public class CRInjuryEffectsRuntime extends ScriptableSystem {
   private let npcs: array<wref<NPCPuppet>>;
   // Transient diagnostic counters only; no output, polling or persistent effects.
   public let lastRefreshFailures: Int32;
   public let rejectedRegistrations: Int32;
   public let lastProgressFailures: Int32;
+
   public static func Get() -> ref<CRInjuryEffectsRuntime> {
     return GameInstance.GetScriptableSystemsContainer(GetGameInstance()).Get(NameOf<CRInjuryEffectsRuntime>()) as CRInjuryEffectsRuntime;
   }
+
   private func Prune() -> Void {
     let i: Int32 = 0;
     while i < ArraySize(this.npcs) {
@@ -170,7 +152,9 @@ public class CRInjuryEffectsRuntime extends ScriptableSystem {
       }
     }
   }
+
   public func Register(npc: ref<NPCPuppet>) -> Bool {
+    let bodyRuntime: ref<CRBodyRuntime>;
     let i: Int32 = 0;
     if !IsDefined(npc) || !CRCombatRuntimePolicy.Enabled() || npc.IsDead() || ScriptedPuppet.IsDefeated(npc) || !npc.IsAttached() {
       return false;
@@ -186,12 +170,16 @@ public class CRInjuryEffectsRuntime extends ScriptableSystem {
       this.rejectedRegistrations += 1;
       return false;
     }
-    // Settle old registrations before admitting this actor to shared intervals.
-    CRBodyRuntime.Get().Observe();
+    bodyRuntime = CRBiologySessionAuthority.Body(this.GetGameInstance());
+    if !IsDefined(bodyRuntime) {
+      return false;
+    }
+    bodyRuntime.Observe();
     npc.crProgressAllowed = CRInjuryEffectsBridge.Allowed(npc, true);
     ArrayPush(this.npcs, npc);
     return true;
   }
+
   public func Advance(hours: Float, config: ref<CRBodyConfig>, skipped: Bool) -> Void {
     let i: Int32 = 0;
     let npc: ref<NPCPuppet>;
@@ -218,9 +206,10 @@ public class CRInjuryEffectsRuntime extends ScriptableSystem {
       i += 1;
     }
   }
+
   public func Refresh(body: ref<CRBodyState>, config: ref<CRBodyConfig>, enabled: Bool) -> Void {
     let i: Int32 = 0;
-    let player: ref<ScriptedPuppet> = GameInstance.GetPlayerSystem(GetGameInstance()).GetLocalPlayerMainGameObject() as ScriptedPuppet;
+    let player: ref<ScriptedPuppet> = GameInstance.GetPlayerSystem(this.GetGameInstance()).GetLocalPlayerMainGameObject() as ScriptedPuppet;
     let localPlayer: ref<PlayerPuppet> = player as PlayerPuppet;
     this.lastRefreshFailures = 0;
     if IsDefined(body) {
@@ -240,31 +229,24 @@ public class CRInjuryEffectsRuntime extends ScriptableSystem {
       }
       i += 1;
     }
-    // This project-defined runtime is the canonical reconstruction point for all
-    // transient injury consequences. Refresh pain here directly rather than trying
-    // to wrap another realpass class with @wrapMethod.
     CRPainNativeEffects.Refresh(localPlayer, IsDefined(body) && enabled && CRInjuryEffectsBridge.Allowed(localPlayer, true));
   }
+
   public func Suspend() -> Void {
     this.Refresh(null, null, false);
   }
 }
+
 @wrapMethod(ScriptedPuppet)
 protected cb func OnGameAttached() -> Bool {
   let result: Bool = wrappedMethod();
   let npc: ref<NPCPuppet> = this as NPCPuppet;
+  let runtime: ref<CRInjuryEffectsRuntime>;
   if IsDefined(npc) && IsDefined(CRNPCInjuryBridge.State(npc)) && CRNPCInjuryBridge.CanAccept(npc) {
-    CRInjuryEffectsRuntime.Get().Register(npc);
+    runtime = CRBiologySessionAuthority.InjuryEffects(this.GetGame());
+    if IsDefined(runtime) {
+      runtime.Register(npc);
+    }
   }
   return result;
-}
-@wrapMethod(ScriptedPuppet)
-protected cb func OnDetach() -> Bool {
-  CRInjuryEffectsBridge.Clear(this);
-  return wrappedMethod();
-}
-@wrapMethod(PlayerPuppet)
-protected cb func OnDetach() -> Bool {
-  CRInjuryEffectsBridge.Clear(this);
-  return wrappedMethod();
 }
