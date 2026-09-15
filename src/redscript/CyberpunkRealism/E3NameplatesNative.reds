@@ -79,14 +79,12 @@ public final func CRRefreshBiologyE3Nameplate(puppet: ref<GameObject>, data: NPC
   // These are native 2.31 NameplateVisualsLogicController refs used by the preserved
   // Project E3 source; no Project E3-added field is required here.
   nameText = inkWidgetRef.Get(this.m_nameTextMain) as inkText;
-  if IsDefined(nameText) {
-    if showName {
-      nameText.SetText(name);
-      nameText.SetLetterCase(textLetterCase.UpperCase);
-      nameText.SetFontStyle(n"Medium");
-      nameText.SetTintColor(CRBiologyE3Primitives.Red());
-      nameText.SetVisible(true);
-    }
+  if IsDefined(nameText) && showName {
+    nameText.SetText(name);
+    nameText.SetLetterCase(textLetterCase.UpperCase);
+    nameText.SetFontStyle(n"Medium");
+    nameText.SetTintColor(CRBiologyE3Primitives.Red());
+    nameText.SetVisible(true);
   }
 
   nameFrame = inkWidgetRef.Get(this.m_nameFrame) as inkBorder;
@@ -110,8 +108,7 @@ public final func SetVisualData(puppet: ref<GameObject>, const incomingData: scr
 // archive, health meter, level display, or scanner implementation.
 @wrapMethod(NpcNameplateGameController)
 protected cb func OnScreenProjectionUpdate(projections: ref<gameuiScreenProjectionsData>) -> Void {
-  let buffered: ref<GameObject>;
-  let data: NPCNextToTheCrosshair;
+  let buffered: wref<GameObject>;
   wrappedMethod(projections);
 
   buffered = this.m_bufferedGameObject;
@@ -120,13 +117,8 @@ protected cb func OnScreenProjectionUpdate(projections: ref<gameuiScreenProjecti
   }
 
   if this.GetNameplateVisible() && IsDefined(this.m_bufferedCharacterNamePlateRecord) && this.m_bufferedCharacterNamePlateRecord.Enabled() {
-    // This changes presentation visibility only. The actual string still comes from
-    // native focus data or the tightly permissioned public-crowd fallback.
+    // Presentation visibility only: the actual string remains native focus identity or
+    // the tightly permissioned public-crowd fallback populated by NameplatesNative.
     inkWidgetRef.SetVisible(this.m_displayName, true);
-    if IsDefined(this.m_visualController) {
-      data.npc = buffered;
-      data.name = "";
-      this.m_visualController.CRRefreshBiologyE3Nameplate(buffered, data);
-    }
   }
 }
