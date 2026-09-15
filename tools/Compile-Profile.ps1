@@ -3,6 +3,16 @@ param([string]$ManifestPath='manifest/m3-body-alpha1.deployment.json', [string]$
 $project=Get-ProjectRoot
 $game=Assert-GameRoot $GameRoot
 
+# Fresh disposable checkouts do not contain ignored runtime output directories.
+# Create every repository-local output root this tool owns before any compiler or
+# logger tries to write into it. The clean-room build must not depend on residue
+# from an older developer workspace.
+$logsDir=Join-Path $project 'logs'
+$reportsDir=Join-Path $project 'reports'
+foreach($dir in @($logsDir,$reportsDir)){
+    New-Item -ItemType Directory -Force -Path $dir | Out-Null
+}
+
 # The offline compiler is a development-only build dependency, not part of the
 # player runtime package. Fresh disposable clones intentionally do not carry this
 # binary, so acquire the one pinned upstream release asset on demand and verify it
@@ -37,7 +47,7 @@ foreach($file in $manifest.files){
     if((Get-Sha256 $path) -ne $file.sha256){throw "Staged file hash mismatch: $path"}
     if($file.destination -match '\.reds$'){$argsList+=@('-s',$path);$count++}
 }
-$log=Join-Path $project ('logs\compile-'+$manifest.buildId+'-'+[DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss')+'.log')
+$log=Join-Path $logsDir ('compile-'+$manifest.buildId+'-'+[DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss')+'.log')
 & $cli @argsList 2>&1 | Tee-Object -FilePath $log | Out-Host
 $code=$LASTEXITCODE
 $output=Join-Path $work 'final.redscripts'
@@ -46,6 +56,6 @@ $diagnosticErrors=@([regex]::Matches($logText,'(?m)^\s*ERROR\s+\[')).Count
 $outputPresent=(Test-Path -LiteralPath $output -PathType Leaf) -and (Get-Item -LiteralPath $output).Length -gt 0
 $passed=$code -eq 0 -and $diagnosticErrors -eq 0 -and $outputPresent
 $result=[ordered]@{buildId=$manifest.buildId;compiledAtUtc=[DateTime]::UtcNow.ToString('o');sourceCount=$count;exitCode=$code;passed=$passed;diagnosticErrors=$diagnosticErrors;outputPresent=$outputPresent;logPath=$log;output=$output;baseBundleSha256=Get-Sha256 (Join-Path $game 'r6\cache\final.redscripts');scope='Offline language/type compilation only; native hooks, archive loading, TweakDB, UI, and saved state require runtime verification.'}
-Write-JsonFile $result (Join-Path $project ('reports\compile-'+$manifest.buildId+'.json'))
+Write-JsonFile $result (Join-Path $reportsDir ('compile-'+$manifest.buildId+'.json'))
 if(-not $passed){throw "Offline compilation failed (exit=$code, errors=$diagnosticErrors, output=$outputPresent); see $log"}
 Write-Host "Offline compilation passed for $count script sources. Game cache was not modified."
