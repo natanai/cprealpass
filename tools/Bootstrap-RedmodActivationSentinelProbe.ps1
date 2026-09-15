@@ -23,9 +23,9 @@ function Add-Evidence([string]$text) {
     Add-Content -LiteralPath $reportPath -Value $text -Encoding utf8
 }
 
-function Invoke-GitSafe([string[]]$Arguments,[switch]$Echo) {
+function Invoke-NativeSafe([string]$FilePath,[string[]]$Arguments,[switch]$Echo) {
     $psi = [Diagnostics.ProcessStartInfo]::new()
-    $psi.FileName = 'git'
+    $psi.FileName = $FilePath
     $psi.UseShellExecute = $false
     $psi.RedirectStandardOutput = $true
     $psi.RedirectStandardError = $true
@@ -38,7 +38,7 @@ function Invoke-GitSafe([string[]]$Arguments,[switch]$Echo) {
     $stderr = ''
     $exitCode = $null
     try {
-        if (-not $process.Start()) { throw 'Unable to start git process.' }
+        if (-not $process.Start()) { throw "Unable to start native process: $FilePath" }
         $stdout = $process.StandardOutput.ReadToEnd()
         $stderr = $process.StandardError.ReadToEnd()
         $process.WaitForExit()
@@ -56,8 +56,11 @@ function Invoke-GitSafe([string[]]$Arguments,[switch]$Echo) {
             Write-Host $line
         }
     }
-
     [pscustomobject]@{ ExitCode=$exitCode; StdOut=$stdout; StdErr=$stderr; Output=@($combined) }
+}
+
+function Invoke-GitSafe([string[]]$Arguments,[switch]$Echo) {
+    Invoke-NativeSafe -FilePath 'git' -Arguments $Arguments -Echo:$Echo
 }
 
 function Get-CprealpassSeed {
@@ -136,8 +139,14 @@ try {
     Write-Host "PROBE HEAD:     $ExpectedHead" -ForegroundColor Cyan
     Write-Host ''
 
-    & pwsh -NoLogo -NoProfile -File (Join-Path $auditRoot 'tools\Probe-RedmodActivationSentinel.ps1') -GameRoot $GameRoot -ReportPath $reportPath
-    $probeExit = $LASTEXITCODE
+    Add-Evidence ''
+    Add-Evidence '=== INNER PROBE PROCESS OUTPUT ==='
+    $probe = Invoke-NativeSafe -FilePath 'pwsh' -Arguments @(
+        '-NoLogo','-NoProfile','-File',(Join-Path $auditRoot 'tools\Probe-RedmodActivationSentinel.ps1'),
+        '-GameRoot',$GameRoot,
+        '-ReportPath',$reportPath
+    ) -Echo
+    $probeExit = $probe.ExitCode
 
     Add-Evidence ''
     Add-Evidence '=== PROBE BOOTSTRAP CONTEXT ==='
@@ -147,18 +156,19 @@ try {
     Add-Evidence "Probed head: $ExpectedHead"
     Add-Evidence "Probe process exit code: $probeExit"
     Add-Evidence ('Completed: ' + [DateTime]::Now.ToString('o'))
-    if ($probeExit -ne 0) { throw "Activation-sentinel probe returned exit code $probeExit." }
+    if ($probeExit -ne 0) { throw "Activation-sentinel probe returned exit code $probeExit. See INNER PROBE FAILURE / process output above." }
 } catch {
     $failed = $true
     Add-Evidence ''
     Add-Evidence '=== PROBE BOOTSTRAP FAILURE ==='
     Add-Evidence ('Time: ' + [DateTime]::Now.ToString('o'))
+    Add-Evidence ('Exception type: ' + $_.Exception.GetType().FullName)
     Add-Evidence ('Error: ' + $_.Exception.Message)
     Add-Evidence "Seed checkout: $seedRepo"
     Add-Evidence "Disposable probe checkout: $auditRoot"
     Add-Evidence "Expected head: $ExpectedHead"
     Write-Host ''
-    Write-Host 'The probe encountered a failure. The text report contains the evidence.' -ForegroundColor Yellow
+    Write-Host 'The probe encountered a failure. The text report contains the inner error evidence.' -ForegroundColor Yellow
 } finally {
     Write-Host ''
     Write-Host '============================================================' -ForegroundColor Cyan
