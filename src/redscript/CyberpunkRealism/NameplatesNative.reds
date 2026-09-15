@@ -1,7 +1,7 @@
 // RealPass-owned NPC name fallback used by the E3-inspired first-person HUD layer.
-// Extends only the stock name data handed to the stock renderer. It has no Project
-// E3 runtime dependency and does not reveal authored hidden identities, alternative
-// names, quest targets or globally disabled names.
+// Extends only the stock name data handed to the stock renderer. It has no external
+// presentation-mod runtime dependency and does not reveal authored hidden identities,
+// alternative names, quest targets or globally disabled names.
 module CyberpunkRealism.Presentation
 
 import CyberpunkRealism.Settings.*
