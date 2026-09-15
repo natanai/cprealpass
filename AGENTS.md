@@ -1,136 +1,171 @@
-# Agent Instructions
+# RealPass agent instructions
 
-This repository is developed against a real local Cyberpunk 2077 installation, but GitHub-hosted agents **cannot access that installation directly**. Do not assume that missing vanilla game files in Git means they are unavailable for investigation.
+Last updated: **2026-09-14 20:36 CDT (UTC-05:00)**
 
-RealPass is intended to be a foundational, long-lived realism layer. Ordinary Cyberpunk patches should not break it unless CDPR changes a genuinely relevant underlying contract. That goal affects how evidence is gathered and how integrations are designed.
+RealPass is a foundational Cyberpunk 2077 realism overhaul. The project is intentionally designed so ordinary game patches should affect a small compatibility boundary rather than force broad rewrites.
+
+## Read order — do this before changing scope or architecture
+
+1. `AGREED-GOALS.md` — **what the product is now**. Locked goals outrank old implementation notes.
+2. `docs/DECISION-HISTORY.md` — **when decisions changed and which misunderstandings the user already corrected**.
+3. The focused current architecture document relevant to the task, for example:
+   - `docs/BIOLOGY-UI.md`
+   - `docs/SETTINGS-ARCHITECTURE.md`
+   - `docs/E3-PRESENTATION.md`
+   - `docs/PATCH-RESILIENCE.md`
+   - `docs/RELEASE-ARCHITECTURE.md`
+   - `docs/CLEAN-ROOM-TESTING.md`
+4. Machine-readable manifests/tests for the implementation contract.
+
+Do **not** reconstruct current intent from old commits, closed branch workplans, or historical prototypes before reading the files above. Superseded handoff/status packets are intentionally removed from the current tree; Git history remains available when historical evidence is actually needed.
 
 ## Evidence hierarchy for Cyberpunk internals
 
-For questions about **what the supported game build actually contains, exposes, names, calls, or does**, use this order of evidence:
+For questions about what the supported game build actually contains, exposes, names, calls, stores, or does, use this order:
 
-1. repository-owned code, tests, generated reference metadata, and already-recorded local evidence;
-2. direct inspection of the user's installed Cyberpunk build through a targeted local PowerShell/CMD/WolvenKit request;
-3. official tool/framework documentation and game release notes;
-4. web/community guides, examples, forum posts, and other secondary material.
+1. repository-owned code/tests and `reference/cyberpunk/`;
+2. targeted direct inspection of the user's installed Cyberpunk build;
+3. official game/framework/tool documentation and release notes;
+4. web/community examples as secondary evidence.
 
-**Do not use an internet search as a substitute for direct game evidence when a small local inspection can answer the question more authoritatively.** Web research is still appropriate for tooling documentation, release history, known framework behavior, broader context, and cross-checking.
+**Do not use internet search as a substitute for a small direct game-file inspection when the installed build can answer the question more authoritatively.**
 
-If implementation correctness depends on a vanilla class, event, record, resource path, controller, callback, script signature, state-machine path, or other game-internal fact and the repository snapshot is insufficient, ask the user for local evidence before guessing or copying a web example.
+If correctness depends on a vanilla class, method, event, record, resource path, controller, callback, state-machine path, widget ownership rule, or other game-internal fact and the tracked snapshot is insufficient, ask the user for a targeted local probe instead of guessing.
 
 ## Local game access available through the user
 
-The user's current Windows paths are:
+Known Windows paths:
 
-- Repository / mod workspace: `C:\Games\CyberpunkRealism`
-- Cyberpunk 2077 installation: `C:\Games\Steam\steamapps\common\Cyberpunk 2077`
-- Local read-only game junction: `C:\Games\CyberpunkRealism\game-reference\live`
-- Local safe extraction workspace: `C:\Games\CyberpunkRealism\game-reference\extracted`
-- Local generated indexes: `C:\Games\CyberpunkRealism\game-reference\index`
+- repository/workspace: `C:\Games\CyberpunkRealism`
+- Cyberpunk 2077: `C:\Games\Steam\steamapps\common\Cyberpunk 2077`
+- read-only game junction: `C:\Games\CyberpunkRealism\game-reference\live`
+- safe selective extraction area: `C:\Games\CyberpunkRealism\game-reference\extracted`
+- local generated indexes: `C:\Games\CyberpunkRealism\game-reference\index`
+- GitHub-safe derived snapshot: `reference\cyberpunk\`
 
-`game-reference/live` is a Windows directory junction to the actual installed game. Treat it as **read-only**. Never instruct the user to edit, delete, rename, overwrite, or repack files there unless a task explicitly requires a carefully justified game-install modification.
+`game-reference\live` points at the real game installation. Treat it as **read-only** during investigation. Never ask the user to edit/delete/rename/repack through that junction merely to inspect something.
 
-`game-reference/extracted` is the preferred local output location for selectively extracted vanilla resources used for investigation.
+The `game-reference/` tree is intentionally excluded from Git. Commit only redistribution-safe derived metadata, RealPass conclusions, compatibility probes, tests, and our own code/docs — never proprietary Cyberpunk archives, executables, DLLs, textures, audio, meshes, or bulk extracted content.
 
-The entire `game-reference/` tree is intentionally excluded from Git and is not visible to remote agents.
+## Preferred proactive compatibility audit
 
-A GitHub-safe snapshot of the local environment is tracked under `reference/cyberpunk/`. Read that snapshot before assuming which frameworks, deployed scripts, archive payloads, or game files are present.
-
-For a broad environment refresh after a Cyberpunk patch or major local install change, ask the user to run this tracked read-only scanner:
+After a Cyberpunk patch, after a major local framework/install change, or before basing new foundational code on native seams, ask the user to run:
 
 ```powershell
-& "C:\Games\CyberpunkRealism\tools\Refresh-LocalGameReference.ps1"
+Set-Location 'C:\Games\CyberpunkRealism'
+pwsh ./tools/Audit-GameContracts.ps1
 ```
 
-That command reads the game installation and rewrites only the GitHub-safe metadata under `reference/cyberpunk/`; it does not modify game files or commit/push anything. For a narrow implementation question, prefer a smaller targeted probe instead of refreshing or extracting everything.
+That audit is designed to be read-only against the game. It refreshes the GitHub-safe environment snapshot, fingerprints the important vanilla script/cache contracts, inventories every RealPass hook boundary, runs the native-seam policy check, and exact-compiles the project-owned REDscript candidate against the installed `final.redscripts`. It writes only repository-side metadata/reports.
 
-## Clean-room attended testing rule
+A successful audit does **not** prove runtime semantics or UI rendering, but it gets ahead of signature/type/linkage breakage and gives future patches a concrete before/after fingerprint.
 
-Broad RealPass candidate testing is intentionally stricter than ordinary developer iteration because the product goal is a player-facing drag-and-drop package.
+For a narrow implementation question, prefer a smaller targeted probe rather than repeatedly running a broad audit or unpacking large archives.
 
-For any full build / live-test / attended-acceptance pass:
+## How to ask the user for local evidence
 
-1. Treat `C:\Games\CyberpunkRealism` as disposable. Prefer deleting it and starting from a fresh clone/download of canonical `main` rather than repairing an accumulated working tree.
-2. Restore `C:\Games\Steam\steamapps\common\Cyberpunk 2077` to a genuinely vanilla installation before applying the candidate. Steam verification alone is not assumed to remove arbitrary extra mod files; the strongest reset is Steam uninstall -> delete any residual game directory -> reinstall.
-3. Build a **game-root-shaped RealPass test artifact** from that fresh repository state.
-4. Apply the artifact by ordinary Windows folder merge/copy into the vanilla Cyberpunk game root, the same installation model intended for players.
-5. Launch normally through Steam and test that exact package.
-6. Before the next broad candidate, return to a fresh workspace and vanilla game root rather than relying on update/uninstall residue cleanup.
+When a local probe would materially improve the work:
 
-`tools/Build-CleanRoomTestPackage.ps1` is the preferred package builder once available on the tested branch. Direct developer deployment tooling may remain useful for narrow iteration, but it is **not** the canonical broad acceptance path.
+1. give one copy/paste-ready PowerShell block;
+2. use the known absolute paths above — no placeholders if they are unnecessary;
+3. make it read-only whenever possible;
+4. explain exactly what uncertainty it resolves;
+5. filter large output locally before asking the user to paste it;
+6. prefer paths, hashes, symbol names, record IDs, metadata, narrow text extracts, and tool output over proprietary file contents;
+7. record durable conclusions in tracked code/docs/tests so another agent does not have to rediscover them.
 
-Targeted read-only game probes, native-signature compilation checks and narrow diagnostics do not require a full reinstall when installed mod residue cannot affect the answer.
-
-See `docs/CLEAN-ROOM-TESTING.md` for the durable workflow and rationale.
-
-## Remote-agent protocol
-
-GitHub/branch agents are explicitly allowed—and expected when useful—to ask the user to run PowerShell or CMD commands when direct evidence from the installed game would materially improve the work.
-
-When requesting a local command:
-
-1. Prefer a single copy/paste-ready PowerShell block.
-2. Use the known absolute paths above so the user does not need to navigate folders or substitute placeholders.
-3. Make the command read-only whenever possible.
-4. State exactly what output is needed and why it resolves the current uncertainty.
-5. Keep requests targeted; do not ask the user to bulk-export or unpack the whole game.
-6. If output is large, filter it before asking the user to paste it back.
-7. Prefer derived evidence such as file paths, hashes, record names, class/function names, tool output, metadata, or narrow text extracts over copying proprietary game assets into Git.
-8. Never ask the user to commit vanilla archives, textures, audio, meshes, executables, DLLs, or other proprietary game files.
-9. When the result establishes a durable architectural fact, record that conclusion in tracked docs/code/tests so future agents do not need to rediscover it from the web.
-
-If archive-level inspection is needed, WolvenKit CLI may be available on the user's machine. Do not assume it is installed; if necessary, first ask the user to run:
+If archive-level inspection is needed, WolvenKit CLI may be available. Do not assume it is installed. First request:
 
 ```powershell
 wolvenkit.cli --help
 ```
 
-Then provide the exact selective inspection/extraction command needed for the task. Avoid bulk extraction unless there is a strong technical reason.
+Then ask for only the selective resource family needed. Avoid bulk extraction unless there is a concrete technical reason.
 
-## Patch-resilience design rule
+## Patch-resilience design rules
 
-Treat patch resilience as an architectural requirement, not a cleanup task.
+Prefer:
 
-Prefer, in roughly this order:
+- semantic game systems and named APIs over implementation accidents;
+- native lifecycle/state ownership over duplicated RealPass shadow state;
+- named classes/events/records/stats over magic indexes or values;
+- thin game-facing adapters around stable RealPass models;
+- runtime discovery + validation when it is deterministic enough;
+- exact compilation and explicit compatibility probes;
+- fail-obvious/fail-closed behavior over silent incorrect simulation.
 
-- semantic game systems and native/script APIs over implementation accidents;
-- named classes, events, records, stats, and stable relationships over magic values;
-- existing vanilla state and lifecycle ownership over duplicated RealPass shadow state;
-- narrow adapters around game-facing seams over spreading game-version assumptions through the simulation core;
-- runtime discovery/validation where practical over hard-coded assumptions;
-- fail-closed or loudly detectable incompatibility over silent incorrect behavior.
+Avoid unless unavoidable:
 
-Avoid unnecessary reliance on:
-
-- hard-coded memory offsets or addresses;
+- hard-coded memory offsets/addresses;
 - copied/decompiled vanilla implementation bodies;
-- exact line numbers or incidental file ordering;
-- brittle widget-tree positions or incidental UI hierarchy when a semantic controller/event exists;
-- patch-specific timing assumptions without a stable lifecycle reason;
-- duplicated state that can drift from a vanilla authority;
-- third-party mod behavior when RealPass can integrate directly with the underlying game contract.
+- exact line numbers or file ordering;
+- brittle widget-child positions when a semantic controller/property exists;
+- fixed delays standing in for lifecycle events;
+- patch-specific assumptions scattered through the simulation core;
+- another gameplay/presentation mod as an intermediary when the native game exposes the underlying contract.
 
-If a version-sensitive seam is unavoidable, isolate it behind the smallest practical adapter, document the evidence used to select it, add a validation/probe where feasible, and keep the rest of RealPass independent of that detail.
+If a version-sensitive seam is unavoidable, isolate it in the smallest adapter, document the evidence that justified it, and add a validation/probe where practical. A future patch should ideally break one compatibility seam loudly rather than alter body/combat logic silently.
 
-The desired failure mode after a future Cyberpunk patch is: a small compatibility seam detects a meaningful upstream contract change and can be repaired locally. The undesired failure mode is: patch-specific assumptions are scattered throughout the mod and silently produce incorrect simulation.
+See `docs/PATCH-RESILIENCE.md` and `manifest/native-seams.json`.
 
-See `docs/PATCH-RESILIENCE.md` for the durable architecture policy.
+## Native-first investigation principle
 
-## Investigation principle
+Before creating a parallel RealPass mechanism, investigate whether Cyberpunk already exposes an appropriate native authority or lifecycle: inventory/equipment behavior, player state, stat, status effect, TweakDB record, event, controller, animation/state machine, interaction, consumable action, cyberware hook, UI shell, etc.
 
-Before creating a parallel RealPass system, investigate whether Cyberpunk already exposes an appropriate native mechanism: player state, stat, status effect, TweakDB record, event, controller, inventory/equipment behavior, UI component, animation/state machine, interaction, consumable behavior, cyberware hook, or other existing game system.
+The goal is not to tightly couple the whole simulation to vanilla internals. The preferred shape is:
 
-Prefer extending or integrating with native systems when that produces a more faithful and maintainable result. The local game installation is available as an evidence source through the user even when the remote agent cannot read it directly.
+```text
+stable RealPass simulation core
+        |
+        v
+small semantic compatibility adapter
+        |
+        v
+native Cyberpunk contract
+```
 
-This does not mean RealPass should tightly couple itself to every vanilla implementation detail. The goal is the opposite: understand the actual game well enough to choose the **smallest, most semantic, most stable integration seam**.
+## Broad attended testing is clean-room
 
-## Current local snapshot
+A full build/live-test/acceptance pass is release-shaped:
 
-As reported from the user's installed game on 2026-09-14:
+1. Cyberpunk is closed.
+2. Use fresh/canonical `main` source rather than an accumulated developer worktree.
+3. Restore the game directory to a genuinely vanilla baseline; Steam Verify alone is not assumed to remove arbitrary extra mod files.
+4. Build a game-root-shaped test artifact with `tools/Build-CleanRoomTestPackage.ps1`.
+5. Merge/copy that artifact into the vanilla game root as a player would.
+6. Launch normally through Steam.
+7. Test that exact package.
+8. Repeat from fresh source + vanilla game for the next broad candidate.
 
-- Cyberpunk 2077 version: `2.31`
-- Installed files indexed locally: `5,128`
-- REDengine `.archive` containers found: `59`
+Narrow read-only probes, exact compile checks, and focused debugging do not require a full reinstall when installed mod residue cannot affect the result.
 
-Treat these counts as a dated snapshot, not permanent assumptions. Ask for a fresh local check if a task depends on current installation state.
+Do not present `Prepare-OwnedSession.ps1 -Deploy` as the canonical broad acceptance path. It may remain useful for narrow developer iteration.
 
-For the detailed local-evidence workflow, see `docs/LOCAL-GAME-REFERENCE.md`.
+See `docs/CLEAN-ROOM-TESTING.md`.
+
+## Current product rules agents most often get wrong
+
+- Executing gameplay/presentation behavior must be RealPass-owned; Dark Future/Project E3 are reference only.
+- RealPass is one authored simulation. Internal modules are not a public buffet of gameplay toggles.
+- Mod Settings has exactly **two** editable booleans: global **Enable RealPass** and **E3 first-person HUD visuals**.
+- With RealPass enabled, traditional actor HP bars/numbers are suppressed; master-off may restore native behavior.
+- E3 visual language remains an explicit target even though the external Project E3 runtime is forbidden.
+- The modern scanner/quickhack experience remains native.
+- Backpack = possessions; Biology = embodied state; Cyberware = installed equipment.
+- Biology stays inspectable while healthy. `STABLE`/quiet overview does not mean hidden nodes or no drill-down.
+- Broad acceptance is clean-room and package-shaped.
+- The user does not want an extra RealPass-managed save-backup chain for ordinary development testing.
+
+If any of those sound surprising, read `docs/DECISION-HISTORY.md` before changing them.
+
+## Instruction hygiene
+
+When the user corrects or changes a requirement:
+
+- update `AGREED-GOALS.md` if the current product requirement changed;
+- append the correction with a timestamp to `docs/DECISION-HISTORY.md`;
+- update the focused architecture doc and contract/test that enforce it;
+- remove obsolete active handoff/workplan/status instructions instead of leaving conflicting packets beside the canonical files;
+- preserve history through Git, not by keeping misleading current-tree instructions.
+
+Current supported local snapshot is dated, not permanent. As of the last tracked refresh on 2026-09-14 the installed game reported Cyberpunk 2077 `2.31`. Refresh/audit again whenever compatibility depends on a later local state.
