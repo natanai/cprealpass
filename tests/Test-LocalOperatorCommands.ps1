@@ -126,7 +126,7 @@ if ($presentationBootstrap -match '\$origin\s*=\s*\(&\s*git\s+-C') { throw 'Pres
 $bootstrapRoot = Join-Path $project 'tools'
 foreach ($bootstrapFile in @(Get-ChildItem -LiteralPath $bootstrapRoot -File -Filter 'Bootstrap-*.ps1')) {
     $text = Get-Content -Raw -LiteralPath $bootstrapFile.FullName
-    if ($text -notmatch 'ATTACH THIS FILE TO CHATGPT:' -or $text -notmatch "FilePath\s+'pwsh'|FileName\s*=\s*'pwsh'|FileName\s*=\s*\"pwsh\"") { continue }
+    if ($text -notmatch 'ATTACH THIS FILE TO CHATGPT:' -or $text -notmatch 'FilePath\s+[''"]pwsh[''"]|FileName\s*=\s*[''"]pwsh[''"]') { continue }
     Require-FailureDurableChildBootstrap -relative ('tools/' + $bootstrapFile.Name) -text $text
 }
 Require-FailureDurableChildBootstrap -relative 'tools/Bootstrap-PresentationAudit.ps1' -text $presentationBootstrap
