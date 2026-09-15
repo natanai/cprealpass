@@ -1,4 +1,4 @@
-// Biology-owned E3-inspired weapon/ammo shell.
+// Biology-owned E3-inspired weapon/ammo presentation for the neutral first-person HUD.
 // Native WeaponRosterGameController remains the sole weapon/ammo data authority.
 module CyberpunkRealism.Presentation
 
@@ -12,7 +12,7 @@ private final func CRCreateBiologyE3WeaponFrame() -> Void {
   if IsDefined(this.crBiologyE3WeaponFrame) {
     return;
   }
-  let root: ref<inkCompoundWidget> = this.GetRootWidget() as inkCompoundWidget;
+  let root: ref<inkCompoundWidget> = this.GetRootCompoundWidget();
   if !IsDefined(root) {
     return;
   }
@@ -24,7 +24,6 @@ private final func CRCreateBiologyE3WeaponFrame() -> Void {
   this.crBiologyE3WeaponFrame.SetVAlign(inkEVerticalAlign.Bottom);
   this.crBiologyE3WeaponFrame.SetSize(Vector2(456.0, 154.0));
   this.crBiologyE3WeaponFrame.SetTranslation(-14.0, -12.0);
-  this.crBiologyE3WeaponFrame.SetAffectsLayoutWhenHidden(false);
   this.crBiologyE3WeaponFrame.Reparent(root, -1);
 
   CRBiologyE3Primitives.AddRect(this.crBiologyE3WeaponFrame, n"CRBiologyE3WeaponTop", 74.0, 0.0, 356.0, 3.0, 0.92);
@@ -36,9 +35,11 @@ private final func CRCreateBiologyE3WeaponFrame() -> Void {
 
 @addMethod(WeaponRosterGameController)
 private final func CRRefreshBiologyE3WeaponFrame() -> Void {
+  let enabled: Bool = CRRealpassSettings.UseE3FirstPersonHudVisuals(GetGameInstance());
   this.CRCreateBiologyE3WeaponFrame();
+  CRBiologyE3Primitives.TintNeutralHudRoot(this.GetRootWidget(), enabled);
   if IsDefined(this.crBiologyE3WeaponFrame) {
-    this.crBiologyE3WeaponFrame.SetVisible(CRRealpassSettings.UseE3FirstPersonHudVisuals(GetGameInstance()));
+    this.crBiologyE3WeaponFrame.SetVisible(enabled);
   }
 }
 
