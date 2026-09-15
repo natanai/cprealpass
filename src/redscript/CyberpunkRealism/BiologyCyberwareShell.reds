@@ -5,6 +5,7 @@ module CyberpunkRealism.Presentation
 
 import CyberpunkRealism.Integration.*
 import CyberpunkRealism.Physiology.*
+import CyberpunkRealism.Settings.*
 
 public class CRBiologyAreaSelectEvent extends Event {
   public let area: gamedataEquipmentArea;
@@ -17,10 +18,13 @@ public class CRBiologyAreaHoverEvent extends Event {
 public class CRBiologyAreaHoverOutEvent extends Event {}
 
 // Keep the exact native Cyberware menu identifier/fullscreen route. Only its visible
-// hub label changes, so every stock transition still opens cyberware_equip.
+// hub label changes while RealPass is enabled; master-off restores stock Cyberware.
 @wrapMethod(MenuHubLogicController)
 public final func SetMenusData(menuData: ref<MenuDataBuilder>, perkPoints: Int32, attrPoints: Int32) -> Void {
   wrappedMethod(menuData, perkPoints, attrPoints);
+  if !CRRealpassSettings.IsEnabled(GetGameInstance()) {
+    return;
+  }
   let biologyData: MenuData = menuData.GetData(EnumInt(HubMenuItems.Cyberware));
   biologyData.label = "BIOLOGY";
   HubMenuUtils.SetMenuData(this.m_btnCyberware, biologyData);
@@ -44,7 +48,7 @@ public final func CRBiologyArea() -> gamedataEquipmentArea {
 
 @addMethod(CyberwareInventoryMiniGrid)
 private final func CRInstallBiologyCallbacks() -> Void {
-  if this.crBiologyCallbacksInstalled {
+  if !CRRealpassSettings.IsEnabled(GetGameInstance()) || this.crBiologyCallbacksInstalled {
     return;
   }
   inkTextRef.RegisterToCallback(this.m_label, n"OnRelease", this, n"OnCRBiologyRelease");
@@ -55,6 +59,14 @@ private final func CRInstallBiologyCallbacks() -> Void {
 
 @addMethod(CyberwareInventoryMiniGrid)
 public final func CRSetBiologyMode(active: Bool) -> Void {
+  if !CRRealpassSettings.IsEnabled(GetGameInstance()) {
+    this.crBiologyMode = false;
+    this.GetRootWidget().SetVisible(true);
+    inkWidgetRef.SetVisible(this.m_gridContainer, true);
+    inkWidgetRef.SetVisible(this.m_isNew, true);
+    this.UpdateTitle(this.GetAreaHeader(this.m_equipArea));
+    return;
+  }
   this.CRInstallBiologyCallbacks();
   let area: gamedataEquipmentArea = this.m_equipArea;
   let supported: Bool = CRBiologyDetailPresentation.Supported(area);
@@ -227,7 +239,7 @@ private final func CRCreateMetricRow(index: Int32) -> Void {
 
 @addMethod(RipperDocGameController)
 private final func CRCreateBiologyShell() -> Void {
-  if IsDefined(this.crBiologyModeBar) {
+  if !CRRealpassSettings.IsEnabled(GetGameInstance()) || IsDefined(this.crBiologyModeBar) {
     return;
   }
   let root: ref<inkCompoundWidget> = this.GetRootCompoundWidget();
@@ -393,6 +405,9 @@ private final func CRCloseBiologyDetail() -> Void {
 
 @addMethod(RipperDocGameController)
 public final func CRApplyBiologyShellMode(biology: Bool) -> Void {
+  if !CRRealpassSettings.IsEnabled(GetGameInstance()) {
+    biology = false;
+  }
   if biology && this.m_isInventoryOpen {
     return;
   }
@@ -491,6 +506,10 @@ protected cb func OnCRBiologyDetailBack(evt: ref<inkPointerEvent>) -> Bool {
 protected cb func OnInitialize() -> Bool {
   let result: Bool = wrappedMethod();
   this.crBiologySelectedArea = gamedataEquipmentArea.Invalid;
+  if !CRRealpassSettings.IsEnabled(GetGameInstance()) {
+    this.crBiologyShellMode = false;
+    return result;
+  }
   this.CRCreateBiologyShell();
   // Ordinary menu access starts in Biology. A direct ripperdoc/vendor visit starts
   // in Cyberware because that is the service context the player intentionally chose.
