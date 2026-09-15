@@ -41,8 +41,9 @@ foreach ($goal in @('G-043','G-044','G-045','G-046','G-047','G-048','G-049','G-0
 # only active body-interface architecture document in the current tree.
 Check (-not (Test-Path -LiteralPath (Join-Path $project 'docs/CONDITION-UI.md'))) 'Superseded Condition instruction packet returned to the active tree.'
 Check ($biologyDoc.Contains('Cyberware is installed equipment within the body') -and $biologyDoc.Contains('Biology submode')) 'Biology contract does not establish Cyberware as a Biology submode.'
-Check ($biologyDoc.Contains('The Biology screen is **always available**') -and $biologyDoc.Contains('supported Biology nodes must remain visible')) 'Biology contract does not preserve healthy-state inspectability.'
-Check ($biologyDoc.Contains('actual carried items') -and $biologyDoc.Contains('never manually removes items')) 'Biology item actions risk becoming a duplicate inventory.'
+Check ($biologyDoc.Contains('The Biology screen is **always available**') -and $biologyDoc -match '(?i)supported.*body.*nodes.*remain visible.*selectable') 'Biology contract does not preserve healthy-state inspectability.'
+Check ($biologyDoc -match '(?i)actual.*carried items/actions' -and $biologyDoc -match '(?i)never creates a second inventory|never.*manually.*decrement') 'Biology item actions risk becoming a duplicate inventory.'
+Check ($biologyDoc -match '(?i)detail/drill-down.*mode switching is unavailable' -and $biologyDoc -match '(?i)Back/Cancel.*overview') 'Biology condition contract lost native detail/back mode-state rules.'
 
 # Overview remains qualitative/terse and composes body/condition/pain projections.
 Check ($biologyPresentation.Contains('public class CRBiologyViewModel')) 'Biology qualitative view-model is missing.'
@@ -96,10 +97,10 @@ Check ($professional.Contains('kind != 4 && kind != 5')) 'Professional care acce
 Check ($professional.Contains('ClinicalCanHelp') -and $professional.Contains('MechanicalCanHelp')) 'Professional biological/mechanical eligibility is not separated.'
 Check ($professional.Contains('r.cyberwareDamage > 0.0')) 'Mechanical care does not key off chrome damage.'
 Check (-not $professional.Contains('CRInjuryModel.Treat(')) 'Professional-care eligibility mutates authoritative injury state.'
-Check ($professionalRuntime.Contains('public class CRProfessionalCareRuntime') -and $professionalRuntime.Contains('CRBodyRuntime.Get()')) 'Professional care has no explicit realpass runtime boundary.'
+Check ($professionalRuntime.Contains('public class CRProfessionalCareRuntime') -and $professionalRuntime.Contains('CRBodyRuntime.Get()')) 'Professional care has no explicit Biology runtime boundary.'
 Check ($professionalRuntime.Contains('CRProfessionalCareModel.CanHelp')) 'Professional runtime does not revalidate current condition before commit.'
 Check ($professionalRuntime.Contains('.CompleteTreatment(region, kind, 1.0)')) 'Professional runtime does not enter shared ordered treatment authority.'
 Check (-not $fieldCare.Contains('DarkFuture.')) 'Field-care runtime still depends on Dark Future.'
-Check ($fieldCare.Contains('GetAllBlackboardDefs().UI_System.IsInMenu')) 'Field-care menu boundary is not using native realpass-owned path.'
+Check ($fieldCare.Contains('GetAllBlackboardDefs().UI_System.IsInMenu')) 'Field-care menu boundary is not using native Biology-owned path.'
 
 Write-Host "PASS: $script:checks shared persistent Biology shell, condition/provenance, inventory and treatment architecture checks."
