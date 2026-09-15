@@ -1,10 +1,6 @@
 # Local Cyberpunk installation snapshot
 
-This directory contains a machine-generated, GitHub-safe description of the Cyberpunk 2077 installation used to develop Cyberpunk Realism / RealPass.
-
-Generated: 2026-09-14 18:50:53 -05:00
-
-Cyberpunk version: 2.31
+This directory contains a machine-generated, GitHub-safe description of the Cyberpunk 2077 installation used to develop Cyberpunk Realism / RealPass. The current generation timestamp and detected game version live in `environment.json`.
 
 ## Purpose
 
@@ -18,15 +14,25 @@ This is intentional: RealPass is meant to be a foundational, patch-resilient mod
 
 ## Files
 
-- `environment.json` — game version and high-level counts
+- `environment.json` — game version, generation timestamp, and high-level counts
 - `filesystem-index.csv` — files visible in the installed game, relative paths only
 - `archives.csv` — installed REDengine archive containers
 - `frameworks.json` — presence of major Cyberpunk modding frameworks
 - `red4ext-plugins.json` — installed RED4ext plugin names and available versions
 - `installed-scripts.csv` — loose REDscript files currently installed
-- `archive-payloads.csv` — loose `.archive` payloads currently present under `archive\pc\mod`; an empty file means no such payloads were found, **not** that no mods are installed
+- `archive-payloads.csv` — loose `.archive` payloads currently present under `archive\pc\mod`; a header-only file means no such payloads were found, **not** that no mods are installed
 
 Cyberpunk mods can live in several game-root locations. `archive\pc\mod` is only the location for packed archive payloads; RealPass itself currently has deployed REDscript under `r6\scripts\CyberpunkRealism`.
+
+## Refreshing this snapshot
+
+After a Cyberpunk patch or meaningful local install change, the user can run:
+
+```powershell
+& "C:\Games\CyberpunkRealism\tools\Refresh-LocalGameReference.ps1"
+```
+
+The scanner reads the installed game and rewrites only GitHub-safe metadata in this directory. It does not modify the game, commit, or push.
 
 ## Important boundary
 
