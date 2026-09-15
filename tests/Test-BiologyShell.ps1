@@ -31,7 +31,7 @@ foreach ($goal in @('G-041','G-043','G-045','G-046','G-063','G-064','G-066','G-0
 Check ($goals.Contains('BIOLOGY -> shared body/anatomy shell -> BIOLOGY | CYBERWARE')) 'Canonical hierarchy is not explicit.'
 Check ($doc.Contains('top hub -> BIOLOGY -> shared body/anatomy shell -> BIOLOGY | CYBERWARE')) 'Biology UI doc does not mirror the canonical hierarchy.'
 Check ($doc.Contains('The Biology screen is **always available**')) 'Biology doc no longer requires healthy-state inspectability.'
-Check ($doc.Contains('the overview should simply read **`STABLE`**')) 'Biology doc does not lock the terse normal-state token.'
+Check ($doc -match '(?is)nothing meaningful is active.{0,80}overview.{0,40}`STABLE`') 'Biology doc does not lock the terse normal-state STABLE token.'
 
 # Keep Cyberpunk's menu identity/route. Biology is the visible parent name, not a new
 # fullscreen implementation.
