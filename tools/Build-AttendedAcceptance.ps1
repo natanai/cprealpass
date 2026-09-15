@@ -138,35 +138,31 @@ $bodyText = Set-PolicyOnce $bodyText 'CRBodyRuntimePolicy' 'Enabled' $true
 $bodyText = Set-PolicyOnce $bodyText 'CRBodyTestPolicy' 'Diagnostics' ([bool]$Diagnostics) 'false'
 Stage-Replacement $bodyDestination $bodyText ('body enabled; diagnostics=' + [bool]$Diagnostics)
 
-# Combat is deliberately opened only in this generated profile. Require the base
-# to still have combat closed; otherwise we would be accepting an unknown already-
-# active combat build as the source of truth without an attended acceptance record.
+# Combat is deliberately opened only in this generated profile. BuildEnabled is the
+# staged acceptance gate; CRCombatRuntimePolicy.Enabled additionally respects the
+# player's global RealPass master setting at runtime.
 $combatDestination = 'r6/scripts/CyberpunkRealism/CombatNativeBridge.reds'
 $combatEntry = $destinations[$combatDestination]
 $combatSource = Resolve-SafeChildPath $project $combatEntry.source
 $combatText = [IO.File]::ReadAllText($combatSource).Replace("`r`n","`n")
-$combatText = Set-PolicyOnce $combatText 'CRCombatRuntimePolicy' 'Enabled' $true 'false'
-Stage-Replacement $combatDestination $combatText 'combat native bridge enabled for attended acceptance'
+$combatText = Set-PolicyOnce $combatText 'CRCombatRuntimePolicy' 'BuildEnabled' $true 'false'
+Stage-Replacement $combatDestination $combatText 'combat native bridge build gate enabled for attended acceptance'
 
 # Always compile the current project-owned policy model + settings surface into the
-# attended candidate. Settings translate player intent into policy flags, but their
-# acceptance booleans remain false; this source cannot open gameplay gates itself.
-# Refresh here so an older known-good deployed base can test the new settings UI
-# without requiring the player to rebuild that base by hand first.
+# attended candidate. The global master setting can disable the complete runtime at
+# player request; individual gameplay authorities remain fixed and non-configurable.
 $policyDestination = 'r6/scripts/CyberpunkRealism/RuntimePolicyModel.reds'
 $settingsDestination = 'r6/scripts/CyberpunkRealism/RealpassSettings.reds'
 Sync-ProjectSource 'src/redscript/CyberpunkRealism/RuntimePolicyModel.reds' $policyDestination 'realpass-core' 'refresh engine-independent accepted-and-intent policy model'
-Sync-ProjectSource 'src/redscript/CyberpunkRealism/RealpassSettings.reds' $settingsDestination 'realpass-settings' 'refresh passive realpass-owned Mod Settings surface'
+Sync-ProjectSource 'src/redscript/CyberpunkRealism/RealpassSettings.reds' $settingsDestination 'realpass-settings' 'refresh realpass-owned Mod Settings surface'
 
 # Default broad gameplay has no traditional actor HP bars. The comparison switch
-# is exact in both directions: if the active base is already a barless attended
-# build, -ShowTraditionalHealthBars removes realpass' suppression source rather than
-# silently inheriting it and producing a false comparison result.
+# remains available only for explicit development comparison builds.
 $healthbarDestination = 'r6/scripts/CyberpunkRealism/NoHealthbars.reds'
 if ($ShowTraditionalHealthBars) {
     Remove-ProjectSource $healthbarDestination 'explicit comparison build: restore traditional healthbar presentation by omitting realpass suppression source'
 } else {
-    Sync-ProjectSource 'src/redscript/CyberpunkRealism/NoHealthbars.reds' $healthbarDestination 'realpass-presentation' 'traditional player/NPC/boss/companion actor health bars hidden'
+    Sync-ProjectSource 'src/redscript/CyberpunkRealism/NoHealthbars.reds' $healthbarDestination 'realpass-presentation' 'traditional player/NPC/boss/companion actor health bars hidden while RealPass is enabled'
 }
 
 $sourceBuildId = [string]$manifest.buildId
@@ -197,4 +193,4 @@ $record = [ordered]@{
     scope = 'Attended compile candidate only. Build does not deploy or launch Cyberpunk. Native combat feel, settings rendering, UI rendering, saves, quests, bosses and Phantom Liberty still require player-attended acceptance.'
 }
 Write-JsonFile $record $report
-Write-Host "Staged and compiled attended candidate $BuildId`: body=on, combat=on, healthBars=$([bool]$ShowTraditionalHealthBars), diagnostics=$([bool]$Diagnostics), settings=passive. No live deployment performed."
+Write-Host "Staged and compiled attended candidate $BuildId`: body=on, combat=on, healthBars=$([bool]$ShowTraditionalHealthBars), diagnostics=$([bool]$Diagnostics), settings=master+presentation. No live deployment performed."
