@@ -8,8 +8,9 @@ $dependencyPath = Join-Path $project 'manifest/dependency-graph.json'
 $classificationPath = Join-Path $project 'manifest/redmod-classification.json'
 $installPath = Join-Path $project 'manifest/redmod-install-contract.json'
 $infoPath = Join-Path $project 'mods/Biology/info.json'
+$probeEvidencePath = Join-Path $project 'docs/evidence/REDMOD-2.31-PROBE-2026-09-15.md'
 
-foreach ($required in @($packagePath,$dependencyPath,$classificationPath,$installPath,$infoPath)) {
+foreach ($required in @($packagePath,$dependencyPath,$classificationPath,$installPath,$infoPath,$probeEvidencePath)) {
     if (-not (Test-Path -LiteralPath $required -PathType Leaf)) { throw "Missing REDmod foundation file: $required" }
 }
 
@@ -18,6 +19,7 @@ $dependencies = Get-Content -Raw -LiteralPath $dependencyPath | ConvertFrom-Json
 $classifications = Get-Content -Raw -LiteralPath $classificationPath | ConvertFrom-Json
 $install = Get-Content -Raw -LiteralPath $installPath | ConvertFrom-Json
 $info = Get-Content -Raw -LiteralPath $infoPath | ConvertFrom-Json
+$probeEvidence = Get-Content -Raw -LiteralPath $probeEvidencePath
 
 if ($package.schemaVersion -ne 1 -or $package.product -ne 'Biology' -or $package.packageId -ne 'Biology') { throw 'Unexpected REDmod package contract.' }
 if ($package.foundationBaseRevision -ne '6fab5ba706e2a10387bb8629cccdb0868533bb97') { throw 'REDmod foundation lost its canonical start revision.' }
@@ -25,6 +27,16 @@ if ($package.supportedGameVersion -ne '2.31' -or $package.redmod.packageRoot -ne
     throw 'Biology REDmod identity/path drifted.'
 }
 if ($package.status -ne 'foundation-skeleton-not-yet-playable') { throw 'Foundation skeleton must not claim to be a playable release.' }
+if ($package.redmod.observedSupportedInstall.fileVersion -ne '2.3.1.0' -or $package.redmod.observedSupportedInstall.productVersion -ne '2.31') {
+    throw 'Direct REDmod 2.31 executable evidence is missing or drifted.'
+}
+if ($package.redmod.observedSupportedInstall.deployModulePresent -ne $true -or $package.redmod.observedSupportedInstall.explicitRootRequiredByBiologyTooling -ne $true) {
+    throw 'Deterministic REDmod deploy invocation contract is missing.'
+}
+if (@($package.redmod.observedSupportedInstall.modsDirectoryBaseline) -notcontains '.stub') { throw 'Direct clean mods-directory baseline was not recorded.' }
+if ($probeEvidence -notmatch 'File version: `2\.3\.1\.0`' -or $probeEvidence -notmatch 'Product version: `2\.31`' -or $probeEvidence -notmatch 'deploy') {
+    throw 'Human-readable direct REDmod probe evidence is incomplete.'
+}
 if ($info.name -ne 'Biology' -or $info.version -notmatch '^\d+\.\d+\.\d+(?:[-+][A-Za-z0-9.-]+)?$') { throw 'Invalid Biology info.json identity/version.' }
 if ($null -eq $info.customSounds) { throw 'Biology info.json must declare customSounds.' }
 
@@ -64,11 +76,18 @@ foreach ($entry in @($classifications.entries)) {
 foreach ($id in @('biology-redmod-package-identity','current-native-hook-seams','redmod-whole-file-script-replacement-for-current-hooks','transitional-mod-settings-provider','official-redmod-cli-on-supported-2.31-install','redmod-conflict-precedence-on-supported-2.31-install')) {
     if (-not $classById.ContainsKey($id)) { throw "Classification coverage missing: $id" }
 }
-if ($classById['official-redmod-cli-on-supported-2.31-install'].classification -ne 'UNKNOWN — NEEDS DIRECT GAME PROBE') { throw 'Local REDmod CLI was guessed instead of probed.' }
+if ($classById['official-redmod-cli-on-supported-2.31-install'].classification -ne 'REDMOD-NATIVE') { throw 'Direct local REDmod CLI probe is not reflected in classification.' }
+if ($classById['official-redmod-cli-on-supported-2.31-install'].evidence -ne 'docs/evidence/REDMOD-2.31-PROBE-2026-09-15.md') { throw 'Direct REDmod CLI classification lost its evidence pointer.' }
 if ($classById['redmod-conflict-precedence-on-supported-2.31-install'].classification -ne 'UNKNOWN — NEEDS DIRECT GAME PROBE') { throw 'PKG-05 local precedence evidence was guessed instead of probed.' }
 
 if ($install.schemaVersion -ne 1 -or $install.product -ne 'Biology' -or $install.installModel -ne 'redmod-first-game-root-relative') { throw 'Unexpected REDmod install contract.' }
 if ($install.officialPackageRoot -ne 'mods/Biology' -or $install.playerFlow.permanentBiologyLauncher -ne $false) { throw 'Install contract lost REDmod-first normal-launch target.' }
+if ($install.redmodCli.relativeExecutable -ne 'tools/redmod/bin/redMod.exe' -or $install.redmodCli.observedFileVersion -ne '2.3.1.0' -or $install.redmodCli.observedProductVersion -ne '2.31') {
+    throw 'Install contract lost directly probed REDmod executable facts.'
+}
+if ($install.redmodCli.deployModuleObserved -ne $true -or $install.redmodCli.requiredInvocationRule -notmatch '(?i)pass -root') {
+    throw 'Install contract does not require deterministic explicit REDmod root invocation.'
+}
 if ($install.ownerManifest.path -ne 'biology/build-manifest.json' -or $install.ownerManifest.ownerValue -ne 'Biology') { throw 'Biology ownership manifest drifted.' }
 if (@($install.neverOwnedRoots) -notcontains 'r6' -or @($install.neverOwnedRoots) -notcontains 'red4ext') { throw 'Shared roots are not protected from broad uninstall ownership.' }
 if ($install.cleanRoom.currentFoundationChangeRequiresMilestoneBeforeBroadAcceptance -ne $true) { throw 'Structural REDmod migration lost milestone clean-room gate.' }
@@ -102,4 +121,4 @@ try {
     if (Test-Path -LiteralPath $temp) { Remove-Item -LiteralPath $temp -Recurse -Force }
 }
 
-Write-Host "PASS: Biology REDmod foundation has official package identity, release-shaped offline construction, explicit uninstall ownership, dependency-removal rationale, route classification, and fail-closed direct-game evidence gates."
+Write-Host "PASS: Biology REDmod foundation has official package identity, direct 2.31 CLI evidence, release-shaped offline construction, explicit uninstall ownership, dependency-removal rationale, route classification, and fail-closed remaining game-probe gates."
