@@ -2,10 +2,18 @@
 // state. Keep native coupling here so the physiology model remains patch-resilient.
 module CyberpunkRealism.Integration
 
+import CyberpunkRealism.Settings.*
+
+public class CRBodyRuntimeMasterPolicy extends IScriptable {
+  public static func Enabled() -> Bool {
+    return CRBodyRuntimePolicy.Enabled() && CRRealpassSettings.IsEnabled(GetGameInstance());
+  }
+}
+
 @wrapMethod(PlayerPuppet)
 protected cb func OnGameAttached() -> Bool {
   let result: Bool = wrappedMethod();
-  if !this.IsReplacer() && CRBodyRuntimePolicy.Enabled() {
+  if !this.IsReplacer() && CRBodyRuntimeMasterPolicy.Enabled() {
     CRBodyRuntime.Get().Activate();
   }
   return result;
@@ -24,7 +32,7 @@ public func CompleteAction(gameInstance: GameInstance) -> Void {
   let record: wref<Item_Record> = TweakDBInterface.GetItemRecord(tdbid);
   wrappedMethod(gameInstance);
 
-  if !CRBodyRuntimePolicy.Enabled() || !IsDefined(executor) || !executor.IsPlayer() || !IsDefined(record) {
+  if !CRBodyRuntimeMasterPolicy.Enabled() || !IsDefined(executor) || !executor.IsPlayer() || !IsDefined(record) {
     return;
   }
   let local: ref<PlayerPuppet> = GameInstance.GetPlayerSystem(gameInstance).GetLocalPlayerMainGameObject() as PlayerPuppet;
@@ -49,7 +57,7 @@ protected func ProcessStatusEffects(const actionEffects: script_ref<array<wref<O
   let consumable: wref<ConsumableItem_Record>;
   let local: ref<PlayerPuppet>;
 
-  if !CRBodyRuntimePolicy.Enabled() || !IsDefined(executor) || !executor.IsPlayer() || !IsDefined(itemData) {
+  if !CRBodyRuntimeMasterPolicy.Enabled() || !IsDefined(executor) || !executor.IsPlayer() || !IsDefined(itemData) {
     wrappedMethod(actionEffects, gameInstance);
     return;
   }
@@ -83,7 +91,7 @@ protected func ProcessStatusEffects(const actionEffects: script_ref<array<wref<O
 // that committed interval as sleep without importing another mod's sleep system.
 @wrapMethod(HubTimeSkipController)
 protected cb func OnTimeSkipButtonPressed(e: ref<inkPointerEvent>) -> Bool {
-  if CRBodyRuntimePolicy.Enabled() && e.IsAction(n"click") {
+  if CRBodyRuntimeMasterPolicy.Enabled() && e.IsAction(n"click") {
     CRBodyRuntime.Get().MarkNextTimeSkipAsWait();
   }
   return wrappedMethod(e);
@@ -94,7 +102,7 @@ private let crRealpassSleeping: Bool;
 
 @wrapMethod(TimeskipGameController)
 protected cb func OnInitialize() -> Bool {
-  if CRBodyRuntimePolicy.Enabled() {
+  if CRBodyRuntimeMasterPolicy.Enabled() {
     this.crRealpassSleeping = CRBodyRuntime.Get().ConsumeNextTimeSkipSleeping();
   }
   return wrappedMethod();
@@ -107,11 +115,11 @@ protected cb func OnInitialize() -> Bool {
 @wrapMethod(TimeskipGameController)
 private func Apply() -> Void {
   let hours: Int32 = this.m_hoursToSkip;
-  if CRBodyRuntimePolicy.Enabled() && hours > 0 {
+  if CRBodyRuntimeMasterPolicy.Enabled() && hours > 0 {
     CRBodyRuntime.Get().BeginSkip();
   }
   wrappedMethod();
-  if CRBodyRuntimePolicy.Enabled() && hours > 0 {
+  if CRBodyRuntimeMasterPolicy.Enabled() && hours > 0 {
     CRBodyRuntime.Get().FinishSkipHours(Cast<Float>(hours), this.crRealpassSleeping);
   }
 }
