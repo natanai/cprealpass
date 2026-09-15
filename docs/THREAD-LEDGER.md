@@ -80,18 +80,18 @@ Existing conversations do not need retroactive renaming; this ledger maps their 
 : Another lane now owns the work.
 
 `CLOSED`
-: The lane's assigned goal is complete; no further active implementation is expected.
+: The lane's assigned goal is complete without further implementation.
 
 ## Current ledger
 
 | Thread ID | Current visible title / alias | Role / goal | Thread state | Lane work state | GitHub / branch | Parent routing note |
 |---|---|---|---|---|---|---|
-| **P01.1** | `PARENT 1` | Parent / integration orchestrator | **ACTIVE** | **IN-PROGRESS** | Issue #35; integration PR #49; parent-owned `integration/attended-followups-2026-09-15` | Current parent. Exact compile now passes; parent is finishing PR #49 integration and preparing one attended candidate. If this conversation becomes too long, replace it with **P01.2** before continuing. |
-| **W06.1** | `Lane - INTEGRATION EXACT-COMPILE REPAIR` | Cross-lane exact-compile repair for the integrated attended follow-ups | **USABLE** | **CLOSED** | Issue #50 closed; PR #52 merged into PR #49; `agent/integration-exact-compile-repair`; repaired head `8f533d8451d2a894fe3ead0eed05ac0adefb69a0` | Parent exact compile passed on integrated head `1a97607332bb6237fb7516b35d1a292403fb2740`. Reuse this thread only if the same compile-repair topic directly resurfaces; a different integration failure gets a new W## lane. |
-| **W05.1** | `Lane - PLAYER DISABLE / UNINSTALL ARCHITECTURE` | Launcher-off vanilla behavior + self-contained Biology uninstaller | **USABLE** | **READY-PARENT** | Issue #44; PR #45; `agent/player-uninstall-vanilla-toggle`; head `f78f4daf9f9c4a612adfe5700cab87c40a3affe9` | Worker implementation is already represented in PR #49. Remaining validation is parent/integration attended acceptance. |
-| **W03.1** | `Thread 3 — E3 HUD, NPC nameplates, presentation settings` | E3-inspired neutral HUD + ambient NPC nameplates | **USABLE** | **READY-PARENT** | Issue #40; PR #46; `agent/presentation-attended-followup`; head `ff08ac0661180ad09afedba920e3962c4117c928` | Worker implementation is already represented in PR #49. Parent owns combined attended acceptance. |
-| **W04.1** | `ATTENDED RUNTIME-AUTHORITY FOLLOW-UP` | Authoritative live Biology body runtime/session ownership | **USABLE** | **READY-PARENT** | Issue #41; PR #47; `agent/body-runtime-attended-followup`; head `44b9613155bcd2751d94ba7f04d2d27497eafacf` | Worker implementation plus the W06 repair are represented in PR #49. Do not reopen by default for unrelated runtime work. |
-| **W02.1** | `Thread 2 — Biology UI and body runtime` | Biology native Cyberware shell/drill-down/back/mode-state follow-up | **USABLE** | **READY-PARENT** | Issue #39; PR #43; `agent/biology-ui-attended-followup`; head `cc9a84bf72b5660078e50ca3a3f10d1486907372` | Worker implementation is already represented in PR #49. Use this context only for a direct shell continuation that truly benefits from it. |
+| **P01.1** | `PARENT 1` | Parent / integration orchestrator | **ACTIVE** | **IN-PROGRESS** | Issue #35; canonical main `2918eab7abe8413cd614bf4ee703dd553bc5d419` plus later ledger-only commits | Current parent. PR #49 is merged and post-merge CI passed; next work is one release-shaped attended candidate from canonical main. If this conversation becomes too long, replace it with **P01.2** before continuing. |
+| **W06.1** | `Lane - INTEGRATION EXACT-COMPILE REPAIR` | Cross-lane exact-compile repair for the integrated attended follow-ups | **USABLE** | **MERGED** | Issue #50 closed; PR #52; `agent/integration-exact-compile-repair`; repaired head `8f533d8451d2a894fe3ead0eed05ac0adefb69a0` | Parent exact compile passed on integrated runtime head `1a97607332bb6237fb7516b35d1a292403fb2740`; repair is on main through PR #49. Reuse only if this same compile-repair topic directly resurfaces. |
+| **W05.1** | `Lane - PLAYER DISABLE / UNINSTALL ARCHITECTURE` | Launcher-off vanilla behavior + self-contained Biology uninstaller | **USABLE** | **MERGED** | Issue #44; PR #45 closed as superseded by integration; `agent/player-uninstall-vanilla-toggle` | Implementation is on main through PR #49. Issue #44 stays open for attended launcher ON/OFF and hard-uninstall acceptance. |
+| **W03.1** | `Thread 3 — E3 HUD, NPC nameplates, presentation settings` | E3-inspired neutral HUD + ambient NPC nameplates | **USABLE** | **MERGED** | Issue #40; PR #46 closed as superseded by integration; `agent/presentation-attended-followup` | Implementation is on main through PR #49. Issue #40 stays open for attended E3/nameplate/scanner acceptance. |
+| **W04.1** | `ATTENDED RUNTIME-AUTHORITY FOLLOW-UP` | Authoritative live Biology body runtime/session ownership | **USABLE** | **MERGED** | Issue #41; PR #47 closed as superseded by integration; `agent/body-runtime-attended-followup` | Implementation plus W06 compile repair are on main through PR #49. Issue #41 stays open for attended live-runtime acceptance. |
+| **W02.1** | `Thread 2 — Biology UI and body runtime` | Biology native Cyberware shell/drill-down/back/mode-state follow-up | **USABLE** | **MERGED** | Issue #39; PR #43 closed as superseded by integration; `agent/biology-ui-attended-followup` | Implementation is on main through PR #49. Issue #39 stays open for attended shell/navigation acceptance. |
 | **W01.1** | `Thread 1 — REDmod foundation` | Original REDmod package/deployment foundation | **USABLE** | **MERGED** | Issue #28; PR #31; historical branch `agent/redmod-foundation` | Foundation work is already on main. A new distinct REDmod goal should normally receive a new W## lane. |
 
 ## Current integration relationship
@@ -99,18 +99,19 @@ Existing conversations do not need retroactive renaming; this ledger maps their 
 ```text
 P01.1 parent
   |
-  +-- PR #49 integrated candidate
-  |     +-- #43 / W02.1 READY-PARENT
-  |     +-- #46 / W03.1 READY-PARENT
-  |     +-- #47 / W04.1 READY-PARENT
-  |     +-- #45 / W05.1 READY-PARENT
-  |     +-- #52 / W06.1 CLOSED
+  +-- canonical main now contains PR #49 integrated follow-ups
+  |     +-- W02.1 shell/UI MERGED
+  |     +-- W03.1 E3/nameplates MERGED
+  |     +-- W04.1 runtime authority MERGED
+  |     +-- W05.1 launcher/uninstaller MERGED
+  |     +-- W06.1 exact-compile repair MERGED
   |
   +-- exact CP2077 2.31 compile PASS on integrated runtime
-  +-- next: green current-head CI -> merge PR #49 -> one attended candidate
+  +-- post-merge main CI PASS
+  +-- next: build/deploy one exact main artifact for attended acceptance
 ```
 
-No separate implementation worker is currently active. The parent should not send the user back into ready/closed worker threads merely because those conversations remain usable.
+No separate implementation worker is currently active. The parent should not send the user back into merged worker threads merely because those conversations remain usable.
 
 ## Creating a new lane/thread
 
