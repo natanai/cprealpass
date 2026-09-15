@@ -58,6 +58,7 @@ if ($manifest.schemaVersion -ne 1 -or -not $manifest.ownedRuntime -or $manifest.
 
 $planFiles = [Collections.Generic.List[object]]::new()
 $components = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+$dependencyComponents = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
 
 function Add-PlanFile([string]$RelativePath, [string]$Owner, [string]$Component, [string]$ReplacePolicy) {
     $normalized = $RelativePath.Replace('\','/').TrimStart('/')
@@ -70,6 +71,10 @@ function Add-PlanFile([string]$RelativePath, [string]$Owner, [string]$Component,
 }
 
 # Materialize the runtime manifest into a game-root-shaped package directory.
+# Ownership follows the manifest's semantic origin field, not a historical component
+# string. This keeps project-original code first-party even while internal identifiers
+# migrate from RealPass toward Biology, and prevents our own runtime from being sent
+# through third-party license handling.
 foreach ($entry in @($manifest.files)) {
     $source = Resolve-SafeChildPath $project ([string]$entry.source)
     if ((Get-Sha256 $source) -ne [string]$entry.sha256) { throw "Runtime source hash mismatch: $source" }
@@ -77,20 +82,29 @@ foreach ($entry in @($manifest.files)) {
     $destination = Resolve-SafeChildPath $packageRoot $relative
     New-Item -ItemType Directory -Force -Path (Split-Path -Parent $destination) | Out-Null
     Copy-VerifiedPayload $source $destination ([string]$entry.sha256)
+
     $component = [string]$entry.component
-    [void]$components.Add($component)
-    $policy = if ($component -eq 'realpass') { 'realpass-owned' } else { 'approved-dependency-owned' }
-    $owner = if ($component -eq 'realpass') { 'realpass' } else { 'upstream:' + $component }
+    $origin = if ($entry.PSObject.Properties.Name -contains 'origin') { [string]$entry.origin } else { '' }
+    $projectOriginal = $origin -eq 'project-original'
+    if ($projectOriginal) {
+        [void]$components.Add('realpass-project-original')
+        $policy = 'realpass-owned'
+        $owner = 'realpass'
+    } else {
+        [void]$components.Add($component)
+        [void]$dependencyComponents.Add($component)
+        $policy = 'approved-dependency-owned'
+        $owner = 'upstream:' + $component
+    }
     Add-PlanFile $relative $owner $component $policy
 }
 
-# Include the repository's audited notice snapshots for each bundled generic
-# dependency. The package copies them under stable names rather than exposing vendor
-# or staging directories.
+# Include the repository's audited notice snapshots only for bundled generic
+# dependencies. Project-original runtime is intentionally excluded from this loop;
+# it is governed by the project's own license/notice boundary.
 $licenseRoot = Join-Path $packageRoot 'LICENSES'
 New-Item -ItemType Directory -Force -Path $licenseRoot | Out-Null
-foreach ($component in @($components | Sort-Object)) {
-    if ($component -eq 'realpass') { continue }
+foreach ($component in @($dependencyComponents | Sort-Object)) {
     $matches = @(Get-ChildItem -LiteralPath (Join-Path $project 'LICENSES') -File -Filter ($component + '-v*.txt'))
     if ($matches.Count -ne 1) { throw "Expected exactly one tracked license snapshot for bundled component '$component', found $($matches.Count)." }
     $destination = Join-Path $licenseRoot ($component + '.txt')
@@ -129,7 +143,7 @@ Add-PlanFile 'UNINSTALL.txt' 'realpass' 'realpass-project-original' 'realpass-ow
 
 $realpassDir = Join-Path $packageRoot 'realpass'
 New-Item -ItemType Directory -Force -Path $realpassDir | Out-Null
-$provenanceComponents = @($components | ForEach-Object { if ($_ -eq 'realpass') { 'realpass-project-original' } else { $_ } } | Sort-Object -Unique)
+$provenanceComponents = @($components | Sort-Object -Unique)
 $provenance = [ordered]@{
     schemaVersion = 1
     product = 'realpass'
