@@ -12,19 +12,22 @@
     "observedFileVersion": "2.3.1.0",
     "observedProductVersion": "2.31",
     "deployModuleObserved": true,
-    "requiredInvocationRule": "Biology tooling must pass -root=<Cyberpunk 2077> explicitly and must not rely on REDmod's default-root heuristic.",
+    "requiredInvocationRule": "Biology tooling must pass the Cyberpunk game root explicitly and validate REDmod output; exit code 0 alone is insufficient because attended probing proved root-ignore/no-mod false positives are possible.",
     "deployHelper": "tools/Deploy-BiologyRedmod.ps1",
-    "evidence": "docs/evidence/REDMOD-2.31-PROBE-2026-09-15.md"
+    "probeEvidence": "docs/evidence/REDMOD-2.31-PROBE-2026-09-15.md",
+    "acceptedDeploymentEvidence": "docs/test-runs/2026-09-15-8cf04566-redmod-deploy-preflight.md",
+    "biologyRecognitionProven": true,
+    "fiveStageDeploymentProven": true
   },
   "playerFlow": {
     "prerequisite": "Cyberpunk 2077 2.31 plus official REDmod support installed for the player's platform/store",
-    "firstInstall": "close game; copy the game-root-shaped Biology release contents into Cyberpunk 2077 so mods/Biology lands intact; run supported REDmod deployment/enable flow; launch normally through Steam after deployment",
-    "developerDeterministicDeploy": "pwsh ./tools/Deploy-BiologyRedmod.ps1 -GameRoot '<Cyberpunk 2077>' after the package contents have been installed; helper always invokes official redMod.exe with an explicit -root",
+    "firstInstall": "close game; copy the game-root-shaped Biology release into Cyberpunk 2077 so mods/Biology lands intact; use the supported REDmod enable/deploy flow; launch normally through Steam",
+    "developerDeterministicDeploy": "use tools/Deploy-BiologyRedmod.ps1 from the active Biology checkout after package installation; do not reconstruct raw redMod.exe quoting from historical chat/docs",
     "normalLaunch": "Steam / supported normal Cyberpunk launch after REDmod is enabled",
     "permanentBiologyLauncher": false,
-    "update": "close game; use the installed biology/build-manifest.json as the prior exact ownership record; replace/remove only accounted Biology/dependency-owned files; install the newer package; redeploy REDmod when package content changed",
-    "disable": "disable REDmod-compatible mods through the supported launcher/store flow; this is not uninstall, save deletion, or proof that supplemental scripting/framework files are unloaded without the documented session boundary",
-    "uninstall": "close game; remove only exact paths listed by biology/build-manifest.json whose ownership is accounted for; remove empty Biology-owned directories only; never recursively delete shared framework/game roots"
+    "update": "close game; use biology/build-manifest.json as the prior exact ownership record; replace/remove only accounted Biology/dependency-owned files; install the newer package; redeploy REDmod when package content changed",
+    "disable": "target: REDlauncher Enable mods OFF yields Biology-inactive vanilla-play behavior after issue #44 proves every supplemental route; disabling is not uninstall or save deletion",
+    "uninstall": "target: self-contained Uninstall Biology.exe validates the owner manifest/hashes, removes only safely proven files, preserves saves/settings by default, and refreshes REDmod state"
   },
   "releaseRootFiles": [
     "INSTALL.txt",
@@ -38,40 +41,22 @@
   "supplementalRuntime": {
     "firstPartyRoot": "r6/scripts/CyberpunkRealism",
     "firstPartyRoute": "REDSCRIPT-BETTER",
-    "retainedGenericComponents": [
-      "redscript",
-      "mod-settings",
-      "archivexl",
-      "red4ext"
-    ],
+    "retainedGenericComponents": ["redscript", "mod-settings", "archivexl", "red4ext"],
     "ownershipRule": "Supplemental files outside mods/Biology are owned/accounted per file. Their parent directories remain shared and are never recursively Biology-owned.",
-    "settingsRemovalBlocker": "Mod Settings remains the current accessible/persistent provider for the two already provider-neutral Biology booleans. ArchiveXL and RED4ext remain only transitively. Route replacement to Lane C; do not redesign settings semantics in packaging."
+    "settingsRemovalBlocker": "Mod Settings remains the current accessible/persistent preference provider. ArchiveXL and RED4ext remain only transitively. Remove or gate the chain only through a current accepted provider/activation design; issue #44 owns launcher-off/hard-uninstall interactions."
   },
   "ownerManifest": {
     "path": "biology/build-manifest.json",
     "ownerValue": "Biology",
-    "requiredFileProperties": [
-      "path",
-      "sha256",
-      "owner",
-      "component",
-      "route",
-      "replacePolicy"
-    ],
-    "allowedReplacePolicies": [
-      "biology-owned",
-      "approved-dependency-owned"
-    ],
-    "rule": "Every ordinary installed payload file is listed exactly once. SHA256SUMS.txt hashes the finalized owner manifest and every final artifact file except SHA256SUMS.txt itself. Uninstall removes exact accounted files and then empty Biology-owned directories only."
+    "requiredFileProperties": ["path", "sha256", "owner", "component", "route", "replacePolicy"],
+    "allowedReplacePolicies": ["biology-owned", "approved-dependency-owned"],
+    "rule": "Every ordinary installed payload file is listed exactly once. SHA256SUMS.txt hashes the finalized owner manifest and every final artifact file except SHA256SUMS.txt itself. Hard uninstall may remove only safely validated owned files and then empty owned directories."
   },
-  "ownedRoots": [
-    "mods/Biology",
-    "biology"
-  ],
+  "ownedRoots": ["mods/Biology", "biology"],
   "conditionalSupplementalRoots": [
     {
       "root": "r6/scripts/CyberpunkRealism",
-      "condition": "Current merged Biology runtime is REDSCRIPT-BETTER. Exact files must be listed individually in the owner manifest."
+      "condition": "Current Biology runtime is REDSCRIPT-BETTER. Exact files must be listed individually in the owner manifest."
     },
     {
       "root": "engine/tools",
@@ -87,7 +72,7 @@
     },
     {
       "root": "red4ext",
-      "condition": "Only exact pinned temporary RED4ext/ArchiveXL/Mod Settings files listed by the owner manifest while the Lane C settings-provider blocker remains. Directory remains shared."
+      "condition": "Only exact pinned temporary RED4ext/ArchiveXL/Mod Settings files listed by the owner manifest while a current accepted consumer remains. Directory stays shared; #44 must account for launcher-off behavior."
     },
     {
       "root": "bin/x64",
@@ -98,48 +83,50 @@
       "condition": "Tracked redistribution notice snapshots for exactly the bundled generic components."
     }
   ],
-  "neverRecursivelyOwnedRoots": [
-    "bin",
-    "archive",
-    "engine",
-    "r6",
-    "red4ext"
-  ],
+  "neverRecursivelyOwnedRoots": ["bin", "archive", "engine", "mods", "r6", "red4ext"],
   "preflight": [
-    "game-must-be-closed-for-installer-assisted-writes",
+    "game-must-be-closed-for-installer-or-uninstaller-writes",
     "supported-game-version-must-match-2.31",
     "integrated-redscript-exact-compile-must-pass-before-package-emission",
     "official-redmod-presence-and-version-must-be-confirmed-before-redmod-deploy",
     "artifact-sha256-and-file-owner-manifest-must-verify",
-    "unknown-collision-must-fail-closed-for-installer-assisted-updates",
+    "unknown-collision-must-fail-closed-for-assisted-updates",
+    "changed-owned-file-must-not-be-auto-deleted",
     "blocked-component-must-not-be-present"
   ],
   "cleanRoom": {
     "freshCanonicalSourceForAttendedBuild": true,
-    "iterationRequiresRecordedVanillaBaseline": true,
-    "milestoneReinstallRequiredForStructuralPackageOrDependencyChange": true,
-    "currentIntegratedAssemblyRequiresMilestoneBeforeBroadAcceptance": true,
-    "reason": "This candidate changes package authority to REDmod-first and narrows the dependency/runtime layout from the pre-refactor package. The first attended acceptance must therefore use the MILESTONE CLEAN-ROOM workflow coordinated by the parent integration thread."
+    "iterationRequiresAccountedPriorBiologyInstall": true,
+    "milestoneReinstallRequiredForStructuralPackageOrDependencyChangeOrUnexplainedResidue": true,
+    "firstIntegratedRedmodMilestoneCompleted": true,
+    "fullSteamReinstallIsNormalUninstall": false,
+    "reason": "The first REDmod-first structural milestone has completed its clean install/build/deploy proof. Future full reinstalls are reserved for structural changes, unexplained residue or deliberate release-level clean-room confidence; normal Biology removal is being moved to the manifest-safe player uninstaller."
   },
   "stateAndSaves": {
     "saveDataIsNeverInArtifact": true,
     "disableIsNotSaveReset": true,
     "uninstallIsNotSaveRollback": true,
-    "fileOwnershipDoesNotAuthorizeSaveDeletion": true
+    "fileOwnershipDoesNotAuthorizeSaveDeletion": true,
+    "settingsPreservedByDefaultOnUninstall": true
   },
+  "acceptedDirectGameGates": [
+    "official REDmod tool/version/deploy module",
+    "Biology package recognition on Cyberpunk 2077 2.31",
+    "real five-stage REDmod deployment using corrected explicit-root helper"
+  ],
   "remainingDirectGameGates": [
-    "Biology REDmod recognition/deployment",
-    "enable/disable behavior",
+    "launcher enable/disable and Biology-inactive OFF behavior",
     "normal relaunch persistence",
-    "clean uninstall/reset against recorded vanilla baseline",
-    "safe PKG-05 REDmod overlap/precedence fixture"
+    "self-contained hard uninstall and residue verification",
+    "safe REDmod overlap/precedence fixture",
+    "attended body/UI/presentation/gameplay acceptance"
   ],
   "rules": [
     "The repository root is not a player package.",
     "mods/Biology is the authoritative first-party REDmod namespace.",
-    "Shared framework/game roots are never deleted wholesale, even when exact dependency files are bundled by the integrated candidate.",
+    "Shared framework/game roots are never deleted wholesale, even when exact dependency files are bundled.",
     "The playable builder may read the installed supported game for version/exact compilation but may not deploy or modify it.",
-    "If the installed owner manifest is missing or hashes/collisions cannot be accounted for, reset fails closed and escalates to the documented milestone clean-room procedure.",
+    "If ownership/hashes/collisions cannot be accounted for, automated removal fails closed rather than guessing.",
     "No successful CI/build result is live-game acceptance."
   ]
 }

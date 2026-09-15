@@ -1,6 +1,6 @@
 # Biology — agreed goals ledger
 
-Last updated: 2026-09-14
+Last updated: 2026-09-15
 Status: **canonical product-intent source of truth**
 
 This file records the goals and product decisions explicitly agreed with the project owner. It exists so a new ChatGPT/Codex/local agent can understand the intended product without reconstructing chat history.
@@ -42,7 +42,7 @@ For stability, prefer narrow hooks at semantic native/official boundaries and Bi
 ### G-005 — “Biology” is the organizing product concept, not a narrow needs menu — LOCKED
 The Biology name intentionally covers the complete causal body experience. Food/hydration, sleep/fatigue, elimination, pain, injury, treatment, combat consequences, clothing/armor protection and relevant cyberware all belong when they determine what happens to the body.
 
-This does **not** expand the product into unrelated economy/weather/travel/hardship systems. A feature belongs because it participates in the authored physical body/protection/combat model, not because it can be labeled “realistic.”
+This does **not** expand the product into unrelated economy, weather, generic hardship, travel restrictions, random encounters or difficulty systems. A feature belongs because it participates in the authored physical body/protection/combat model, not because it can be labeled “realistic.”
 
 ---
 
@@ -92,6 +92,15 @@ Do not claim universal compatibility or precedence over third-party redscript wr
 The preferred finished identity is one recognizable `mods/Biology` REDmod package plus only those extra generic framework files that remain strictly unavoidable after the dependency audit.
 
 A user should be able to understand what belongs to Biology, how to enable it, and how to remove it without knowing the project's development history. Avoid unexplained loose legacy payload spread across the game tree.
+
+### G-017 — Investigate Cyberpunk/CDPR's official capability before inheriting the modding ecosystem's workaround — LOCKED
+For foundational runtime, UI, packaging, deployment, resource, tweak, animation/audio, persistence and lifecycle problems, Biology should first investigate what **vanilla Cyberpunk and the installed official REDmod toolchain actually expose** on the supported game build.
+
+Established community practice is not proof that the official route is missing or inferior. Agents may directly inspect the user's supported game installation and invoke the game-provided REDmod tools from repository-owned PowerShell probes when that can answer the question more authoritatively.
+
+A non-official/community framework or workaround should be accepted only after direct/official evidence shows that the vanilla/REDmod route cannot provide the needed semantics cleanly, is materially more brittle/broad, or otherwise creates a larger compatibility surface. When a fallback remains, preserve the evidence explaining why.
+
+This policy deliberately favors understanding Cyberpunk and REDmod on their own terms even when that means re-investigating a problem that other modders already solved differently.
 
 ---
 
@@ -415,3 +424,4 @@ These are **not** permission to change the locked goals above. They are implemen
 9. Do not present a release as self-contained while the user still has to understand/install a manual dependency stack that could reasonably have been removed.
 10. Preserve vanilla item/system identity unless a new explicit product decision says otherwise; prefer realistic Biology mechanics beneath CDPR's existing names/assets/interactions over importing another mod's renames.
 11. When safe parallel work exists, proactively offer a branch handoff instead of silently serializing the entire undertaking.
+12. Before accepting a community/framework workaround for a foundational capability, directly investigate the supported Cyberpunk/CDPR/REDmod route and preserve the reason when a fallback is still necessary.

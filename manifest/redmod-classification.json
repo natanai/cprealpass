@@ -15,85 +15,85 @@
       "id": "biology-redmod-package-identity",
       "scope": "mods/Biology/info.json and official REDmod package root",
       "classification": "REDMOD-NATIVE",
-      "reason": "Biology's official first-party package identity lives under the game's REDmod mods directory."
+      "reason": "Biology's first-party package identity lives under the official REDmod mods directory and has been recognized by the supported 2.31 tool."
     },
     {
       "id": "integrated-biology-player-package",
       "scope": "tools/Build-BiologyPackage.ps1 game-root-shaped playable candidate and biology ownership/provenance metadata",
       "classification": "REDMOD-NATIVE",
-      "reason": "The integrated release is REDmod-first: mods/Biology is the first-party identity and REDmod deployment is the official package/load authority, with individually justified supplemental runtime files where REDmod whole-file replacement would be less robust."
+      "reason": "The integrated release is REDmod-first: mods/Biology is the first-party identity and official REDmod deployment is proven, with individually justified supplemental files where whole-file replacement would be less robust."
     },
     {
       "id": "biology-archive-resources",
       "scope": "future Biology-owned archive/resource payload",
       "classification": "REDMOD-NATIVE",
-      "reason": "REDmod natively stages archives from a mod package. No first-party archive payload is required by the current merged candidate."
+      "reason": "REDmod natively stages archives from a mod package. No first-party archive payload is required by the current candidate."
     },
     {
       "id": "biology-tweak-source",
       "scope": "future Biology-owned tweak source",
       "classification": "REDMOD-NATIVE",
-      "reason": "REDmod natively compiles tweak source. No first-party tweak source is required by the current merged candidate."
+      "reason": "REDmod natively compiles tweak source. No first-party tweak source is required by the current candidate."
     },
     {
       "id": "biology-audio",
       "scope": "future Biology-owned customSounds payload",
       "classification": "REDMOD-NATIVE",
-      "reason": "REDmod has a native customSounds route; current Biology source contains no custom audio payload."
+      "reason": "REDmod has a native customSounds route; Biology currently has no custom audio payload."
     },
     {
       "id": "biology-animation-and-ui-resources",
       "scope": "future first-party cooked animation/UI/resource archives",
       "classification": "REDMOD-NATIVE",
-      "reason": "Cooked first-party resource payload belongs under Biology's REDmod identity when such assets actually exist; runtime controller behavior remains separately classified."
+      "reason": "Cooked first-party resources belong under Biology's REDmod identity when they actually exist; runtime controller behavior remains separately classified."
     },
     {
       "id": "current-project-owned-redscript-core",
-      "scope": "complete merged src/redscript/CyberpunkRealism/*.reds project-owned models/runtime classes without whole-file vanilla replacement",
+      "scope": "src/redscript/CyberpunkRealism/*.reds project-owned models/runtime classes without whole-file vanilla replacement",
       "classification": "REDSCRIPT-BETTER",
-      "reason": "The integrated runtime is additive project-owned REDscript and shares narrow wrapper seams. Forcing it into REDmod's vanilla-path .script replacement model would broaden replacement ownership rather than reduce compatibility surface."
+      "reason": "Biology's runtime is additive project-owned REDscript and uses narrow wrapper seams. Forcing it into vanilla-path REDmod .script replacement would broaden replacement ownership."
     },
     {
       "id": "current-native-hook-seams",
       "scope": "hook files enumerated in manifest/native-seams.json using @wrapMethod/@replaceMethod/@addMethod/@addField",
       "classification": "REDSCRIPT-BETTER",
-      "reason": "These seams intentionally intercept small game-facing methods. Whole-file REDmod script replacement would copy/own substantially more vanilla implementation for the same behavior. Exact compilation against 2.31 is a mandatory integrated build gate."
+      "reason": "These seams intercept small game-facing methods. Whole-file replacement would copy/own substantially more vanilla implementation for the same behavior. Exact compilation against 2.31 remains a mandatory build gate."
     },
     {
       "id": "redmod-whole-file-script-replacement-for-current-hooks",
-      "scope": "copying vanilla .script files from tools/redmod/scripts solely to replace current wrapper/additive hooks",
+      "scope": "copying vanilla .script files solely to replace current wrapper/additive hooks",
       "classification": "REDMOD-POSSIBLE-BUT-BRITTLE",
-      "reason": "Official REDmod supports modified vanilla-path scripts, but conflict is at file granularity and a game patch can invalidate copied implementation unrelated to Biology's narrow hook."
+      "reason": "Official REDmod supports modified vanilla-path scripts, but conflict is at file granularity and game patches can invalidate copied implementation unrelated to Biology's narrow hook."
     },
     {
       "id": "biology-menu-and-hud-runtime-code",
-      "scope": "merged project-owned Ink/REDscript controller/runtime behavior for Biology body shell, HUD and nameplates",
+      "scope": "Biology-owned Ink/REDscript controller/runtime behavior for body shell, HUD and nameplates",
       "classification": "REDSCRIPT-BETTER",
-      "reason": "PR #32 and PR #33 implement these surfaces as Biology-owned additive/wrapper REDscript without requesting a new framework or REDmod asset dependency. Whole vanilla-file replacement would broaden their seam."
+      "reason": "Current body/menu and presentation work uses Biology-owned additive/wrapper REDscript with native game authority. Whole vanilla-file replacement would broaden the compatibility seam."
     },
     {
       "id": "transitional-mod-settings-provider",
-      "scope": "RealpassSettings.reds ModSettings runtimeProperty/listener adapter for Enable Biology and E3-inspired HUD + nameplates",
+      "scope": "RealpassSettings.reds ModSettings adapter for provider-neutral Biology/E3 preferences",
       "classification": "REMOVE/RETHINK",
-      "reason": "The setting semantics are now Biology-owned/provider-neutral, but PR #33 did not implement another accessible persistent provider. Mod Settings is therefore retained only for this playable candidate so the parent can test master-disable and E3 ON/OFF. Replacement implementation belongs to the presentation/settings lane."
+      "reason": "The semantics are Biology-owned/provider-neutral. Mod Settings remains only as the current accessible persistent provider and should leave when a smaller accepted provider/boundary replaces it."
     },
     {
       "id": "settings-provider-accessibility-blocker",
-      "scope": "player-accessible persistence/UI for the existing two Biology-owned Boolean settings",
+      "scope": "player-accessible persistence/UI for the small Biology-owned preference surface",
       "classification": "REMOVE/RETHINK",
-      "reason": "Packaging can remove Mod Settings/ArchiveXL/RED4ext only after Lane C supplies and accepts a replacement provider or deliberately moves the whole-mod boundary to install/deploy. This lane must not invent a new settings UI."
+      "reason": "Dependency removal must preserve accessible preference semantics or intentionally move whole-mod activation to the launcher/install boundary. Issue #44 owns launcher-off activation interactions; #40 owns attended E3 presentation behavior."
     },
     {
       "id": "redscript-framework",
       "scope": "redscript 0.5.31 runtime/compiler plumbing",
       "classification": "REDSCRIPT-BETTER",
-      "reason": "Directly consumed by the merged project-owned additive/wrapper runtime. It is the only current supplemental framework with a direct Biology feature-level justification."
+      "reason": "Directly consumed by Biology-owned additive/wrapper runtime and native seams."
     },
     {
       "id": "mod-settings-framework",
       "scope": "Mod Settings 0.2.21",
       "classification": "REMOVE/RETHINK",
-      "reason": "Temporarily bundled as the current accessible/persistent adapter for two provider-neutral Biology booleans; remove after Lane C replacement-provider acceptance."
+      "reason": "Temporarily bundled as the current accessible/persistent preference adapter; remove when a current accepted replacement/boundary exists."
     },
     {
       "id": "archivexl-framework",
@@ -105,7 +105,7 @@
       "id": "red4ext-framework",
       "scope": "RED4ext 1.30.0",
       "classification": "REMOVE/RETHINK",
-      "reason": "No Biology-owned DLL/plugin consumer; temporarily bundled only as transitive plumbing for ArchiveXL/Mod Settings."
+      "reason": "No Biology-owned DLL/plugin consumer; temporarily bundled only as transitive plumbing for ArchiveXL/Mod Settings. Launcher-off behavior must be accounted for by #44."
     },
     {
       "id": "tweakxl-framework",
@@ -129,19 +129,19 @@
       "id": "darkfuture-runtime",
       "scope": "Dark Future executing payload",
       "classification": "REMOVE/RETHINK",
-      "reason": "Reference/provenance only; forbidden from Biology runtime."
+      "reason": "Research/provenance only; forbidden from Biology runtime."
     },
     {
       "id": "project-e3-runtime",
       "scope": "Project E3 executing payload",
       "classification": "REMOVE/RETHINK",
-      "reason": "Reference/provenance only; forbidden from Biology runtime. PR #33's presentation is Biology-owned."
+      "reason": "Local-only design/provenance reference for #40; Project E3 runtime content is forbidden from Biology artifacts."
     },
     {
       "id": "legacy-root-package-builders",
-      "scope": "manifest/package.json, tools/Build-Package.ps1 and tools/Build-CleanRoomTestPackage.ps1 as the active final architecture",
+      "scope": "manifest/package.json, tools/Build-Package.ps1 and tools/Build-CleanRoomTestPackage.ps1 as final player architecture",
       "classification": "REMOVE/RETHINK",
-      "reason": "Build-BiologyPackage.ps1 supersedes them as the intended integrated candidate route, but PKG-06 forbids deleting/retiring the known working fallback until the REDmod-first package exact-compiles, deploys, and reaches equivalent or better reproducibility in direct testing."
+      "reason": "Build-BiologyPackage.ps1 is the canonical integrated player-candidate route and has now exact-compiled, installed and deployed through official REDmod. Legacy development/fallback builders must remain clearly labeled and may be retired when no current test/recovery consumer requires them."
     },
     {
       "id": "legacy-loose-archive-root",
@@ -151,28 +151,29 @@
     },
     {
       "id": "official-redmod-cli-on-supported-2.31-install",
-      "scope": "actual installed tools/redmod/bin/redMod.exe path/version/help contract",
+      "scope": "installed tools/redmod/bin/redMod.exe path/version/help contract",
       "classification": "REDMOD-NATIVE",
-      "reason": "Direct read-only probe confirmed tools/redmod/bin/redMod.exe, file version 2.3.1.0 / product version 2.31, deploy module and global -root parameter. Deterministic tooling always passes -root explicitly.",
+      "reason": "Direct probe confirmed the installed official REDmod tool, deploy module and root option. Biology's helper owns safe argument construction and fail-closed output validation.",
       "evidence": "docs/evidence/REDMOD-2.31-PROBE-2026-09-15.md"
     },
     {
       "id": "biology-redmod-recognition-on-supported-2.31-install",
       "scope": "actual recognition/deployment of the integrated mods/Biology candidate",
-      "classification": "UNKNOWN — NEEDS DIRECT GAME PROBE",
-      "reason": "The package is now structurally playable, but recognition/deploy success must be observed against the supported install after merge; CI cannot prove it."
+      "classification": "REDMOD-NATIVE",
+      "reason": "Attended preflight on Cyberpunk 2077 2.31 observed 'Found mod Biology', all five deploy stages, mods.json output and successful completion using the repaired explicit-root helper.",
+      "evidence": "docs/test-runs/2026-09-15-8cf04566-redmod-deploy-preflight.md"
     },
     {
       "id": "redmod-conflict-precedence-on-supported-2.31-install",
-      "scope": "actual precedence when two enabled REDmods overlap the same safe fixture file",
+      "scope": "actual precedence when enabled REDmods overlap the same safe fixture file",
       "classification": "UNKNOWN — NEEDS DIRECT GAME PROBE",
-      "reason": "Official documentation describes order semantics, but PKG-05 requires harmless direct local evidence before Biology depends on that precedence."
+      "reason": "Official documentation describes order semantics, but the safe overlap/precedence fixture has not yet been accepted directly."
     },
     {
       "id": "native-extension-last-resort",
       "scope": "future Biology-owned or generic DLL/native hook",
       "classification": "REQUIRES-NATIVE-EXTENSION",
-      "reason": "Reserved for a concrete feature that cannot be implemented safely through vanilla semantics, REDmod, or retained redscript. No current merged Biology feature proves such a requirement."
+      "reason": "Reserved for a concrete feature that cannot be implemented safely through vanilla semantics, REDmod, or retained redscript. No current Biology feature proves such a requirement."
     }
   ]
 }

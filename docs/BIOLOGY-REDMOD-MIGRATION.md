@@ -1,31 +1,29 @@
-# Biology — REDmod-first product and migration plan
+# Biology — REDmod-first product and migration architecture
 
-Status: **canonical migration direction**
-Last updated: **2026-09-15**
-Current repository name: `cprealpass` (may remain during migration)
-Player-facing product name: **Biology**
+Status: **canonical architecture direction**  
+Last updated: **2026-09-15**  
+Repository: `natanai/cprealpass`  
+Player-facing product/package identity: **Biology**
 
-> **Active execution:** read `PRE-REDMOD-LIVE-BASELINE-2026-09-15.md` and `ACTIVE-REDMOD-ROADMAP.md` before starting migration work. The active roadmap incorporates attended evidence and supersedes any older generic lane split where they differ.
+This document defines architecture. It intentionally does **not** define current worker branch names. For active work, read root `ROADMAP.md`, `ACTIVE-REDMOD-ROADMAP.md`, and current GitHub issues/PRs.
 
 ## Decision
 
-The finished overhaul is **Biology**, not a generic “realism pack.” Biology is one coherent systemic overhaul built around the premise that V and supported actors are physical bodies rather than collections of unrelated RPG meters.
+Biology is one coherent systemic overhaul centered on the premise that V and supported actors are physical bodies rather than disconnected RPG meters.
 
-That product boundary intentionally includes systems that may not look biological in isolation when they materially determine what happens to the body:
+That product boundary can include systems that materially determine what happens to the body:
 
 - metabolism, food, hydration, fatigue, sleep, elimination and hygiene where retained;
 - pain, analgesia, injury, bleeding, impairment, treatment and recovery;
-- weapons, projectiles, impact regions and physical combat consequences;
+- projectiles, impact regions and physical combat consequences;
 - clothing, armor, material protection, coverage and wear;
 - cyberware as installed structure inside/alongside the body;
-- restrained UI, audio and visual feedback required to perceive those systems;
-- physical outfit/loadout behavior where the visible/equipped item must be the same item encountered by protection logic.
+- restrained UI/audio/visual feedback needed to perceive those systems;
+- physical outfit/loadout behavior where visible/equipped protection must be the same physical state used by simulation.
 
-This is not permission to expand into unrelated economy, weather, hardship, travel restriction, random encounter or “realism for realism's sake” systems. A feature belongs when it supports the authored body/protection/combat model.
+It does not automatically expand into unrelated economy, weather, generic hardship, travel restrictions, random encounters or difficulty systems.
 
 ## Product hierarchy
-
-The conceptual product map is:
 
 ```text
 BIOLOGY
@@ -37,299 +35,234 @@ BIOLOGY
 |   +-- pain / sensation
 |
 +-- Injury
-|   +-- tissue
-|   +-- bone
-|   +-- bleeding
-|   +-- impairment
+|   +-- tissue / bone / bleeding / impairment
 |   +-- treatment / recovery
 |
-+-- Combat
-|   +-- weapon / projectile
-|   +-- impact region
-|   +-- material encounter
-|   +-- physical injury consequence
-|
-+-- Protection
-|   +-- clothing
-|   +-- armor
-|   +-- coverage
-|   +-- wear / condition
++-- Combat / Protection
+|   +-- projectile / impact region
+|   +-- material encounter / penetration
+|   +-- clothing / armor / coverage / wear
 |
 +-- Cyberware
     +-- installed equipment
-    +-- cybernetic structure
-    +-- mechanical damage
+    +-- cybernetic structure / damage
     +-- biological interaction
 ```
 
-The **BIOLOGY** game screen remains the player-facing body home. Cyberware remains accessible as a Biology submode because it is installed equipment within the body, not the parent concept.
+The **BIOLOGY** game screen is the player-facing body home. Cyberware remains an internal mode because it is installed equipment within the shared body experience, not the parent product concept.
 
 ## Distribution objective
 
-The preferred finished installation is one recognizable official REDmod package:
+The preferred release is centered on one recognizable official REDmod package:
 
 ```text
 Cyberpunk 2077/
 └── mods/
     └── Biology/
         ├── info.json
-        ├── scripts/       # only where official REDmod script replacement is appropriate
-        ├── tweaks/        # REDmod/TweakDB source where appropriate
-        ├── archives/      # Biology-owned assets/resources where appropriate
+        ├── scripts/       # only when accepted whole-file REDmod script routing is robust
+        ├── tweaks/        # accepted Biology tweak sources
+        ├── archives/      # Biology-owned resources
         └── customSounds/  # only if Biology owns custom sound content
 ```
 
-The exact folder contents are evidence-driven. Do not manufacture a REDmod subfolder merely to fill the shape.
+Do not manufacture REDmod subtrees simply to match a diagram. The package shape follows actual accepted routes.
 
-The official REDmod toolchain is the **first routing option** for systems it can own cleanly. A finished Biology release should be as self-contained and self-reliant as practical and should avoid requiring players to assemble a stack of community gameplay mods or framework dependencies.
+The first integrated milestone has already proven that official REDmod can recognize and deploy the Biology package on Cyberpunk 2077 2.31. Future work must preserve that proof while fixing runtime/UI/presentation behavior.
 
 ## Dependency ladder
 
-For every runtime requirement, prefer the highest viable layer:
+For each runtime requirement, prefer:
 
-1. **Vanilla Cyberpunk 2077 semantic authority** — native item/system/state/event/controller behavior when it can carry the intended Biology behavior.
-2. **Official REDmod** — packaging, archives, tweak sources, sound/animation paths, and script replacement only where that replacement is genuinely the robust option.
-3. **Biology-owned additive/wrapper scripting** — currently redscript where a narrow wrapper/additive seam is materially safer than copying/replacing an entire vanilla script file.
-4. **Generic native/framework extension** — RED4ext/ArchiveXL/Codeware/TweakXL/Mod Settings/etc. only when a required Biology behavior cannot be implemented robustly above and the dependency has a clear, isolated benefit.
-5. **Anything more invasive/version-sensitive** — exceptional and requires explicit justification, compatibility evidence, and a narrow adapter.
+1. **Vanilla Cyberpunk semantic authority** — native item/system/state/event/controller behavior when it can carry the intended semantics.
+2. **Official REDmod** — package identity, archives/resources, tweaks, sound/animation paths, and whole-file script replacement only when genuinely robust.
+3. **Biology-owned additive/wrapper scripting** — currently redscript where a narrow wrapper/additive seam is materially safer than replacing an entire vanilla script file.
+4. **Generic framework/native extension** — only when a current Biology feature demonstrably requires it.
+5. **More invasive/version-sensitive mechanisms** — isolated exceptions with direct compatibility evidence and a narrow adapter.
 
-A dependency does **not** survive merely because the current build already uses it. The REDmod migration audit must prove why each dependency remains necessary.
+A dependency does not survive because an older build happened to use it.
+
+## Official-source-first investigation gate
+
+The hierarchy above is also an **investigation order**, not merely a packaging preference.
+
+When Biology needs a capability, agents must first ask what Cyberpunk and the installed CDPR REDmod toolchain actually provide before copying the established community/modder solution. The fact that most existing mods use redscript, RED4ext, CET, ArchiveXL, TweakXL, Codeware, custom launchers or another common workaround is **not evidence that the official route is unavailable, incomplete or less stable**.
+
+The supported local installation is authoritative evidence. For Cyberpunk 2077 2.31, the game-provided REDmod tool is directly available under:
+
+```text
+C:\Games\Steam\steamapps\common\Cyberpunk 2077\tools\redmod\bin\redMod.exe
+```
+
+Repository tooling may invoke it directly from PowerShell when a read-only capability probe or supported deploy operation is useful. Use `docs/LOCAL-OPERATOR-COMMANDS.md`; `tools/Probe-OfficialRedmod.ps1` is the canonical read-only capability probe.
+
+Before adopting or retaining a non-official workaround for a foundational seam, establish at least one of these with direct/official evidence:
+
+- REDmod/vanilla does not expose the needed capability;
+- the official route would require materially broader replacement/ownership than the narrow Biology seam;
+- the official route fails a supported-build compatibility test;
+- the official route cannot satisfy required runtime/lifecycle semantics;
+- the official route creates a documented conflict/patch surface larger than the fallback.
+
+Only then should the narrower fallback be treated as justified architecture. Community examples can help identify possibilities, but they do not decide the route.
+
+This principle intentionally means Biology may sometimes re-investigate problems that the modding ecosystem already “solved.” The goal is to understand Cyberpunk and REDmod on their own terms and build the smallest stable compatibility boundary around the official game.
 
 ## Why REDmod-first does not mean REDmod-only
 
-Official REDmod script modding uses modified `.script` files at their vanilla paths and resolves conflicts on a per-file basis. That can be appropriate when Biology intentionally owns an entire file/resource, but it can also be brittle across patches because a copied 2.31 vanilla file can become stale after CDPR changes unrelated code in that same file.
+Official-source-first does **not** mean blindly forcing every behavior through REDmod.
 
-A narrow additive/wrapper seam may therefore be **more patch-resilient** than an official whole-file replacement. The project must choose the route that minimizes the actual compatibility surface, not the route with the most official branding.
+Official REDmod whole-file script routing can increase patch/conflict surface when it requires copying a larger vanilla implementation than Biology actually needs.
 
-The migration question for every current mechanism is therefore:
+Therefore the engineering question is:
 
 ```text
-Does official REDmod express this behavior cleanly without copying more vanilla implementation than necessary?
+After directly checking the official/native option, does it express this behavior cleanly without increasing the compatibility surface compared with a narrower Biology-owned seam?
 ```
 
-If yes, migrate it to REDmod. If no, keep the smallest justified Biology-owned fallback.
+If yes, use REDmod/native authority. If not, document the reason and keep the smallest evidenced Biology-owned fallback.
 
-## Required migration classification
+## Runtime-route classifications
 
-Every current runtime feature/file family must be audited and assigned one of these classifications before the REDmod migration is considered designed:
+Use these classifications when auditing a feature/file family:
 
-- `REDMOD-NATIVE` — official REDmod is clearly the preferred final route.
-- `REDMOD-POSSIBLE-BUT-BRITTLE` — technically possible through REDmod, but likely increases patch/conflict surface compared with a narrower seam.
-- `REDSCRIPT-BETTER` — an additive/wrapper redscript seam is demonstrably narrower/more resilient than REDmod whole-file replacement.
-- `REQUIRES-NATIVE-EXTENSION` — the feature cannot be implemented adequately through vanilla/REDmod/redscript and requires a generic native framework.
-- `REMOVE/RETHINK` — the current mechanism exists because of historical architecture and should disappear rather than be migrated.
-- `UNKNOWN — NEEDS DIRECT GAME PROBE` — do not guess; use `reference/cyberpunk/` or request a targeted local inspection.
+- `REDMOD-NATIVE`
+- `REDMOD-POSSIBLE-BUT-BRITTLE`
+- `REDSCRIPT-BETTER`
+- `REQUIRES-NATIVE-EXTENSION`
+- `REMOVE/RETHINK`
+- `UNKNOWN — NEEDS DIRECT GAME PROBE`
+
+`UNKNOWN — NEEDS DIRECT GAME PROBE` is preferable to prematurely inheriting a community workaround.
 
 The audit should cover at minimum:
 
-- body clock/state and persistence;
-- food/consumable routing;
+- body clock/state/persistence;
+- consumable routing;
 - inventory/equipment transactions;
 - Biology/Cyberware UI shell and navigation;
 - injury/bleeding/pain/impairment hooks;
 - combat/projectile/damage interception;
 - armor/clothing/outfit authority;
 - health-bar/nameplate/HUD presentation;
-- E3-inspired visual presentation;
-- settings/master-switch persistence;
-- professional/field care interactions;
-- any archives, tweaks, localization, sounds or animation dependencies;
-- build/install/uninstall and load-order behavior.
+- settings/activation persistence;
+- care interactions;
+- archives/tweaks/localization/sounds/animation;
+- build/install/disable/uninstall and load-order behavior.
 
-The active three-lane plan divides this audit by consumer: Lane A owns package/dependency classification, while Lane B and Lane C must classify their own UI/runtime and presentation seams and report concrete dependency requirements back to Lane A.
+## Authoritative overlap policy
 
-## Authoritative-overlap policy
+Biology should be authoritative for systems it explicitly owns, while minimizing changes outside those systems.
 
-Biology is intended to be **authoritative for the systems it explicitly owns**. If another mod alters the same REDmod-controlled file/resource, Biology's deployment/load-order policy should prefer Biology where REDmod can deterministically express that precedence.
+Where REDmod can deterministically express precedence for overlapping REDmod-controlled resources, package/deploy policy may use that precedence. Do not claim universal dominance over redscript/CET/RED4ext/native hooks or other mechanisms outside REDmod's per-file model.
 
-However, do **not** claim universal dominance over every possible Cyberpunk mod. Another mod may use redscript wrappers, RED4ext/CET/native hooks, runtime TweakDB mutation, or another mechanism outside REDmod's per-file conflict model.
-
-The compatibility promise is therefore:
-
-> Biology owns the physical systems it changes, minimizes edits outside those systems, and uses explicit deterministic precedence where the official loader can provide it. Unrelated mods should remain untouched; overlapping mods may be incompatible unless their behavior composes cleanly.
-
-Do not broaden Biology's file footprint merely to “win” conflicts.
+A self-contained mod is not a mod that forcibly overrides everything.
 
 ## Self-contained identity and uninstallability
 
-The final package should make it obvious which files belong to Biology.
+The target release should make ownership obvious:
 
-Preferred end state:
-
-- one `mods/Biology` REDmod identity;
+- one `mods/Biology` identity;
 - one product/version/provenance identity;
 - no Dark Future or Project E3 executing content;
-- no unexplained loose files scattered through legacy mod locations;
-- any unavoidable external framework payload explicitly listed and justified;
-- simple uninstall/removal instructions based on owned paths, not historical rollback chains;
-- disabling/removing Biology should yield the affected systems back to native Cyberpunk as cleanly as technically possible.
+- no unexplained loose legacy payload;
+- any unavoidable framework payload explicitly justified and represented in ownership metadata;
+- safe disable/removal without historical rollback chains.
 
-The repository name and internal class/file prefixes may remain `cprealpass`, `RealPass`, or `CR*` temporarily during migration. **Do not perform a risky mass rename merely for cosmetic consistency.** Player-facing product identity, package identity and new documentation should use **Biology** now; internal identifiers can migrate incrementally when doing so is low-risk.
+The release UX now has three intended states:
+
+1. REDlauncher mods enabled → Biology active.
+2. REDlauncher mods disabled → Biology behavior inactive / convenient vanilla-play mode, once the activation audit proves this across supplemental routes.
+3. self-contained `Uninstall Biology.exe` → hard removal of manifest-proven Biology-owned files without requiring a full Steam reinstall.
+
+Issue #44 owns implementation of that contract. A full game reinstall is an exceptional clean-room/recovery operation, not normal Biology uninstall.
 
 ## Settings direction
 
-Biology remains one authored simulation, not a collection of independently toggled modules.
+Biology remains one authored simulation, not a set of independently toggled modules.
 
-The public preference contract remains intentionally tiny:
+The public preference surface should remain small. The provider is not product architecture. Mod Settings may remain only while a current feature justifies it; do not preserve a framework stack merely to host a small number of booleans.
 
-- one global **Enable Biology** master switch, if a reliable whole-mod runtime switch remains practical;
-- one E3-inspired first-person HUD presentation preference.
-
-The **provider is no longer a product requirement**. Mod Settings may remain during migration only if the dependency audit proves it worthwhile. Prefer a Biology-owned settings surface (for example, a restrained preferences subsection inside Biology) if that can remove RED4ext/ArchiveXL/Mod Settings dependencies without making the implementation more brittle.
-
-Do not preserve a framework stack merely to host two booleans.
+The launcher-level Biology activation contract and the optional E3-inspired presentation preference must remain semantically distinct.
 
 ## REDmod launch/deployment UX target
 
-Official REDmod requires deployment and modded launch behavior. The migration must determine the cleanest supported Steam experience and document it before release.
+Target player experience:
 
-Target user experience:
+1. install official REDmod support if the game install does not already contain it;
+2. copy/install one Biology release;
+3. use the normal REDlauncher/Steam mod-enable path;
+4. launch normally through Steam;
+5. use the launcher mod toggle for convenient Biology-on / Biology-inactive play once proven;
+6. use the Biology uninstaller for full removal.
 
-1. install/enable the free official REDmod DLC/tooling if the game installation does not already contain it;
-2. copy/install the single Biology package;
-3. enable mods through the supported Cyberpunk/Steam/REDlauncher path once as needed;
-4. thereafter launch normally through Steam without a Biology-specific launcher or background process.
+No Biology-specific persistent launcher/background service is desired.
 
-Do not promise launcher skipping until verified against the current supported game/REDmod behavior.
+## Current architecture milestone
 
-## Migration phases
+Already demonstrated in the first integrated REDmod milestone:
 
-### Phase 0 — preserve the attended baseline and freeze the old packaging direction
+- `mods/Biology` package identity;
+- release-shaped builder;
+- exact compilation against the supported 2.31 script bundle;
+- installation into a clean game;
+- official REDmod recognition;
+- real REDmod deploy stages through an explicit-root, fail-closed helper.
 
-The pre-refactor live evidence is recorded in `PRE-REDMOD-LIVE-BASELINE-2026-09-15.md`. During migration:
+The direct supported-install REDmod probe also established that the game ships more than a deploy executable: the toolset exposes module help plus shipped metadata/script/tweak/compiler-related material. Do not assume the ecosystem's most common path is the complete official capability surface.
 
-- do not add new third-party runtime dependencies;
-- do not add new loose legacy-package paths unless required for an urgent correctness fix;
-- do not spend large effort polishing the old RealPass root-package architecture as though it were final;
-- keep current code compiling so useful simulation work is not lost;
-- do not lose the attended failures by declaring source-level tests equivalent to live acceptance.
+Still active after attended testing:
 
-### Phase 1 — inventory and classify
+- Biology native-shell/detail/back behavior (#39);
+- authoritative body-runtime lifecycle/availability (#41);
+- complete E3-inspired ordinary HUD and ambient nameplates (#40);
+- player disable/hard-uninstall contract (#44);
+- later dependency reduction where current consumers can be eliminated safely.
 
-Create a machine-readable/runtime inventory mapping each current file/feature to the classification list above. Record:
+For exact live evidence and current branch assignments, use `ROADMAP.md`, `ACTIVE-REDMOD-ROADMAP.md`, and `docs/test-runs/`.
 
-- current mechanism;
-- intended final mechanism;
-- touched vanilla authority/file/resource;
-- patch-risk rationale;
-- conflict/load-order implications;
-- required dependency;
-- evidence/probe needed;
-- migration owner/branch.
+## Patch resilience
 
-### Phase 2 — establish minimal official REDmod skeleton
+For every version-sensitive seam:
 
-Build the smallest `mods/Biology` package that:
+- inspect the supported game/CDPR toolchain directly before assuming a community workaround is required;
+- use direct supported-build evidence when practical;
+- isolate the seam from the simulation core;
+- register/audit native boundaries where appropriate;
+- exact-compile/package against the supported game before attended tests;
+- fail obvious/closed rather than silently presenting incorrect state;
+- preserve a short evidence trail explaining why any non-official fallback remains necessary.
 
-- has valid REDmod identity/metadata;
-- can be deployed by official REDmod tooling;
-- can be enabled/disabled without unrelated payload;
-- contains no gameplay behavior merely for demonstration;
-- is verified against the recorded vanilla baseline.
+See `PATCH-RESILIENCE.md`, `LOCAL-GAME-REFERENCE.md`, `LOCAL-OPERATOR-COMMANDS.md`, and `manifest/native-seams.json`.
 
-### Phase 3 — migrate low-risk REDmod-native systems
+## Project E3 / external references
 
-Move assets/tweaks/resources and other clearly REDmod-native content first. Remove superseded legacy paths as each migration becomes authoritative.
+Project E3 and Dark Future may be studied as design/provenance references. They do not execute or ship as Biology runtime dependencies.
 
-### Phase 4 — decide script seams individually
+For Project E3 specifically, `config/realpass-e3.json` preserves a durable inventory of the local-only reference package. The actual `ReferenceMods/` payload is intentionally gitignored and must not be copied into the public Biology repository simply to make remote agents convenient.
 
-For each script-based behavior, compare:
+Derived design/controller mappings are appropriate repository material; third-party payload is not.
 
-- REDmod whole-file `.script` replacement;
-- Biology-owned redscript wrapper/addition;
-- native/plugin alternative;
-- removal/re-design.
+## Acceptance criteria for the architecture
 
-Choose the smallest stable seam. Add compatibility probes for every version-sensitive fallback.
+The REDmod-first architecture is successful when:
 
-### Phase 5 — dependency reduction
+1. player-facing/package identity is Biology;
+2. the release is centered on `mods/Biology` with only justified supplemental payload;
+3. official Cyberpunk/REDmod capabilities are directly investigated before non-official workarounds are accepted;
+4. official REDmod owns every surface it can own robustly;
+5. every retained non-REDmod dependency has a current feature-specific, evidence-backed justification;
+6. no source gameplay/presentation mod executes at runtime;
+7. Biology touches only systems it intends to own;
+8. native seams are narrow and auditable;
+9. package build/deploy is reproducible from fresh canonical source;
+10. body authority is available and persistent in live sessions;
+11. Biology is the body parent with Cyberware as an internal mode;
+12. E3 presentation has an obvious attended effect while the modern scanner stays native;
+13. users can install, temporarily disable and fully remove Biology without needing development knowledge or a routine Steam reinstall.
 
-After behavior is migrated, remove any framework that no longer has a proven runtime consumer. Rebuild the dependency graph from actual need rather than historical inheritance.
+## Parallelization policy
 
-Special scrutiny:
+Do not hard-code live branch names in this architecture document. Large work should still be split when ownership boundaries are safe, using `PARALLEL-AGENT-WORKFLOW.md`.
 
-- Mod Settings;
-- ArchiveXL if retained only because of Mod Settings;
-- RED4ext if no remaining native plugin requires it;
-- any framework present only because an earlier source mod used it.
-
-### Phase 6 — authoritative overlap/load-order acceptance
-
-Test Biology alone, then representative overlapping mods where practical. Establish exactly what REDmod precedence can guarantee and document known incompatibility classes without pretending to solve every third-party hook collision.
-
-### Phase 7 — clean-room milestone
-
-Only after the new packaging path is coherent and the active UI/presentation lanes are integrated:
-
-- start from a recorded clean vanilla installation;
-- fresh-clone canonical `main`;
-- build the release-shaped Biology/REDmod artifact;
-- install it exactly as a player would;
-- deploy/enable it through the official path;
-- launch through Steam;
-- test Biology UI, body, needs, combat, armor/clothing, cyberware, HUD, treatment, save/reload and time progression together;
-- capture the matched screenshot set required by `ACTIVE-REDMOD-ROADMAP.md`;
-- snapshot the resulting installed game state so residue is auditable.
-
-## Acceptance criteria for the migration
-
-The REDmod migration is not complete until all are true:
-
-1. player-facing/product/package identity is **Biology**;
-2. the package is as close as practical to a single `mods/Biology` installation;
-3. official REDmod owns every runtime surface it can own without increasing patch fragility;
-4. each non-REDmod runtime dependency has a written, current, feature-specific justification;
-5. no source gameplay/presentation mod executes at runtime;
-6. no framework remains solely because it happened to exist in an older development stack;
-7. Biology's touched systems have documented precedence/conflict behavior;
-8. unrelated systems are not modified merely to force compatibility/load-order dominance;
-9. a clean-room install is auditable against the recorded vanilla baseline;
-10. the exact candidate passes compile/preflight, official REDmod deployment, Steam launch, save/reload and broad attended gameplay acceptance;
-11. Biology body state is available and inspectable in the live UI;
-12. Biology is the parent body mode with Cyberware as submode;
-13. the E3-inspired HUD/nameplate option has an obvious visible attended effect while preserving the modern scanner;
-14. a user can understand install/disable/remove without knowing the project's development history.
-
-## Parallelization — current active split
-
-This migration is intentionally large enough to split across agents. Follow `docs/PARALLEL-AGENT-WORKFLOW.md` and the active issue ledger in `ACTIVE-REDMOD-ROADMAP.md`.
-
-The current attended-evidence-informed split is:
-
-### Lane A — `agent/redmod-foundation`
-
-Official REDmod/package/dependency architecture:
-
-- `mods/Biology` skeleton and official deploy/load proof;
-- package/install/uninstall shape;
-- dependency graph and removal candidates;
-- REDmod overlap/load-order evidence;
-- package/dependency classification and tooling.
-
-Handoff: `handoffs/REDMOD-FOUNDATION.md`
-
-### Lane B — `agent/biology-ui-runtime`
-
-Biology body shell/runtime availability:
-
-- Biology parent / Cyberware submode hierarchy;
-- outer/inner navigation identity;
-- selector placement/behavior;
-- `Body state is unavailable` root cause;
-- persistent nodes, drill-down metrics, save/reload lifecycle.
-
-Handoff: `handoffs/BIOLOGY-UI-RUNTIME.md`
-
-### Lane C — `agent/presentation-hud-nameplates`
-
-HUD/nameplates/settings presentation:
-
-- Biology-owned E3-inspired first-person HUD;
-- Biology-owned E3-inspired NPC nameplates;
-- modern scanner preservation;
-- E3 ON/OFF semantics and matched screenshot acceptance;
-- player-facing presentation/settings identity.
-
-Handoff: `handoffs/PRESENTATION-HUD-NAMEPLATES.md`
-
-These lanes should work on separate branches and merge only after their owned contracts are individually green. The combined `main` candidate is then tested once as a whole.
+Current lanes and exact branches belong in root `ROADMAP.md`, the active follow-up ledger, and GitHub issues/PRs so architecture does not become stale every time a worker merges.

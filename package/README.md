@@ -1,25 +1,54 @@
-# realpass — development package 0.1.0-dev.20
+# Biology development/source artifact 0.1.0-dev.20
 
-This redistribution-safe **development/source artifact** contains only project-original realpass policy/model/data source plus the authored stock-protection recipe. It exists for offline model review, CI packaging and source handoff. It is deliberately not the finished drag-and-drop gameplay mod and **does not activate gameplay**.
+This redistribution-safe **development/source artifact** contains a selected set of project-original Biology model/policy sources plus the authored stock-protection recipe. It exists for offline model review, CI packaging, artifact-policy checks, and source handoff.
 
-The release architecture is a locked authored physical simulation rather than a player-selectable stack of gameplay subsystems. `RuntimePolicyModel.reds` keeps internal development isolation and native-acceptance gates, but those gates are build/test controls rather than player preferences. The live owned candidate now also has a separate constrained Mod Settings surface for RealPass presence, a managed feature ledger and binary presentation/accessibility preferences only; that native/settings adapter is intentionally outside this model-only development artifact.
+It is **not the player package** and **does not activate gameplay**. The canonical playable artifact is built by `tools/Build-BiologyPackage.ps1` and is centered on the official `mods/Biology` REDmod identity.
 
-The package includes body resources, ordered intake, servings, clock policy, body-state presentation math, sleep accounting, forecasts, physical impacts, contact selection, projectile profiles, localized injuries, field-care plans, wound conversion, a stock equipment resolver, regional armor-wear arithmetic, injury-to-ability projection and NPC progression through the shared body solver.
+## What this artifact contains
 
-It does not contain native gameplay adapters, the live Mod Settings adapter, physical-Outfit native hooks, Dark Future integration patches, Project E3 runtime material or UI bridges. The earlier local integration profiles are legacy development builds and must not be treated as owned-runtime evidence. Keep this archive separate; do not manually extract it over an installed test profile.
+The source artifact intentionally exercises representative project-original model families such as:
 
-The stock resolver covers 294 exact game item identifiers using five original profiles. It includes 71 shirts, 117 trousers, 30 intrinsic-armored vests, 11 current subdermal armor tiers and 65 optical implants. Unknown records remain unresolved. The recipe uses stock identifiers and original coefficients; no game assets or upstream implementation bodies are included. Its values are provisional gameplay assumptions, not measured armor/material ratings. Coarse regional coverage still needs visual and gameplay validation.
+- runtime policy;
+- body resources/input/clock/sleep/forecast models;
+- impact/projectile/injury/wound models;
+- stock protection and armor-wear models;
+- injury-effect, field-care, blood-loss, and NPC progression models.
 
-The only declared script prerequisite for **this model/source artifact** is redscript 0.5.31 on Cyberpunk 2077 2.31. That is not the dependency statement for the live owned runtime. The deployable `m1-owned-settings` candidate separately stages pinned redscript + RED4ext + ArchiveXL + Mod Settings because the accepted settings surface requires that generic plumbing. Those frameworks do not own RealPass simulation policy. The manifest records this development artifact's payload paths and SHA-256 hashes. Arithmetic, fixture checks and compilation do not prove engine serialization, live item availability, timing, rendering, mission compatibility or performance.
+It deliberately excludes native gameplay adapters, UI/controller hooks, settings adapters, packaged framework binaries, Cyberpunk game files, Dark Future runtime, and Project E3 runtime material.
 
-Dark Future and Project E3 HUD are reference/inspiration sources only under the current product definition. Their gameplay scripts, archives, assets, tweak payloads and persistent systems are not permitted in an owned-runtime test or release build. Historical recipes/provenance may remain elsewhere in the repository, but this package contains no third-party gameplay/presentation code, binaries or assets and starts no process, watcher or logger.
+The declared `redscript 0.5.31` prerequisite belongs only to this model/source artifact's source context. It is **not** a complete statement of the current playable candidate's dependency graph.
 
-Armor wear uses absorbed projectile energy and stores normalized wear independently for six regions. The pure model includes acceptance rules for acknowledged zero-health-damage armor stops. Item-instance/NPC persistence, equipment sampling and native commit adapters are implemented in separate project-original source but remain unverified in game. Registry capacity, malformed state, replay and repeated-impact checks do not prove engine serialization, inventory identity or performance.
+For current runtime dependencies, read:
 
-Impairment projects regional function and blood deficit into bounded movement, stamina, reload, recoil and accuracy factors. Bone support can improve function without healing the underlying injury. Coefficients are provisional gameplay tuning. Native modifier ownership, scene/suspend cleanup, weapon changes and NPC registration have fixture coverage, but native movement/AI behavior and save/load cleanup remain unverified.
+- `manifest/dependency-graph.json`
+- `manifest/distribution.json`
+- `manifest/redmod-package.json`
+- `docs/REDMOD-INTEGRATED-ASSEMBLY.md`
 
-NPCBodyModel reuses the same bounded minute solver as V, retaining body resources, pending time and one injury owner. Model/fixture checks cover progression, conservation and reconstruction; AI eating, drinking, sleep, offscreen continuity, actual native saves and performance are not verified or complete. Initial NPC resource reserves are provisional; no historical metabolism is invented during migration. V's sleep never counts as NPC sleep automatically.
+The current integrated playable candidate directly requires redscript for Biology-owned additive/wrapper seams and temporarily retains Mod Settings plus its ArchiveXL/RED4ext dependency chain while a current accepted preference/activation boundary still needs them. Those temporary dependencies do not own Biology simulation or presentation policy.
 
-FieldCareActionModel adds transient queued/active/completion timing for dressing and limb support. Project-original native adapters use bounded in-game action callbacks, cancellation and completion-only item debit, but their presentation/access path is being rewritten so no Dark Future UI namespace/runtime host remains. Treatment animations, engine callback behavior and input/notification usability remain unverified.
+## Provenance and safety
 
-BloodLossModel tracks a bounded transient delivery cursor over the shared injury model's cumulative severe-blood-loss exposure. It prevents replay after restoration/protection, duplicate in-flight events and unlimited catch-up bursts. Project-original native code translates eligible demand into native damage events; human boss/MaxTac delivery has a capped adapter with offline evidence. Native boss phases, kill attribution, final death behavior, skip-time consequences and damage cadence remain acceptance gates. These are provisional gameplay coefficients, not calibrated physiology.
+Dark Future and Project E3 are reference/provenance sources only. Their scripts, archives, tweak payloads, assets, settings/save state, or other executing runtime content are not permitted in this development artifact or in a Biology player artifact.
+
+The stock-protection recipe uses stock record identifiers plus project-authored coefficients. It contains no Cyberpunk assets or copied upstream implementation bodies. Values remain gameplay/model assumptions requiring attended calibration rather than measured material claims.
+
+This artifact starts no process, installs nothing, deploys nothing, and should never be extracted over the game as though it were a release.
+
+## What this artifact does not prove
+
+Successful source packaging/model tests do not prove:
+
+- Cyberpunk runtime registration or serialization;
+- live item/controller availability;
+- REDmod recognition/deployment;
+- UI rendering;
+- mission/save compatibility;
+- performance;
+- launcher-off behavior;
+- hard-uninstall safety;
+- attended gameplay acceptance.
+
+Those gates belong to the canonical Biology build/test flow and direct evidence recorded by the parent integration thread.
+
+Version `0.1.0-dev.20` is the development-source recipe version, not the public Biology release version.

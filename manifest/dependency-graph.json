@@ -16,7 +16,7 @@
       ],
       "bundledByBiology": false,
       "plannedAction": "retain",
-      "rationale": "Official package/deployment authority for the REDmod-first release. The supported 2.31 tool is game-provided and must never be redistributed by Biology."
+      "rationale": "Official package/deployment authority for the REDmod-first release. Recognition and five-stage deployment of Biology have been proven on Cyberpunk 2077 2.31; the game-provided REDmod tool must never be redistributed by Biology."
     },
     {
       "id": "redscript",
@@ -32,7 +32,7 @@
       ],
       "bundledByBiology": true,
       "plannedAction": "retain while accepted additive/wrapper seams remain; reassess only if a demonstrably narrower official route replaces every consumer",
-      "rationale": "The merged Biology runtime relies on additive/wrapper annotations. Replacing the same narrow hooks with whole vanilla REDmod .script files would increase copied upstream implementation, conflict surface and patch fragility.",
+      "rationale": "Biology uses additive/wrapper annotations. Replacing the same narrow hooks with whole vanilla REDmod .script files would increase copied upstream implementation, conflict surface and patch fragility.",
       "licenseProvenance": "manifest/components.json:redscript"
     },
     {
@@ -45,22 +45,20 @@
         "current accessible UI/persistence adapter for E3-inspired HUD + nameplates"
       ],
       "bundledByBiology": true,
-      "plannedAction": "remove after Lane C supplies and accepts another accessible persistent provider for the existing two provider-neutral Boolean semantics; do not redesign those semantics in the packaging lane",
-      "rationale": "PR #33 separated Biology's setting meaning from Mod Settings, but it did not implement another player-accessible persistent provider. Removing Mod Settings now would leave both values at defaults with no accepted attended-test surface for master disable or E3 ON/OFF.",
+      "plannedAction": "remove when a Biology-owned provider or deliberate launcher/install boundary provides the same accepted player semantics without greater fragility",
+      "rationale": "The setting meaning is Biology-owned/provider-neutral. Mod Settings remains only as the current accessible persistent adapter, not as product architecture.",
       "licenseProvenance": "manifest/components.json:mod-settings",
-      "ownerLaneBlocker": "presentation/settings (Lane C)"
+      "currentOwnerIssue": "#44 for whole-mod launcher-off activation interactions; presentation preference behavior also participates in #40 attended acceptance"
     },
     {
       "id": "archivexl",
       "kind": "generic-framework",
       "status": "temporary-transitive",
       "route": "REMOVE/RETHINK",
-      "consumerFeatures": [
-        "transitive dependency of the temporary Mod Settings adapter"
-      ],
+      "consumerFeatures": ["transitive dependency of the temporary Mod Settings adapter"],
       "bundledByBiology": true,
-      "plannedAction": "remove together with Mod Settings unless a separate final Biology feature later proves a direct ArchiveXL requirement",
-      "rationale": "No project-original Biology resource or runtime source consumes ArchiveXL directly. It survives this candidate only because the current accessible Mod Settings adapter requires it.",
+      "plannedAction": "remove together with Mod Settings unless another accepted Biology feature later proves a direct ArchiveXL requirement",
+      "rationale": "No project-original Biology resource/runtime source currently consumes ArchiveXL directly.",
       "licenseProvenance": "manifest/components.json:archivexl"
     },
     {
@@ -68,12 +66,10 @@
       "kind": "generic-native-extension",
       "status": "temporary-transitive",
       "route": "REMOVE/RETHINK",
-      "consumerFeatures": [
-        "transitive native plumbing for ArchiveXL/Mod Settings"
-      ],
+      "consumerFeatures": ["transitive native plumbing for ArchiveXL/Mod Settings"],
       "bundledByBiology": true,
-      "plannedAction": "remove when the Mod Settings/ArchiveXL chain leaves unless a future concrete Biology-owned native extension proves a separate need",
-      "rationale": "The merged Biology source contains no project-owned RED4ext DLL/plugin consumer. RED4ext survives this candidate only as transitive plumbing for the temporary settings-provider chain.",
+      "plannedAction": "remove when the Mod Settings/ArchiveXL chain leaves unless a concrete Biology-owned native extension proves a separate need",
+      "rationale": "Biology owns no RED4ext DLL/plugin. Issue #44 must also verify this supplemental route does not keep Biology behavior active when REDmod is disabled.",
       "licenseProvenance": "manifest/components.json:red4ext"
     },
     {
@@ -84,7 +80,7 @@
       "consumerFeatures": [],
       "bundledByBiology": false,
       "plannedAction": "do not bundle",
-      "rationale": "No merged Biology production source/data path requires TweakXL; REDmod-native tweak source is preferred if future tweak content is needed.",
+      "rationale": "No current Biology production source/data path requires TweakXL; REDmod-native tweak source is preferred for future tweak content when robust.",
       "licenseProvenance": "manifest/components.json:tweakxl"
     },
     {
@@ -95,7 +91,7 @@
       "consumerFeatures": [],
       "bundledByBiology": false,
       "plannedAction": "do not bundle",
-      "rationale": "The merged Biology Ink/REDscript source has no Codeware dependency.",
+      "rationale": "Current Biology Ink/REDscript source has no Codeware dependency.",
       "licenseProvenance": "manifest/components.json:codeware"
     },
     {
@@ -114,9 +110,7 @@
       "kind": "reference-mod",
       "status": "blocked-runtime",
       "route": "REMOVE/RETHINK",
-      "consumerFeatures": [
-        "historical research/provenance only"
-      ],
+      "consumerFeatures": ["historical research/provenance only"],
       "bundledByBiology": false,
       "plannedAction": "never execute or bundle",
       "rationale": "Finished Biology gameplay must be project-owned."
@@ -126,12 +120,10 @@
       "kind": "reference-mod",
       "status": "blocked-runtime",
       "route": "REMOVE/RETHINK",
-      "consumerFeatures": [
-        "visual reference/provenance only"
-      ],
+      "consumerFeatures": ["local-only design archaeology/provenance for issue #40"],
       "bundledByBiology": false,
       "plannedAction": "never execute or bundle",
-      "rationale": "Finished Biology presentation is implemented in Biology-owned source and must not execute Project E3 runtime content."
+      "rationale": "Finished Biology presentation is Biology-owned. Project E3 source/archive/tweaks are reference material only."
     },
     {
       "id": "cyberpunk-game-files",
@@ -144,14 +136,14 @@
       ],
       "bundledByBiology": false,
       "plannedAction": "read/reference only through supported game install; never redistribute",
-      "rationale": "Biology targets the installed game and may not redistribute CDPR executables, archives, scripts, saves, generated stock caches, or final.redscripts."
+      "rationale": "Biology may not redistribute CDPR executables, archives, scripts, saves, generated stock caches, or final.redscripts."
     }
   ],
   "rules": [
     "A dependency without at least one concrete current Biology consumer is not retained.",
-    "Retained in the integrated candidate does not mean permanent architecture: Mod Settings, ArchiveXL and RED4ext remain REMOVE/RETHINK routes with an explicit Lane C removal blocker.",
-    "The only directly feature-justified supplemental runtime framework in the current merged source is redscript.",
-    "A future lane requesting a new dependency must identify the exact feature, why vanilla/REDmod/current redscript cannot satisfy it, and the package/install consequence before this graph changes.",
+    "Retained in the integrated candidate does not mean permanent architecture: Mod Settings, ArchiveXL and RED4ext remain REMOVE/RETHINK routes with current feature/activation ownership rather than obsolete lane ownership.",
+    "The only directly feature-justified supplemental runtime framework in the current source is redscript.",
+    "A future worker requesting a new dependency must identify the exact feature, why vanilla/REDmod/current redscript cannot satisfy it, and the package/install consequence before this graph changes.",
     "Bundled third-party components require pinned version/hash/license/provenance and exact per-file ownership.",
     "No source gameplay/presentation mod may execute or be bundled."
   ]

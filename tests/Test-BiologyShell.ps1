@@ -32,8 +32,10 @@ Check ($goals.Contains('BIOLOGY -> shared body/anatomy shell -> BIOLOGY | CYBERW
 Check ($doc.Contains('top hub -> BIOLOGY -> shared body/anatomy shell -> BIOLOGY | CYBERWARE')) 'Biology UI doc does not mirror the canonical hierarchy.'
 Check ($doc.Contains('players should not feel that they need to poll Biology')) 'Biology UI doc lost the no-meter-polling acceptance principle.'
 Check ($doc.Contains('The Biology screen is **always available**')) 'Biology doc no longer requires healthy-state inspectability.'
-Check ($doc.Contains('the overview should simply read **`STABLE`**')) 'Biology doc does not lock the terse normal-state token.'
-Check ($doc.Contains('Every ordinary player-facing doorway') -and $doc.Contains('inner tab/navigation strip')) 'Biology navigation-label consistency is not documented.'
+Check ($doc -match '(?i)overview.*(simply|simply reads|reads).*`STABLE`|nothing meaningful.*`STABLE`') 'Biology doc does not lock the terse normal-state token.'
+Check ($doc.Contains('Every ordinary player-facing doorway') -and $doc.Contains('underlying native destination/identifier')) 'Biology navigation-label consistency/native routing boundary is not documented.'
+Check ($doc -match '(?is)overview:\*\*?\s*`BIOLOGY \| CYBERWARE` mode switching is available.*detail/drill-down:\*\*?\s*mode switching is unavailable') 'Biology doc does not lock overview-only mode switching.'
+Check ($doc.Contains('Back must **not** force the user to close the entire pause/menu stack')) 'Biology doc does not lock detail Back to overview behavior.'
 
 # Reuse the stock hub routing: relabel the existing Cyberware menu data instead of
 # inventing a second fullscreen/menu identifier.
@@ -55,7 +57,7 @@ Check ($shell.Contains('this.UpdateTitle(this.GetAreaHeader(area))')) 'Cyberware
 Check (-not $shell.Contains('this.UpdateTitle(GetAreaHeader(area))')) 'Cyberware label restore regressed to an unresolved global GetAreaHeader call.'
 Check ($shell.Contains('CRSetStockMetersVisible(!biology)')) 'Biology mode leaves cyberware-specific stock meters visible.'
 
-# Supported body nodes are controlled by whether RealPass models that area, not by
+# Supported body nodes are controlled by whether Biology models that area, not by
 # whether a current need/condition is severe. Overview composition may still inspect
 # hasEffects/hasConditions; node visibility itself must remain support-only.
 Check ($shell.Contains('let supported: Bool = CRBiologyDetailPresentation.Supported(area)')) 'Biology node visibility is not keyed to modeled-system support.'

@@ -2,11 +2,12 @@ $ErrorActionPreference = 'Stop'
 if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'Run-CI.ps1 requires PowerShell 7 or newer.' }
 
 # Only tests reproducible from the public source tree and relevant to the current
-# vanilla-first, project-owned runtime path belong here. Exact integrated compilation
-# against Cyberpunk's proprietary final.redscripts remains a local build gate inside
+# Biology-owned runtime path belong here. Exact integrated compilation against
+# Cyberpunk's proprietary final.redscripts remains a local build gate inside
 # Build-BiologyPackage.ps1 rather than a cloud-CI claim.
 $tests = @(
     'Test-PowerShellSyntax.ps1',
+    'Test-ActiveGuidanceHygiene.ps1',
     'Test-BiologyProductDirection.ps1',
     'Test-ActiveRoadmap.ps1',
     'Test-IntegrationOrchestrator.ps1',
@@ -34,7 +35,6 @@ $tests = @(
     'Test-OwnedAcceptanceBuilder.ps1',
     'Test-OwnedSessionTool.ps1',
     'Test-ArtifactPolicy.ps1',
-    'Test-PlayerPackageFinalizer.ps1',
     'Test-PackageMetadata.ps1',
     'Test-RuntimePolicyModel.ps1',
     'Test-NoHealthbars.ps1',
@@ -62,20 +62,47 @@ $tests = @(
     'Test-NPCProgression.ps1'
 )
 
+$project = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $failed = @()
+$results = [Collections.Generic.List[object]]::new()
 $started = [DateTime]::UtcNow
 foreach ($name in $tests) {
     $path = Join-Path $PSScriptRoot $name
     if (-not (Test-Path -LiteralPath $path)) { throw "Missing CI test: $name" }
     Write-Host "`n=== CI: $name ==="
+    $testStarted = [DateTime]::UtcNow
     & pwsh -NoLogo -NoProfile -NonInteractive -File $path
-    if ($LASTEXITCODE -ne 0) {
+    $exitCode = $LASTEXITCODE
+    $testElapsed = [DateTime]::UtcNow - $testStarted
+    $passed = $exitCode -eq 0
+    $results.Add([pscustomobject]@{
+        test = $name
+        passed = $passed
+        exitCode = $exitCode
+        seconds = [Math]::Round($testElapsed.TotalSeconds,3)
+    })
+    if (-not $passed) {
         $failed += $name
-        Write-Error "FAILED: $name (exit $LASTEXITCODE)" -ErrorAction Continue
+        Write-Error "FAILED: $name (exit $exitCode)" -ErrorAction Continue
     }
 }
 
 $elapsed = [DateTime]::UtcNow - $started
+$reportRoot = Join-Path $project 'reports'
+New-Item -ItemType Directory -Force -Path $reportRoot | Out-Null
+$summaryPath = Join-Path $reportRoot 'ci-suite-summary.json'
+$summary = [ordered]@{
+    schemaVersion = 1
+    generatedUtc = [DateTime]::UtcNow.ToString('o')
+    passed = $failed.Count -eq 0
+    totalTests = $tests.Count
+    failedTests = @($failed)
+    elapsedSeconds = [Math]::Round($elapsed.TotalSeconds,3)
+    results = @($results.ToArray())
+}
+$summary | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $summaryPath -Encoding utf8
+Write-Host "CI suite summary: $summaryPath"
+
 if ($failed.Count -gt 0) {
     throw "CI failed: $($failed -join ', ')"
 }

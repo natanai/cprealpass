@@ -1,7 +1,7 @@
 # Biology decision and correction history
 
 Status: **canonical chronology of product decisions and user corrections**
-Last updated: **2026-09-14**
+Last updated: **2026-09-15**
 
 This document answers a different question from `AGREED-GOALS.md`:
 
@@ -178,6 +178,20 @@ Current authority: G-001, G-005, `docs/BIOLOGY-REDMOD-MIGRATION.md`.
 
 Current authority: G-093, `AGENTS.md`, `docs/PARALLEL-AGENT-WORKFLOW.md`.
 
+### 2026-09-15 — date-only — official Cyberpunk/REDmod capability must be investigated before inheriting the modder workaround
+
+**Earlier risk:** “REDmod-first” could still be interpreted as a packaging preference while implementation agents quietly defaulted to the established community route because that was what most existing mods used.
+
+**User correction:** the project should build a direct working relationship with Cyberpunk and CDPR's official REDmod toolchain. If the supported installation can answer a question directly, use it. The fact that the modding ecosystem commonly chose redscript/RED4ext/CET/ArchiveXL/TweakXL/Codeware or another workaround does not prove that route was the best or most stable route.
+
+The installed game-provided REDmod tool is directly available under the supported game's `tools` tree and may be invoked from repository-owned PowerShell tooling when useful. The project should be willing to “reinvent the wheel” by rediscovering the official route if that produces a smaller, more stable compatibility boundary.
+
+**Current rule:** for foundational capabilities, inspect vanilla/CDPR/REDmod first. Accept a non-official fallback only after direct/official evidence shows the official route is missing the needed semantics, materially broader/brittle, or otherwise creates a worse compatibility surface. Preserve that reason in architecture/evidence so future agents do not rediscover the same question.
+
+**Do not repeat:** do not cite common modder practice as sufficient justification for a dependency or hook strategy, and do not search community workarounds before checking the supported official capability when a direct probe is practical.
+
+Current authority: G-017, `docs/BIOLOGY-REDMOD-MIGRATION.md`, `docs/LOCAL-OPERATOR-COMMANDS.md`, `tools/Probe-OfficialRedmod.ps1`.
+
 ---
 
 ## Current product snapshot
@@ -189,6 +203,7 @@ This section is intentionally short. The detailed requirements remain in `AGREED
 - Biology is the organizing concept for body/needs, injury, combat consequences, protection/clothing/armor, treatment/recovery and relevant cyberware interaction.
 - Native Cyberpunk identity and semantic systems are preferred where they can carry the intended behavior.
 - Official REDmod is the preferred packaging/runtime route where robust; narrower wrappers may remain when whole-file REDmod replacement would increase fragility.
+- **Official Cyberpunk/REDmod capabilities are investigated directly before community workarounds are accepted as architecture.**
 - The preferred final identity is one self-contained `mods/Biology` package plus only unavoidable explicitly justified framework payload.
 - Historical dependency stacks are being audited down rather than assumed permanent.
 - Backpack owns possessions; Biology owns body state; Cyberware is installed equipment inside the shared body/anatomy experience.

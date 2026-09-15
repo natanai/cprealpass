@@ -1,138 +1,172 @@
-# Patch Resilience Architecture
+# Patch resilience architecture
+
+Status: **canonical architecture policy**  
+Last updated: **2026-09-15**
 
 ## Goal
 
-RealPass is intended to be a foundational realism layer rather than a patch-specific collection of tweaks. An ordinary Cyberpunk 2077 update should not require broad rewrites. Breakage should occur only when CDPR changes a genuinely relevant contract, and when that happens the affected compatibility seam should be small, obvious, and repairable.
-
-This document defines the architecture policy for achieving that goal.
+Biology is intended to be a foundational body/physiology layer rather than a patch-specific collection of tweaks. Ordinary Cyberpunk updates should affect a small compatibility boundary, not force broad rewrites throughout the simulation.
 
 ## Core principle
 
 **Understand the supported game build directly, then integrate at the most semantic stable seam available.**
 
-Do not choose an integration simply because a web guide, another mod, or an old implementation happens to use it. When the actual installed game can answer a question, direct evidence is preferred.
+Do not choose an integration merely because an old guide, another mod or a historical Biology/RealPass implementation used it.
 
-The intended architecture is:
+Preferred architecture:
 
 ```text
-RealPass simulation / policy core
+Biology simulation / policy core
         |
         v
 small owned compatibility adapter
         |
         v
-semantic Cyberpunk contract
+semantic Cyberpunk / REDmod contract
 ```
 
 The simulation core should not know unnecessary patch-local details.
 
 ## Evidence order
 
-For vanilla game internals, agents should use:
+For game internals, use:
 
-1. tracked RealPass source, tests, docs, and `reference/cyberpunk/`;
-2. targeted inspection of the user's installed supported game build;
-3. official game/framework/tool documentation and release notes;
-4. community/web material as secondary evidence.
+1. current Biology source/tests/docs and `reference/cyberpunk/`;
+2. targeted direct inspection of the user's supported installed game;
+3. official CDPR/REDmod/framework/tool documentation and release notes;
+4. community/web examples as secondary evidence.
 
-If the local snapshot is insufficient, remote agents are explicitly expected to ask the user for a single copy/paste-ready PowerShell, CMD, or WolvenKit probe. See `AGENTS.md` and `docs/LOCAL-GAME-REFERENCE.md`.
+Before asking the user to run anything, read `docs/LOCAL-OPERATOR-COMMANDS.md`.
+
+Do not assume a permanent repository checkout path. The supported game path may be stable while the repo workspace is disposable.
 
 ## Prefer stable contracts
 
-Prefer integration through concepts whose identity is meaningful to the game rather than incidental to one build, including where available:
+Prefer concepts whose identity is meaningful to the game:
 
 - named script/native classes and methods;
-- lifecycle events and callbacks;
+- lifecycle events/callbacks;
 - TweakDB records and typed relationships;
 - stats/status effects with semantic ownership;
 - inventory/equipment APIs;
 - authoritative player/game state;
 - stable controllers and event-driven UI seams;
-- documented framework APIs;
-- resource identities that are semantically tied to the feature rather than discovered only by ordering or position.
+- documented REDmod/framework APIs;
+- resource identities tied to the feature rather than enumeration order.
 
-A named contract can still change, but it gives RealPass a narrow place to validate and repair. An incidental implementation detail tends to spread fragility.
+A named contract can still change, but it gives Biology a narrow place to validate and repair.
 
 ## Avoid patch-local coupling
 
-Do not introduce these unless there is no reasonable semantic alternative:
+Avoid unless no reasonable semantic alternative exists:
 
-- hard-coded process memory addresses or offsets;
+- hard-coded process memory addresses/offsets;
 - assumptions about compiled layout;
-- copied or vendored vanilla implementation bodies;
-- exact line numbers;
-- reliance on file enumeration order;
-- magic indexes into arrays whose semantic identity is available elsewhere;
-- brittle widget-child positions when a named controller/event/property exists;
-- fixed timing delays used as substitutes for lifecycle signals;
-- duplicated shadow copies of state already authoritatively owned by the game;
-- unnecessary dependencies on third-party mods as intermediaries to a vanilla contract.
+- copied vanilla implementation bodies;
+- exact source line numbers;
+- file enumeration order;
+- magic array indexes when semantic identity exists;
+- brittle widget-child positions when named ownership/events/properties exist;
+- fixed delays used instead of lifecycle signals;
+- duplicated shadow state already owned authoritatively elsewhere;
+- unnecessary third-party gameplay/presentation mods as intermediaries to a vanilla contract.
 
-When one of these is unavoidable, it must be treated as a compatibility seam, not normal architecture.
+If unavoidable, isolate the dependency as a compatibility seam.
 
 ## Compatibility seam rule
 
-A version-sensitive integration should be:
+A version-sensitive seam should be:
 
-1. **small** — minimal code surface touching unstable details;
-2. **isolated** — behind an owned adapter rather than distributed throughout the model;
-3. **evidence-backed** — record what local inspection established the seam;
+1. **small** — minimal unstable surface;
+2. **isolated** — behind an owned adapter;
+3. **evidence-backed** — record what direct evidence established it;
 4. **validated** — detect absence/signature/shape changes where practical;
-5. **fail-obvious** — prefer disabling that narrow feature or surfacing incompatibility to silently corrupting simulation;
-6. **replaceable** — the rest of RealPass should not care how the adapter satisfies the contract.
+5. **fail-obvious/fail-closed** — do not silently corrupt simulation or present fake healthy state;
+6. **replaceable** — the rest of Biology should not depend on the adapter's internal method.
+
+The live `BODY RUNTIME SYSTEM MISSING` failure is an example of why a compatibility/lifecycle failure must stay distinguishable from a healthy body.
 
 ## Native authority before shadow state
 
-Before adding persistent RealPass state, ask whether Cyberpunk already owns the authoritative state or lifecycle needed for the feature.
-
-Reuse or observe vanilla authority when doing so prevents drift. RealPass-owned state is appropriate when RealPass is genuinely introducing a new simulation concept, but it should not duplicate vanilla truth merely for convenience.
+Before adding persistent Biology state, determine whether Cyberpunk already owns the authoritative state/lifecycle needed.
 
 Examples:
 
 - observe authoritative inventory ownership instead of maintaining a parallel item inventory;
-- use semantic equipment events rather than polling guessed UI state;
-- attach Biology consequences to stable player lifecycle hooks rather than an arbitrary timer if a suitable lifecycle exists.
+- use equipment/inventory transactions rather than manually decrementing items;
+- reuse native menu/controller state machines rather than layering an unrelated duplicate navigation model;
+- use one Biology body runtime rather than a UI-owned copy;
+- use native identity/knowledge authority for NPC nameplates rather than creating a second identity database.
+
+Biology-owned state is appropriate where Biology genuinely introduces a new simulation concept.
 
 ## Runtime discovery where appropriate
 
-If a value or capability can safely be discovered at runtime, prefer discovery plus validation over unnecessary hard-coding.
+Prefer discovery + validation over unnecessary hard-coding when the rule for finding the correct thing is deterministic and semantically meaningful.
 
-Discovery is not automatically better: it must still be deterministic enough for the feature. The objective is to encode the **rule for finding the correct thing**, not a patch-local answer, when a stable rule exists.
+Discovery is not automatically safer; validate the discovered result and fail obviously when the expected contract is absent.
 
 ## Patch workflow
 
-When Cyberpunk updates:
+When Cyberpunk/REDmod/frameworks update:
 
-1. regenerate or refresh the local environment snapshot;
-2. run compatibility probes and exact compilation before changing architecture;
-3. inspect failures at game-facing adapters first;
-4. determine whether the underlying semantic contract changed or only an incidental representation;
-5. repair the narrow adapter if possible;
-6. change the simulation core only if the game changed a concept RealPass actually models;
-7. record the new evidence and supported version.
+1. obtain current canonical source in an active/disposable checkout;
+2. use the canonical local compatibility command from `docs/LOCAL-OPERATOR-COMMANDS.md`;
+3. refresh relevant redistribution-safe evidence;
+4. exact-compile/package before changing architecture;
+5. inspect failures at the game-facing adapters first;
+6. determine whether the semantic contract changed or only an incidental representation;
+7. repair the narrow adapter when possible;
+8. change the simulation core only if the underlying concept Biology models actually changed;
+9. record the new evidence/version/seam decision.
 
-Do not preemptively rewrite working architecture just because a patch exists.
+Do not preemptively rewrite working architecture merely because a patch exists.
+
+## Local report rule
+
+Broad compatibility audits and other user-run evidence commands should emit:
+
+- a concise console summary; and
+- a plain-text report under the active checkout's `reports/` directory that the user can return to the requesting agent.
+
+This avoids requiring large console transcripts and keeps direct evidence attributable to one exact run.
+
+If an audit fails after starting, preserve the report where practical and identify which phase failed.
 
 ## Web research policy
 
 Online research is appropriate for:
 
-- official framework/API documentation;
-- release notes and changelogs;
-- discovering candidate concepts or terminology;
-- comparing known compatibility reports;
-- learning how tooling such as WolvenKit exposes data.
+- official APIs/documentation;
+- release notes/changelogs;
+- discovering candidate concepts/terminology;
+- known compatibility reports;
+- learning tool capabilities.
 
-For a statement such as "the supported game has method X with signature Y" or "this controller owns event Z," direct supported-build evidence should be obtained when feasible before making it foundational architecture.
+For foundational claims such as “the supported game has method X with signature Y” or “controller Y owns event Z,” prefer direct supported-build evidence when feasible.
+
+## REDmod route selection
+
+Official REDmod is the preferred packaging/runtime route where robust, but REDmod-first is not ideological REDmod-only.
+
+A whole-file REDmod script replacement can be more brittle than a narrow additive wrapper if it copies more vanilla implementation than Biology actually needs. Choose the smallest stable compatibility surface.
+
+See `BIOLOGY-REDMOD-MIGRATION.md`.
+
+## Reference-mod policy
+
+Dark Future and Project E3 may be studied as research/provenance sources but must not become executing Biology dependencies.
+
+For Project E3, the public repository keeps a derived inventory/mapping while the actual third-party reference payload remains local-only. Derived controller/responsibility knowledge is appropriate; redistributing the third-party payload is not.
 
 ## Long-term target
 
-A mature RealPass release should be able to distinguish three categories after an upstream patch:
+After an upstream patch, a mature Biology release should distinguish:
 
-- **unchanged contracts** — no RealPass work required;
-- **changed compatibility seams** — small adapter repair and revalidation;
-- **fundamental game-model changes** — deliberate architectural review.
+- **unchanged contracts** — no Biology work required;
+- **changed compatibility seams** — narrow adapter repair/revalidation;
+- **fundamental game-model changes** — deliberate architecture review.
 
-If ordinary patches routinely require broad changes across Biology, combat, UI, equipment, and persistence simultaneously, that is evidence that patch-specific assumptions have leaked too far into the architecture.
+If ordinary patches routinely require broad changes across body simulation, combat, UI, equipment and persistence simultaneously, patch-specific assumptions have leaked too far into the architecture.
 
-The desired end state is a bedrock mod whose core simulation remains stable while a small, auditable boundary translates between RealPass and Cyberpunk.
+The desired end state is a bedrock mod whose core simulation remains stable while a small auditable boundary translates between Biology and Cyberpunk.

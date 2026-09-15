@@ -138,19 +138,18 @@ SUPPORTED GAME
 Cyberpunk 2077 2.31
 
 PACKAGE IDENTITY
-The first-party package identity is mods\Biology. The current playable candidate also contains individually accounted supplemental redscript/runtime framework files because the integrated Biology code still uses narrow REDscript wrappers and the current accessible settings/persistence adapter is Mod Settings.
+The first-party package identity is mods\Biology. The current playable candidate also contains individually accounted supplemental redscript/runtime framework files because Biology still uses narrow REDscript wrappers and the current accessible preference provider remains Mod Settings.
 
 INSTALL / ATTENDED TEST
-1. Use the MILESTONE CLEAN-ROOM procedure in the repository before this structural package test.
+1. Follow the repository's canonical ITERATION or MILESTONE CLEAN-ROOM operator flow appropriate to the change being tested.
 2. Close Cyberpunk 2077.
 3. Extract/copy the CONTENTS of this package into the Cyberpunk 2077 game root.
 4. Verify mods\Biology\info.json is present.
-5. Deploy REDmod deterministically with the official tool using the explicit game root:
-   tools\redmod\bin\redMod.exe deploy -root=<Cyberpunk 2077>
-6. Enable REDmod-compatible mods through the supported launcher/store flow if required.
+5. For deterministic developer/probe deployment, use the repository-owned tools\Deploy-BiologyRedmod.ps1 helper with the explicit game root. Do not reconstruct raw REDmod quoting from old chat/docs.
+6. Normal players use the supported REDlauncher/Steam mod-enable path.
 7. Launch normally through Steam.
 
-Do not treat successful build/CI as live acceptance. Recognition, enable/disable, relaunch persistence, clean uninstall/reset, and overlap precedence remain attended/direct-game gates until recorded by the parent integration thread.
+Official REDmod recognition of Biology and real five-stage deployment on Cyberpunk 2077 2.31 have already been directly proven. Build/CI still does not prove launcher-off behavior, hard-uninstall safety, body/runtime/UI/presentation behavior, or broader gameplay acceptance.
 '@
 [IO.File]::WriteAllText((Join-Path $packageRoot 'INSTALL.txt'),$installText.TrimStart() + "`n",[Text.UTF8Encoding]::new($false))
 Add-FileRecord 'INSTALL.txt' 'Biology' 'biology-package-metadata' 'REDMOD-NATIVE' 'biology-owned'
@@ -159,11 +158,11 @@ $uninstallText = @'
 Biology integrated REDmod-first candidate
 
 UNINSTALL / RESET PRINCIPLE
-Use biology\build-manifest.json as the exact ownership record. Remove only files recorded there and then only empty Biology-owned directories. Never recursively delete shared roots such as r6, engine, red4ext, archive, or bin.
+Use biology\build-manifest.json as the exact ownership record. Remove only files recorded there and then only empty Biology-owned directories. Never recursively delete shared roots such as r6, engine, red4ext, archive, mods, or bin.
 
-For the first REDmod/dependency structural milestone, the parent integration thread should use the repository's MILESTONE CLEAN-ROOM workflow rather than relying on this candidate to prove a vanilla reset by itself.
+The player-release target is a self-contained Uninstall Biology.exe that applies these rules, preserves saves/settings by default, and refuses changed/ambiguous file deletion. Until that implementation is integrated and accepted, development iteration cleanup uses the canonical repository reset/operator flow; a full Steam reinstall is reserved for structural clean-room/recovery cases, not normal Biology removal.
 
-Disabling/uninstalling Biology is not permission to delete save data or player settings outside the package-owned game-root paths.
+Disabling/uninstalling Biology is not permission to delete save data or player settings outside explicitly owned package paths.
 '@
 [IO.File]::WriteAllText((Join-Path $packageRoot 'UNINSTALL.txt'),$uninstallText.TrimStart() + "`n",[Text.UTF8Encoding]::new($false))
 Add-FileRecord 'UNINSTALL.txt' 'Biology' 'biology-package-metadata' 'REDMOD-NATIVE' 'biology-owned'
@@ -200,13 +199,13 @@ $provenance = [ordered]@{
     }
     retainedDependencies = @(
         [ordered]@{ id='redscript'; reason='Required by accepted Biology-owned additive/wrapper REDscript runtime and native seams.' },
-        [ordered]@{ id='mod-settings'; reason='Temporary current UI/persistence adapter for the two provider-neutral public Boolean preferences; Lane C has not yet supplied another accessible persistent surface.' },
+        [ordered]@{ id='mod-settings'; reason='Temporary current UI/persistence adapter for the provider-neutral Biology preference surface; #44 owns launcher-off activation interactions and #40 owns attended E3 presentation behavior.' },
         [ordered]@{ id='archivexl'; reason='Retained only as a transitive dependency of the current Mod Settings adapter.' },
         [ordered]@{ id='red4ext'; reason='Retained only as transitive runtime plumbing for ArchiveXL/Mod Settings; Biology has no project-owned RED4ext plugin.' }
     )
     removedDependencies = @('tweakxl','codeware','input-loader','darkfuture','project-e3-hud')
     sourceModsRequired = @()
-    directGameGatesRemaining = @('Biology REDmod recognition/deployment','enable/disable behavior','normal relaunch persistence','clean uninstall/reset','PKG-05 safe overlap/precedence fixture')
+    directGameGatesRemaining = @('launcher enable/disable and Biology-inactive OFF behavior','normal relaunch persistence','self-contained hard uninstall and residue verification','safe REDmod overlap/precedence fixture','attended body/runtime/UI/presentation/gameplay acceptance')
 }
 Write-JsonFile $provenance (Join-Path $biologyDir 'provenance.json')
 Add-FileRecord 'biology/provenance.json' 'Biology' 'biology-package-metadata' 'REDMOD-NATIVE' 'biology-owned'
@@ -256,5 +255,5 @@ Write-Host "Game version: $gameVersion"
 Write-Host "Revision:     $revision"
 Write-Host "REDmod ID:    mods/Biology"
 Write-Host ''
-Write-Host 'The parent integration thread owns the MILESTONE CLEAN-ROOM install/deploy/attended acceptance.'
+Write-Host 'The parent integration thread owns install/deploy and attended acceptance under the canonical operator/test-mode policy.'
 return $zipPath

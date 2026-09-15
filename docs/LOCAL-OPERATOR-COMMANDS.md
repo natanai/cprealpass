@@ -17,7 +17,7 @@ Canonical game root unless the user says otherwise:
 C:\Games\Steam\steamapps\common\Cyberpunk 2077
 ```
 
-Attended-test source workspaces are disposable and milestone-specific. Do **not** assume `C:\Games\CyberpunkRealism` exists. Prefer:
+Attended-test source workspaces are disposable and milestone-specific. Do **not** assume a permanent repository checkout. Prefer:
 
 ```text
 C:\Games\Biology-Test-<YYYY-MM-DD>-<short-main-sha>\
@@ -154,7 +154,7 @@ pwsh ./tools/Deploy-BiologyRedmod.ps1 `
   -GameRoot 'C:\Games\Steam\steamapps\common\Cyberpunk 2077'
 ```
 
-This uses the directly evidenced official REDmod executable and explicit game root. Deployment success is not gameplay acceptance.
+This uses the directly evidenced CDPR REDmod executable at `tools\redmod\bin\redMod.exe` and an explicit game root. Deployment success is not gameplay acceptance.
 
 The helper is deliberately fail-closed. REDmod sometimes returns exit code `0` even when it ignored the requested game root or found nothing to deploy. Therefore any output containing `No root specified`, `Invalid root path found`, or `No mods found, no deployment is needed` is a deployment **failure** for an installed Biology candidate, not a pass. Positive deployment also requires the actual `[DEPLOY]` stage and `Commandlet deploy has succeeded` evidence.
 
@@ -201,15 +201,37 @@ It publishes derived metadata only, never proprietary Cyberpunk payload.
 
 ---
 
+## Command 9 — ask the installed official REDmod tool what it can do
+
+Use this before adopting a community/framework workaround when the uncertainty is whether CDPR's own REDmod toolchain already exposes a suitable capability.
+
+```powershell
+pwsh ./tools/Probe-OfficialRedmod.ps1 `
+  -GameRoot 'C:\Games\Steam\steamapps\common\Cyberpunk 2077'
+```
+
+This probe is read-only. It directly queries the game-provided `tools\redmod\bin\redMod.exe`, records its version/hash, inventories the shipped REDmod toolset signals, captures `redMod.exe --help`, and writes a plain-text report under the active checkout's `reports/` directory.
+
+Use the report to answer questions such as:
+
+- which official REDmod modules are actually present in the supported build;
+- which root/version/tool assumptions are true on the user's installation;
+- whether an apparent “standard modding workaround” should first be replaced by or compared against an official route.
+
+The presence of an official module does not automatically prove that it is the safest implementation for every Biology seam. If the official route would require broader whole-file replacement or otherwise increase patch/conflict surface, document that direct evidence before selecting the narrower fallback.
+
+---
+
 ## Rules for agents asking the user to run PowerShell
 
 1. **Look here first.** If a catalog command covers the task, use it exactly rather than reconstructing its internals in chat.
-2. Agents may substitute the exact main SHA, disposable test-root name, and known game path where the catalog explicitly permits it.
-3. Do not paste the internals of a repository tool into chat merely to avoid invoking that tool.
-4. Prefer one catalog entrypoint over a long chain of hand-written commands.
-5. Long operations must expose durable console progress. `Write-Progress` alone is not sufficient because some hosts hide it.
-6. Do not describe a fast sanity pass as a full baseline/hash verification.
-7. After a freshly uninstalled/residual-directory-deleted/reinstalled game, let the user choose whether the additional exhaustive hash check is worth the time. Default is **No**.
-8. Iteration cleanup on a reused install remains stricter: `Reset-BiologyIteration.ps1` must prove the return to the tracked baseline before layering another package.
-9. If a command fails, return the failure output to the owning agent; do not improvise destructive cleanup commands.
-10. If an operation becomes recurring, codify it here and in `tools/` with CI coverage before treating it as standard.
+2. For foundational runtime/package questions, **probe the game/CDPR toolchain before assuming the established community/modder route is necessary**. Community practice is fallback evidence, not proof that the official route is unavailable or inferior.
+3. Agents may substitute the exact main SHA, disposable test-root name, and known game path where the catalog explicitly permits it.
+4. Do not paste the internals of a repository tool into chat merely to avoid invoking that tool.
+5. Prefer one catalog entrypoint over a long chain of hand-written commands.
+6. Long operations must expose durable console progress. `Write-Progress` alone is not sufficient because some hosts hide it.
+7. Do not describe a fast sanity pass as a full baseline/hash verification.
+8. After a freshly uninstalled/residual-directory-deleted/reinstalled game, let the user choose whether the additional exhaustive hash check is worth the time. Default is **No**.
+9. Iteration cleanup on a reused install remains stricter: `Reset-BiologyIteration.ps1` must prove the return to the tracked baseline before layering another package.
+10. If a command fails, return the failure output/report to the owning agent; do not improvise destructive cleanup commands.
+11. If an operation becomes recurring, codify it here and in `tools/` with CI coverage before treating it as standard.

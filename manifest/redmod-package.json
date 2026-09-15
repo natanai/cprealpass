@@ -13,17 +13,19 @@
     "packageRoot": "mods/Biology",
     "metadata": "mods/Biology/info.json",
     "officialToolRelativePath": "tools/redmod/bin/redMod.exe",
-    "deployCommand": "tools/redmod/bin/redMod.exe deploy -root=<Cyberpunk 2077>",
     "deployHelper": "tools/Deploy-BiologyRedmod.ps1",
-    "manualModdedLaunchFlag": "-modded",
+    "deployCommandPolicy": "Use the repository deploy helper for deterministic/probe deployment; do not reconstruct raw redMod.exe argument quoting from old docs/chat because the first attended probe proved exit-code-zero false positives are possible when the root argument is ignored.",
     "normalPlayerEnableRoute": "REDlauncher/Steam supported REDmod enable flow",
     "observedSupportedInstall": {
-      "evidence": "docs/evidence/REDMOD-2.31-PROBE-2026-09-15.md",
+      "probeEvidence": "docs/evidence/REDMOD-2.31-PROBE-2026-09-15.md",
+      "deploymentEvidence": "docs/test-runs/2026-09-15-8cf04566-redmod-deploy-preflight.md",
       "fileVersion": "2.3.1.0",
       "productVersion": "2.31",
       "deployModulePresent": true,
       "explicitRootRequiredByBiologyTooling": true,
-      "modsDirectoryBaseline": [".stub"]
+      "modsDirectoryBaseline": [".stub"],
+      "biologyRecognitionProven": true,
+      "biologyFiveStageDeploymentProven": true
     },
     "contentRoots": [
       "mods/Biology/archives",
@@ -54,25 +56,25 @@
       "includedByIntegratedArtifact": true,
       "status": "required-current-runtime",
       "route": "REDSCRIPT-BETTER",
-      "reason": "Merged Biology runtime and presentation use narrow additive/wrapper seams whose whole-file REDmod replacement would broaden patch/conflict surface."
+      "reason": "Biology runtime/presentation use narrow additive/wrapper seams whose whole-file REDmod replacement would broaden patch/conflict surface."
     },
     "mod-settings": {
       "includedByIntegratedArtifact": true,
       "status": "temporary-retained-blocker",
       "route": "REMOVE/RETHINK",
-      "reason": "PR #33 made the two preference semantics provider-neutral but did not implement another accessible persistent settings surface. Removing Mod Settings now would remove the attended-test path for master disable and E3 ON/OFF."
+      "reason": "Current accessible/persistent adapter for provider-neutral Biology/E3 preferences. Remove when a Biology-owned provider or deliberate launcher/install boundary satisfies the same product semantics."
     },
     "archivexl": {
       "includedByIntegratedArtifact": true,
       "status": "temporary-transitive",
       "route": "REMOVE/RETHINK",
-      "reason": "Retained solely because the current Mod Settings adapter depends on it."
+      "reason": "Retained only because the current Mod Settings adapter depends on it."
     },
     "red4ext": {
       "includedByIntegratedArtifact": true,
       "status": "temporary-transitive",
       "route": "REMOVE/RETHINK",
-      "reason": "Retained solely as transitive plumbing for ArchiveXL/Mod Settings; Biology has no project-owned RED4ext DLL/plugin."
+      "reason": "Retained only as transitive plumbing for ArchiveXL/Mod Settings; Biology has no project-owned RED4ext DLL/plugin. Issue #44 must account for launcher-off behavior of this supplemental path."
     }
   },
   "removedRuntimeDependencies": [
@@ -91,12 +93,17 @@
     "installInstructions": "INSTALL.txt",
     "uninstallInstructions": "UNINSTALL.txt"
   },
+  "acceptedDirectGameEvidence": [
+    "official REDmod executable/version/module contract on Cyberpunk 2077 2.31",
+    "official REDmod recognition of mods/Biology",
+    "real five-stage REDmod deployment with explicit game root"
+  ],
   "remainingDirectGameGates": [
-    "Biology REDmod recognition/deployment",
-    "enable/disable behavior",
+    "launcher enable/disable and Biology-inactive OFF behavior",
     "normal relaunch persistence",
-    "clean uninstall/reset",
-    "safe PKG-05 REDmod overlap/precedence probe"
+    "self-contained hard uninstall and residue verification",
+    "safe REDmod overlap/precedence fixture",
+    "attended body/UI/presentation/gameplay acceptance"
   ],
   "rules": [
     "mods/Biology is the authoritative first-party REDmod package identity.",
@@ -105,7 +112,7 @@
     "Every installed payload file must be individually recorded with owner, component, route, replace policy and SHA-256; shared framework roots are never recursively Biology-owned.",
     "No Dark Future or Project E3 executing content may enter the package.",
     "No stock Cyberpunk executable, archive, script bundle, save, settings file, or other proprietary game payload may enter the package.",
-    "Mod Settings/ArchiveXL/RED4ext remain temporary current-candidate dependencies only because the merged presentation lane has not yet supplied another accessible persistent provider for its already provider-neutral semantics.",
-    "CI and exact compilation are not live-game acceptance; remaining direct-game gates stay open until the parent integration thread records them."
+    "Mod Settings/ArchiveXL/RED4ext remain temporary current-candidate dependencies only while a current accepted settings/activation consumer justifies them.",
+    "CI and exact compilation are not live-game acceptance; each remaining direct-game gate stays open until the parent integration thread records it."
   ]
 }

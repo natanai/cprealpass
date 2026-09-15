@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "id": "realpass",
-  "name": "realpass",
+  "id": "biology-source",
+  "name": "Biology development source",
   "version": "0.1.0-dev.20",
-  "status": "Project-original locked-release policy plus body/NPC progression, combat, blood-loss demand, impairment and timed-care models; source-mod runtime bridges excluded from this safe package; no gameplay activation",
+  "status": "Redistribution-safe project-original model/source artifact for CI and offline review; not the playable Biology package and no gameplay activation",
   "gameVersion": "2.31",
   "requiredExternalComponents": [
     "redscript 0.5.31"
@@ -23,7 +23,7 @@
     },
     {
       "source": "package/README.md",
-      "destination": "CyberpunkRealism/README.md",
+      "destination": "BiologySource/README.md",
       "origin": "project-original",
       "module": "documentation"
     },
@@ -107,7 +107,7 @@
     },
     {
       "source": "config/stock-protection.json",
-      "destination": "CyberpunkRealism/config/stock-protection.json",
+      "destination": "BiologySource/config/stock-protection.json",
       "origin": "project-original",
       "module": "stock-protection-recipe"
     },

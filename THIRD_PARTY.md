@@ -1,24 +1,37 @@
-# Third-party provenance
+# Biology third-party provenance
 
-Framework authors, pinned versions, official source URLs, archive hashes and dependency relationships are recorded in `manifest/components.json`. Captured license notices are under `LICENSES/`. The offline redscript compiler/toolchain is pinned separately in `manifest/toolchain.json`. This source repository contains no framework binaries, Cyberpunk game archives or compiled game cache.
+Framework authors, pinned versions, upstream source URLs, archive hashes, license/provenance records, and dependency relationships are recorded in `manifest/components.json`, `manifest/dependency-graph.json`, and `manifest/distribution.json`. Captured license notices are under `LICENSES/`. The offline redscript compiler/toolchain is pinned separately in `manifest/toolchain.json`.
 
-## Current owned-candidate infrastructure
+This repository does not contain Cyberpunk game archives/executables, compiled stock game caches, or the local-only third-party reference payloads under ignored `ReferenceMods/`.
 
-The current deployable owned candidate intentionally uses only the following generic third-party infrastructure:
+## Current runtime dependency status
 
-- **redscript 0.5.31** — script loader/compiler plumbing;
-- **RED4ext 1.30.0** — generic infrastructure required by the pinned settings dependency chain;
-- **ArchiveXL 1.27.3** — generic dependency of the pinned Mod Settings build;
-- **Mod Settings 0.2.21** — host for RealPass presence, its read-only managed-feature ledger and explicitly accepted binary presentation/accessibility preferences.
+The current integrated Biology candidate is REDmod-first and retains only the generic runtime pieces that still have a concrete consumer:
 
-These dependencies do **not** own RealPass gameplay or presentation policy. Body, injury, combat, armor/protection, physical Outfit behavior, Biology, nameplate behavior, healthbar policy and the meaning/effects of RealPass settings are implemented in project-original RealPass source. TweakXL, Codeware and Input Loader remain catalogued because they were used by older development profiles, but they are not required by the current owned candidate and must not drift into its runtime artifact.
+- **official REDmod** — game-provided package/deploy/enable authority; never bundled by Biology;
+- **redscript 0.5.31** — directly required by current Biology-owned additive/wrapper runtime seams whose whole-file REDmod replacement is presently classified as a broader compatibility surface;
+- **Mod Settings 0.2.21** — temporary accessible/persistent provider for the small provider-neutral Biology preference surface;
+- **ArchiveXL 1.27.3** — temporary transitive dependency of the current Mod Settings provider;
+- **RED4ext 1.30.0** — temporary transitive plumbing for that ArchiveXL/Mod Settings chain.
 
-`manifest/distribution.json` is authoritative for which components may enter a future public package. Before release, every allowed pinned dependency must have its exact redistributable payload and all required license/third-party notices re-audited. The repository already retains captured notices for the pinned framework versions, but their presence here is not itself proof that a particular release archive is complete.
+Mod Settings, ArchiveXL, and RED4ext do **not** have permanent architectural entitlement. Issue #44 owns launcher-off/hard-uninstall behavior across supplemental routes, and current dependency contracts require removal when their last accepted consumer disappears.
 
-## Historical/reference mods
+TweakXL, Codeware, and Input Loader are catalogued for provenance/history but are **not required by the current integrated candidate** and must not drift into a player artifact without a new concrete consumer and routing decision.
 
-**Dark Future 2.0 by DarkFortuneTeller is reference/provenance only.** Earlier experiments adapted its needs/UI behavior, but no Dark Future gameplay script, archive, tweak payload, localization, persistent state or runtime authority is permitted in the current owned candidate or final RealPass package. Historical recipes and its captured CC BY-SA 4.0 notice may remain in the repository for provenance; they are not current runtime dependencies.
+No generic framework owns Biology gameplay policy, body state, injury/combat/armor authority, Biology UI semantics, or the authored E3-inspired presentation.
 
-**Project E3 - HUD by Virtuoso75 is reference/provenance only.** Its visual ideas informed some presentation exploration, but the accepted RealPass runtime uses stock Cyberpunk UI behavior plus project-original RealPass code. Original or modified Project E3 scripts/assets are not permitted in the standalone RealPass runtime or package. Historical local recipes may remain for provenance and must not be mistaken for a build dependency.
+## Reference mods
 
-Downloaded component archives stay in ignored local reference/vendor directories; generated candidates and deployment manifests stay in ignored staging/deployment storage. A local integration bundle is never authorization for public redistribution. Public packaging must be assembled from the explicit allowed-component contract and verified pinned upstream archives, not by copying whatever happens to be installed on a developer machine.
+**Dark Future 2.0 by DarkFortuneTeller** is research/provenance only. Earlier development studied portions of its gameplay/UI behavior, but no Dark Future gameplay script, archive, tweak payload, localization, persistent state, or runtime authority is permitted in Biology.
+
+**Project E3 - HUD by Virtuoso75** is design/controller archaeology only. `config/realpass-e3.json` preserves a durable inventory/version/hash map of the user-supplied local reference package. The actual third-party source/archive/tweak payload remains outside Git under ignored `ReferenceMods/` and is not redistributed by Biology. Issue #40 re-derives the desired presentation against current Cyberpunk/REDmod native controllers in Biology-owned code while preserving the modern scanner.
+
+Historical filenames containing `realpass`, `darkfuture`, or `project-e3` may remain where they are clearly provenance/reference data. Their presence is not runtime authorization.
+
+## Redistribution rule
+
+`manifest/distribution.json` is authoritative for what may enter a Biology player artifact. Every bundled generic dependency must be pinned, attributed, licensed for the intended redistribution, individually represented in the owner manifest, and removable without recursively owning shared framework/game roots.
+
+Downloaded component archives stay in ignored local vendor/reference storage. Public packaging must be assembled from explicit contracts and verified payloads, never by copying whatever happens to be installed on a developer machine.
+
+For foundational capability questions, investigate vanilla Cyberpunk and the installed official CDPR/REDmod toolchain before accepting a community workaround as necessary. If a non-official framework remains, preserve the evidence showing why that route is currently narrower or more robust.

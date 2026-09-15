@@ -1,42 +1,81 @@
 # Biology release and installation architecture
 
-Status: **canonical target; REDmod migration active**
-Last updated: **2026-09-14**
-Canonical policy: `../AGREED-GOALS.md`, `docs/BIOLOGY-REDMOD-MIGRATION.md`, `manifest/distribution.json`, `docs/CLEAN-ROOM-TESTING.md`
+Status: **canonical release target; implementation still in progress**  
+Last updated: **2026-09-15**
+
+Canonical policy sources:
+
+- `../AGREED-GOALS.md`
+- `BIOLOGY-REDMOD-MIGRATION.md`
+- `CLEAN-ROOM-TESTING.md`
+- `LOCAL-OPERATOR-COMMANDS.md`
+- root `ROADMAP.md`
+- current GitHub issues/PRs
 
 ## Player-facing target
 
 A normal player should be able to:
 
-1. have Cyberpunk 2077 plus the official free REDmod support installed/enabled as required by the supported platform;
+1. have Cyberpunk 2077 + official REDmod support installed;
 2. download one **Biology** release;
-3. copy/install one clearly identified Biology package, preferably under `Cyberpunk 2077/mods/Biology`;
-4. deploy/enable it through the supported REDmod path as needed;
-5. launch Cyberpunk normally through Steam thereafter.
+3. copy/install one clearly identified package;
+4. use the normal REDlauncher/Steam mod-enable path;
+5. launch normally through Steam;
+6. temporarily play without Biology by disabling REDmod once launcher-off behavior is proven across the complete runtime;
+7. fully remove Biology with a self-contained `Uninstall Biology.exe` rather than reinstalling Cyberpunk.
 
-The player should not need Vortex knowledge, a manual source-mod stack, a persistent Biology launcher, or a menu of independent gameplay modules.
+The player should not need Vortex knowledge, Git, PowerShell, a source checkout, a persistent Biology launcher, or a menu of independent gameplay modules.
+
+## Three supported player states
+
+### 1. Biology ON
+
+REDlauncher `Enable mods` ON and Biology active.
+
+### 2. Vanilla-play mode
+
+Biology remains installed, REDlauncher `Enable mods` OFF, and Biology behavior is inactive.
+
+This must be **proven**, not assumed. Supplemental redscript/framework paths outside `mods/Biology` must either be inert without Biology activation, explicitly gated, or removed/restructured if they continue Biology behavior while REDmod is disabled.
+
+Vanilla-play mode means Biology behavior is inactive; it does not necessarily mean every supplemental framework file is physically absent.
+
+### 3. Fully removed
+
+The player runs a self-contained Windows uninstaller with player-facing identity such as:
+
+`Uninstall Biology.exe`
+
+The uninstaller removes only files whose ownership can be proven safely, preserves saves, and reports ambiguous/changed files instead of guessing.
+
+Issue #44 owns implementation of this contract.
 
 ## REDmod-first does not mean REDmod-only
 
-Official REDmod is the preferred package/deployment/runtime route wherever it can own the behavior cleanly.
+Official REDmod is preferred where it owns behavior cleanly.
 
-Use REDmod for:
+Use REDmod for package identity/deployment and REDmod-native resources/routes. Do not force a behavior into whole-file REDmod script replacement when a smaller Biology-owned additive/wrapper seam is materially safer across game patches.
 
-- package identity/deployment;
-- REDmod-native archives/resources;
-- tweak source;
-- audio/animation paths where Biology actually owns such content;
-- script replacement only when whole-file replacement is the robust choice.
+Runtime route decisions belong in `BIOLOGY-REDMOD-MIGRATION.md` and the relevant manifests/tests.
 
-Do **not** force a behavior into REDmod merely because the route is official. REDmod `.script` modding replaces a vanilla-path script file and conflicts per file; a narrow Biology-owned wrapper/additive seam may touch far less vanilla implementation and therefore survive patches better.
+## Current integrated package foundation
 
-The route for each runtime feature must be classified under `docs/BIOLOGY-REDMOD-MIGRATION.md` before the migration is considered complete.
+The first integrated REDmod-first milestone already proved:
+
+- package identity under `mods/Biology`;
+- release-shaped package construction;
+- exact compilation against Cyberpunk 2077 2.31;
+- installation into a clean game;
+- official REDmod recognition of `Biology`;
+- actual five-stage REDmod deployment through the corrected explicit-root helper.
+
+That foundation is no longer hypothetical. Current attended follow-ups are runtime/UI/presentation/release-UX defects tracked in root `ROADMAP.md`.
 
 ## Runtime ownership and dependency ladder
 
-Executing gameplay/presentation behavior is Biology-owned. Dark Future and Project E3 are reference/provenance only and are blocked from finished live/public runtime manifests.
+Executing gameplay/presentation behavior is Biology-owned. Dark Future and Project E3 are reference/provenance only and must not execute in the player package.
 
-Dependency preference:
+Preferred dependency ladder:
 
 ```text
 vanilla Cyberpunk semantic authority
@@ -45,32 +84,25 @@ vanilla Cyberpunk semantic authority
 official REDmod
         |
         v
-Biology-owned additive/wrapper script seam (only when narrower/safer)
+Biology-owned additive/wrapper seam when narrower/safer
         |
         v
-generic native/framework extension (only when necessary)
+generic framework/native extension only when required
 ```
 
-The current settings-capable runtime may still contain redscript, RED4ext, ArchiveXL and Mod Settings during migration. **Those are transitional, not an entitlement.** Each must be removed unless the migration audit demonstrates a current Biology feature that genuinely requires it.
+Current framework dependencies remain transitional unless a current Biology feature specifically proves they are needed.
 
-In particular, Mod Settings is no longer a product requirement. The public settings contract is provider-neutral and intentionally tiny; a Biology-owned preferences surface is preferred if it can remove the Mod Settings/ArchiveXL/RED4ext chain without increasing fragility.
+Do not retain a dependency simply because a previous build used it.
 
 ## Product/package identity
 
-Player-facing and new package identity is **Biology**.
+Player-facing identity is **Biology**.
 
-During migration:
-
-- repository name may remain `cprealpass`;
-- internal `RealPass`/`CR*` identifiers may remain temporarily;
-- historical manifests/tests may still use `realpass` as a technical identifier;
-- do not mass-rename internals merely for cosmetics.
-
-The migration should move package metadata, install paths, labels and new documentation toward Biology first, then internal identifiers gradually where safe.
+The repository may remain named `cprealpass`, and internal `RealPass`/`CR*` identifiers may remain temporarily where renaming would add risk. New player-facing package metadata, labels and documentation should use Biology.
 
 ## Preferred final artifact shape
 
-The target shape is approximately:
+The core target is approximately:
 
 ```text
 Cyberpunk 2077/
@@ -78,153 +110,153 @@ Cyberpunk 2077/
     └── Biology/
         ├── info.json
         ├── scripts/        # only accepted REDmod whole-file script routes
-        ├── tweaks/         # only accepted Biology tweak source
-        ├── archives/       # only accepted Biology-owned resources
-        └── customSounds/   # only if Biology owns custom sound content
+        ├── tweaks/         # accepted Biology tweak source
+        ├── archives/       # accepted Biology-owned resources
+        └── customSounds/   # only if Biology owns such content
 ```
 
-If an unavoidable generic framework remains, its player-package files may live outside `mods/Biology` only because that framework requires it. Every such file family must be:
+A player release may also include:
 
-- pinned and hash-verified;
-- explicitly justified by a current Biology feature;
-- accompanied by required notices;
-- represented in the package manifest/provenance;
-- removable when the last consumer disappears.
+```text
+Biology/
+    Uninstall Biology.exe
+    <ownership/version data required by that uninstaller>
+```
 
-The final package must not contain:
+If an unavoidable generic framework requires files outside `mods/Biology`, every such family must be:
 
-- repository `tests/`, `tools/`, `staging/`, `reports/`, or `vendor/` state;
-- local deployment receipts or machine-specific manifests;
-- saves or user data;
-- Cyberpunk executables, stock archives, `final.redscripts`, or other proprietary game files;
+- pinned/hash-verified;
+- feature-justified;
+- represented in package ownership/provenance;
+- handled conservatively by uninstall logic;
+- removable when the last current consumer disappears.
+
+## What must not ship
+
+The final player package must not contain:
+
+- repository tests/source-workspace state unrelated to runtime;
+- staging/reports/vendor caches;
+- machine-specific deployment receipts;
+- saves;
+- Cyberpunk executables, stock archives or other proprietary game payload;
 - Dark Future or Project E3 executing content;
-- frameworks merely inherited from an old developer machine;
-- unexplained loose legacy payload unrelated to an accepted final route.
+- frameworks with no current Biology consumer;
+- unexplained loose legacy payload;
+- local `ReferenceMods/` material.
+
+## Uninstaller safety contract
+
+The self-contained player uninstaller must not depend on repository PowerShell scripts.
+
+It should:
+
+- locate/validate the game root;
+- require Cyberpunk to be closed;
+- read the installed Biology ownership manifest/version data;
+- validate owned files before deletion;
+- remove only proven Biology/release-owned paths;
+- never recursively delete shared roots such as `archive`, `r6`, `red4ext`, `bin`, `engine`, or the entire `mods` directory;
+- remove only now-empty directories reached from owned paths;
+- preserve saves;
+- preserve Biology settings by default unless the player explicitly requests otherwise;
+- leave changed/shared/ambiguous files in place and report them;
+- refresh official REDmod deployment/cache state appropriately after removal;
+- clearly distinguish full success from partial cleanup.
+
+Developer reset tooling may act as a reference implementation for ownership safety, but it is not the final player UX.
 
 ## Authoritative overlap and load order
 
-Biology should be authoritative for the physical systems it intentionally owns.
+Biology is authoritative for systems it intentionally owns.
 
-Where REDmod can deterministically express conflict/load-order precedence, the package/deploy process should give Biology the intended precedence for overlapping REDmod-controlled resources. However:
+Where REDmod can deterministically express precedence for REDmod-controlled resources, use that behavior deliberately. Do not claim universal dominance over redscript/CET/native/runtime TweakDB mechanisms outside REDmod's per-file model.
 
-- do not modify unrelated files merely to “win” conflicts;
-- do not claim universal dominance over redscript wrappers, RED4ext/CET/native hooks, runtime TweakDB mutation or other mechanisms outside REDmod's per-file model;
-- document known overlap/incompatibility classes honestly.
+A self-contained mod is not a mod that forcibly overrides every possible third-party behavior.
 
-A self-contained mod is not the same thing as a mod that forcibly overrides every other possible runtime mechanism.
+## Repository → package boundary
 
-## Repository -> package boundary
-
-The repository root is not the player mod. It contains tests, tools, docs and build state that do not belong in the game.
-
-The target boundary is:
+The repository root is not the player mod.
 
 ```text
 canonical source
-  -> cloud/offline source contracts
-  -> direct/native/REDmod compatibility evidence
+  -> cloud/source contracts
+  -> direct/native compatibility evidence
   -> exact compile/stage against supported game
-  -> official REDmod-shaped Biology artifact
-  -> supported REDmod deploy/enable path
+  -> release-shaped Biology artifact
+  -> official REDmod deploy/enable path
   -> normal Steam launch
-  -> attended acceptance of that exact package
+  -> attended acceptance of that exact artifact
 ```
 
-Raw repository source may remain fail-closed where necessary for development. Candidate builders may open accepted development gates only in immutable staged copies.
+The package builder, not a developer working tree, defines what players receive.
 
-## Current clean-room builder is transitional
+## Local operator path rule
 
-`tools/Build-CleanRoomTestPackage.ps1` remains useful while the migration is underway because it enforces fresh source, exact compile, owned-package provenance and non-deployment. It must **not** be mistaken for the final artifact architecture if it still emits the old game-root-shaped RealPass/framework layout.
+Repository/workspace paths are not stable.
 
-The migration should evolve or replace that builder so broad attended testing eventually builds the same `mods/Biology`/REDmod-shaped artifact intended for players.
+Do not publish active instructions that require a permanent checkout such as `C:\Games\CyberpunkRealism`.
 
-Do not spend large effort polishing the old root-package shape as though it were final while the REDmod migration remains unresolved.
+Before asking the user to run local commands, use `LOCAL-OPERATOR-COMMANDS.md`. Tools should derive the active checkout or self-bootstrap according to the canonical operator workflow.
 
-## Dependency and notice policy
+The known game path may be used where the catalog permits it:
 
-`manifest/distribution.json` remains authoritative for currently allowed/blocked/not-required runtime components during migration, but it must be revised as dependencies are removed.
-
-Every bundled generic dependency must be the exact pinned upstream version, hash-verified from its official release source, and accompanied by required license/third-party notices.
-
-`docs/DEPENDENCY-AUDIT.md` records engineering/license evidence. A technically working dependency is not automatically approved or still necessary.
-
-## Patch compatibility before packaging
-
-Before broad testing after a Cyberpunk/REDmod patch or before changing a foundational native seam, run the read-only compatibility audit:
-
-```powershell
-Set-Location 'C:\Games\CyberpunkRealism'
-pwsh ./tools/Audit-GameContracts.ps1
+```text
+C:\Games\Steam\steamapps\common\Cyberpunk 2077
 ```
 
-For REDmod-specific questions that the tracked snapshot cannot answer, prefer a targeted direct probe against the user's clean supported game installation over community guesswork.
+## Testing and cleanup
 
-See `docs/PATCH-RESILIENCE.md`, `docs/LOCAL-GAME-REFERENCE.md`, and `docs/BIOLOGY-REDMOD-MIGRATION.md`.
+The source checkout is disposable for user-facing attended builds.
 
-## Clean-room and iteration testing
+The game installation has two test tiers:
 
-The source checkout is disposable for every attended user-facing build: use a fresh clone/download of canonical `main`.
+- **Iteration** — use current ownership/reset policy when the prior Biology install can be safely accounted for.
+- **Milestone clean-room** — Steam uninstall + residual-directory deletion + reinstall for structural/package/framework/game-patch milestones or unexplained residue.
 
-The game installation has two valid tiers:
+After a genuine fresh reinstall, the extra exhaustive whole-game hash pass is optional at the user's choice; fast sanity must not be mislabeled as full baseline verification.
 
-- **Iteration:** remove/account for the previous package, prove the whole installation matches the recorded vanilla baseline, then install the new release-shaped artifact.
-- **Milestone clean-room:** uninstall Cyberpunk, delete residual game directory, reinstall, refresh/capture baseline, then install/deploy the new artifact.
+A full Steam reinstall is **not** the normal uninstall path for Biology. It remains exceptional clean-room/recovery evidence until the dedicated player uninstaller is fully accepted.
 
-A full game reinstall is deliberately **not** required for every small iteration. It is required when structural/package/dependency changes or unexplained baseline drift make residue plausible.
+See `CLEAN-ROOM-TESTING.md`.
 
-See `docs/CLEAN-ROOM-TESTING.md`.
-
-## Parallel implementation
-
-The REDmod migration is a large project and should normally be split across 2–3 branches when safe. Follow `docs/PARALLEL-AGENT-WORKFLOW.md`.
-
-Preferred initial lanes:
-
-- official REDmod/package/dependency architecture;
-- runtime/script/native seam classification and migration;
-- Biology product/UI/settings identity.
-
-Each lane merges only when internally coherent and green. Broad in-game acceptance happens after selected lanes converge into canonical `main`, not by contaminating the game separately for every branch.
-
-## CI vs local evidence
+## CI vs attended evidence
 
 Cloud CI can establish source/model/contract/package-policy consistency. It cannot prove:
 
-- REDmod deployment behavior on the supported local game;
+- REDmod runtime behavior on the user's supported installation;
 - native UI rendering;
-- actual game event semantics;
-- save persistence behavior;
+- ScriptableSystem lifecycle semantics;
+- save persistence;
 - quest compatibility;
-- combat feel/calibration;
-- runtime latency/performance;
-- third-party overlap behavior.
+- gameplay feel/performance;
+- launcher-off vanilla-play behavior;
+- hard-uninstall cleanliness.
 
-Those remain attended local gates against the exact release-shaped package.
+Those require direct/attended evidence against an exact release-shaped artifact.
 
 ## Release gate
 
-Do not publish a player release merely because source compiles or a ZIP assembles. A release candidate needs, at minimum:
+Do not publish a player release merely because source compiles or a ZIP assembles.
+
+A release candidate needs, at minimum:
 
 - cloud/source contracts green;
-- every current runtime route classified and justified;
-- minimal dependency graph demonstrated;
-- local native/REDmod contract evidence green for the supported game;
-- exact package compilation/staging green;
-- artifact/provenance/dependency policy green;
-- official REDmod deploy/enable path proven;
-- clean-room normal Steam boot;
-- attended Biology/settings/scanner/presentation validation;
-- attended physical combat/armor/wound/bleeding/pain/treatment validation;
+- runtime routes/dependencies justified;
+- exact supported-game compile/package checks green;
+- official REDmod recognition/deploy proven;
+- normal Steam launch;
+- attended Biology body/runtime/UI/presentation validation;
 - save/reload/time progression validation;
-- representative base-game + Phantom Liberty quest-safety validation;
+- representative gameplay/quest safety;
 - acceptable runtime performance;
-- required notices/checksums present;
+- notices/checksums/ownership metadata present;
+- launcher ON/OFF semantics verified if advertised;
+- self-contained uninstaller safety/cleanup verified if included;
 - install/disable/remove instructions understandable without development context.
 
 ## Recovery philosophy
 
-Biology does not maintain a multi-generation rollback chain or an extra automatic save-backup system for ordinary development.
+Biology should not maintain a multi-generation rollback chain or depend on reinstalling an 85+ GiB game as ordinary removal.
 
-The strict recorded vanilla baseline is the authority for proving a reused installation is clean. If a prior package cannot be fully accounted for or the baseline cannot be restored, escalate to a milestone uninstall/delete/reinstall rather than guessing which files are safe to delete.
-
-Public removal should eventually be simple because package identity/ownership is simple, not because Biology runs a persistent cleanup service.
+Ownership manifests and the self-contained uninstaller are the normal safety mechanism. Full Steam reinstall remains the fallback when state cannot be accounted for or when a deliberate milestone clean-room proof is needed.

@@ -17,10 +17,8 @@ $referenceDoc = Read 'docs/LOCAL-GAME-REFERENCE.md'
 $capture = Read 'tools/Capture-VanillaGameBaseline.ps1'
 $compare = Read 'tools/Compare-GameToVanillaBaseline.ps1'
 $reset = Read 'tools/Reset-BiologyIteration.ps1'
-$legacyReset = Read 'tools/Reset-RealPassIteration.ps1'
 $publishSnapshot = Read 'tools/Publish-LocalGameReferenceSnapshot.ps1'
 $package = Read 'tools/Build-BiologyPackage.ps1'
-$legacyPackage = Read 'tools/Build-CleanRoomTestPackage.ps1'
 $deploy = Read 'tools/Deploy-BiologyRedmod.ps1'
 $compile = Read 'tools/Compile-Profile.ps1'
 
@@ -38,13 +36,15 @@ Require $doc 'reference/cyberpunk/vanilla-baseline/' 'Clean-room doc must identi
 Require $doc 'biology/build-manifest\.json' 'Biology iteration cleanup must be tied to the installed owner manifest.'
 Require $doc 'Build-BiologyPackage\.ps1' 'Clean-room doc must name the canonical integrated Biology builder.'
 Require $doc 'Reset-BiologyIteration\.ps1' 'Clean-room doc must name the Biology manifest reset path.'
-Require $doc 'Deploy-BiologyRedmod\.ps1' 'Clean-room doc must name deterministic REDmod deployment.'
-Require $doc 'Build-CleanRoomTestPackage\.ps1.*PKG-06|PKG-06.*Build-CleanRoomTestPackage\.ps1' 'Legacy clean-room builder must be demoted to a PKG-06 fallback rather than silently deleted.'
+Require $doc 'Deploy-BiologyRedmod\.ps1' 'Clean-room doc must name fail-closed REDmod deployment.'
+Require $doc 'first REDmod structural milestone.*already|first integrated REDmod.*already' 'Clean-room doc must not present the already-completed first structural milestone as future work.'
 Require $doc 'If any of those checks fail, the correct response is a milestone reset' 'Cleanup must fail closed rather than broaden deletion.'
-Require $doc 'MILESTONE CLEAN-ROOM' 'Structural REDmod-first integration must require milestone clean-room acceptance.'
+Require $doc 'MILESTONE CLEAN-ROOM' 'Milestone clean-room mode must remain explicit.'
+Require $doc 'exhaustive.*optional|optional.*exhaustive' 'Fresh-reinstall milestone flow must preserve the optional exhaustive hash policy.'
 
-Require $referenceDoc 'Publish-LocalGameReferenceSnapshot\.ps1' 'Local-game reference docs must expose the running snapshot publish path.'
+Require $referenceDoc 'LOCAL-OPERATOR-COMMANDS\.md' 'Local-game reference docs must route user-run work through the canonical command catalog.'
 Require $referenceDoc 'current observed installation|Current observed installation' 'Local-game reference docs must distinguish the current snapshot from vanilla baseline.'
+Require $referenceDoc 'report.*reports/|reports/.*report' 'Local-game reference docs must require report-file evidence for material diagnostic output.'
 
 Require $capture 'Get-FileHash' 'Vanilla baseline capture must hash game files.'
 Require $capture 'vanilla-baseline' 'Vanilla baseline capture must write the dedicated baseline path.'
@@ -73,7 +73,6 @@ Require $reset 'Installed package file changed since installation' 'Biology rese
 Require $reset 'approved-dependency-owned' 'Biology reset must understand exact dependency-file ownership without owning shared roots.'
 Require $reset 'Compare-GameToVanillaBaseline\.ps1' 'Biology reset must finish with a strict whole-game baseline comparison.'
 Require $reset 'MILESTONE CLEAN-ROOM' 'Biology reset must fail closed to milestone mode.'
-Require $legacyReset 'realpass\\build-manifest\.json' 'Legacy reset must remain available for the prior package during PKG-06 transition.'
 
 Require $package 'mods/Biology/info\.json' 'Integrated package must include official Biology REDmod identity.'
 Require $package 'r6/scripts/CyberpunkRealism|runtimeManifest\.files' 'Integrated package must consume the compiled Biology runtime destinations.'
@@ -84,11 +83,13 @@ Require $package 'Build-OwnedRuntimeProfile\.ps1' 'Integrated builder must exact
 Require $package 'biology/build-manifest\.json' 'Integrated package must emit exact Biology ownership metadata.'
 Require $package 'approved-dependency-owned' 'Integrated package must account for supplemental framework files individually.'
 Require $package 'sourceModsRequired = @\(\)' 'Integrated package must require no source gameplay/presentation mod runtime.'
-Require $legacyPackage 'Build-OwnedRuntimeProfile\.ps1' 'Known-working old route must remain present until PKG-06 direct replacement proof.'
 
 Require $deploy 'redMod\.exe' 'Deterministic deploy helper must call official REDmod.'
 Require $deploy '''deploy''' 'Deterministic deploy helper must call the deploy module.'
-Require $deploy '-root=\$game' 'Deterministic deploy helper must pass explicit game root.'
+Require $deploy 'ProcessStartInfo|ArgumentList' 'Deploy helper must control native argument boundaries.'
+Require $deploy 'No root specified' 'Deploy helper must reject REDmod root-ignore false positives.'
+Require $deploy 'No mods found' 'Deploy helper must reject empty-mod-set false positives.'
+Require $deploy 'Commandlet deploy has succeeded' 'Deploy helper must require positive deploy evidence.'
 Require $deploy '2\.3\.1\.0' 'Deploy helper must guard directly evidenced REDmod file version.'
 Require $deploy '2\.31' 'Deploy helper must guard directly evidenced REDmod product version.'
 
@@ -102,4 +103,8 @@ Require $compile '\$logsDir=Join-Path \$project ''logs''' 'Fresh-clone compile m
 Require $compile '\$reportsDir=Join-Path \$project ''reports''' 'Fresh-clone compile must create its report output root.'
 Require $compile 'New-Item -ItemType Directory -Force -Path \$dir' 'Fresh-clone compile must materialize ignored output directories before writing.'
 
-Write-Host 'PASS: attended testing now uses the REDmod-first Biology build/deploy/reset route, preserves strict vanilla-baseline cleanup and milestone discipline, and keeps the old package path only as a PKG-06 rollback.'
+foreach ($retired in @('tools/Build-CleanRoomTestPackage.ps1','tools/Finalize-PlayerPackage.ps1','tools/Reset-RealPassIteration.ps1')) {
+    if (Test-Path -LiteralPath (Join-Path $project $retired)) { throw "Retired RealPass-era attended tooling still exists: $retired" }
+}
+
+Write-Host 'PASS: attended testing uses the canonical Biology build/deploy/reset route, preserves baseline/milestone discipline, and no longer carries the superseded RealPass player-package fallback.'

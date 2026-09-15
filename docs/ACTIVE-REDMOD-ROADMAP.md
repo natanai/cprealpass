@@ -1,547 +1,279 @@
-# Biology — active REDmod refactor roadmap
+# Biology — active REDmod follow-up roadmap
 
-Status: **ACTIVE WORK PLAN**
+Status: **ACTIVE FOLLOW-UP LEDGER**  
+Last updated: **2026-09-15**
 
-This is the current execution roadmap for the Biology product migration. It converts the attended pre-REDmod evidence in `PRE-REDMOD-LIVE-BASELINE-2026-09-15.md` into concrete work items, ownership lanes, merge order, and acceptance gates.
+This file tracks work that is active **after** the first integrated REDmod-first attended run. It is intentionally not a permanent archive of every prior migration lane.
 
-This file is intentionally more operational than `BIOLOGY-REDMOD-MIGRATION.md`. The migration document explains the architecture and why. This roadmap says **what to do next**.
+For historical pre-REDmod evidence, use `PRE-REDMOD-LIVE-BASELINE-2026-09-15.md`. For exact integrated attended evidence, use `docs/test-runs/`.
 
 ## Read before working
 
-Every agent on this refactor must read, in this order:
-
 1. `AGENTS.md`
 2. `AGREED-GOALS.md`
-3. `docs/PRE-REDMOD-LIVE-BASELINE-2026-09-15.md`
-4. `docs/BIOLOGY-REDMOD-MIGRATION.md`
-5. this file
-6. the focused architecture document for the lane (`BIOLOGY-UI.md`, `E3-PRESENTATION.md`, etc.)
+3. root `ROADMAP.md`
+4. this file
+5. the focused architecture doc for the subsystem
+6. `docs/BIOLOGY-REDMOD-MIGRATION.md`
 7. `docs/PARALLEL-AGENT-WORKFLOW.md`
+8. `docs/INTEGRATION-ORCHESTRATOR.md`
+9. `docs/LOCAL-OPERATOR-COMMANDS.md` before requesting local commands
+10. the relevant GitHub issue and all current comments
 
-Do not infer current product intent from historical `RealPass`, Dark Future, or Project E3 implementations before reading those files.
-
----
-
-# 1. Current milestone state
-
-The tested pre-REDmod candidate at revision `ec8ba06451c3cbacabfad24f1479e1537147d0c9`:
-
-- exact-compiled;
-- packaged from a clean clone;
-- installed into a freshly baselined Cyberpunk 2.31 directory;
-- launched successfully;
-- changed the outer hub label to `BIOLOGY`;
-- hid the ordinary player health bar;
-- exposed the current RealPass Mod Settings page;
-- **did not** deliver the intended E3-style HUD;
-- **did not** deliver E3-style NPC nameplates;
-- **did not** make Biology the true parent body mode;
-- **did not** provide live body state to the Biology overlay;
-- **did not** consistently rename inner Cyberware navigation to Biology;
-- displayed a visually colliding/faint `BIOLOGY | CYBERWARE` selector;
-- still exposed obsolete `REALPASS` branding in settings.
-
-Those failures are migration acceptance requirements, not reasons to polish the old overlay architecture indefinitely.
+Do not use merged worker handoffs or dated baseline records to infer a current branch assignment.
 
 ---
 
-# 2. Parallel work lanes
+# 1. Accepted foundation from the first integrated REDmod milestone
 
-The next phase should use up to three branches in parallel.
+The exact candidate built from `8cf045664b5e4d8b4b014edfc98bf2f8eb270ba5` produced:
 
-## Lane A — REDmod foundation, package shape, dependency audit
+- exact compile success;
+- a release-shaped Biology package;
+- official package identity `mods/Biology`;
+- successful installation into a clean Cyberpunk 2077 2.31 game;
+- successful official REDmod recognition of `Biology`;
+- successful five-stage REDmod deployment after explicit-root handling was repaired and made fail-closed.
 
-Proposed branch: `agent/redmod-foundation`
+Artifact:
 
-Owns:
+`biology-integrated-20260915-061136-8cf045664b5e.zip`
 
-- official `mods/Biology` package skeleton;
-- REDmod identity/deploy/enable/load-order proof;
-- machine-readable classification of current runtime/package components;
-- dependency justification/removal map;
-- final install/uninstall ownership model;
-- REDmod overlap/precedence evidence;
-- migration of clearly REDMOD-NATIVE resources where safe;
-- package/build tooling necessary for a release-shaped Biology artifact.
+SHA-256:
 
-Must not redesign:
+`42BACC73173EB95D84F3278593CD06DDAF665AA714F4C692DB03D553B91557CC`
 
-- body model equations;
-- Biology UI layout/content semantics;
-- E3 HUD/nameplate visual design;
-- combat/injury calibration.
-
-Primary issue IDs:
-
-- `PKG-01` through `PKG-07`
-- `DEP-01` through `DEP-06`
-- `SEAM-01` classification coordination
-
-## Lane B — Biology body shell, runtime availability, navigation
-
-Proposed branch: `agent/biology-ui-runtime`
-
-Owns:
-
-- making Biology the real parent mode of the shared body/anatomy fullscreen;
-- consistent player-facing `BIOLOGY` navigation identity;
-- correct non-overlapping `BIOLOGY | CYBERWARE` mode switch;
-- authoritative body-state availability/lifecycle in live game;
-- persistent Biology nodes while healthy;
-- drill-down exact values/bars;
-- terse telemetry wording;
-- preservation of stock Cyberware behavior inside Cyberware submode;
-- contextual Biology actions only where backed by authoritative transactions.
-
-Must not redesign:
-
-- REDmod package/dependency architecture beyond requirements reported to Lane A;
-- E3 HUD/nameplate styling;
-- body equations unless a proven lifecycle/API defect requires a narrowly scoped fix.
-
-Primary issue IDs:
-
-- `NAV-01`, `NAV-02`
-- `BIO-01` through `BIO-08`
-- `STATE-01` through `STATE-04`
-
-## Lane C — first-person HUD, NPC nameplates, presentation settings
-
-Proposed branch: `agent/presentation-hud-nameplates`
-
-Owns:
-
-- Biology-owned E3-inspired first-person HUD recreation;
-- Biology-owned E3-inspired NPC nameplates;
-- modern scanner/quickhack preservation;
-- presentation-toggle semantics and visible proof;
-- player-facing settings/product naming for presentation;
-- separation of Biology-wide barless-health policy from optional E3 skin behavior;
-- removal of Project E3 runtime dependence/identity.
-
-Must not redesign:
-
-- body simulation equations;
-- Biology body-menu shell;
-- REDmod package architecture except reporting actual dependency needs to Lane A.
-
-Primary issue IDs:
-
-- `PRES-01` through `PRES-08`
-- `SET-01` through `SET-05`
+The original package/dependency/UI/presentation worker branches are merged history. They are not active work lanes.
 
 ---
 
-# 3. Issue ledger
+# 2. Active attended follow-ups
 
-## Packaging / REDmod foundation
+## UI-ATTENDED — Issue #39
 
-### PKG-01 — create the minimal official Biology REDmod identity
+Branch: `agent/biology-ui-attended-followup`
 
-Target:
+### Live failures
 
-```text
-Cyberpunk 2077/
-└── mods/
-    └── Biology/
-        └── info.json
-```
+- Biology overview/detail still behaves like a parallel custom overlay instead of fully reusing the native Cyberware interaction shell.
+- Overview labels remain visible during detail zoom.
+- `BIOLOGY | CYBERWARE` is too small and easy to miss.
+- Biology detail has no normal Back/Cancel route to Biology overview; the user had to close the whole menu.
+- Switching directly from Biology detail to Cyberware can leave Biology body/skeleton presentation stuck.
+- Native Cyberware already blocks the inverse switch while drilled down, proving the preferred state rule.
 
-Add only REDmod-supported subtrees that actual migrated behavior needs.
+### Required design
 
-Acceptance:
+Overview:
 
-- official tooling recognizes/deploys the mod;
-- enable/disable state is testable;
-- package can exist with no unrelated legacy payload;
-- package identity is `Biology`, not `RealPass`.
+- Biology/Cyberware mode switching allowed.
 
-### PKG-02 — make the build produce a REDmod-first release-shaped artifact
+Detail/drill-down:
 
-The canonical attended build path must eventually produce the same install shape intended for players, not an accumulated developer tree.
+- mode switching unavailable;
+- native Back/Cancel returns to the current mode overview;
+- the mode selector becomes available again only after returning to overview.
 
-Acceptance:
+Biology detail should reuse the native Cyberware structural grammar where possible:
 
-- fresh clone can build it;
-- game is not modified during build;
-- generated package manifest owns every file;
-- artifact clearly separates project-original Biology files from unavoidable external framework payload.
+- selected-region zoom/focus;
+- top body-part navigation strip and left/right cycling;
+- native content/item area;
+- native back-stack/input behavior;
+- contextual items/actions routed through authoritative inventory/treatment systems.
 
-### PKG-03 — official deployment / Steam launch workflow
+Do not create a second inventory or manually mutate item counts.
 
-Determine exact supported steps for deploy/enable/launch with current REDmod.
+### Acceptance
 
-Acceptance:
+- overview → detail → Back → overview works repeatedly;
+- overview-only labels are absent from detail;
+- switching modes is blocked while either Biology or Cyberware is drilled down;
+- no Biology visual state leaks into Cyberware;
+- selector is legible/discoverable at attended UI scale;
+- stock Cyberware equip/upgrade/vendor/capacity behavior remains intact.
 
-- no Biology-specific launcher/background helper;
-- player can use supported Steam/CDPR flow;
-- documented behavior survives reboot/relaunch;
-- failure to enable mods is obvious.
-
-### PKG-04 — uninstall/disable cleanliness
-
-Acceptance:
-
-- Biology-owned paths are obvious;
-- removing/disabling package does not require historical rollback receipts;
-- iteration reset can return the game to recorded vanilla baseline or fail closed with exact residue.
-
-### PKG-05 — overlap/load-order proof
-
-Acceptance:
-
-- test at least one deliberately conflicting REDmod fixture or safe local test package;
-- record whether Biology wins/loses based on actual REDmod precedence rather than assumptions;
-- do not claim dominance over redscript/CET/native hooks outside REDmod's control.
-
-### PKG-06 — retire superseded root-package tooling only after replacement works
-
-Do not delete the current build path before the REDmod path can compile/package/deploy an integrated candidate.
-
-Acceptance:
-
-- replacement has equivalent or better reproducibility and baseline auditing;
-- old path is marked retired and removed from active instructions.
-
-### PKG-07 — preserve clean-room discipline during migration
-
-Acceptance:
-
-- ordinary iteration can reuse a baseline-verified game install;
-- milestone structural tests still use clean reinstall when required;
-- fresh local repo remains the default for attended builds.
+Runtime-authority failure is owned by #41, not #39.
 
 ---
 
-# 4. Dependency and seam audit
+## RUNTIME-ATTENDED — Issue #41
 
-### DEP-01 — audit Mod Settings
+Branch: `agent/body-runtime-attended-followup`
 
-Question: can the tiny settings surface move into Biology and eliminate Mod Settings plus transitive dependencies?
+### Live failure
 
-Acceptance:
+The Biology overview visibly reports:
 
-- retain only with feature-specific justification;
-- otherwise remove provider coupling and port controls into Biology-owned UI/config.
+`[ BIOLOGY ERROR ] BODY RUNTIME SYSTEM MISSING`
 
-### DEP-02 — audit ArchiveXL
+This is a blocking authority/lifecycle failure, not a cosmetic string problem.
 
-Acceptance:
+### Questions to resolve
 
-- keep only if an actual final Biology feature requires it;
-- being transitively required by a provider that itself can be removed is not sufficient.
+Determine whether the authoritative body runtime is:
 
-### DEP-03 — audit RED4ext
+- not registered;
+- registered but not initialized;
+- initialized but inaccessible from the live menu/GameInstance context;
+- temporarily unavailable during a lifecycle window;
+- disabled by an activation/settings gate;
+- absent from the packaged runtime route;
+- reached through a stale/incorrect controller path;
+- or failing for another evidenced reason.
 
-Acceptance:
+### Rules
 
-- keep only if a final native extension/framework consumer remains after REDmod/redscript migration;
-- isolate version-sensitive usage.
+- no fake `STABLE` fallback;
+- no UI-owned duplicate body state;
+- no second body runtime for menus;
+- diagnostics may distinguish failure classes but must not hide missing authority;
+- save/reload/time progression must consume the same canonical body state.
 
-### DEP-04 — audit redscript
+### Acceptance
 
-Redscript is not automatically rejected. For each hook, compare narrow wrapper/additive behavior against REDmod whole-file replacement.
-
-Acceptance:
-
-- every retained hook has a written `REDSCRIPT-BETTER` rationale;
-- native seam is explicit and validated against 2.31;
-- no wrapper remains merely because the old build used one.
-
-### DEP-05 — no source-mod runtime ownership
-
-Acceptance:
-
-- no Dark Future or Project E3 scripts/assets execute as dependencies;
-- copied/reference material remains provenance/research only.
-
-### DEP-06 — machine-readable dependency graph
-
-Create/update a manifest listing:
-
-- dependency/component;
-- consumer feature(s);
-- required/optional/transitional;
-- routing layer;
-- planned removal/migration status;
-- license/provenance notes.
+- ordinary valid session exposes the body runtime reliably;
+- menu open/close does not lose it;
+- save/reload retains/reconstructs expected state;
+- wait/sleep/time skip update through one authority;
+- live UI reads real state;
+- true compatibility failure remains obvious.
 
 ---
 
-# 5. Biology UI and runtime issues
+## PRES-ATTENDED — Issue #40
 
-### NAV-01 — consistent Biology destination identity
+Branch: `agent/presentation-attended-followup`
 
-Current evidence: outer hub says `BIOLOGY`; inner top tab says `CYBERWARE`.
+### Corrected live evidence
 
-Acceptance:
+With E3 presentation **ON**:
 
-- outer hub = `BIOLOGY`;
-- inner standard navigation = `BIOLOGY`;
-- adjacent inventory/menu navigation uses `BIOLOGY` for the same destination;
-- Cyberware wording appears as the internal submode, not the parent destination.
+- ordinary gameplay still looks overwhelmingly like the modern retail HUD;
+- the quest/objective tracker remains modern;
+- minimap, weapon/ammo, prompts and most framing remain modern;
+- looking directly at a random civilian shows no E3 ambient nameplate;
+- police/combatants receive only a narrow red strip, not the complete intended identity treatment.
 
-### NAV-02 — stable Biology/Cyberware selector
+With E3 **OFF**, that police red strip is absent.
 
-Acceptance:
+The modern scanner/quickhack view remains intact and is a **PASS/preserve requirement**.
 
-- no overlap with top navigation;
-- no faint duplicated labels;
-- keyboard/controller/mouse focus works;
-- state is obvious;
-- responsive at supported resolution/UI scale.
+### Project E3 reference archaeology
 
-### BIO-01 — Biology truly owns the shared body shell
+`config/realpass-e3.json` is the durable component inventory for the local-only Project E3 reference. The actual `ReferenceMods/` payload is intentionally gitignored and must not be redistributed.
 
-Acceptance:
+The inventory demonstrates that the original presentation touched materially more than a biomonitor/nameplate hook, including:
 
-- ordinary hub entry defaults to Biology mode;
-- Biology mode replaces/hides cyberware equipment cards with body-system content;
-- Cyberware remains accessible and restores stock equipment interactions.
+- base HUD controller;
+- quest tracker;
+- activity log;
+- dialogue/interactions;
+- minimap/quest mappins;
+- compass;
+- weapon roster/ammo;
+- crosshair/focus;
+- D-pad hints;
+- health/status presentation;
+- NPC nameplate visuals/behavior.
 
-### BIO-02 — persistent Biology nodes
+The worker must map those responsibilities to current Cyberpunk 2.31 native seams and Biology-owned implementation, while documenting which areas intentionally remain modern/native.
 
-Acceptance:
+### Acceptance
 
-- modeled nodes remain present even when healthy;
-- quiet state never collapses into only `STABLE` text;
-- selecting a node uses native hover/zoom language where possible.
+Matched attended captures must include:
 
-### BIO-03 — exact drill-down values
+- ordinary gameplay E3 ON/OFF;
+- quest/objective HUD ON/OFF;
+- random civilian ordinary focus E3 ON before scanner;
+- police/combatant ordinary focus E3 ON;
+- same relevant NPC after scan knowledge is acquired where applicable;
+- modern scanner/quickhack E3 ON.
 
-Acceptance:
-
-- exact authoritative numbers/bars appear only after deliberate selection;
-- no duplicate state variables;
-- useful development metrics are visible for calibration.
-
-### BIO-04 — terse overview telemetry
-
-Acceptance:
-
-- normal overview = `STABLE`;
-- abnormal state uses compact tokens;
-- no prose such as `Body state is unavailable.` unless a true diagnostics error is being surfaced separately.
-
-### BIO-05 — contextual actions use real inventory/treatment transactions
-
-Acceptance:
-
-- `EAT…`, `DRINK…`, dress/support/care actions use authoritative item/care paths;
-- no Biology-owned duplicate inventory.
-
-### BIO-06 — stock Cyberware submode integrity
-
-Acceptance:
-
-- equip/upgrade/capacity/vendor behavior remains correct;
-- switching modes cannot duplicate/lose/unequip items.
-
-### BIO-07 — contextual ripperdoc behavior
-
-Acceptance:
-
-- normal hub defaults Biology;
-- ripperdoc/vendor context may sensibly default Cyberware if needed;
-- parent identity remains Biology.
-
-### BIO-08 — no old overlay architecture remains active after replacement
-
-Acceptance:
-
-- superseded popup/overlay/prototype code removed from production route;
-- only one active Biology body UI authority.
+E3 ON must be recognizable without reading settings. A tiny red widget, a police strip, or health-bar suppression alone is not acceptance.
 
 ---
 
-# 6. Body-state lifecycle issues
+## RELEASE-UX — Issue #44
 
-### STATE-01 — resolve `Body state is unavailable.`
+Branch: `agent/player-uninstall-vanilla-toggle`  
+Draft PR: `#45`
 
-This is a blocking functional issue for UI acceptance.
+### Product states
 
-Investigate:
+1. **Biology ON** — REDlauncher `Enable mods` ON; full Biology behavior.
+2. **Vanilla-play mode** — Biology installed, REDlauncher `Enable mods` OFF; Biology behavior inactive.
+3. **Fully removed** — self-contained `Uninstall Biology.exe` safely removes manifest-proven Biology-owned files.
 
-- ScriptableSystem availability timing;
-- save/session initialization;
-- release/acceptance gating;
-- global enable setting interaction;
-- menu controller game-instance access;
-- persistence/load lifecycle;
-- forecast/runtime object ownership.
+### Hard-uninstall safety
 
-Acceptance:
+The uninstaller must:
 
-- ordinary valid save/session exposes body state reliably;
-- menu can open/close repeatedly without losing it.
+- work without PowerShell/Git/Vortex/source checkout;
+- verify the installed ownership manifest and file hashes;
+- never recursively delete shared roots;
+- preserve saves;
+- preserve settings by default unless the user explicitly chooses otherwise;
+- leave changed/shared/ambiguous files in place and report them;
+- refresh REDmod state appropriately after removal;
+- report success/partial success clearly.
 
-### STATE-02 — save/reload persistence
-
-Acceptance:
-
-- body state exists before save;
-- reload reconstructs/retains expected state;
-- UI reads the same authoritative state after reload.
-
-### STATE-03 — time progression consistency
-
-Acceptance:
-
-- waiting/sleeping/time skip updates body once through shared authority;
-- Biology detail values reflect resulting state;
-- no stale view-model cache.
-
-### STATE-04 — fail-obvious compatibility behavior
-
-If a supported-game native seam breaks, do not silently present empty body data.
-
-Acceptance:
-
-- compatibility failure is distinguishable from a healthy body;
-- normal player UI stays concise;
-- diagnostics/logging identifies the failed seam.
+A full Steam uninstall/reinstall becomes exceptional clean-room recovery, not normal Biology removal.
 
 ---
 
-# 7. E3-inspired presentation issues
+# 3. Integration rules
 
-### PRES-01 — full first-person E3 visual language is absent
+The active branches above may work in parallel where file ownership allows, but the parent integration thread decides merge order.
 
-Current screenshot is substantially modern/vanilla in ordinary gameplay.
+Particular overlap risks:
 
-Acceptance:
+- #39 and #41 both originate near Biology menu/runtime boundaries; #39 owns shell/state-machine presentation, #41 owns runtime authority/lifecycle.
+- #40 may touch shared settings/activation gates; coordinate with #44 rather than duplicating whole-mod enable semantics.
+- #44 may change package/install/activation contracts; it must not absorb UI/runtime/presentation feature redesign.
 
-- E3 visuals ON produces a clearly recognizable red E3-inspired presentation in ordinary gameplay;
-- result is Biology-owned, not Project E3 runtime content.
-
-### PRES-02 — NPC nameplates are absent
-
-Acceptance:
-
-- intended NPC focus/nameplate states use Biology-owned E3-inspired presentation;
-- scanner/quickhack remains modern/native.
-
-### PRES-03 — health-bar suppression is not an E3 completion metric
-
-Current build hides the health bar even when E3 visuals are toggled off.
-
-Canonical interpretation:
-
-- barless actor-health remains Biology-wide while Biology is enabled;
-- E3 toggle controls E3-specific styling/nameplates;
-- therefore the toggle must demonstrate other obvious visible changes.
-
-If the project owner later explicitly changes this rule, update `AGREED-GOALS.md` and `E3-PRESENTATION.md` together.
-
-### PRES-04 — visible ON/OFF parity test
-
-Acceptance:
-
-Capture matched screenshots from the same location/state:
-
-- E3 ON;
-- E3 OFF.
-
-A reviewer should be able to identify which is which without reading settings.
-
-### PRES-05 — modern scanner/quickhack preservation
-
-Acceptance:
-
-- scanner visuals/interaction remain modern Cyberpunk;
-- no old E3 scanner recreation sneaks in with HUD work.
-
-### PRES-06 — quest/navigation/interaction/crosshair treatment
-
-Audit which visible components materially define the desired E3 look and implement only those intentionally owned by Biology.
-
-Acceptance:
-
-- coherent visual language;
-- no arbitrary partial recolor that looks broken or inconsistent.
-
-### PRES-07 — presentation feedback remains subordinate to simulation
-
-Biology injury/need cues may use the HUD language, but do not recreate a permanent body-meter wall.
-
-### PRES-08 — remove player-facing Project E3 identity
-
-Use attribution/provenance in docs/licenses as appropriate, but final settings/UI should describe the feature as Biology presentation rather than an installed Project E3 dependency.
+Do not ask the user to install each branch separately. Merge compatible work into canonical `main`, then build one release-shaped candidate.
 
 ---
 
-# 8. Settings and product identity
+# 4. Local evidence policy
 
-### SET-01 — replace `REALPASS` player-facing branding
+Before asking the user to run PowerShell/CMD, read `docs/LOCAL-OPERATOR-COMMANDS.md`.
 
-Acceptance:
+Rules:
 
-- shipped settings/product labels say `BIOLOGY` / `Biology`;
-- obsolete RealPass name remains only in transitional internals where renaming is risky.
-
-### SET-02 — replace `Enable RealPass`
-
-If the runtime master remains:
-
-- label becomes `Enable Biology`;
-- disable semantics are tested explicitly.
-
-If the REDmod enable/disable boundary makes an in-game master redundant, document and remove it rather than preserving a historical toggle.
-
-### SET-03 — clarify E3 preference label
-
-The preference should describe the player-facing outcome without implying an external runtime dependency.
-
-Candidate direction: `E3-inspired HUD` or `2018-style HUD`, subject to final product wording.
-
-### SET-04 — provider-neutral settings ownership
-
-Acceptance:
-
-- settings semantics exist independently from Mod Settings provider;
-- provider can be removed/replaced without changing simulation authority.
-
-### SET-05 — master-disable yield-to-vanilla test
-
-If retained, turning Biology off must have documented session/reload semantics and yield wrapped presentation/gameplay surfaces to vanilla as completely as technically safe.
+- use repository-owned entrypoints rather than reconstructing their internals in chat;
+- do not assume a persistent repo checkout path;
+- attended workspaces are disposable;
+- the known game path may be used where the catalog allows it;
+- long-running commands need durable progress output;
+- user-run evidence tools should write a plain-text report file when output is materially useful for an agent, and the user should return that file rather than copy/pasting large console transcripts;
+- a fast post-reinstall sanity check is not equivalent to whole-game baseline verification.
 
 ---
 
-# 9. Merge order
+# 5. Combined next-milestone acceptance
 
-The lanes can work concurrently, but integration should normally proceed:
+After the parent integrates the selected follow-ups, the next attended candidate should establish at minimum:
 
-1. **Lane A foundational package/dependency schema/tooling** that other lanes do not need to guess around;
-2. **Lane B and Lane C implementation PRs** after rebasing/merging current main as necessary;
-3. any final Lane A package assembly changes that consume the now-known runtime output;
-4. combined CI on `main`;
-5. build one release-shaped candidate from a fresh clone;
-6. attended integrated milestone test.
+- official Biology package recognition/deploy still works;
+- body runtime authority is available in live Biology;
+- Biology overview/detail/back navigation is stable;
+- mode switching is allowed only at the shared overview level;
+- stock Cyberware remains functional;
+- E3 ON clearly changes the ordinary first-person presentation;
+- ambient civilian and police/combatant nameplates behave as intended;
+- modern scanner/quickhack remains native/current;
+- E3 OFF cleanly removes only E3-specific presentation;
+- save/reload/time progression remains correct;
+- if #44 is included, launcher OFF yields Biology-inactive vanilla-play behavior and hard uninstall removes Biology without a Steam reinstall.
 
-If Lane B/C discovers a hard dependency requirement, report it to Lane A rather than independently adding framework/package plumbing.
+Live acceptance must be tied to the exact canonical `main` SHA and exact artifact. CI/source contracts cannot substitute for attended behavior.
 
 ---
 
-# 10. Combined milestone acceptance
+# 6. Historical migration IDs
 
-Do not call the REDmod-first refactor ready for broad testing until the integrated `main` candidate demonstrates:
+Older identifiers such as `PKG-*`, `DEP-*`, `NAV-*`, `BIO-*`, `STATE-*`, `PRES-*`, and `SET-*` appear in historical docs/issues/test records. They remain useful when tracing why a feature exists, but they are **not automatically active work merely because their text remains in history**.
 
-- official Biology package identity;
-- build/deploy from fresh clone;
-- known dependency graph;
-- `BIOLOGY` outer and inner navigation;
-- non-overlapping Biology/Cyberware selector;
-- live body state available;
-- persistent inspectable Biology nodes;
-- exact drill-down metrics;
-- Cyberware submode preserved;
-- E3-inspired HUD visibly present when enabled;
-- E3-inspired NPC nameplates present when enabled;
-- modern scanner preserved;
-- settings under Biology identity;
-- E3 ON/OFF visibly distinguishable;
-- save/reload body persistence;
-- no Project E3/Dark Future executing runtime;
-- baseline-auditable install/remove state.
-
-The next screenshot set should be compared directly against `PRE-REDMOD-LIVE-BASELINE-2026-09-15.md` so the refactor can prove which failures were fixed and which remain.
+Current work is defined by root `ROADMAP.md`, this ledger, and current GitHub issues/PRs.
