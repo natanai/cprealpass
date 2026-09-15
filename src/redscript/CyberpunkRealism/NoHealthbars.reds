@@ -1,36 +1,33 @@
-// realpass presentation policy for traditional actor health bars.
+// RealPass presentation policy for traditional actor health bars.
 //
-// Final RealPass presentation is injury/body-state led rather than HP-meter led,
-// but attended development must not remove the player's only useful feedback before
-// the replacement Biology/HUD/gameplay cues have actually been accepted in-game.
-// Suppression is therefore replacement-gated instead of blindly always-on.
-//
-// Keep non-health information (RAM, buffs, names, scanner data, status cues) owned
-// by their native/presentation systems. When an accepted replacement exists this
-// file suppresses continuous HP bars, HP numbers/previews, the dedicated boss-health
-// HUD and dedicated companion actor-health HUD without changing simulation state.
+// Attended testing has now explicitly accepted barless actor presentation as the
+// RealPass-on behavior. Native health UI is restored only when the global RealPass
+// master switch is off. This changes presentation only; native health state remains
+// available to the game and to RealPass' physical/injury simulation.
 module CyberpunkRealism.Presentation
 
+import CyberpunkRealism.Settings.*
+
 public class CRFeedbackReadiness extends IScriptable {
-  // These are acceptance gates, not player settings and not balance controls.
-  // Change each to true only after an attended build proves the corresponding
-  // replacement feedback remains understandable during ordinary play/combat.
+  // Explicit attended acceptance: the project owner expects the traditional player
+  // health indicator to stay absent while RealPass is enabled, even while richer
+  // E3/embodied replacement presentation continues to be implemented.
   public static func PlayerHealthReplacementAccepted() -> Bool {
-    return false;
+    return true;
   }
 
   public static func NPCHealthReplacementAccepted() -> Bool {
-    return false;
+    return true;
   }
 }
 
 public class CRHealthbarPresentationPolicy extends IScriptable {
   public static func ShowTraditionalPlayerHealthBars() -> Bool {
-    return !CRFeedbackReadiness.PlayerHealthReplacementAccepted();
+    return !CRRealpassSettings.IsEnabled(GetGameInstance()) || !CRFeedbackReadiness.PlayerHealthReplacementAccepted();
   }
 
   public static func ShowTraditionalNPCHealthBars() -> Bool {
-    return !CRFeedbackReadiness.NPCHealthReplacementAccepted();
+    return !CRRealpassSettings.IsEnabled(GetGameInstance()) || !CRFeedbackReadiness.NPCHealthReplacementAccepted();
   }
 }
 
@@ -64,9 +61,6 @@ protected cb func OnUpdateHealthBarVisibility() -> Bool {
   return result;
 }
 
-// Overclock has a direct visibility path which can bypass the generic update
-// callback. Re-apply accepted suppression after native handling while preserving
-// ordinary native behavior during the transitional fallback period.
 @wrapMethod(healthbarWidgetGameController)
 public final func EvaluateHealthBarVisibility(isInOverclockedState: Bool) -> Void {
   wrappedMethod(isInOverclockedState);
