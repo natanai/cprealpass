@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "product": "Biology",
+  "packageId": "Biology",
+  "foundationBaseRevision": "6fab5ba706e2a10387bb8629cccdb0868533bb97",
+  "supportedGameVersion": "2.31",
+  "status": "foundation-skeleton-not-yet-playable",
+  "redmod": {
+    "packageRoot": "mods/Biology",
+    "metadata": "mods/Biology/info.json",
+    "officialToolRelativePath": "tools/redmod/bin/redMod.exe",
+    "deployCommand": "tools/redmod/bin/redMod.exe deploy -root=<Cyberpunk 2077>",
+    "manualModdedLaunchFlag": "-modded",
+    "normalPlayerEnableRoute": "REDlauncher/Steam supported REDmod enable flow",
+    "contentRoots": [
+      "mods/Biology/archives",
+      "mods/Biology/scripts",
+      "mods/Biology/tweaks",
+      "mods/Biology/customSounds"
+    ]
+  },
+  "files": [
+    {
+      "source": "mods/Biology/info.json",
+      "destination": "mods/Biology/info.json",
+      "owner": "Biology",
+      "component": "biology-redmod-identity",
+      "route": "REDMOD-NATIVE"
+    }
+  ],
+  "supplementalRuntime": {
+    "redscript": {
+      "sourceRoot": "src/redscript/CyberpunkRealism",
+      "installedRoot": "r6/scripts/CyberpunkRealism",
+      "includedByFoundationArtifact": false,
+      "status": "retention-candidate",
+      "route": "REDSCRIPT-BETTER",
+      "reason": "Current Biology runtime uses narrow additive/wrapper seams. REDmod script replacement is a whole vanilla-path file route and would broaden patch/conflict surface for those seams. Runtime integration remains owned by the runtime lanes and must be packaged only after their accepted file set is known."
+    }
+  },
+  "generatedMetadata": {
+    "root": "biology",
+    "ownerManifest": "biology/build-manifest.json",
+    "provenance": "biology/provenance.json",
+    "versionFile": "BIOLOGY-VERSION.txt",
+    "checksums": "SHA256SUMS.txt",
+    "installInstructions": "INSTALL.txt",
+    "uninstallInstructions": "UNINSTALL.txt"
+  },
+  "rules": [
+    "The REDmod package identity is Biology and lives under mods/Biology.",
+    "Foundation package construction must not modify a Cyberpunk installation.",
+    "Only files enumerated by this contract may enter the REDmod-native payload.",
+    "A non-REDmod runtime file may enter a future integrated release only when manifest/dependency-graph.json names its concrete Biology consumer and manifest/redmod-classification.json records an accepted route.",
+    "No Dark Future or Project E3 executing content may enter the package.",
+    "No stock Cyberpunk executable, archive, script bundle, save, settings file, or other proprietary game payload may enter the package.",
+    "The foundation skeleton is structural evidence only; official 2.31 recognition/deployment remains a direct-game gate until recorded from the supported installation."
+  ]
+}
