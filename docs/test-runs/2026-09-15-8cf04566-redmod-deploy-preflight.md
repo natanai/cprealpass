@@ -16,14 +16,15 @@ Game-state evidence: fresh Steam uninstall/reinstall; existing tracked baseline 
 - PR #32 / issue #29 — Biology UI/body runtime
 - PR #33 / issue #30 — presentation/HUD/nameplates
 - PR #36 / issue #28 follow-up — integrated playable REDmod-first assembly
+- PR #38 — parent-owned deploy validation fix discovered during this same milestone preflight
 
 ## Expected acceptance
 
 - [x] supported Cyberpunk 2.31 clean installation is proven before Biology install
 - [x] exact integrated source builds and exact-compiles successfully
 - [x] release-shaped ZIP installs `mods/Biology/info.json` and exact ownership metadata
-- [ ] official REDmod consumes the explicit game root
-- [ ] official REDmod recognizes/deploys Biology
+- [x] official REDmod consumes the explicit game root
+- [x] official REDmod recognizes/deploys Biology
 - [ ] attended gameplay launch and Lane B/Lane C acceptance
 
 ## Observed results
@@ -35,14 +36,19 @@ Game-state evidence: fresh Steam uninstall/reinstall; existing tracked baseline 
 - Integrated package build passed and exact-compiled the merged runtime.
 - Package artifact policy passed with `107` final files.
 - Installed package exposed `mods/Biology/info.json`, `biology/build-manifest.json`, and `BIOLOGY-VERSION.txt`.
+- After the parent-owned deploy helper was repaired in PR #38, the targeted probe consumed the actual game root and REDmod reported:
+  - `Found mod "Biology" (v0.1.0) in folder "Biology" (enabled; not deployed; )`
+  - `Needs deployment: true`
+  - all five `[DEPLOY]` stages ran through Finalize
+  - `r6\cache\modded\mods.json` was written under the supported Cyberpunk install
+  - `Commandlet deploy has succeeded.`
+- The repaired helper returned PASS only after observing non-empty REDmod discovery plus positive deploy completion evidence.
 
 ### FAIL / PARTIAL
 
-- `Deploy-BiologyRedmod.ps1` printed PASS solely because `redMod.exe` returned exit code `0`, but REDmod itself reported:
-  - `No root specified, using default root path.`
-  - `Invalid root path found: C:\!`
-  - `No mods found, no deployment is needed!`
-- Therefore the direct REDmod deployment gate did **not** pass and no gameplay launch was attempted.
+- Initial deployment attempt was invalid because `redMod.exe` ignored the supplied root, fell back to `C:\`, found no mods, and still exited `0`.
+- That false-positive behavior is now fixed in PR #38 and was not accepted as deployment evidence.
+- Attended gameplay behavior has not yet been exercised.
 
 ## Evidence
 
@@ -50,32 +56,34 @@ Game-state evidence: fresh Steam uninstall/reinstall; existing tracked baseline 
 - Candidate source remained exact detached SHA `8cf045664b5e4d8b4b014edfc98bf2f8eb270ba5`.
 - Artifact path: `C:\Games\Biology-Test-2026-09-15-8cf04566\candidate\staging\biology-packages\biology-integrated-20260915-061136-8cf045664b5e.zip`
 - Artifact SHA-256: `42BACC73173EB95D84F3278593CD06DDAF665AA714F4C692DB03D553B91557CC`.
-- User stopped before launching Cyberpunk, as required by the parent handoff.
+- Corrected deploy-tool checkout used canonical tooling commit `71eda86d247374e2e270d98c1451f95be3d5cd01`; commits after `8cf04566` changed test/operator/deploy tooling only, not the installed Biology runtime payload under test.
+- Direct corrected deployment found Biology v0.1.0, marked it enabled/not deployed, required deployment, completed stages 1–5, and wrote `r6\cache\modded\mods.json`.
+- No attended gameplay observations have yet been recorded.
 
 ## Findings and routing
 
 | ID | Finding | Expected | Observed | Owner / route | Follow-up issue/branch |
 |---|---|---|---|---|---|
-| TEST-REDMOD-01 | deploy helper false-positive | explicit game root consumed and real deployment required before PASS | REDmod ignored root, fell back to `C:\`, found no mods, exit 0 was misclassified as success | parent tiny integration/test-tool fix | `integration/redmod-deploy-validation` |
-| TEST-REDMOD-02 | Biology REDmod recognition remains unknown | installed `mods/Biology` is recognized/deployed on supported install | current probe cannot distinguish package-recognition failure until root invocation is corrected | original packaging lane if reproduced after corrected root | issue #28 follow-up after targeted probe |
+| TEST-REDMOD-01 | deploy helper false-positive | explicit game root consumed and real deployment required before PASS | initial helper accepted exit 0 despite ignored root | parent tiny integration/test-tool fix | fixed/merged in PR #38 |
+| TEST-REDMOD-02 | Biology REDmod recognition | installed `mods/Biology` is recognized/deployed on supported install | corrected direct probe found Biology v0.1.0 and completed a real five-stage deployment | packaging gate passed | no packaging follow-up required for recognition |
+| TEST-GAME-01 | attended gameplay acceptance | merged Biology runtime/UI/presentation behaves correctly in-game | not yet exercised | Lane B / Lane C / parent routing based on evidence | pending attended checklist |
 
 ## KEEP / FIX / REMOVE
 
 - KEEP — clean-room baseline and release-shaped build evidence.
-- KEEP — installed exact artifact and workspace until targeted deploy probe finishes.
-- FIX — deployment helper must fail closed on ignored root, invalid root, or `No mods found` even with exit 0.
-- FIX — if corrected-root probe still reports no mods, route package-recognition failure to the REDmod packaging lane.
+- KEEP — installed exact artifact and workspace through attended gameplay acceptance.
+- KEEP — fail-closed REDmod deployment validation added in PR #38.
+- FIX — route any gameplay/UI/presentation failures from the upcoming attended pass to their original owner lanes.
 - REMOVE — prior assumption that REDmod exit code 0 alone proves deployment.
 
 ## Milestone disposition
 
-Partially accepted.
+Preflight accepted; attended gameplay pending.
 
-Reason: clean install, baseline, build, exact compile, artifact, and install gates passed. Official REDmod deployment/recognition did not pass, so attended gameplay acceptance is blocked.
+Reason: clean install, baseline, build, exact compile, artifact, install, explicit-root REDmod recognition, and deployment gates now pass. The milestone can proceed to attended in-game validation against the same exact `8cf04566` runtime artifact.
 
 ## Next integration step
 
-- Merge fail-closed deployment tooling.
-- Run one targeted deploy probe against the already-installed exact `8cf04566` artifact; do not reinstall or repeat the 85.1 GiB hash pass.
-- If root is consumed and Biology deploys, continue the milestone from the same artifact evidence.
-- If root is consumed but REDmod reports no mods, route that exact direct-game evidence back to issue #28 / REDmod packaging lane before another attended build.
+- Launch Cyberpunk with the already-installed/deployed Biology artifact.
+- Run the parent-issued attended checklist covering startup/relaunch persistence, Biology parent UI/runtime state, native Cyberware integrity, E3 presentation ON/OFF, nameplates, scanner/quickhack, save/reload/time progression, and failure diagnostics.
+- Preserve screenshots and exact observations; route each failure by evidence rather than reopening broad lanes preemptively.
