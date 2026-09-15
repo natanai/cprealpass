@@ -264,16 +264,18 @@ Drill-down numbers/bars answer *what exactly is happening?* and help calibration
 ### G-070 — Native modern scanner stays authoritative — LOCKED
 Keep Cyberpunk's modern scanner/quickhack behavior rather than restoring Project E3's scanner replacement.
 
-### G-071 — E3 is visual inspiration only — LOCKED
-Useful E3-era HUD/nameplate ideas may be recreated with realpass-owned code/assets, but Project E3 runtime assets/scripts may not be required by the finished mod.
+### G-071 — RealPass owns an E3-inspired first-person HUD and NPC-nameplate visual language — LOCKED
+The intended ordinary first-person presentation uses the recognizable **red E3-era HUD visual language and E3-inspired NPC nameplates**. This is an explicit RealPass presentation target, not merely optional historical inspiration.
+
+The finished implementation must be RealPass-owned and standalone: Project E3 may be studied as reference/provenance, but its scripts, archive, tweak payload, settings class, save state or other executing runtime material must not be required by the finished mod. Preserve G-070: the modern Cyberpunk scanner/quickhack experience stays authoritative rather than restoring the old E3 scanner.
 
 ### G-072 — Presentation serves the simulation — LOCKED
 UI should communicate what V could reasonably perceive/diagnose without becoming a dense spreadsheet or permanent RPG meter wall. Exact numerical state may be available in **deliberate Biology drill-down inspection** and development diagnostics, but not as always-visible gameplay/HUD or overview telemetry.
 
-### G-073 — RealPass has a constrained Mod Settings presence, not a balance console — LOCKED
-RealPass should appear in the game's Mod Settings surface so a player can confirm the mod is active and read a concise, descriptive feature ledger of the major systems RealPass currently owns. The ledger is read-only product/status language, not patch notes, diagnostics, or hidden-state telemetry.
+### G-073 — Mod Settings has exactly one player control: E3 first-person HUD visuals — LOCKED
+RealPass must appear in the game's Mod Settings surface. Its normal player-facing page contains **exactly one editable setting**: a binary **E3 first-person HUD visuals** toggle, default **On**. That toggle controls the RealPass-owned E3-inspired first-person HUD/nameplate visual layer only.
 
-Player preferences may exist only as binary ON/OFF presentation or accessibility channels that leave the authored physical simulation unchanged. Numeric tuning controls, rate/multiplier sliders, and switches that disable body, injury, combat, armor, bleeding, recovery, cyberware physiology, or other core authorities are forbidden in ordinary player settings. A given RealPass version keeps one fixed physical simulation regardless of those presentation-only preferences.
+Do not fill Mod Settings with fake one-value status controls, a feature ledger, patch notes, diagnostics, or implementation inventory. Numeric tuning controls, rate/multiplier sliders, and switches that disable body, injury, combat, armor, bleeding, recovery, cyberware physiology or other core authorities are forbidden. Toggling the E3 visual layer must not change the authored physical simulation or the modern scanner.
 
 ### G-074 — Traditional health feedback is removed only when its replacement is actually usable — LOCKED
 The final presentation target remains no traditional actor HP bars under G-033, but development suppression is replacement-gated. Do not remove the player's only useful health/needs feedback before the corresponding RealPass Biology/HUD/gameplay cues have been accepted in attended play.
@@ -338,7 +340,7 @@ These are **not** permission to change the locked goals above. They are implemen
 - the minimal set of generic frameworks actually required by the final owned runtime;
 - exact professional-care cost/time/economy integration, provided it does not become an economy overhaul;
 - exact handling for exceptional bosses/quest actors/robots/non-human targets beyond the locked ordinary-human physical model;
-- final implementation of realpass-owned E3-inspired nameplate/HUD aesthetics.
+- exact RealPass-owned implementation details for the red E3-inspired first-person HUD/nameplate layer while keeping the modern scanner native.
 
 ---
 
