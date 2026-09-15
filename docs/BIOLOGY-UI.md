@@ -1,194 +1,169 @@
 # realpass Biology interface
 
-Status: canonical architecture revised from first live test; native shell redesign in progress
-Last updated: 2026-09-14
+Status: canonical architecture; clean-room live acceptance pending
+Last updated: 2026-09-15
 Governing goals: `AGREED-GOALS.md` G-033, G-040 through G-049, G-055 through G-065, G-072
 
 ## Product intent
 
 **Biology** is the canonical player-facing home for realpass bodily simulation. It owns the body-shaped menu experience: needs, sensations, injury/conditions, pain/analgesia, elimination, fatigue/rest, recovery, hygiene where retained, and relevant cyberware/body state.
 
-The core hierarchy is now:
+The hierarchy is:
 
 `top hub -> BIOLOGY -> shared body/anatomy shell -> BIOLOGY | CYBERWARE`
 
-Cyberware is therefore a subsection/mode of Biology rather than the parent category. This deliberately reuses Cyberpunk's existing body silhouette, anatomical hover/zoom language, category anchors and interaction grammar instead of creating an unrelated second body screen.
+Cyberware is installed equipment within the body, so it is a Biology submode rather than the parent category. The vanilla `cyberware_equip` fullscreen remains the technical shell because it already provides the body silhouette, system anchors, hover/zoom language and familiar Cyberpunk interaction grammar.
 
-The vanilla `cyberware_equip` fullscreen remains the technical shell because it already contains the most appropriate body presentation. The player-facing top-hub label should be **BIOLOGY**. Inside the screen, the player can switch cleanly between:
+Normal hub access defaults to Biology. A direct ripperdoc/vendor context may default the internal mode to Cyberware for usability while preserving Biology as the parent screen.
 
-- **BIOLOGY** — embodied state, body systems, needs, conditions and contextual responses;
-- **CYBERWARE** — the normal cyberware equipment/slot experience.
+## Navigation identity
 
-Normal hub entry defaults to Biology. A direct ripperdoc/vendor context may default the internal mode to Cyberware because that is the task the player intentionally entered, while Biology remains the parent conceptual screen.
+Every ordinary player-facing doorway that represents the stock Cyberware destination should read **BIOLOGY** once the shared shell is accepted: the outer radial hub, the inner tab/navigation strip, and adjacent inventory/menu navigation surfaces that reuse the same destination.
+
+The underlying native destination/identifier remains Cyberware so stock routing stays intact. Only the player-facing hierarchy changes.
+
+Inside the body screen, a clear **BIOLOGY | CYBERWARE** selector exposes the two modes without covering or competing with the stock top navigation.
 
 ## Backpack / Biology / Cyberware boundary
 
-- **Backpack = possessions.** It answers what V is carrying.
-- **Biology = the body.** It answers what V can perceive, know or deliberately inspect about their embodied state.
-- **Cyberware = installed equipment in the body.** It remains fully accessible, but lives as a Biology submode.
-- **Simulation = authoritative hidden physical state.** It can remain exact and high-resolution independently of what the overview shows.
+- **Backpack = possessions.**
+- **Biology = embodied state.**
+- **Cyberware = installed equipment.**
+- **Simulation = authoritative hidden physical state.**
 
-Biology must never maintain a duplicate food, drink, medical or cyberware inventory.
+Biology never maintains duplicate food, drink, medical or cyberware inventory state.
 
-## Governing presentation pipeline
+## Overview rule
 
-Normal play follows:
+The Biology screen is **always available**, even when V has no urgent needs, injury or pain. Healthy state must not make the body screen disappear or make its body-system nodes unselectable. The player must always be able to inspect a modeled system and drill into its exact values.
 
-`hidden biological state -> perceptible/knowable interpretation -> gameplay/visual/audio cues + Biology overview`
+The unzoomed overview is qualitative and terse. It must read like compact instrumentation, not prose or advice.
 
-The primary player experience is qualitative and embodied. A hydration value, blood deficit, sleep pressure, bladder volume, analgesic load or tissue-damage fraction existing internally does **not** mean it deserves permanent screen space.
+Preferred status vocabulary is one or two words per signal, for example:
 
-> realpass calculates quantities; the player experiences consequences.
+- `STABLE`
+- `THIRST`
+- `THIRST HIGH`
+- `HUNGER`
+- `HUNGER CRITICAL`
+- `FATIGUE`
+- `BLADDER HIGH`
+- `BOWEL URGENT`
+- `HYGIENE LOW`
+- `PAIN HIGH`
+- `ANALGESIA`
+- `DISORIENTATION`
+- `BLEEDING`
+- `IMPAIRED`
+- `CONDITION ACTIVE`
 
-The stronger acceptance rule is: **players should not feel that they need to poll Biology's detailed values to understand V's body.** If repeatedly opening categories to check bars becomes the practical way to know whether V is hungry, exhausted, dehydrated, bleeding or impaired, the embodied feedback is insufficient and should be improved rather than making the meters more prominent.
+Do not use conversational filler such as “No strong bodily need is demanding attention,” “the body is doing fine,” or explanatory coaching copy on the overview.
 
-## Two levels of visibility
+When nothing meaningful is active, the overview should simply read **`STABLE`**. The body nodes remain visible and selectable.
 
-### Biology overview
+## Exact values belong to deliberate drill-down
 
-The unzoomed body view stays quiet and qualitative. It may expose states such as:
+The overview does **not** show a permanent hydration/nutrition/fatigue/pain/blood/bladder meter wall.
 
-- thirsty / very thirsty;
-- hungry / weak with hunger;
-- tired / exhausted;
-- need to urinate / bowel pressure;
-- bleeding;
-- pain / analgesic disorientation;
-- impaired arm or leg;
-- active head/torso/limb condition;
-- relevant recovery or care state.
+Once the player deliberately selects/zooms into a modeled body system or region, exact authoritative values may appear as restrained bars and numbers. This visibility is especially useful for development/calibration and remains available to players as inspection depth.
 
-Healthy, irrelevant and imperceptible state should fade into the background. **No hydration/nutrition/fatigue/pain/blood/bladder percentage wall belongs on this overview.**
+Appropriate detail values include:
 
-### Deliberate drill-down
-
-Once the player deliberately clicks/zooms into a body system or affected region, **exact authoritative values may be shown as restrained bars and numbers**. This is not a return to HUD health bars: it is deep inspection requested by the player.
-
-Examples of appropriate drill-down values include:
-
-- hydration/nutrition/energy projections;
-- body-water or energy-balance context where useful;
-- bladder/bowel accumulation;
-- blood deficit relative to modeled blood capacity;
-- perceived pain / analgesia / overuse state;
+- hydration, nutrition and energy;
+- bladder/bowel load;
+- circulating volume / blood deficit;
+- external/internal bleed rate;
+- perceived pain, analgesia and disorientation;
 - regional function;
-- tissue, bone and cyberware damage for the selected region;
-- external/internal bleed rate where the model tracks it.
+- tissue, bone and cyberware integrity;
+- exertion reserve;
+- cleanliness/hygiene where retained.
 
-The bar is a view of the authoritative model, never a second state variable. Where a bar is normalized from an authored gameplay scale rather than a literal clinical percentage, the UI should avoid implying medical precision.
+The bar is only a view of the authoritative model. It never becomes a second state variable.
 
-This deeper visibility is particularly useful during development/calibration, but it is intentionally available to players as inspection depth too.
+The stronger acceptance rule remains: **players should not feel that they need to poll Biology's exact values to know how V feels.** If repeated menu checking becomes optimal play, embodied feedback needs improvement.
+
+## Drill-down copy style
+
+Selected-system summaries should also prefer telemetry over paragraphs. Examples:
+
+- `NO CONDITION`
+- `PAIN / ANALGESIA`
+- `GLOBAL LOAD`
+- `DEFICIT 320 ml | BLEED EXT 40 | BLEED INT 0`
+- `L NO CONDITION | R MODERATE FRACTURE`
+
+Exact metrics below the summary carry the detail. Explanatory prose belongs only where a genuinely complex cause/care distinction cannot be communicated by labels, values and concise condition language.
 
 ## Reusing the Cyberware anatomy shell
 
-The existing Cyberware screen already supplies useful native presentation machinery:
+Biology should reuse the native:
 
 - central body silhouette;
-- body-system/category anchors around the body;
+- anatomical/system anchors;
 - hover highlighting;
-- category selection;
-- zoom-in / zoom-out animations;
+- selection and zoom animations;
 - left/right layout behavior;
-- familiar Cyberpunk interaction language.
+- category interaction grammar.
 
-Biology should reuse those mechanics rather than add a floating hub panel beside them.
+In Biology mode, stock cyberware slot contents may be hidden while supported categories become body-system nodes. Existing labels such as Arms, Skeleton, Nervous System, Integumentary System, Circulatory System and Legs are useful native language.
 
-In Biology mode, stock cyberware slot contents can be hidden while relevant category anchors remain usable as body-system nodes. Existing labels that already describe anatomy (`ARMS`, `SKELETON`, `NERVOUS SYSTEM`, `INTEGUMENTARY SYSTEM`, `CIRCULATORY SYSTEM`, `LEGS`, etc.) are valuable native language. Cyberware-specific categories may be relabeled or omitted in Biology mode only where the realpass body model actually supports a replacement concept.
+Do not invent physiology just to fill every Cyberware category. Unsupported nodes may be omitted until realpass has an authoritative model behind them.
 
-Do **not** invent biological detail merely to fill every Cyberware slot. A system/node can stay absent or quiet until realpass has an authoritative model behind it.
-
-Selecting a Biology node should use the stock body hover/zoom animation controller where possible, then reveal the qualitative explanation plus any deeper exact inspection values for that system/region.
+The supported Biology nodes must remain visible regardless of whether their current values are normal.
 
 ## Conditions
 
-Conditions remain a Biology subsection, not a separate top-level page. Regional injury remains authoritative at minimum for head, torso, left/right arms and left/right legs.
+Conditions are a Biology subsection, not a separate top-level screen. Regional injury remains authoritative for head, torso, left/right arms and left/right legs.
 
-A selected condition can show:
+A selected condition may expose region, condition type, approximate severity, likely cause/protection context, biological vs cybernetic damage, bleeding, functional consequence, exact regional bars, field care and professional/mechanical care where relevant.
 
-- region and condition type;
-- approximate severity/current state;
-- likely cause/protection context when provenance supports it;
-- biological vs cybernetic damage;
-- external vs internal bleeding;
-- pain and functional consequence;
-- exact regional values/bars at this deliberate inspection depth;
-- plausible field care;
-- professional biological or mechanical care where context permits.
-
-Healthy regions remain visually quiet.
+Healthy regions may report concise `NO CONDITION` at drill-down depth while remaining visually quiet on the overview.
 
 ## Contextual actions
 
-Biology is primarily observational. Actions appear because the body makes them relevant.
+Biology is primarily observational. Actions appear only when relevant, for example:
 
-Examples:
+- hunger -> `EAT…`
+- thirst -> `DRINK…`
+- external bleeding -> dressing;
+- appropriate limb injury -> support;
+- ripperdoc context -> clinical/mechanical care.
 
-- `Hungry -> Eat…`
-- `Thirsty -> Drink…`
-- external bleeding -> dressing if applicable;
-- appropriate limb injury -> support if applicable;
-- ripperdoc context -> clinical/mechanical professional care if the model says it can help.
-
-`Eat…` and `Drink…` enumerate V's **actual carried item stacks** through the stock transaction system, filter them through `CRItemServing`, and preserve their stock `Eat`, `Drink` or fallback `Consume` action. Biology never manually removes the item or maintains duplicate inventory state.
+`Eat…` and `Drink…` enumerate V's actual carried items and preserve stock item action/transaction paths. Biology never manually removes items or creates a second inventory.
 
 ## Cyberware mode
 
-The internal **CYBERWARE** mode preserves normal Cyberpunk equipment behavior:
+Internal **CYBERWARE** restores ordinary Cyberpunk equipment behavior: slots, equip/upgrade interactions, cyberware capacity/armor presentation, and ripperdoc purchasing/service flows.
 
-- installed cyberware slots;
-- item selection/equip/upgrade interactions;
-- capacity/armor/cyberware-specific presentation;
-- ripperdoc purchasing/service behavior where applicable.
+Switching modes must not duplicate, consume, unequip or corrupt cyberware/items.
 
-Switching back to Biology should restore Biology nodes/state without losing or duplicating the underlying cyberware equipment state.
+## Live-test interpretation
 
-The hierarchy is conceptual and navigational only: nesting Cyberware beneath Biology must **not** rewrite Cyberpunk's actual cyberware inventory authority.
+A stale in-place test build showed three useful design problems even though it is not valid evidence for the current clean-room candidate:
 
-## Communicating urgency outside Biology
+1. Biology identity appeared in one outer menu but not consistently across inner navigation.
+2. The `BIOLOGY | CYBERWARE` selector visually collided with stock text.
+3. The bottom overview used verbose prose where compact telemetry was needed.
 
-Biology is where the player may deliberately inspect their body; it must not become the only place the body exists.
-
-Injury/pain should communicate through impairment, bleeding/weakness, weapon handling, movement, audiovisual feedback and other justified consequences. Hunger/thirst/fatigue/elimination should similarly become increasingly apparent through believable sensations/consequences as they become important.
-
-The drill-down bars exist to answer *"what exactly is going on?"*, not *"should I be worried yet?"* The game should already be answering the latter.
-
-## First live-test finding (2026-09-14)
-
-The first deployed candidate exact-compiled and launched, but its dynamically-added Biology button on `MenuHubLogicController` did **not** surface as an ordinary navigable Biology page. The visible hub still presented the stock `CYBERWARE` top-level entry.
-
-That live result invalidates the floating-hub-button shell, not the underlying Biology/body models. The replacement architecture is therefore to make the existing body-shaped Cyberware fullscreen the shared Biology/Cyberware shell and rename the top-level hub destination to **BIOLOGY**.
-
-The old floating hub panel should be retired as the canonical ordinary Biology entry after the shared shell is working.
-
-## Implementation targets
-
-1. Relabel the top-level stock `HubMenuItems.Cyberware` destination as **BIOLOGY** while retaining its `cyberware_equip` fullscreen routing.
-2. Add a clear internal `BIOLOGY | CYBERWARE` mode switch inside `RipperDocGameController`.
-3. Default normal hub access to Biology; preserve sensible Cyberware-first behavior in direct ripperdoc/vendor context.
-4. Reuse native cyberware body anchors/category hover and `RipperdocScreenAnimationController` zoom behavior for Biology nodes where the model supports them.
-5. Hide stock cyberware slot contents while in Biology mode without destroying/duplicating their inventory state.
-6. Keep the central body silhouette and useful anatomical category language.
-7. Replace/omit only genuinely cyberware-specific nodes where realpass has an authoritative biological category to present.
-8. Add deliberate-detail bars/numbers sourced directly from `CRBodyRuntime`, `CRBodyMeters`, injury state and pain projection.
-9. Keep the overview qualitative and meter-free.
-10. Preserve existing actual-inventory Eat/Drink, field-care and professional-care transaction boundaries.
-11. Retire the invisible floating ordinary hub Biology panel once the shared shell is proven.
+The clean-room candidate should therefore be evaluated for **label consistency, selector placement, persistent inspectability, terse overview copy and drill-down values** separately from simulation correctness.
 
 ## Acceptance criteria
 
-The revised Biology shell is accepted only when an attended build demonstrates all of the following:
+Biology is accepted only when an attended clean-room build demonstrates all of the following:
 
-1. The top navigation says **BIOLOGY** where Cyberware previously appeared.
-2. Clicking it opens the familiar body/anatomy fullscreen, not a separate floating panel.
-3. A clear internal Biology/Cyberware switch exists and Cyberware remains fully usable.
-4. Normal hub entry defaults to Biology; ripperdoc context remains practical for cyberware service.
-5. Biology mode reuses the native body silhouette, hover/zoom language and appropriate anatomy nodes.
-6. Biology overview shows meaningful qualitative state but no permanent numerical needs/body bars.
-7. Deliberately selecting a body system/region may show exact authoritative values as bars/numbers.
-8. Those detail values never become an always-on HUD or replacement actor-healthbar system.
-9. A player can understand important needs/injury without repeatedly polling the detail bars.
-10. Active conditions remain selectable and healthy state remains quiet.
-11. Eat/Drink and care actions still use their existing authoritative transactions.
-12. Switching modes does not duplicate, consume, unequip or corrupt cyberware/items.
-13. No Dark Future/Project E3 executing UI/runtime is required.
-14. Save/reload and time progression preserve the single shared physiological body.
+1. Ordinary Cyberware navigation identity is consistently presented as **BIOLOGY** across the outer hub and relevant inner navigation surfaces.
+2. Clicking Biology opens the familiar body/anatomy fullscreen.
+3. A legible, non-overlapping **BIOLOGY | CYBERWARE** selector exists.
+4. Normal hub entry defaults to Biology; ripperdoc context remains practical for Cyberware service.
+5. Biology mode reuses native body silhouette/hover/zoom behavior.
+6. Supported Biology nodes remain visible and clickable even when every current state is normal.
+7. A normal overview reads `STABLE`, not a sentence.
+8. Non-normal overview signals use terse one/two-word telemetry tokens.
+9. No permanent exact needs/body meter wall appears on the overview or gameplay HUD.
+10. Selecting a modeled body system/region shows exact authoritative bars/numbers.
+11. Detail summaries remain compact/data-like where possible.
+12. Players can understand important needs/injury without repeatedly polling detail bars.
+13. Eat/Drink and care actions preserve authoritative inventory/treatment transactions.
+14. Switching modes preserves Cyberware equipment state.
+15. Save/reload and time progression preserve the single shared physiological body.
