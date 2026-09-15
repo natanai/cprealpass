@@ -71,12 +71,17 @@ Require $package 'Nothing was deployed to Cyberpunk' 'Package builder must remai
 
 # A fresh clone must be able to exact-compile without carrying developer binaries in
 # Git. The pinned official redscript CLI is a local build dependency only and must
-# be downloaded on demand with its exact upstream digest before execution.
+# be downloaded on demand with its exact upstream digest before execution. Fresh
+# clones also lack ignored logs/reports directories, so the compiler must create
+# those output roots itself before Tee-Object or report writing occurs.
 Require $compile 'redscript-cli\.exe' 'Compile profile must use the pinned redscript CLI.'
 Require $compile 'https://github\.com/jac3km4/redscript/releases/download/v0\.5\.31/redscript-cli\.exe' 'Fresh-clone compile must acquire the pinned official redscript CLI asset.'
 Require $compile 'CDCBED2E0C943322BBCBBAC4A9C62EF29ADC5620E4B0934F0D2A31A8282B5B62' 'Pinned redscript CLI digest changed or disappeared.'
 Require $compile 'if\(-not \(Test-Path -LiteralPath \$cli -PathType Leaf\)\)' 'Compile path must bootstrap a missing developer compiler in a fresh clone.'
 Require $compile 'Invoke-WebRequest -Uri \$cliUri -OutFile \$partial' 'Compile path does not acquire the missing pinned compiler.'
 Require $compile 'Downloaded offline compiler hash mismatch' 'Downloaded compiler must be verified before installation.'
+Require $compile "\$logsDir=Join-Path \$project 'logs'" 'Fresh-clone compile must create its log output root.'
+Require $compile "\$reportsDir=Join-Path \$project 'reports'" 'Fresh-clone compile must create its report output root.'
+Require $compile 'New-Item -ItemType Directory -Force -Path \$dir' 'Fresh-clone compile must materialize ignored output directories before writing.'
 
-Write-Host 'PASS: attended testing distinguishes fresh-source iteration from milestone clean-room, archives GitHub-safe game snapshots, enforces fail-closed vanilla-baseline evidence, and bootstraps the pinned offline compiler in fresh clones.'
+Write-Host 'PASS: attended testing distinguishes fresh-source iteration from milestone clean-room, archives GitHub-safe game snapshots, enforces fail-closed vanilla-baseline evidence, and bootstraps all fresh-clone compile dependencies/output roots.'
