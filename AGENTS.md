@@ -43,6 +43,25 @@ For a broad environment refresh after a Cyberpunk patch or major local install c
 
 That command reads the game installation and rewrites only the GitHub-safe metadata under `reference/cyberpunk/`; it does not modify game files or commit/push anything. For a narrow implementation question, prefer a smaller targeted probe instead of refreshing or extracting everything.
 
+## Clean-room attended testing rule
+
+Broad RealPass candidate testing is intentionally stricter than ordinary developer iteration because the product goal is a player-facing drag-and-drop package.
+
+For any full build / live-test / attended-acceptance pass:
+
+1. Treat `C:\Games\CyberpunkRealism` as disposable. Prefer deleting it and starting from a fresh clone/download of canonical `main` rather than repairing an accumulated working tree.
+2. Restore `C:\Games\Steam\steamapps\common\Cyberpunk 2077` to a genuinely vanilla installation before applying the candidate. Steam verification alone is not assumed to remove arbitrary extra mod files; the strongest reset is Steam uninstall -> delete any residual game directory -> reinstall.
+3. Build a **game-root-shaped RealPass test artifact** from that fresh repository state.
+4. Apply the artifact by ordinary Windows folder merge/copy into the vanilla Cyberpunk game root, the same installation model intended for players.
+5. Launch normally through Steam and test that exact package.
+6. Before the next broad candidate, return to a fresh workspace and vanilla game root rather than relying on update/uninstall residue cleanup.
+
+`tools/Build-CleanRoomTestPackage.ps1` is the preferred package builder once available on the tested branch. Direct developer deployment tooling may remain useful for narrow iteration, but it is **not** the canonical broad acceptance path.
+
+Targeted read-only game probes, native-signature compilation checks and narrow diagnostics do not require a full reinstall when installed mod residue cannot affect the answer.
+
+See `docs/CLEAN-ROOM-TESTING.md` for the durable workflow and rationale.
+
 ## Remote-agent protocol
 
 GitHub/branch agents are explicitly allowed—and expected when useful—to ask the user to run PowerShell or CMD commands when direct evidence from the installed game would materially improve the work.
