@@ -72,9 +72,9 @@ Require $deploy 'Deployment is NOT accepted|not recognized as a deployable REDmo
 
 # The probe may build the official path from segments rather than hard-code one full string.
 # What matters is that it resolves tools\redmod plus bin\redMod.exe under the asserted game root.
-Require $officialProbe "Join-Path \$game 'tools\\redmod'" 'Official REDmod probe must resolve the game-provided tools\\redmod root.'
-Require $officialProbe "Join-Path \$redmodRoot 'bin\\redMod\.exe'" 'Official REDmod probe must call the game-provided CDPR executable directly.'
-Require $officialProbe "Arguments @\('--help'\)|@\('--help'\)" 'Official REDmod probe must query the installed tool help surface.'
+Require $officialProbe 'Join-Path \$game .*tools\\redmod' 'Official REDmod probe must resolve the game-provided tools\\redmod root.'
+Require $officialProbe 'Join-Path \$redmodRoot .*bin\\redMod\.exe' 'Official REDmod probe must call the game-provided CDPR executable directly.'
+Require $officialProbe 'Arguments @\(''--help''\)|@\(''--help''\)' 'Official REDmod probe must query the installed tool help surface.'
 Require $officialProbe 'ProcessStartInfo' 'Official REDmod probe must control native invocation boundaries.'
 Require $officialProbe 'Get-Sha256' 'Official REDmod probe must fingerprint the executable used as evidence.'
 Require $officialProbe 'metadata\.json' 'Official REDmod probe must inventory shipped REDmod metadata/toolset signals.'
