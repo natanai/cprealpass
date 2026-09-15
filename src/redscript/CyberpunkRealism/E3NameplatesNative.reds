@@ -98,6 +98,10 @@ public final func SetVisualData(puppet: ref<GameObject>, const incomingData: scr
 protected cb func OnScreenProjectionUpdate(projections: ref<gameuiScreenProjectionsData>) -> Void {
   wrappedMethod(projections);
 
+  if !CRRealpassSettings.UseE3FirstPersonHudVisuals(GetGameInstance()) {
+    return;
+  }
+
   if this.GetNameplateVisible() {
     if IsDefined(this.m_bufferedCharacterNamePlateRecord) && this.m_bufferedCharacterNamePlateRecord.Enabled() {
       inkWidgetRef.SetVisible(this.m_displayName, true);
