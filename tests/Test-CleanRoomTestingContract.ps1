@@ -46,10 +46,14 @@ Require $capture 'red4ext' 'Vanilla capture must reject installed RED4ext payloa
 Require $capture 'relativeToMods -eq ''\.stub'' -and \$file\.Length -eq 0' 'Vanilla capture must permit only the exact zero-byte REDmod .stub marker.'
 Require $capture 'mods/\$relativeToMods' 'Vanilla capture must still reject any other file under mods.'
 Require $capture 'HASH \[\{0\}\].*files.*GiB.*elapsed' 'Long vanilla baseline hashing must emit durable host-independent progress, not rely only on Write-Progress.'
+Require $capture '-c "user\.name=\$commitAuthorName"' 'Vanilla baseline publishing must not depend on machine-global Git author configuration.'
+Require $capture '-c "user\.email=\$commitAuthorEmail"' 'Vanilla baseline publishing must scope an email identity to the generated commit.'
 
 Require $publishSnapshot 'Refresh-LocalGameReference\.ps1' 'Current-state publisher must refresh the GitHub-safe snapshot first.'
 Require $publishSnapshot 'local-game-snapshot-' 'Current-state publisher must use a dedicated snapshot branch.'
 Require $publishSnapshot 'git -C \$project add -- ''reference/cyberpunk''' 'Current-state publisher must scope commits to reference metadata.'
+Require $publishSnapshot '-c "user\.name=\$commitAuthorName"' 'Current-state snapshot publishing must not depend on machine-global Git author configuration.'
+Require $publishSnapshot '-c "user\.email=\$commitAuthorEmail"' 'Current-state snapshot publishing must scope an email identity to the generated commit.'
 
 Require $compare 'Get-FileHash' 'Baseline comparison must verify file hashes, not path names alone.'
 Require $compare "Status='EXTRA'" 'Baseline comparison must detect extra files.'

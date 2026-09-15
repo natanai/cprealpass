@@ -153,7 +153,12 @@ if ([string]::IsNullOrWhiteSpace($current)) { throw 'Baseline publishing require
 if ($LASTEXITCODE -ne 0) { throw "Could not create baseline branch: $branch" }
 & git -C $project add -- 'reference/cyberpunk'
 if ($LASTEXITCODE -ne 0) { throw 'Could not stage GitHub-safe Cyberpunk reference metadata.' }
-& git -C $project commit -m "Capture clean Cyberpunk vanilla baseline $stamp"
+
+# Fresh disposable test clones are not required to have a user-level Git author
+# configured. Scope a neutral identity to this one generated metadata commit only.
+$commitAuthorName = 'RealPass Snapshot'
+$commitAuthorEmail = 'realpass-snapshot@users.noreply.github.com'
+& git -C $project -c "user.name=$commitAuthorName" -c "user.email=$commitAuthorEmail" commit -m "Capture clean Cyberpunk vanilla baseline $stamp"
 if ($LASTEXITCODE -ne 0) { throw 'Could not commit vanilla baseline metadata.' }
 & git -C $project push -u origin $branch
 if ($LASTEXITCODE -ne 0) { throw 'Could not push vanilla baseline branch.' }

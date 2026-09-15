@@ -36,7 +36,12 @@ if ([string]::IsNullOrWhiteSpace($current)) { throw 'Snapshot publishing require
 if ($LASTEXITCODE -ne 0) { throw "Could not create snapshot branch: $branch" }
 & git -C $project add -- 'reference/cyberpunk'
 if ($LASTEXITCODE -ne 0) { throw 'Could not stage GitHub-safe game-reference metadata.' }
-& git -C $project commit -m "Capture local Cyberpunk game snapshot $stamp"
+
+# Fresh disposable test clones are not required to have a user-level Git author
+# configured. Scope a neutral identity to this one generated metadata commit only.
+$commitAuthorName = 'RealPass Snapshot'
+$commitAuthorEmail = 'realpass-snapshot@users.noreply.github.com'
+& git -C $project -c "user.name=$commitAuthorName" -c "user.email=$commitAuthorEmail" commit -m "Capture local Cyberpunk game snapshot $stamp"
 if ($LASTEXITCODE -ne 0) { throw 'Could not commit local game-reference snapshot.' }
 & git -C $project push -u origin $branch
 if ($LASTEXITCODE -ne 0) { throw 'Could not push local game-reference snapshot branch.' }
