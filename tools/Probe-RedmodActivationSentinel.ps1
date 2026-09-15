@@ -15,6 +15,7 @@ $redmodExe = Join-Path $redmodRoot 'bin\redMod.exe'
 $tweakRoot = Join-Path $redmodRoot 'tweaks'
 $tweakDbScript = Join-Path $redmodRoot 'scripts\core\data\tweakDB.script'
 $tweakDbRecords = Join-Path $redmodRoot 'scripts\core\data\tweakDBRecords.script'
+$modsAbilities = Join-Path $tweakRoot 'base\gameplay\static_data\database\items\weapons\parts\mods_abilities.tweak'
 
 if ([string]::IsNullOrWhiteSpace($ReportPath)) {
     $reportRoot = Join-Path $project 'reports'
@@ -33,7 +34,7 @@ function Add-Report([string]$Text = '') {
 function Normalize-Relative([string]$Path,[string]$Root) {
     return [IO.Path]::GetRelativePath($Root,$Path).Replace('\','/')
 }
-function Compact([string]$Text,[int]$Max = 240) {
+function Compact([string]$Text,[int]$Max = 260) {
     if ($null -eq $Text) { return '' }
     $value = ($Text -replace '\s+',' ').Trim()
     if ($value.Length -le $Max) { return $value }
@@ -57,7 +58,7 @@ function Add-SelectStringMatches(
 
 $failed = $false
 try {
-    foreach ($required in @($redmodExe,$tweakDbScript,$tweakDbRecords)) {
+    foreach ($required in @($redmodExe,$tweakDbScript,$tweakDbRecords,$modsAbilities)) {
         if (-not (Test-Path -LiteralPath $required -PathType Leaf)) { throw "Required official REDmod file not found: $required" }
     }
     if (-not (Test-Path -LiteralPath $tweakRoot -PathType Container)) { throw "Official REDmod tweak source tree not found: $tweakRoot" }
@@ -68,7 +69,7 @@ try {
     }
 
     Add-Report ''
-    Add-Report '=== W07.1 INNER OFFICIAL-SOURCE PROBE ==='
+    Add-Report '=== W08.1 INNER OFFICIAL-SOURCE TWEAK GRAMMAR PROBE ==='
     Add-Report ('Generated UTC: ' + [DateTime]::UtcNow.ToString('o'))
     Add-Report 'Policy: READ-ONLY against the Cyberpunk/REDmod installation. No game, mod, deploy, cache, or package files are modified.'
     Add-Report ('Game root: ' + $game)
@@ -80,36 +81,56 @@ try {
     $tweakFiles = @(Get-ChildItem -LiteralPath $tweakRoot -Recurse -File -Filter '*.tweak' -ErrorAction Stop | Sort-Object FullName)
     if ($tweakFiles.Count -eq 0) { throw 'Official REDmod tweak source tree contains no .tweak files.' }
     Add-Report ('Official tweak source files scanned: ' + $tweakFiles.Count)
+    Add-Report ('Exact native base file: ' + (Normalize-Relative $modsAbilities $redmodRoot))
 
     $paths = @($tweakFiles | ForEach-Object { $_.FullName })
     $templateMatches = [Collections.Generic.List[string]]::new()
     $typedBoolMatches = [Collections.Generic.List[string]]::new()
     $unbasedTypedBoolMatches = [Collections.Generic.List[string]]::new()
-    $packageUsingMatches = [Collections.Generic.List[string]]::new()
+    $packageUsingPairs = [Collections.Generic.List[string]]::new()
+    $usingFirst = [Collections.Generic.List[string]]::new()
+    $crossPackageInheritance = [Collections.Generic.List[string]]::new()
+    $qualifiedBaseMatches = [Collections.Generic.List[string]]::new()
     $readFailures = [Collections.Generic.List[string]]::new()
 
     Add-SelectStringMatches $templateMatches @(Select-String -LiteralPath $paths -SimpleMatch 'IconicWeaponModAbilityBase' -ErrorAction Stop) $redmodRoot 24
     Add-SelectStringMatches $typedBoolMatches @(Select-String -LiteralPath $paths -Pattern '^\s*bool\s+[A-Za-z_][A-Za-z0-9_]*\s*=' -ErrorAction Stop) $redmodRoot 24
-    Add-SelectStringMatches $packageUsingMatches @(Select-String -LiteralPath $paths -Pattern '^\s*(package|using)\b' -ErrorAction Stop) $redmodRoot 24
+    Add-SelectStringMatches $qualifiedBaseMatches @(Select-String -LiteralPath $paths -SimpleMatch 'Items.IconicWeaponModAbilityBase' -ErrorAction Stop) $redmodRoot 16
 
-    # Find lexical examples of an unbased group containing an explicitly typed bool.
-    # This is intentionally source evidence only, not native compilation proof.
     foreach ($file in $tweakFiles) {
-        if ($unbasedTypedBoolMatches.Count -ge 16) { break }
         try {
             $lines = @(Get-Content -LiteralPath $file.FullName -ErrorAction Stop)
+            $relative = Normalize-Relative $file.FullName $redmodRoot
+            $directives = [Collections.Generic.List[object]]::new()
             for ($i = 0; $i -lt $lines.Count; $i++) {
                 $line = [string]$lines[$i]
-                if ($line -notmatch '^\s*(?<group>[A-Za-z_][A-Za-z0-9_.]*)\s*\{\s*$') { continue }
-                if ($line -match ':') { continue }
-                $max = [Math]::Min($i + 24,$lines.Count - 1)
-                for ($j = $i + 1; $j -le $max; $j++) {
-                    $candidate = [string]$lines[$j]
-                    if ($candidate -match '^\s*}\s*;?\s*$') { break }
-                    if ($candidate -match '^\s*bool\s+[A-Za-z_][A-Za-z0-9_]*\s*=') {
-                        $relative = Normalize-Relative $file.FullName $redmodRoot
-                        Add-Bounded $unbasedTypedBoolMatches ("{0}:{1}-{2}: {3} | {4}" -f $relative,($i + 1),($j + 1),(Compact $line),(Compact $candidate)) 16
-                        break
+                $directive = [regex]::Match($line,'^\s*(?<kind>package|using)\s+(?<name>[A-Za-z_][A-Za-z0-9_.]*)\s*$')
+                if ($directive.Success) {
+                    $directives.Add([pscustomobject]@{ Kind=$directive.Groups['kind'].Value; Name=$directive.Groups['name'].Value; Line=$i + 1; Text=(Compact $line) })
+                }
+                if ($crossPackageInheritance.Count -lt 24 -and $line -match ':\s*[A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*\s*(?:\{|$)') {
+                    Add-Bounded $crossPackageInheritance ("{0}:{1}: {2}" -f $relative,($i + 1),(Compact $line)) 24
+                }
+            }
+            if ($directives.Count -gt 0 -and $directives[0].Kind -eq 'using') {
+                Add-Bounded $usingFirst ("{0}:{1}: {2}" -f $relative,$directives[0].Line,$directives[0].Text) 24
+            }
+            if ($directives.Count -gt 1 -and $directives[0].Kind -eq 'package' -and $directives[1].Kind -eq 'using') {
+                Add-Bounded $packageUsingPairs ("{0}:{1}-{2}: {3} | {4}" -f $relative,$directives[0].Line,$directives[1].Line,$directives[0].Text,$directives[1].Text) 24
+            }
+
+            if ($unbasedTypedBoolMatches.Count -lt 16) {
+                for ($i = 0; $i -lt $lines.Count; $i++) {
+                    $line = [string]$lines[$i]
+                    if ($line -notmatch '^\s*(?<group>[A-Za-z_][A-Za-z0-9_.]*)\s*\{\s*$') { continue }
+                    $max = [Math]::Min($i + 24,$lines.Count - 1)
+                    for ($j = $i + 1; $j -le $max; $j++) {
+                        $candidate = [string]$lines[$j]
+                        if ($candidate -match '^\s*}\s*;?\s*$') { break }
+                        if ($candidate -match '^\s*bool\s+[A-Za-z_][A-Za-z0-9_]*\s*=') {
+                            Add-Bounded $unbasedTypedBoolMatches ("{0}:{1}-{2}: {3} | {4}" -f $relative,($i + 1),($j + 1),(Compact $line),(Compact $candidate)) 16
+                            break
+                        }
                     }
                 }
             }
@@ -118,42 +139,67 @@ try {
         }
     }
 
+    $nativeBaseHeader = [Collections.Generic.List[string]]::new()
+    $baseLines = @(Get-Content -LiteralPath $modsAbilities -ErrorAction Stop)
+    $baseRelative = Normalize-Relative $modsAbilities $redmodRoot
+    for ($i = 0; $i -lt [Math]::Min(24,$baseLines.Count); $i++) {
+        $line = [string]$baseLines[$i]
+        if ([string]::IsNullOrWhiteSpace($line)) { continue }
+        Add-Bounded $nativeBaseHeader ("{0}:{1}: {2}" -f $baseRelative,($i + 1),(Compact $line)) 12
+    }
+
     $tweakDbSignatures = [Collections.Generic.List[string]]::new()
     Add-SelectStringMatches $tweakDbSignatures @(Select-String -LiteralPath $tweakDbScript -Pattern '\bGetBool\b|\bGetRecord\b|\bGetItemRecord\b' -ErrorAction Stop) $redmodRoot 32
     $itemRecordSignatures = [Collections.Generic.List[string]]::new()
     Add-SelectStringMatches $itemRecordSignatures @(Select-String -LiteralPath $tweakDbRecords -Pattern '\bgamedataItem_Record\b' -ErrorAction Stop) $redmodRoot 12
 
     Add-Report ''
-    Add-Report 'QUESTION A — Is IconicWeaponModAbilityBase present in the shipped 2.31 tweak sources, and where?'
+    Add-Report 'QUESTION A — What package/header context owns IconicWeaponModAbilityBase in the exact shipped base file?'
+    foreach ($entry in $nativeBaseHeader) { Add-Report $entry }
+    Add-Report 'Base symbol matches (bounded):'
     if ($templateMatches.Count -eq 0) { Add-Report 'NO MATCHES' } else { foreach ($entry in $templateMatches) { Add-Report $entry } }
+
     Add-Report ''
-    Add-Report 'QUESTION B — Does the shipped source grammar use explicitly typed bool flats?'
-    if ($typedBoolMatches.Count -eq 0) { Add-Report 'NO MATCHES' } else { foreach ($entry in $typedBoolMatches) { Add-Report $entry } }
+    Add-Report 'QUESTION B — What directive ordering does shipped 2.31 .tweak source use?'
+    Add-Report 'Representative package-then-using pairs:'
+    if ($packageUsingPairs.Count -eq 0) { Add-Report 'NO MATCHES' } else { foreach ($entry in $packageUsingPairs) { Add-Report $entry } }
+    Add-Report 'Files whose first package/import directive is using:'
+    if ($usingFirst.Count -eq 0) { Add-Report 'NO MATCHES' } else { foreach ($entry in $usingFirst) { Add-Report $entry } }
+
     Add-Report ''
-    Add-Report 'QUESTION C — Are there shipped unbased groups containing explicitly typed bool flats?'
-    Add-Report 'These are bounded lexical examples only; the owning agent must inspect semantics before selecting a sentinel.'
+    Add-Report 'QUESTION C — Does official source show qualified-base inheritance or the specific Items.IconicWeaponModAbilityBase spelling?'
+    Add-Report 'Cross-package-looking inheritance examples (bounded lexical matches):'
+    if ($crossPackageInheritance.Count -eq 0) { Add-Report 'NO MATCHES' } else { foreach ($entry in $crossPackageInheritance) { Add-Report $entry } }
+    Add-Report 'Exact Items.IconicWeaponModAbilityBase matches:'
+    if ($qualifiedBaseMatches.Count -eq 0) { Add-Report 'NO MATCHES' } else { foreach ($entry in $qualifiedBaseMatches) { Add-Report $entry } }
+
+    Add-Report ''
+    Add-Report 'QUESTION D — Does shipped source grammar use explicitly typed bool flats, and are there unbased group examples?'
+    if ($typedBoolMatches.Count -eq 0) { Add-Report 'NO TYPED BOOL MATCHES' } else { foreach ($entry in $typedBoolMatches) { Add-Report $entry } }
+    Add-Report 'Unbased groups containing explicitly typed bool flats (bounded lexical scan):'
     if ($unbasedTypedBoolMatches.Count -eq 0) { Add-Report 'NO MATCHES' } else { foreach ($entry in $unbasedTypedBoolMatches) { Add-Report $entry } }
-    if ($readFailures.Count -gt 0) {
-        Add-Report 'Per-file read failures (bounded; other evidence remains usable):'
-        foreach ($entry in $readFailures) { Add-Report $entry }
-    }
-    Add-Report ''
-    Add-Report 'QUESTION D — Do shipped tweak sources use package/using imports that can explain source-local base visibility?'
-    if ($packageUsingMatches.Count -eq 0) { Add-Report 'NO MATCHES' } else { foreach ($entry in $packageUsingMatches) { Add-Report $entry } }
+
     Add-Report ''
     Add-Report 'QUESTION E — What TweakDB read APIs are declared by the shipped 2.31 engine scripts?'
     if ($tweakDbSignatures.Count -eq 0) { Add-Report 'NO MATCHES for GetBool/GetRecord/GetItemRecord' } else { foreach ($entry in $tweakDbSignatures) { Add-Report $entry } }
     Add-Report ''
     Add-Report 'QUESTION F — Is gamedataItem_Record declared in the shipped generated TweakDB record surface?'
     if ($itemRecordSignatures.Count -eq 0) { Add-Report 'NO MATCHES' } else { foreach ($entry in $itemRecordSignatures) { Add-Report $entry } }
+
+    if ($readFailures.Count -gt 0) {
+        Add-Report ''
+        Add-Report 'Per-file read failures (bounded; other evidence remains usable):'
+        foreach ($entry in $readFailures) { Add-Report $entry }
+    }
+
     Add-Report ''
-    Add-Report 'Interpretation boundary: this report is direct supported-install source evidence. It does NOT claim that an arbitrary Biology tweak compiles/deploys. Official REDmod compile/deploy acceptance remains an attended parent gate.'
-    Add-Report 'PASS: bounded official REDmod 2.31 activation-sentinel evidence captured.'
-    Write-Host 'PASS: captured bounded, read-only official REDmod 2.31 activation-sentinel evidence.' -ForegroundColor Green
+    Add-Report 'Interpretation boundary: this report is direct supported-install source/schema evidence from CDPR-shipped 2.31 .tweak and engine-script surfaces. It does NOT claim that any Biology standalone tweak compiles/deploys, that package membership is accepted for mod-owned source, or that launcher ON/OFF behavior is proven. Official REDmod compile/deploy acceptance remains a parent P01.1 gate.'
+    Add-Report 'PASS: bounded official REDmod 2.31 standalone-tweak grammar evidence captured.'
+    Write-Host 'PASS: captured bounded, read-only official REDmod 2.31 standalone-tweak grammar evidence.' -ForegroundColor Green
 } catch {
     $failed = $true
     Add-Report ''
-    Add-Report '=== W07.1 INNER PROBE FAILURE ==='
+    Add-Report '=== W08.1 INNER PROBE FAILURE ==='
     Add-Report ('Time: ' + [DateTime]::Now.ToString('o'))
     Add-Report ('Exception type: ' + $_.Exception.GetType().FullName)
     Add-Report ('Error: ' + $_.Exception.Message)
@@ -161,7 +207,7 @@ try {
         Add-Report ('Script line: ' + $_.InvocationInfo.ScriptLineNumber)
         Add-Report ('Position: ' + (Compact $_.InvocationInfo.PositionMessage 500))
     }
-    Add-Report 'FAIL: official-source activation-sentinel probe did not complete.'
+    Add-Report 'FAIL: official-source standalone-tweak grammar probe did not complete.'
     Write-Host ('FAIL: ' + $_.Exception.Message) -ForegroundColor Yellow
 } finally {
     Write-Host "ATTACH THIS FILE TO CHATGPT: $ReportPath" -ForegroundColor Cyan

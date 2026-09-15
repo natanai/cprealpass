@@ -91,8 +91,10 @@ $activationRelative = 'mods/Biology/tweaks/base/gameplay/static_data/database/it
 $activationSource = Resolve-SafeChildPath $project $activationRelative
 if (-not (Test-Path -LiteralPath $activationSource -PathType Leaf)) { throw 'Biology REDmod activation marker source is missing.' }
 $activationText = Get-Content -Raw -LiteralPath $activationSource
-if ($activationText -notmatch 'Items\.BiologyLauncherActivationMarker\s*:\s*IconicWeaponModAbilityBase' -or $activationText -notmatch 'stackable\s*=\s*true') {
-    throw 'Biology REDmod activation marker no longer matches the runtime activation accessor contract.'
+$activationPackage = [regex]::Match($activationText,'(?m)^\s*package\s+Items\s*$')
+$activationRecord = [regex]::Match($activationText,'(?m)^\s*BiologyLauncherActivationMarker\s*:\s*IconicWeaponModAbilityBase\s*$')
+if (-not $activationPackage.Success -or -not $activationRecord.Success -or $activationPackage.Index -gt $activationRecord.Index -or $activationText -match '(?m)^\s*using\s+Items\s*$' -or $activationText -notmatch '(?m)^\s*stackable\s*=\s*true\s*;\s*$') {
+    throw 'Biology REDmod activation marker no longer matches the supported-source package/read-path contract.'
 }
 Copy-IntoPackage $activationSource $activationRelative (Get-Sha256 $activationSource) 'Biology' 'biology-launcher-activation' 'REDMOD-NATIVE' 'biology-owned'
 
