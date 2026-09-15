@@ -1,4 +1,4 @@
-// Shared project-original INK primitives for Biology's E3-inspired presentation.
+// Shared project-original INK primitives for Biology's E3-inspired neutral HUD.
 //
 // These helpers contain no native hooks and no Project E3 resources. Individual
 // controller adapters decide where the visual language is appropriate.
@@ -9,8 +9,8 @@ public class CRBiologyE3Primitives extends IScriptable {
     return new HDRColor(1.1761, 0.1400, 0.1200, 1.0);
   }
 
-  public static func SoftRed() -> HDRColor {
-    return new HDRColor(0.7600, 0.0850, 0.0700, 1.0);
+  public static func Neutral() -> HDRColor {
+    return new HDRColor(1.0, 1.0, 1.0, 1.0);
   }
 
   public static func AddRect(parent: ref<inkCompoundWidget>, name: CName, x: Float, y: Float, width: Float, height: Float, opacity: Float) -> ref<inkRectangle> {
@@ -23,7 +23,6 @@ public class CRBiologyE3Primitives extends IScriptable {
     widget.SetTranslation(x, y);
     widget.SetTintColor(CRBiologyE3Primitives.Red());
     widget.SetOpacity(opacity);
-    widget.SetAffectsLayoutWhenHidden(false);
     widget.Reparent(parent, -1);
     return widget;
   }
@@ -42,14 +41,13 @@ public class CRBiologyE3Primitives extends IScriptable {
     label.SetTranslation(x, y);
     label.SetTintColor(CRBiologyE3Primitives.Red());
     label.SetOpacity(opacity);
-    label.SetAffectsLayoutWhenHidden(false);
     label.Reparent(parent, -1);
     return label;
   }
 
-  public static func SetVisible(widget: ref<inkWidget>, visible: Bool) -> Void {
-    if IsDefined(widget) {
-      widget.SetVisible(visible);
+  public static func TintNeutralHudRoot(root: ref<inkWidget>, enabled: Bool) -> Void {
+    if IsDefined(root) {
+      root.SetTintColor(enabled ? CRBiologyE3Primitives.Red() : CRBiologyE3Primitives.Neutral());
     }
   }
 }
