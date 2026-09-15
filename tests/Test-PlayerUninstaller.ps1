@@ -23,8 +23,9 @@ try {
     foreach ($needle in @(
         'generic-dependency-shared',
         'PreserveChangedBiologyOwned',
-        'mods\Biology\',
-        'r6\scripts\CyberpunkRealism\',
+        'BiologyOwnedPrefixes',
+        'IsAllowedBiologyOwnedPath',
+        'SharedRootNames',
         'red4ext/plugins/mod_settings/user.ini',
         'official-redmod-deploy-explicit-root',
         'No mods found, no deployment is needed'
