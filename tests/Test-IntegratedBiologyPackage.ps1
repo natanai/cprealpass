@@ -26,6 +26,8 @@ Check ($package.canonicalBuildCommand -eq 'pwsh ./tools/Build-BiologyPackage.ps1
 Check ($package.exactCompileRequiredBeforeArtifact -eq $true) 'Exact compilation is not a package-emission requirement.'
 Check ($package.redmod.packageRoot -eq 'mods/Biology') 'Official REDmod identity is not mods/Biology.'
 Check ($package.redmod.deployCommand -match 'deploy -root=<Cyberpunk 2077>') 'Package contract does not require deterministic explicit REDmod root.'
+$runtimeEntry = @($package.firstPartyFiles | Where-Object { $_.component -eq 'biology-owned-runtime' })
+Check ($runtimeEntry.Count -eq 1 -and $runtimeEntry[0].destinationRoot -eq 'r6/scripts/CyberpunkRealism' -and $runtimeEntry[0].route -eq 'REDSCRIPT-BETTER') 'Package contract lost Biology-owned supplemental REDscript destination/route.'
 
 # The cloud tier cannot exact-compile against proprietary final.redscripts, so inspect
 # the hard gate rather than pretending CI is a runtime compiler. A locally emitted ZIP
@@ -37,7 +39,6 @@ Check ($builder.Contains('$compileReport.exitCode -ne 0')) 'Integrated builder d
 Check ($builder.Contains('$compileReport.outputPresent -ne $true')) 'Integrated builder does not require compiler output.'
 Check ($builder -match '\$gameVersion\s+-ne\s+''2\.31''') 'Integrated builder does not pin the supported game version.'
 Check ($builder.Contains("'mods/Biology/info.json'")) 'Integrated builder does not include official Biology REDmod metadata.'
-Check ($builder -match 'r6/scripts/CyberpunkRealism') 'Integrated builder does not include Biology-owned supplemental REDscript runtime.'
 Check ($builder -match '\$expectedRetained\s*=\s*@\(''redscript'',''red4ext'',''archivexl'',''mod-settings''\)') 'Integrated builder retained dependency set is not exact/fail-closed.'
 foreach ($blocked in @('tweakxl','codeware','input-loader','darkfuture','project-e3')) {
     Check ($builder.ToLowerInvariant().Contains($blocked)) "Integrated builder does not explicitly reject/exclude $blocked."
@@ -50,8 +51,6 @@ Check ($builder.Contains('playableRuntimeIncluded = $true')) 'Integrated artifac
 Check ($builder.Contains('sourceModsRequired = @()')) 'Integrated artifact does not explicitly reject source-mod runtime requirements.'
 Check (-not $builder.Contains('Build-RedmodFoundation.ps1')) 'Playable builder delegates to non-playable foundation skeleton.'
 
-# Deployment helper must only call the directly evidenced official REDmod path and
-# must never rely on the working directory/default-root heuristic.
 Check ($deploy -match 'tools\\redmod\\bin\\redMod\.exe') 'Deploy helper does not use the official probed REDmod executable.'
 Check ($deploy -match '''-root=\$game''') 'Deploy helper does not pass an explicit game root.'
 Check ($deploy.Contains("FileVersion -ne '2.3.1.0'")) 'Deploy helper does not guard the directly evidenced REDmod file version.'
@@ -72,9 +71,6 @@ foreach ($id in @('darkfuture','project-e3-hud')) {
     Check ($dep[$id].status -eq 'blocked-runtime' -and $dep[$id].bundledByBiology -eq $false) "$id source/reference runtime became packageable."
 }
 
-# Provider-neutral semantics are already merged, but no replacement accessible
-# persistence/UI exists in this branch. Packaging must preserve that fact instead of
-# either redesigning settings or silently dropping the user's ON/OFF acceptance path.
 Check ($settings.Contains('public static func IsEnabled(game: GameInstance)')) 'Biology master semantics are not provider-neutral.'
 Check ($settings.Contains('public static func UseE3FirstPersonHudVisuals(game: GameInstance)')) 'E3 presentation semantics are not provider-neutral.'
 Check ($settings.Contains('@if(ModuleExists("ModSettingsModule"))')) 'Current optional settings adapter is not guarded.'
