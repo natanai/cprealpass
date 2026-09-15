@@ -1,22 +1,39 @@
-# realpass dependency and redistribution audit
+# Biology dependency and redistribution audit
 
-Last evidence review: 2026-09-12
+Status: **current engineering audit**  
+Last evidence review: **2026-09-15**
 
-This is an engineering release audit, not legal advice. Its purpose is to keep the one-download goal honest: a dependency is not marked bundleable merely because it is easy to download or because another mod bundles it. `manifest/components.json` remains the pinned technical inventory; `manifest/distribution.json` remains the machine-readable release disposition.
+This is an engineering release audit, not legal advice. `manifest/components.json` records pinned technical inputs and `manifest/distribution.json` records the current machine-readable release disposition.
+
+A dependency is not entitled to remain because an older RealPass build used it or because another mod bundles it.
+
+## Current integrated dependency picture
+
+The first integrated REDmod-first Biology milestone on Cyberpunk 2077 2.31 retained:
+
+- official REDmod — game-provided package/deployment foundation;
+- redscript 0.5.31 — direct retained consumer for Biology-owned narrow additive/wrapper seams;
+- Mod Settings 0.2.21 — temporary provider for the small player preference surface;
+- ArchiveXL 1.27.3 — temporary transitive dependency of the current Mod Settings route;
+- RED4ext 1.30.0 — temporary transitive plumbing for the retained settings/framework chain.
+
+It did **not** require TweakXL, Codeware, Input Loader, Dark Future runtime, or Project E3 runtime.
+
+Issue #44 must additionally audit whether any supplemental path remains behaviorally active when REDlauncher `Enable mods` is OFF. Launcher-off vanilla-play behavior is a product requirement, so a physically installed framework may remain only if Biology-specific behavior is inert or otherwise correctly gated.
 
 ## Decision rule
 
-A framework can move from **conditional** to a final bundled disposition only after all of the following are true for the exact pinned release:
+A generic framework can remain in a public Biology release only when all of the following are true for the exact pinned version:
 
-1. the primary license permits the intended binary redistribution;
-2. required copyright/license text is identified;
-3. bundled third-party notices and their redistribution conditions are preserved;
-4. the exact official release archive/file set is inventoried and hash verified;
-5. only files actually required by the final realpass runtime are selected, unless selectively extracting files would violate an upstream notice/packaging requirement;
-6. the installed paths are represented in the realpass owner/provenance manifest;
-7. the combined package passes `tools/Test-ArtifactPolicy.ps1` and the final dependency notice audit.
-
-Until then, `conditional` means “technically promising, not cleared for public realpass bundling yet.”
+1. a current accepted Biology feature requires it;
+2. a smaller vanilla/REDmod/Biology-owned route is not materially safer;
+3. license/redistribution terms permit the intended binary distribution;
+4. required notices are identified and preserved;
+5. exact official release files/hashes are inventoried;
+6. only required files are selected unless upstream packaging terms require otherwise;
+7. installed files are represented individually in Biology ownership/provenance metadata;
+8. the artifact passes `tools/Test-ArtifactPolicy.ps1` and dependency-notice tests;
+9. install/disable/uninstall semantics remain safe, including launcher-off behavior where advertised.
 
 ## Pinned framework evidence
 
@@ -24,101 +41,87 @@ Until then, `conditional` means “technically promising, not cleared for public
 
 Pinned source/release: <https://github.com/WopsS/RED4ext/releases/tag/v1.30.0>
 
-Primary license: MIT, exact tagged evidence: <https://github.com/WopsS/RED4ext/blob/v1.30.0/LICENSE.md>
+License: MIT plus upstream third-party notices.
 
-The official release also carries `THIRD_PARTY_LICENSES.md`: <https://github.com/WopsS/RED4ext/blob/v1.30.0/THIRD_PARTY_LICENSES.md>. That file contains several third-party licenses with notice/redistribution conditions, so the public realpass package must preserve the applicable notice material rather than copying only the top-level MIT text.
-
-Engineering disposition: **conditional bundle candidate**. The pinned release archive hash is already recorded in `manifest/components.json`.
+Current Biology role: **temporary transitive dependency only**. Biology currently owns no RED4ext plugin. Keep only while the retained settings/framework chain genuinely requires it. Issue #44 must account for its launcher-off behavior and uninstaller ownership semantics.
 
 ### redscript 0.5.31
 
 Pinned source/release: <https://github.com/jac3km4/redscript/releases/tag/v0.5.31>
 
-Primary license: MIT, exact tagged evidence: <https://github.com/jac3km4/redscript/blob/v0.5.31/LICENSE>
+License: MIT.
 
-The project’s Windows installation model is already game-root-relative, which matches realpass’s desired player experience. The exact official release archive/hash is pinned in `manifest/components.json`.
-
-Engineering disposition: **conditional bundle candidate**, pending exact release-archive notice/file audit.
+Current Biology role: **direct retained dependency** for accepted Biology-owned additive/wrapper runtime seams. Its retention is architectural, not merely settings-provider inheritance.
 
 ### ArchiveXL 1.27.3
 
 Pinned source/release: <https://github.com/psiberx/cp2077-archive-xl/releases/tag/v1.27.3>
 
-Primary license: MIT, exact tagged evidence: <https://github.com/psiberx/cp2077-archive-xl/blob/v1.27.3/LICENSE>
+License: MIT plus upstream third-party notices.
 
-Third-party notices: <https://github.com/psiberx/cp2077-archive-xl/blob/v1.27.3/THIRD_PARTY_LICENSES>. The notice set contains multiple licenses/conditions and explicitly includes a TiltedCore notice that says not to remove or modify license notices. Therefore an ArchiveXL bundle must preserve the upstream third-party notice material intact unless a complete component-level legal audit establishes a narrower compliant set.
-
-Engineering disposition: **conditional bundle candidate**, not yet promoted.
-
-### TweakXL 1.11.4
-
-Pinned source/release: <https://github.com/psiberx/cp2077-tweak-xl/releases/tag/v1.11.4>
-
-Primary license: MIT, exact tagged evidence: <https://github.com/psiberx/cp2077-tweak-xl/blob/v1.11.4/LICENSE>
-
-Its runtime depends on RED4ext. The official release’s third-party notice material must be retained/audited before public bundling.
-
-Engineering disposition: **conditional bundle candidate**. If the final realpass runtime no longer requires TweakXL, remove the dependency instead of bundling it by inertia.
-
-### Codeware 1.20.3
-
-Pinned source/release: <https://github.com/psiberx/cp2077-codeware/releases/tag/v1.20.3>
-
-Primary license: MIT, exact tagged evidence: <https://github.com/psiberx/cp2077-codeware/blob/v1.20.3/LICENSE>
-
-Third-party notices: <https://github.com/psiberx/cp2077-codeware/blob/v1.20.3/THIRD_PARTY_LICENSES>. As with ArchiveXL, this includes several separate notice/redistribution conditions. Preserve the official third-party notice file unless a complete audit proves another compliant representation.
-
-Engineering disposition: **conditional bundle candidate**. Remove it if the final realpass settings/UI/runtime no longer needs it.
+Current Biology role: **temporary transitive dependency** of the current Mod Settings adapter. There is no current direct Biology resource consumer in the integrated package. Remove it when the provider chain no longer needs it.
 
 ### Mod Settings 0.2.21
 
 Pinned source/release: <https://github.com/jackhumbert/mod_settings/releases/tag/v0.2.21>
 
-Primary license: MIT, exact tagged evidence: <https://github.com/jackhumbert/mod_settings/blob/v0.2.21/license.md>
+License: MIT.
 
-The upstream release documentation lists RED4ext, ArchiveXL and redscript requirements. realpass currently plans to use Mod Settings for one public settings surface, but `docs/SETTINGS-ARCHITECTURE.md` deliberately leaves replacement possible if a smaller reliable realpass-owned UI becomes preferable.
+Current Biology role: **temporary provider** for the provider-neutral Biology/E3 preferences. It has no entitlement to remain in the final product. A Biology-owned surface or deliberate launcher/install boundary may replace it if that reduces dependency depth without increasing fragility.
 
-Engineering disposition: **conditional bundle candidate**. Its dependency closure matters: bundling Mod Settings can indirectly keep ArchiveXL in the final dependency set even if realpass gameplay itself does not otherwise need ArchiveXL.
+### TweakXL 1.11.4
+
+Pinned upstream evidence remains available in `manifest/components.json` for historical/tooling context.
+
+Current Biology role: **not required**. Do not bundle merely because Project E3 or another historical source used it.
+
+### Codeware 1.20.3
+
+Pinned upstream evidence remains available for historical/tooling context.
+
+Current Biology role: **not required**. The integrated Biology UI/presentation routes do not currently justify it.
 
 ### Input Loader 0.2.3
 
-Pinned upstream release: <https://github.com/jackhumbert/cyberpunk2077-input-loader/releases/tag/v0.2.3>
+Pinned upstream evidence remains available for historical/tooling context.
 
-Primary license: MIT, exact tagged evidence: <https://github.com/jackhumbert/cyberpunk2077-input-loader/blob/v0.2.3/license.md>
+Current Biology role: **not required**. Biology currently adds no custom input binding requiring it.
 
-Upstream documents RED4ext as its requirement and supports per-mod input XMLs. It also has uninstall/cache behavior of its own. realpass must never package a user’s live `inputUserMappings.xml`; if Input Loader remains necessary, package only the official plugin/runtime pieces and realpass-owned input definitions.
+## Historical/reference gameplay and presentation sources
 
-Engineering disposition: **conditional bundle candidate**. Remove it if the final realpass controls require no custom input mapping.
+### Dark Future
 
-## Adapted gameplay/presentation dependencies
+Dark Future is **research/provenance only for the final runtime**. Historical adapted ideas/source records may remain where licensing/provenance requires them, but no executing Dark Future gameplay content may enter Biology candidates.
 
-### Dark Future 2.0
-
-Current role: needs/UI integration host and source of adapted behavior. The repository records the selected adapted material as CC BY-SA 4.0 and retains the source author/change notices.
-
-This does **not** mean the whole upstream mod should become part of realpass. `manifest/feature-inventory.json` marks unrelated difficulty/economy/travel/random-encounter/addiction/humanity systems for removal. The release path is either:
-
-- retain only the specifically adapted, in-scope material with full attribution/share-alike compliance and any required source/notice availability; or
-- replace remaining host/integration pieces with realpass-owned equivalents.
-
-Engineering disposition: **conditional adapt-or-replace**. A full upstream archive is not assumed cleared or desirable.
+Do not describe Dark Future as the current needs/UI host; that was an earlier architecture.
 
 ### Project E3 - HUD
 
-Current role: local/reference presentation source for the selected E3-inspired HUD/nameplate look.
+Project E3 is **local-only design archaeology/provenance**, not a runtime dependency.
 
-The permission record in this repository requires the original mod for published modifications and prohibits standalone redistribution of its modified assets. That conflicts directly with the one-download standalone realpass target.
+`config/realpass-e3.json` preserves the exact reference inventory/version/hashes. The actual `ReferenceMods/` payload remains gitignored and must not be committed or shipped.
 
-Engineering disposition: **blocked from standalone realpass artifact under current recorded terms**. Replace the required presentation behavior with independently distributable realpass implementation/assets or obtain new permission. The artifact scanner and distribution contract fail closed on `project-e3-hud`.
+Issue #40 uses that reference to map HUD responsibilities to current Cyberpunk 2.31 native seams and Biology-owned presentation. Project E3 scripts, tweaks and archives remain blocked from Biology player artifacts.
 
-## Dependency minimization before 1.0
+## Dependency minimization before public release
 
-A one-download package is easiest to maintain when its dependency graph is as small as possible. Before promoting a framework from conditional to bundled:
+Before retaining any framework:
 
-- identify which final realpass runtime file/API actually requires it;
-- prove that removing the framework breaks an in-scope feature;
-- prefer deleting an unused dependency over carrying it for historical reasons;
-- avoid bundling broad framework “extras” as realpass features; framework-internal files required for correct operation are different from optional gameplay features;
-- preserve upstream authorship and license notices even though the player downloads one realpass package.
+- identify the exact accepted consumer;
+- prove removing it breaks an in-scope feature or accepted provider path;
+- prefer deletion over historical inertia;
+- preserve required upstream notices;
+- keep per-file ownership explicit;
+- test hard uninstall conservatively;
+- verify launcher-off behavior where Biology advertises vanilla-play mode.
 
-The target is “one player download,” not “claim all bundled software is ours.”
+The target is one understandable player download, not a claim that bundled third-party software is Biology-owned.
+
+## Source of truth
+
+When prose and machine-readable state disagree, treat that as a bug to fix rather than choosing whichever is convenient.
+
+Current release disposition: `manifest/distribution.json`  
+Pinned versions/hashes: `manifest/components.json`  
+Install/uninstall safety contract: `manifest/install-contract.json`  
+Current active work: root `ROADMAP.md` + current issues/PRs
