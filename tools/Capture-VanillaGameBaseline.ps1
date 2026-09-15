@@ -63,12 +63,13 @@ New-Item -ItemType Directory -Force -Path $baselineRoot | Out-Null
 $rows = [Collections.Generic.List[object]]::new()
 $totalBytes = [int64]0
 $files = @(Get-ChildItem -LiteralPath $game -File -Recurse -Force -ErrorAction Stop | Sort-Object FullName)
+$expectedBytes = [int64](($files | Measure-Object -Property Length -Sum).Sum)
 $index = 0
+$startedAt = Get-Date
+$lastReportedBucket = -1
+
 foreach ($file in $files) {
     $index++
-    if (($index % 250) -eq 0 -or $index -eq $files.Count) {
-        Write-Progress -Activity 'Hashing vanilla Cyberpunk files' -Status "$index / $($files.Count)" -PercentComplete (($index / [Math]::Max(1,$files.Count)) * 100)
-    }
     $relative = [IO.Path]::GetRelativePath($game,$file.FullName).Replace('\','/')
     $hash = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToUpperInvariant()
     $rows.Add([pscustomobject]@{
@@ -77,6 +78,32 @@ foreach ($file in $files) {
         Sha256 = $hash
     })
     $totalBytes += [int64]$file.Length
+
+    $percent = if ($expectedBytes -gt 0) {
+        [int][Math]::Floor(($totalBytes / [double]$expectedBytes) * 100.0)
+    } else {
+        [int][Math]::Floor(($index / [double][Math]::Max(1,$files.Count)) * 100.0)
+    }
+    $percent = [Math]::Min(100,[Math]::Max(0,$percent))
+
+    if (($index % 100) -eq 0 -or $index -eq $files.Count) {
+        Write-Progress -Activity 'Hashing vanilla Cyberpunk files' -Status "$index / $($files.Count) files; $percent%" -PercentComplete $percent
+    }
+
+    # Write-Progress can be hidden when pwsh is launched from another PowerShell
+    # host. Emit a durable console bar every 5 percentage points so the user can
+    # always see that a long whole-game hash is advancing.
+    $bucket = [int][Math]::Floor($percent / 5)
+    if ($bucket -gt $lastReportedBucket -or $index -eq $files.Count) {
+        $lastReportedBucket = $bucket
+        $barWidth = 20
+        $filled = [Math]::Min($barWidth,[int][Math]::Floor(($percent / 100.0) * $barWidth))
+        $bar = ('#' * $filled) + ('-' * ($barWidth - $filled))
+        $hashedGiB = $totalBytes / 1GB
+        $expectedGiB = $expectedBytes / 1GB
+        $elapsed = ((Get-Date) - $startedAt).ToString('hh\:mm\:ss')
+        Write-Host ("HASH [{0}] {1,3}% | {2}/{3} files | {4:N1}/{5:N1} GiB | elapsed {6}" -f $bar,$percent,$index,$files.Count,$hashedGiB,$expectedGiB,$elapsed) -ForegroundColor Cyan
+    }
 }
 Write-Progress -Activity 'Hashing vanilla Cyberpunk files' -Completed
 
