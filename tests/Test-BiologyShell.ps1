@@ -34,7 +34,7 @@ Check ($doc.Contains('players should not feel that they need to poll Biology')) 
 Check ($doc.Contains('The Biology screen is **always available**')) 'Biology doc no longer requires healthy-state inspectability.'
 Check ($doc -match '(?i)overview.*(simply|simply reads|reads).*`STABLE`|nothing meaningful.*`STABLE`') 'Biology doc does not lock the terse normal-state token.'
 Check ($doc.Contains('Every ordinary player-facing doorway') -and $doc.Contains('underlying native destination/identifier')) 'Biology navigation-label consistency/native routing boundary is not documented.'
-Check ($doc.Contains('overview: `BIOLOGY | CYBERWARE` mode switching is available') -and $doc.Contains('detail/drill-down: mode switching is unavailable')) 'Biology doc does not lock overview-only mode switching.'
+Check ($doc -match '(?is)overview:\*\*?\s*`BIOLOGY \| CYBERWARE` mode switching is available.*detail/drill-down:\*\*?\s*mode switching is unavailable') 'Biology doc does not lock overview-only mode switching.'
 Check ($doc.Contains('Back must **not** force the user to close the entire pause/menu stack')) 'Biology doc does not lock detail Back to overview behavior.'
 
 # Reuse the stock hub routing: relabel the existing Cyberware menu data instead of
