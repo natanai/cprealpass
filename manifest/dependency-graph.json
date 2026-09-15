@@ -1,0 +1,131 @@
+{
+  "schemaVersion": 1,
+  "product": "Biology",
+  "supportedGameVersion": "2.31",
+  "policy": "vanilla -> official REDmod -> Biology-owned narrow scripting -> generic extension only when necessary",
+  "dependencies": [
+    {
+      "id": "redmod",
+      "kind": "official-platform-component",
+      "status": "required-platform",
+      "route": "REDMOD-NATIVE",
+      "consumerFeatures": ["package identity", "official deploy/enable/load", "future Biology-owned archives/tweaks/audio/whole-file script routes"],
+      "bundledByBiology": false,
+      "plannedAction": "retain",
+      "rationale": "Official package/deployment authority for the REDmod-first release."
+    },
+    {
+      "id": "redscript",
+      "kind": "generic-framework",
+      "status": "retention-candidate",
+      "route": "REDSCRIPT-BETTER",
+      "consumerFeatures": ["project-owned simulation/runtime classes", "native hook seams listed in manifest/native-seams.json", "provider-neutral settings state until a narrower accepted route exists"],
+      "bundledByBiology": "only-if-final-integrated-runtime-still-requires-it",
+      "plannedAction": "retain only for accepted additive/wrapper seams; remove if every consumer migrates to a narrower official route",
+      "rationale": "Current runtime relies on additive/wrapper annotations. Replacing whole vanilla REDmod script files for the same hooks would increase conflict and patch surface.",
+      "licenseProvenance": "manifest/components.json:redscript"
+    },
+    {
+      "id": "mod-settings",
+      "kind": "generic-framework",
+      "status": "removal-candidate",
+      "route": "REMOVE/RETHINK",
+      "consumerFeatures": ["transitional two-boolean settings provider only"],
+      "bundledByBiology": false,
+      "plannedAction": "remove when the presentation/settings lane supplies the accepted Biology-owned/provider-neutral preference surface",
+      "rationale": "The product requires at most a tiny settings contract; Mod Settings is a provider, not simulation authority, and currently creates dependency depth without another Biology consumer.",
+      "licenseProvenance": "manifest/components.json:mod-settings"
+    },
+    {
+      "id": "archivexl",
+      "kind": "generic-framework",
+      "status": "removal-candidate",
+      "route": "REMOVE/RETHINK",
+      "consumerFeatures": ["transitional dependency of Mod Settings"],
+      "bundledByBiology": false,
+      "plannedAction": "remove with Mod Settings unless a separate final Biology resource feature proves a direct requirement",
+      "rationale": "No project-original source/resource in the canonical tree currently consumes ArchiveXL directly.",
+      "licenseProvenance": "manifest/components.json:archivexl"
+    },
+    {
+      "id": "red4ext",
+      "kind": "generic-native-extension",
+      "status": "removal-candidate",
+      "route": "REMOVE/RETHINK",
+      "consumerFeatures": ["transitional dependency chain for ArchiveXL/Mod Settings"],
+      "bundledByBiology": false,
+      "plannedAction": "remove if ArchiveXL/Mod Settings are removed and no concrete Biology-owned native plugin consumer is demonstrated",
+      "rationale": "The canonical project has REDscript source but no Biology-owned RED4ext DLL/plugin consumer. Historical presence alone is not a retention reason.",
+      "licenseProvenance": "manifest/components.json:red4ext"
+    },
+    {
+      "id": "tweakxl",
+      "kind": "generic-framework",
+      "status": "not-required",
+      "route": "REMOVE/RETHINK",
+      "consumerFeatures": [],
+      "bundledByBiology": false,
+      "plannedAction": "do not bundle",
+      "rationale": "No current Biology production source/data path requires TweakXL; REDmod-native tweak source is preferred if future tweak content is needed.",
+      "licenseProvenance": "manifest/components.json:tweakxl"
+    },
+    {
+      "id": "codeware",
+      "kind": "generic-framework",
+      "status": "not-required",
+      "route": "REMOVE/RETHINK",
+      "consumerFeatures": [],
+      "bundledByBiology": false,
+      "plannedAction": "do not bundle",
+      "rationale": "Current Biology Ink/REDscript source has no Codeware dependency.",
+      "licenseProvenance": "manifest/components.json:codeware"
+    },
+    {
+      "id": "input-loader",
+      "kind": "generic-framework",
+      "status": "not-required",
+      "route": "REMOVE/RETHINK",
+      "consumerFeatures": [],
+      "bundledByBiology": false,
+      "plannedAction": "do not bundle",
+      "rationale": "Biology currently defines no custom input binding that requires Input Loader.",
+      "licenseProvenance": "manifest/components.json:input-loader"
+    },
+    {
+      "id": "darkfuture",
+      "kind": "reference-mod",
+      "status": "blocked-runtime",
+      "route": "REMOVE/RETHINK",
+      "consumerFeatures": ["historical research/provenance only"],
+      "bundledByBiology": false,
+      "plannedAction": "never execute or bundle",
+      "rationale": "Finished Biology gameplay must be project-owned."
+    },
+    {
+      "id": "project-e3-hud",
+      "kind": "reference-mod",
+      "status": "blocked-runtime",
+      "route": "REMOVE/RETHINK",
+      "consumerFeatures": ["visual reference/provenance only"],
+      "bundledByBiology": false,
+      "plannedAction": "never execute or bundle",
+      "rationale": "Finished Biology presentation must be project-owned."
+    },
+    {
+      "id": "cyberpunk-game-files",
+      "kind": "proprietary-game-authority",
+      "status": "external-never-bundle",
+      "route": "REDMOD-NATIVE",
+      "consumerFeatures": ["vanilla semantic/runtime authority"],
+      "bundledByBiology": false,
+      "plannedAction": "read/reference only through supported game install; never redistribute",
+      "rationale": "Biology targets the installed game and may not redistribute CDPR executables, archives, scripts, saves, or generated stock caches."
+    }
+  ],
+  "rules": [
+    "A dependency without at least one concrete current Biology consumer is not retained.",
+    "A parallel lane requesting a new dependency must identify the exact feature, why vanilla/REDmod/current redscript cannot satisfy it, and the package/install consequence before this graph changes.",
+    "Removal-candidate does not mean delete the framework from a currently tested transitional build before its consumer is migrated; it means it is not part of the accepted REDmod-first target without new evidence.",
+    "Bundled third-party components require pinned version/hash/license/provenance before release."
+  ]
+}
