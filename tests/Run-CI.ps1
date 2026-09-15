@@ -22,6 +22,7 @@ $tests = @(
     'Test-GameContractAudit.ps1',
     'Test-CleanRoomTestingContract.ps1',
     'Test-RedmodFoundation.ps1',
+    'Test-RedmodActivationSentinelProbe.ps1',
     'Test-IntegratedBiologyPackage.ps1',
     'Test-PlayerDisableContract.ps1',
     'Test-PlayerUninstaller.ps1',
