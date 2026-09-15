@@ -33,7 +33,7 @@ foreach ($token in @(
 # Same-lane replacement and new-goal behavior must be explicit so long chats do not
 # become permanent hidden project state.
 Check ($ledger -match 'P01\.1\s*->\s*P01\.2') 'Parent replacement generation rule is missing.'
-Check ($ledger -match 'W06\.1\s*->\s*W06\.2') 'Worker replacement generation rule is missing.'
+Check ($ledger -match 'same ongoing lane[\s\S]*next generation[\s\S]*W\d{2}\.2') 'Worker replacement generation rule is missing.'
 Check ($ledger -match 'materially new goal[\s\S]*fresh `W##`|materially new goal[\s\S]*new `W##`') 'New-goal/new-lane rule is missing.'
 
 # Current parent and the user-confirmed exact-compile repair thread must be visible.
