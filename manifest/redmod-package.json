@@ -12,6 +12,14 @@
     "deployCommand": "tools/redmod/bin/redMod.exe deploy -root=<Cyberpunk 2077>",
     "manualModdedLaunchFlag": "-modded",
     "normalPlayerEnableRoute": "REDlauncher/Steam supported REDmod enable flow",
+    "observedSupportedInstall": {
+      "evidence": "docs/evidence/REDMOD-2.31-PROBE-2026-09-15.md",
+      "fileVersion": "2.3.1.0",
+      "productVersion": "2.31",
+      "deployModulePresent": true,
+      "explicitRootRequiredByBiologyTooling": true,
+      "modsDirectoryBaseline": [".stub"]
+    },
     "contentRoots": [
       "mods/Biology/archives",
       "mods/Biology/scripts",
@@ -54,6 +62,6 @@
     "A non-REDmod runtime file may enter a future integrated release only when manifest/dependency-graph.json names its concrete Biology consumer and manifest/redmod-classification.json records an accepted route.",
     "No Dark Future or Project E3 executing content may enter the package.",
     "No stock Cyberpunk executable, archive, script bundle, save, settings file, or other proprietary game payload may enter the package.",
-    "The foundation skeleton is structural evidence only; official 2.31 recognition/deployment remains a direct-game gate until recorded from the supported installation."
+    "The installed REDmod 2.31 CLI/tool path is directly probed, but Biology package recognition/deployment and relaunch persistence remain direct-game gates until actually exercised."
   ]
 }
