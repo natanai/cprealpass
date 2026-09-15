@@ -26,8 +26,12 @@ Require $probe '\^\\s\*bool' 'Activation probe must look for explicitly typed na
 Require $probe 'GetBool' 'Activation probe must capture the installed GetBool read surface.'
 Require $probe 'GetRecord' 'Activation probe must capture the installed GetRecord read surface.'
 Require $probe 'gamedataItem_Record' 'Activation probe must capture whether the generated item record surface exists.'
+Require $probe 'Select-String' 'Activation probe must use bounded native source searches rather than relying on a guessed schema.'
 Require $probe 'READ-ONLY|read-only' 'Activation probe must explicitly declare the installed game read-only.'
 Require $probe 'does NOT claim.*compiles/deploys|does not claim.*compiles/deploys' 'Activation probe must not fake native compile/deploy validation.'
+Require $probe 'W07\.1 INNER PROBE FAILURE' 'Activation probe must preserve a named failure section in the evidence report.'
+Require $probe 'Exception type:' 'Activation probe must preserve the exception type on local failure.'
+Require $probe 'InvocationInfo|Script line:' 'Activation probe must preserve actionable source-position evidence on local failure.'
 Require $probe 'ATTACH THIS FILE TO CHATGPT:' 'Activation probe must return a text evidence file rather than require pasted console logs.'
 if ($probe -match '(?i)redMod\.exe.*deploy|Invoke-.*deploy|Copy-Item.*\$game|Move-Item.*\$game|Remove-Item.*\$game') {
     throw 'Activation probe must not mutate/deploy against the installed game.'
@@ -41,7 +45,11 @@ Require $bootstrap "'worktree','add','--detach'" 'Activation probe bootstrap mus
 Require $bootstrap 'cprealpass-redmod-activation-probe-' 'Activation probe bootstrap must isolate the exact revision in a uniquely signed checkout.'
 Require $bootstrap 'Probe-RedmodActivationSentinel\.ps1' 'Activation probe bootstrap must invoke the repository-owned narrow probe.'
 Require $bootstrap 'Biology-Redmod-Activation-Sentinel-Probe-' 'Activation probe bootstrap must produce a plainly named text report outside the disposable checkout.'
+Require $bootstrap 'RedirectStandardOutput\s*=\s*\$true' 'Activation probe bootstrap must capture child stdout into durable evidence.'
+Require $bootstrap 'RedirectStandardError\s*=\s*\$true' 'Activation probe bootstrap must capture child stderr instead of losing the actual probe exception.'
+Require $bootstrap 'INNER PROBE PROCESS OUTPUT' 'Activation probe bootstrap must label captured child diagnostics in the report.'
+Require $bootstrap 'See INNER PROBE FAILURE / process output above' 'Activation probe bootstrap must route nonzero child exits to their preserved diagnostics.'
 Require $bootstrap 'ATTACH THIS FILE TO CHATGPT:' 'Activation probe bootstrap must print the report file handoff on success or failure.'
 if ($bootstrap.Contains('C:\Games\CyberpunkRealism')) { throw 'Activation probe bootstrap reintroduced the retired fixed repo path.' }
 
-Write-Host 'PASS: W07.1 activation-sentinel evidence tooling is exact-head, bounded, read-only against the installed game, and explicitly separates source evidence from native compile/deploy acceptance.'
+Write-Host 'PASS: W07.1 activation-sentinel evidence tooling is exact-head, bounded, read-only against the installed game, preserves local failure diagnostics, and explicitly separates source evidence from native compile/deploy acceptance.'
