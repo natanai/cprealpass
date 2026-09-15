@@ -1,0 +1,56 @@
+// Biology-owned E3-inspired weapon/ammo shell.
+// Native WeaponRosterGameController remains the sole weapon/ammo data authority.
+module CyberpunkRealism.Presentation
+
+import CyberpunkRealism.Settings.*
+
+@addField(WeaponRosterGameController)
+private let crBiologyE3WeaponFrame: ref<inkCanvas>;
+
+@addMethod(WeaponRosterGameController)
+private final func CRCreateBiologyE3WeaponFrame() -> Void {
+  if IsDefined(this.crBiologyE3WeaponFrame) {
+    return;
+  }
+  let root: ref<inkCompoundWidget> = this.GetRootWidget() as inkCompoundWidget;
+  if !IsDefined(root) {
+    return;
+  }
+
+  this.crBiologyE3WeaponFrame = new inkCanvas();
+  this.crBiologyE3WeaponFrame.SetName(n"CRBiologyE3WeaponFrame");
+  this.crBiologyE3WeaponFrame.SetAnchor(inkEAnchor.BottomRight);
+  this.crBiologyE3WeaponFrame.SetHAlign(inkEHorizontalAlign.Right);
+  this.crBiologyE3WeaponFrame.SetVAlign(inkEVerticalAlign.Bottom);
+  this.crBiologyE3WeaponFrame.SetSize(Vector2(456.0, 154.0));
+  this.crBiologyE3WeaponFrame.SetTranslation(-14.0, -12.0);
+  this.crBiologyE3WeaponFrame.SetAffectsLayoutWhenHidden(false);
+  this.crBiologyE3WeaponFrame.Reparent(root, -1);
+
+  CRBiologyE3Primitives.AddRect(this.crBiologyE3WeaponFrame, n"CRBiologyE3WeaponTop", 74.0, 0.0, 356.0, 3.0, 0.92);
+  CRBiologyE3Primitives.AddRect(this.crBiologyE3WeaponFrame, n"CRBiologyE3WeaponRight", 427.0, 0.0, 3.0, 116.0, 0.92);
+  CRBiologyE3Primitives.AddRect(this.crBiologyE3WeaponFrame, n"CRBiologyE3WeaponBottom", 252.0, 116.0, 178.0, 3.0, 0.72);
+  CRBiologyE3Primitives.AddRect(this.crBiologyE3WeaponFrame, n"CRBiologyE3WeaponAccent", 45.0, 0.0, 20.0, 7.0, 1.00);
+  CRBiologyE3Primitives.AddLabel(this.crBiologyE3WeaponFrame, n"CRBiologyE3WeaponLabel", "WEAPON // AMMO", 250.0, 9.0, 13, 0.80);
+}
+
+@addMethod(WeaponRosterGameController)
+private final func CRRefreshBiologyE3WeaponFrame() -> Void {
+  this.CRCreateBiologyE3WeaponFrame();
+  if IsDefined(this.crBiologyE3WeaponFrame) {
+    this.crBiologyE3WeaponFrame.SetVisible(CRRealpassSettings.UseE3FirstPersonHudVisuals(GetGameInstance()));
+  }
+}
+
+@wrapMethod(WeaponRosterGameController)
+protected cb func OnInitialize() -> Bool {
+  let result: Bool = wrappedMethod();
+  this.CRRefreshBiologyE3WeaponFrame();
+  return result;
+}
+
+@wrapMethod(WeaponRosterGameController)
+private func SetRosterSlotData() -> Void {
+  wrappedMethod();
+  this.CRRefreshBiologyE3WeaponFrame();
+}
