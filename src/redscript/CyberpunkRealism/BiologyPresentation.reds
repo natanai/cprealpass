@@ -7,7 +7,10 @@ import CyberpunkRealism.Integration.*
 import CyberpunkRealism.Physiology.*
 
 public class CRBiologyViewModel extends IScriptable {
+  // valid means the view model has something intentional to render. A diagnostic
+  // failure is explicitly marked and never treated as healthy physiology.
   public let valid: Bool = false;
+  public let diagnosticFailure: Bool = false;
   public let needs: String;
   public let effects: String;
   public let conditions: String;
@@ -69,15 +72,25 @@ public class CRBiologyPresentation extends IScriptable {
     return result;
   }
 
+  private static func Diagnostic(result: ref<CRBiologyViewModel>, reason: String) -> ref<CRBiologyViewModel> {
+    result.valid = true;
+    result.diagnosticFailure = true;
+    result.needs = "[ BIOLOGY ERROR ] " + (Equals(reason, "") ? "BODY STATE UNAVAILABLE" : reason);
+    return result;
+  }
+
   public static func Current() -> ref<CRBiologyViewModel> {
     let result: ref<CRBiologyViewModel> = new CRBiologyViewModel();
-    if !CRBodyStatusPresentation.Owns() {
-      return result;
+    // Player attachment is still the normal startup activation edge, but the menu
+    // must be able to recover from ScriptableSystem/save ordering without presenting
+    // a healthy-looking placeholder. This retries the same authoritative runtime.
+    if !CRBiologyRuntimeAvailability.EnsureActive() || !CRBodyStatusPresentation.Owns() {
+      return CRBiologyPresentation.Diagnostic(result, CRBiologyRuntimeAvailability.FailureReason());
     }
     let body: ref<CRBodyState> = CRBodyRuntime.Get().GetBodySnapshot();
     let meters: ref<CRBodyMeters> = CRBodyRuntime.Get().GetMeters();
     if !IsDefined(body) || !body.initialized || !IsDefined(meters) || !meters.valid {
-      return result;
+      return CRBiologyPresentation.Diagnostic(result, "BODY STATE INVALID");
     }
 
     result.needs = CRBodyStatusPresentation.BodyStatus(body);

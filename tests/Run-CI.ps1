@@ -20,6 +20,7 @@ $tests = @(
     'Test-CleanRoomTestingContract.ps1',
     'Test-RedmodFoundation.ps1',
     'Test-BiologyShell.ps1',
+    'Test-BiologyRuntimeLifecycle.ps1',
     'Test-ConditionArchitecture.ps1',
     'Test-PainArchitecture.ps1',
     'Test-OwnedNameplates.ps1',

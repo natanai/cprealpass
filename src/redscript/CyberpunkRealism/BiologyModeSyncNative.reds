@@ -41,6 +41,31 @@ private final func CRSyncBiologyNodeInteractivity(active: Bool) -> Void {
 }
 
 @addMethod(RipperDocGameController)
+private final func CRSyncSpawnedBiologyNode(widget: ref<inkWidget>) -> Void {
+  if !CRRealpassSettings.IsEnabled(GetGameInstance()) || !IsDefined(widget) {
+    return;
+  }
+  let minigrid: ref<CyberwareInventoryMiniGrid> = widget.GetController() as CyberwareInventoryMiniGrid;
+  if !IsDefined(minigrid) {
+    return;
+  }
+
+  // Stock SpawnMinigrids is asynchronous. OnInitialize can therefore enter Biology
+  // before m_equipmentMinigrids contains these controllers. Apply the already chosen
+  // shell mode at the actual native creation boundary so healthy modeled nodes do
+  // not disappear merely because they arrived one frame later.
+  minigrid.CRSetBiologyMode(this.crBiologyShellMode);
+  minigrid.CRSetBiologyLabelInteractive(this.crBiologyShellMode && CRBiologyDetailPresentation.Supported(minigrid.CRBiologyArea()));
+}
+
+@wrapMethod(RipperDocGameController)
+protected cb func OnMinigridSpawned(widget: ref<inkWidget>, userData: ref<IScriptable>) -> Bool {
+  let result: Bool = wrappedMethod(widget, userData);
+  this.CRSyncSpawnedBiologyNode(widget);
+  return result;
+}
+
+@addMethod(RipperDocGameController)
 protected cb func OnCRBioModeActionSync(evt: ref<inkPointerEvent>) -> Bool {
   if !CRRealpassSettings.IsEnabled(GetGameInstance()) || !IsDefined(evt) || !evt.IsAction(n"click") {
     return false;
@@ -66,6 +91,14 @@ protected cb func OnInitialize() -> Bool {
   let result: Bool = wrappedMethod();
   if !CRRealpassSettings.IsEnabled(GetGameInstance()) {
     return result;
+  }
+
+  // The attended build placed this shell control at y=92, directly in the stock top
+  // navigation band. Keep it within the shared body screen but below that native
+  // navigation layer; final pixel acceptance remains an attended resolution/UI-scale
+  // check rather than a claim made from static source.
+  if IsDefined(this.crBiologyModeBar) {
+    this.crBiologyModeBar.SetMargin(inkMargin(0.0, 154.0, 0.0, 0.0));
   }
   if IsDefined(this.crBiologyModeButton) {
     this.crBiologyModeButton.RegisterToCallback(n"OnRelease", this, n"OnCRBioModeActionSync");
