@@ -76,7 +76,7 @@ foreach ($needle in @('Audit-GameContracts.ps1','Probe-PresentationNativeContrac
     Check ($presentation.Contains($needle)) "Presentation local audit wrapper lost required behavior: $needle"
 }
 Check ($presentation.Contains('-ReportPath $ReportPath')) 'Presentation wrapper does not consolidate exact-compile output into its single text evidence report.'
-Check ($probe.Contains("tools\\redmod\\scripts")) 'Presentation native probe is not grounded in the installed official REDmod decompiled scripts.'
+Check ($probe.Contains('tools\redmod\scripts')) 'Presentation native probe is not grounded in the installed official REDmod decompiled scripts.'
 Check ($probe.Contains("@('.script','.reds')")) 'Presentation native probe must search REDmod .script sources (with optional .reds tolerance), not assume loose redscript format.'
 foreach ($needle in @('MinimapContainerController','IronsightGameController','QuestTrackerGameController','WeaponRosterGameController','HotkeysWidgetController','CrosshairGameController_Tech_Hex','NpcNameplateGameController','NameplateVisualsLogicController','OnScreenProjectionUpdate','OnCompassUpdate')) {
     Check ($probe.Contains($needle)) "Presentation native probe no longer checks required current-game symbol: $needle"
