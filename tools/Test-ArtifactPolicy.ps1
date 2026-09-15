@@ -60,19 +60,20 @@ foreach ($candidate in $provenanceCandidates) {
     try { $data = Get-Content -Raw -LiteralPath $full | ConvertFrom-Json } catch { throw "Invalid artifact provenance JSON: $candidate" }
 
     $declaredIds = [Collections.Generic.List[string]]::new()
-    if ($null -ne $data.components) {
+    $propertyNames = @($data.PSObject.Properties.Name)
+    if ($propertyNames -contains 'components' -and $null -ne $data.components) {
         foreach ($entry in @($data.components)) {
             $id = if ($entry -is [string]) { [string]$entry } else { [string]$entry.id }
             if (-not [string]::IsNullOrWhiteSpace($id)) { $declaredIds.Add($id) }
         }
     }
-    if ($null -ne $data.retainedDependencies) {
+    if ($propertyNames -contains 'retainedDependencies' -and $null -ne $data.retainedDependencies) {
         foreach ($entry in @($data.retainedDependencies)) {
             $id = if ($entry -is [string]) { [string]$entry } else { [string]$entry.id }
             if (-not [string]::IsNullOrWhiteSpace($id)) { $declaredIds.Add($id) }
         }
     }
-    if ($null -ne $data.removedDependencies) {
+    if ($propertyNames -contains 'removedDependencies' -and $null -ne $data.removedDependencies) {
         foreach ($id in @($data.removedDependencies)) {
             if ([string]::IsNullOrWhiteSpace([string]$id)) { throw "Empty removed dependency id in $candidate" }
         }
