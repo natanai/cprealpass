@@ -7,6 +7,7 @@ $ErrorActionPreference = 'Stop'
 if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'Verify-BiologyRemoval.ps1 requires PowerShell 7 or newer.' }
 . "$PSScriptRoot\Common.ps1"
 
+# Read-only verification: this tool does not delete or modify game files.
 $game = Assert-GameRoot $GameRoot
 $biologySpecific = @(
     'mods/Biology',
