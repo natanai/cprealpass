@@ -4,7 +4,6 @@
 // status effect (and therefore without inheriting alcohol's unrelated gameplay).
 import CyberpunkRealism.Physiology.*
 import CyberpunkRealism.Integration.*
-import CyberpunkRealism.Settings.*
 
 public class CRPainModifierSet extends IScriptable {
   private let slots: array<ref<CRInjuryModifierSlot>>;
@@ -67,8 +66,8 @@ public class CRPainNativeEffects extends IScriptable {
     player.crPainIntoxicationLevel = 0;
   }
 
-  private static func SyncIntoxication(player: ref<PlayerPuppet>, intoxication: Float, enabled: Bool) -> Void {
-    let level: Int32 = enabled ? CRPainNativeEffects.IntoxicationLevel(intoxication) : 0;
+  private static func SyncIntoxication(player: ref<PlayerPuppet>, intoxication: Float) -> Void {
+    let level: Int32 = CRPainNativeEffects.IntoxicationLevel(intoxication);
     if !IsDefined(player) || level == player.crPainIntoxicationLevel {
       return;
     }
@@ -110,9 +109,10 @@ public class CRPainNativeEffects extends IScriptable {
       player.crPainModifiers = new CRPainModifierSet();
     }
     let ok: Bool = player.crPainModifiers.Sync(player, pain);
-    // Player preference gates only the presentation loop. It deliberately does not
-    // change pain, analgesic load, injury or pain-derived weapon handling.
-    CRPainNativeEffects.SyncIntoxication(player, pain.intoxication, CRRealpassSettings.ShowFullscreenDisorientationEffects());
+    // Analgesic-overuse feedback is part of the authored body presentation rather
+    // than a separate player preference. The sole public preference is the E3 HUD
+    // visual skin; neither choice changes pain/injury state or weapon handling.
+    CRPainNativeEffects.SyncIntoxication(player, pain.intoxication);
     return ok;
   }
 }

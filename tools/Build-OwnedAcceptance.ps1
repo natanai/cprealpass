@@ -38,15 +38,16 @@ if ($presentRetired.Count -gt 0) {
 $candidateFiles = @($sourceFiles)
 
 # Fail closed on source-mod/runtime-host imports and source-mod nomenclature that
-# would silently rebrand vanilla gameplay items. Mod Settings metadata is now
-# intentionally allowed because it supplies a constrained generic settings surface.
-# RealPass source still must not import/call Mod Settings as a gameplay-policy owner.
+# would silently rebrand vanilla gameplay items. Mod Settings metadata plus guarded
+# RegisterListenerToClass/UnregisterListenerToClass lifecycle calls are allowed as
+# generic UI/persistence plumbing. RealPass may not query or drive Mod Settings as a
+# gameplay/simulation policy owner.
 $forbiddenOwnedPatterns = @(
     '(?m)^\s*(?:module|import)\s+DarkFuture(?:\.|\b)',
     '(?im)Project\s*E3',
     '(?m)^\s*import\s+Codeware(?:\.|\b)',
     '(?m)^\s*import\s+ModSettings(?:\.|\b)',
-    '(?m)(?<!["''])\bModSettings\.(?:Register|Unregister|GetInstance|GetMods|GetCategories|GetVars|AcceptChanges|RejectChanges|RestoreDefaults)\b',
+    '(?m)(?<!["''])\bModSettings\.(?:GetInstance|GetMods|GetCategories|GetVars|AcceptChanges|RejectChanges|RestoreDefaults)\b',
     '(?i)\bTrauma\s+Kit\b|UseTraumaKit'
 )
 foreach ($file in $candidateFiles) {
