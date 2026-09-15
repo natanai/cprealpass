@@ -1,18 +1,18 @@
-# realpass Biology interface
+# Biology interface
 
-Status: canonical architecture; clean-room live acceptance pending
+Status: canonical architecture; live pre-REDmod failures recorded; REDmod-first acceptance pending
 Last updated: 2026-09-15
 Governing goals: `AGREED-GOALS.md` G-033, G-040 through G-049, G-055 through G-065, G-072
 
 ## Product intent
 
-**Biology** is the canonical player-facing home for realpass bodily simulation. It owns the body-shaped menu experience: needs, sensations, injury/conditions, pain/analgesia, elimination, fatigue/rest, recovery, hygiene where retained, and relevant cyberware/body state.
+**Biology** is the canonical player-facing home for bodily simulation. It owns the body-shaped menu experience: needs, sensations, injury/conditions, pain/analgesia, elimination, fatigue/rest, recovery, hygiene where retained, and relevant cyberware/body state.
 
 The hierarchy is:
 
 `top hub -> BIOLOGY -> shared body/anatomy shell -> BIOLOGY | CYBERWARE`
 
-Cyberware is installed equipment within the body, so it is a Biology submode rather than the parent category. The vanilla `cyberware_equip` fullscreen remains the technical shell because it already provides the body silhouette, system anchors, hover/zoom language and familiar Cyberpunk interaction grammar.
+Cyberware is installed equipment within the body, so it is a Biology submode rather than the parent category. The vanilla `cyberware_equip` fullscreen remains the preferred technical shell because it already provides the body silhouette, system anchors, hover/zoom language and familiar Cyberpunk interaction grammar.
 
 Normal hub access defaults to Biology. A direct ripperdoc/vendor context may default the internal mode to Cyberware for usability while preserving Biology as the parent screen.
 
@@ -20,7 +20,7 @@ Normal hub access defaults to Biology. A direct ripperdoc/vendor context may def
 
 Every ordinary player-facing doorway that represents the stock Cyberware destination should read **BIOLOGY** once the shared shell is accepted: the outer radial hub, the inner tab/navigation strip, and adjacent inventory/menu navigation surfaces that reuse the same destination.
 
-The underlying native destination/identifier remains Cyberware so stock routing stays intact. Only the player-facing hierarchy changes.
+The underlying native destination/identifier may remain Cyberware where doing so preserves stock routing. The player-facing hierarchy changes; native identifiers do not need a risky cosmetic rename.
 
 Inside the body screen, a clear **BIOLOGY | CYBERWARE** selector exposes the two modes without covering or competing with the stock top navigation.
 
@@ -108,7 +108,7 @@ Biology should reuse the native:
 
 In Biology mode, stock cyberware slot contents may be hidden while supported categories become body-system nodes. Existing labels such as Arms, Skeleton, Nervous System, Integumentary System, Circulatory System and Legs are useful native language.
 
-Do not invent physiology just to fill every Cyberware category. Unsupported nodes may be omitted until realpass has an authoritative model behind them.
+Do not invent physiology just to fill every Cyberware category. Unsupported nodes may be omitted until Biology has an authoritative model behind them.
 
 The supported Biology nodes must remain visible regardless of whether their current values are normal.
 
@@ -138,15 +138,40 @@ Internal **CYBERWARE** restores ordinary Cyberpunk equipment behavior: slots, eq
 
 Switching modes must not duplicate, consume, unequip or corrupt cyberware/items.
 
-## Live-test interpretation
+## 2026-09-15 clean-room attended evidence
 
-A stale in-place test build showed three useful design problems even though it is not valid evidence for the current clean-room candidate:
+The exact pre-REDmod clean-room candidate at `ec8ba06451c3cbacabfad24f1479e1537147d0c9` established the following real in-game state:
 
-1. Biology identity appeared in one outer menu but not consistently across inner navigation.
-2. The `BIOLOGY | CYBERWARE` selector visually collided with stock text.
-3. The bottom overview used verbose prose where compact telemetry was needed.
+1. **Outer identity works partially.** The outer pause/menu hub shows `BIOLOGY` in place of the stock Cyberware destination.
+2. **Inner identity is wrong.** Once inside the shared body fullscreen, the native top navigation still says `CYBERWARE`.
+3. **Selector placement is wrong.** Faint `BIOLOGY` / `CYBERWARE` text visibly overlaps/competes with the stock top navigation rather than occupying a stable body-screen control area.
+4. **Hierarchy is backwards.** Entering Biology still displays the ordinary Cyberware equipment layout. Biology is not yet the real parent mode; it is effectively an overlay on Cyberware.
+5. **Body state is unavailable.** The screen reports `BODY` / `Body state is unavailable.`. This is a functional lifecycle/runtime-access failure, not merely a copy problem.
+6. **Persistent Biology nodes are absent.** A healthy/quiet body cannot be deliberately inspected through supported system nodes because those nodes are not actually present in the live UI.
+7. **Exact drill-down is therefore unaccepted.** Source/tests may describe exact metrics, but the attended build did not demonstrate a usable Biology node -> zoom -> exact bars/numbers path.
 
-The clean-room candidate should therefore be evaluated for **label consistency, selector placement, persistent inspectability, terse overview copy and drill-down values** separately from simulation correctness.
+These observations supersede the earlier stale-build-only evidence. The complete record and issue IDs live in:
+
+- `PRE-REDMOD-LIVE-BASELINE-2026-09-15.md`
+- `ACTIVE-REDMOD-ROADMAP.md` (`NAV-*`, `BIO-*`, `STATE-*`)
+
+Do not solve this by merely repositioning the old overlay if the REDmod-first refactor is replacing its ownership model. The target is a single authoritative shared body shell with Biology as parent and Cyberware as submode.
+
+## Runtime availability rule
+
+`STABLE` is valid only when authoritative body state is actually available and normal.
+
+Do **not** convert a missing/uninitialized body runtime into `STABLE` just to make the UI look finished. A genuine runtime compatibility/lifecycle failure must fail obviously in diagnostics, while the ordinary UI remains concise.
+
+Investigate body-state availability before polishing detailed layout. At minimum verify:
+
+- ScriptableSystem registration/availability timing;
+- save/session initialization;
+- global/master enable state interactions;
+- menu-controller `GameInstance` access;
+- release/acceptance gates;
+- save/reload persistence;
+- stale/transitional view-model paths.
 
 ## Acceptance criteria
 
@@ -158,12 +183,14 @@ Biology is accepted only when an attended clean-room build demonstrates all of t
 4. Normal hub entry defaults to Biology; ripperdoc context remains practical for Cyberware service.
 5. Biology mode reuses native body silhouette/hover/zoom behavior.
 6. Supported Biology nodes remain visible and clickable even when every current state is normal.
-7. A normal overview reads `STABLE`, not a sentence.
-8. Non-normal overview signals use terse one/two-word telemetry tokens.
-9. No permanent exact needs/body meter wall appears on the overview or gameplay HUD.
-10. Selecting a modeled body system/region shows exact authoritative bars/numbers.
-11. Detail summaries remain compact/data-like where possible.
-12. Players can understand important needs/injury without repeatedly polling detail bars.
-13. Eat/Drink and care actions preserve authoritative inventory/treatment transactions.
-14. Switching modes preserves Cyberware equipment state.
-15. Save/reload and time progression preserve the single shared physiological body.
+7. Authoritative body state is available in an ordinary valid player session and remains available through menu reopen/save/reload.
+8. A normal overview reads `STABLE`, not a sentence.
+9. Non-normal overview signals use terse one/two-word telemetry tokens.
+10. No permanent exact needs/body meter wall appears on the overview or gameplay HUD.
+11. Selecting a modeled body system/region shows exact authoritative bars/numbers.
+12. Detail summaries remain compact/data-like where possible.
+13. Players can understand important needs/injury without repeatedly polling detail bars.
+14. Eat/Drink and care actions preserve authoritative inventory/treatment transactions.
+15. Switching modes preserves Cyberware equipment state.
+16. Save/reload and time progression preserve the single shared physiological body.
+17. Superseded overlay/prototype paths are no longer active once the replacement becomes authoritative.
