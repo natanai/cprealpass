@@ -19,6 +19,7 @@ $compare = Read 'tools/Compare-GameToVanillaBaseline.ps1'
 $reset = Read 'tools/Reset-RealPassIteration.ps1'
 $publishSnapshot = Read 'tools/Publish-LocalGameReferenceSnapshot.ps1'
 $package = Read 'tools/Build-CleanRoomTestPackage.ps1'
+$compile = Read 'tools/Compile-Profile.ps1'
 
 Require $agents 'TEST HANDOFF GATE' 'AGENTS.md must put attended-test handoff rules in a prominent gate.'
 Require $agents 'ITERATION TEST' 'AGENTS.md must distinguish iteration tests.'
@@ -68,4 +69,14 @@ Require $reset 'Compare-GameToVanillaBaseline\.ps1' 'Iteration reset must finish
 Require $package 'game-root-shaped' 'Attended package builder must remain release-shaped.'
 Require $package 'Nothing was deployed to Cyberpunk' 'Package builder must remain non-deploying.'
 
-Write-Host 'PASS: attended testing distinguishes fresh-source iteration from milestone clean-room, archives GitHub-safe game snapshots, and enforces fail-closed vanilla-baseline evidence.'
+# A fresh clone must be able to exact-compile without carrying developer binaries in
+# Git. The pinned official redscript CLI is a local build dependency only and must
+# be downloaded on demand with its exact upstream digest before execution.
+Require $compile 'redscript-cli\.exe' 'Compile profile must use the pinned redscript CLI.'
+Require $compile 'https://github\.com/jac3km4/redscript/releases/download/v0\.5\.31/redscript-cli\.exe' 'Fresh-clone compile must acquire the pinned official redscript CLI asset.'
+Require $compile 'CDCBED2E0C943322BBCBBAC4A9C62EF29ADC5620E4B0934F0D2A31A8282B5B62' 'Pinned redscript CLI digest changed or disappeared.'
+Require $compile 'if\(-not \(Test-Path -LiteralPath \$cli -PathType Leaf\)\)' 'Compile path must bootstrap a missing developer compiler in a fresh clone.'
+Require $compile 'Invoke-WebRequest -Uri \$cliUri -OutFile \$partial' 'Compile path does not acquire the missing pinned compiler.'
+Require $compile 'Downloaded offline compiler hash mismatch' 'Downloaded compiler must be verified before installation.'
+
+Write-Host 'PASS: attended testing distinguishes fresh-source iteration from milestone clean-room, archives GitHub-safe game snapshots, enforces fail-closed vanilla-baseline evidence, and bootstraps the pinned offline compiler in fresh clones.'
