@@ -42,14 +42,12 @@ foreach ($file in $files) {
     }
 }
 
-# Provenance is authoritative for finalized artifact component declarations. Support
-# both the transitional realpass metadata and the REDmod-first Biology metadata while
-# PKG-06 keeps the old route available as a rollback path.
+# Biology provenance is authoritative for finalized player artifacts. Generic
+# provenance.json locations remain accepted for isolated policy fixtures, but retired
+# RealPass player-package metadata paths are no longer treated as current artifact forms.
 $provenanceCandidates = @(
     'biology/provenance.json',
     'biology/provenance/components.json',
-    'realpass/provenance.json',
-    'realpass/provenance/components.json',
     'provenance.json',
     'provenance/components.json'
 )
