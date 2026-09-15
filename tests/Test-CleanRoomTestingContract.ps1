@@ -45,6 +45,7 @@ Require $capture 'archive\\pc\\mod' 'Vanilla capture must reject obvious mod pay
 Require $capture 'red4ext' 'Vanilla capture must reject installed RED4ext payload.'
 Require $capture 'relativeToMods -eq ''\.stub'' -and \$file\.Length -eq 0' 'Vanilla capture must permit only the exact zero-byte REDmod .stub marker.'
 Require $capture 'mods/\$relativeToMods' 'Vanilla capture must still reject any other file under mods.'
+Require $capture 'HASH \[\{0\}\].*files.*GiB.*elapsed' 'Long vanilla baseline hashing must emit durable host-independent progress, not rely only on Write-Progress.'
 
 Require $publishSnapshot 'Refresh-LocalGameReference\.ps1' 'Current-state publisher must refresh the GitHub-safe snapshot first.'
 Require $publishSnapshot 'local-game-snapshot-' 'Current-state publisher must use a dedicated snapshot branch.'
