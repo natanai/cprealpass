@@ -152,7 +152,7 @@
     "BIOLOGY-VERSION.txt, provenance, owner manifest and SHA-256 checksums identify the exact candidate.",
     "Required licenses and third-party notices for every bundled generic dependency are included without development-only files.",
     "Blocked or not-required components cause artifact construction to fail closed rather than silently expanding the dependency stack.",
-    "The final player package must support manifest-safe hard uninstall through a self-contained Biology executable once issue #44 is accepted.",
+    "The final player package must support manifest-safe hard uninstall through self-contained Uninstall Biology.exe once issue #44 is accepted.",
     "Public release remains gated until direct-game and attended acceptance is recorded; successful CI/exact compilation is not live acceptance."
   ]
 }
