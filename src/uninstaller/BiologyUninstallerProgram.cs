@@ -222,11 +222,17 @@ namespace BiologyUninstall
                 removePreferences.Enabled = false;
                 BiologyExecutionOptions options = new BiologyExecutionOptions();
                 options.RemovePreferences = removePreferences.Checked;
+                // The UI owns the final refresh decision so it can verify the Biology
+                // REDmod namespace is actually gone before asking REDmod to deploy.
+                // This prevents a changed/untracked partial mods/Biology package from
+                // being redeployed during a conservative partial uninstall.
+                options.SkipRedmodRefresh = true;
                 BiologyExecutionResult result = BiologyUninstallExecutor.Execute(plan, options);
+                FinalizeResidualAndRedmodState(result);
                 report.Text = BuildExecutionReport(result);
                 summary.Text = result.BiologyPayloadFullyRemoved
-                    ? "Biology-owned payload removal finished. Review the REDmod refresh result below before closing."
-                    : "Biology was only partially removed. Changed/failed files were deliberately preserved; review the report below.";
+                    ? "Biology-owned payload removal finished and REDmod state was refreshed safely."
+                    : "Biology was only partially removed. Changed, residual, or failed files were deliberately preserved; review the report below.";
             }
             catch (Exception ex)
             {
@@ -234,6 +240,41 @@ namespace BiologyUninstall
                 summary.Text = "Uninstall stopped safely; review the report. No recursive cleanup is attempted.";
                 uninstall.Enabled = false;
             }
+        }
+
+        private void FinalizeResidualAndRedmodState(BiologyExecutionResult result)
+        {
+            string biologyRedmod = Path.Combine(gameRoot, "mods", "Biology");
+            string biologyScripts = Path.Combine(gameRoot, "r6", "scripts", "CyberpunkRealism");
+            string biologyMetadata = Path.Combine(gameRoot, "biology");
+
+            AppendResidualDirectory(result, biologyScripts, "r6/scripts/CyberpunkRealism");
+            AppendResidualDirectory(result, biologyMetadata, "biology");
+
+            if (Directory.Exists(biologyRedmod))
+            {
+                AppendResidualDirectory(result, biologyRedmod, "mods/Biology");
+                result.RedmodRefresh = new RedmodRefreshResult();
+                result.RedmodRefresh.Attempted = false;
+                result.RedmodRefresh.Succeeded = false;
+                result.RedmodRefresh.OtherRedmodCount = BiologyRedmodRefresher.CountOtherRedmods(gameRoot);
+                result.RedmodRefresh.Outcome = "REDmod refresh was deliberately not run because mods/Biology still contains preserved, changed, untracked, or otherwise unresolved content. Redeploying could reactivate a partial Biology package.";
+                result.Errors.Add("REDmod refresh withheld because mods/Biology still exists; manual review is required before claiming Biology fully removed.");
+                return;
+            }
+
+            result.RedmodRefresh = BiologyRedmodRefresher.Refresh(gameRoot);
+            if (!result.RedmodRefresh.Succeeded)
+            {
+                result.Errors.Add("REDmod refresh did not complete safely: " + result.RedmodRefresh.Outcome);
+            }
+        }
+
+        private static void AppendResidualDirectory(BiologyExecutionResult result, string fullPath, string displayPath)
+        {
+            if (!Directory.Exists(fullPath)) return;
+            string message = "Biology-specific directory remains after exact-file removal: " + displayPath + ". Preserved or untracked content requires manual review.";
+            if (!result.Errors.Contains(message)) result.Errors.Add(message);
         }
 
         private static void EnsureGameStopped()
