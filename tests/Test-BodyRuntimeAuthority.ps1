@@ -118,7 +118,8 @@ Check ($nativeHooks -match 'FinishSkipHours\(Cast<Float>\(hours\), this\.crRealp
 # set; it must not rely on a compile-only or stale transitional route. Codeware stays
 # explicitly non-required, which is why no authority path may depend on its global
 # GameInstance convenience guarantee.
-Check ($ownedBuilder -match "Get-ChildItem[^\r\n]+CyberpunkRealism[^\r\n]+Filter '\*\.reds'") 'Owned acceptance builder no longer enumerates all project REDscript files.'
+Check ($ownedBuilder -match "\$sourceRoot = Resolve-SafeChildPath \$project 'src/redscript/CyberpunkRealism'") 'Owned acceptance builder source root no longer points at the complete project REDscript tree.'
+Check ($ownedBuilder -match "\$sourceFiles = @\(Get-ChildItem -LiteralPath \$sourceRoot -File -Filter '\*\.reds'") 'Owned acceptance builder no longer enumerates every project REDscript file.'
 Check ($packageBuilder -match 'owned-runtime-manifest\.json') 'Biology package builder no longer consumes the exact owned-runtime manifest.'
 Check ($ownedBuilder -match 'exact') 'Owned-runtime builder no longer documents/enforces exact compilation semantics.'
 Check ($dependencyGraph -match '"id": "codeware"[\s\S]*?"status": "not-required"') 'Dependency graph no longer records Codeware as non-required.'
