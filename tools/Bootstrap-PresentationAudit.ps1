@@ -34,11 +34,15 @@ function Invoke-GitSafe([string[]]$Arguments, [switch]$Echo) {
 
     $process = [Diagnostics.Process]::new()
     $process.StartInfo = $psi
+    $stdout = ''
+    $stderr = ''
+    $exitCode = $null
     try {
         if (-not $process.Start()) { throw 'Unable to start git process.' }
         $stdout = $process.StandardOutput.ReadToEnd()
         $stderr = $process.StandardError.ReadToEnd()
         $process.WaitForExit()
+        $exitCode = $process.ExitCode
     } finally {
         $process.Dispose()
     }
@@ -54,7 +58,7 @@ function Invoke-GitSafe([string[]]$Arguments, [switch]$Echo) {
     }
 
     [pscustomobject]@{
-        ExitCode = $process.ExitCode
+        ExitCode = $exitCode
         StdOut = $stdout
         StdErr = $stderr
         Output = @($combined)
