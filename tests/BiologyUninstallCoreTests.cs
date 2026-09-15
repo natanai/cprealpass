@@ -16,12 +16,15 @@ internal static class BiologyUninstallCoreTests
         {
             TestHappyPlanAndExecution(Path.Combine(root, "happy"));
             TestChangedBiologyIsPreserved(Path.Combine(root, "changed"));
+            TestChangedGenericDependencyIsPreserved(Path.Combine(root, "changed-generic"));
             TestTimeOfCheckChangeIsPreserved(Path.Combine(root, "toctou"));
             TestMissingBiologyIsReported(Path.Combine(root, "missing"));
             TestUnsafeReceiptPaths(Path.Combine(root, "unsafe"));
             TestDuplicateAndIdentityFailures(Path.Combine(root, "identity"));
+            TestMalformedManifestFailures(Path.Combine(root, "malformed"));
             TestBiologyOwnedAllowlist(Path.Combine(root, "allowlist"));
-            TestPreferenceOptInIsSurgical(Path.Combine(root, "preferences"));
+            TestPreferencesPreservedByDefault(Path.Combine(root, "preferences-default"));
+            TestPreferenceOptInIsSurgical(Path.Combine(root, "preferences-optin"));
             TestRedmodRefreshEvaluation();
             Console.WriteLine("PASS: " + checks + " Biology uninstall planner/executor safety checks.");
         }
@@ -71,6 +74,21 @@ internal static class BiologyUninstallCoreTests
         BiologyExecutionResult result = BiologyUninstallExecutor.Execute(plan, new BiologyExecutionOptions { SkipRedmodRefresh = true });
         Check(File.Exists(owned), "changed Biology file was automatically deleted");
         Check(File.Exists(manifestPath) && !result.ReceiptDeleted, "ownership receipt was deleted while a changed Biology file remains");
+    }
+
+    private static void TestChangedGenericDependencyIsPreserved(string root)
+    {
+        PrepareGameRoot(root);
+        string generic = WriteFile(root, "engine/tools/scc.exe", "packaged-generic");
+        BiologyManifestFile entry = Entry("engine/tools/scc.exe", generic, "upstream:redscript", "redscript", BiologyUninstallPlanner.GenericDependencyPolicy);
+        string manifestPath = WriteManifest(root, new[] { entry }, "Biology");
+        File.WriteAllText(generic, "updated-by-another-mod");
+
+        BiologyUninstallPlan plan = BiologyUninstallPlanner.Build(root, manifestPath);
+        Check(plan.Count(BiologyPlanAction.PreserveGenericDependency) == 1, "changed generic dependency was not classified preserve");
+        BiologyExecutionResult result = BiologyUninstallExecutor.Execute(plan, new BiologyExecutionOptions { SkipRedmodRefresh = true });
+        Check(File.Exists(generic) && File.ReadAllText(generic) == "updated-by-another-mod", "changed generic dependency was altered/deleted");
+        Check(result.PreservedGeneric.Count == 1, "changed generic dependency was not reported as preserved");
     }
 
     private static void TestTimeOfCheckChangeIsPreserved(string root)
@@ -146,6 +164,27 @@ internal static class BiologyUninstallCoreTests
         ExpectFailure(delegate { BiologyUninstallPlanner.Build(wrongRoot, wrongManifest); }, "unexpected product identity accepted");
     }
 
+    private static void TestMalformedManifestFailures(string root)
+    {
+        PrepareGameRoot(root);
+        string owned = WriteFile(root, "mods/Biology/info.json", "x");
+        string manifestPath = WriteManifest(root, new[] { Entry("mods/Biology/info.json", owned, "Biology", "id", BiologyUninstallPlanner.BiologyOwnedPolicy) }, "Biology");
+        JavaScriptSerializer serializer = new JavaScriptSerializer();
+        BiologyManifest manifest = serializer.Deserialize<BiologyManifest>(File.ReadAllText(manifestPath));
+        manifest.schemaVersion = 99;
+        File.WriteAllText(manifestPath, serializer.Serialize(manifest), new UTF8Encoding(false));
+        ExpectFailure(delegate { BiologyUninstallPlanner.Build(root, manifestPath); }, "unsupported ownership receipt schema accepted");
+
+        string policyRoot = Path.Combine(Path.GetDirectoryName(root), "bad-policy");
+        PrepareGameRoot(policyRoot);
+        string policyOwned = WriteFile(policyRoot, "mods/Biology/info.json", "x");
+        string policyManifestPath = WriteManifest(policyRoot, new[] { Entry("mods/Biology/info.json", policyOwned, "Biology", "id", BiologyUninstallPlanner.BiologyOwnedPolicy) }, "Biology");
+        BiologyManifest policyManifest = serializer.Deserialize<BiologyManifest>(File.ReadAllText(policyManifestPath));
+        policyManifest.uninstall.genericDependencyPolicy = "delete";
+        File.WriteAllText(policyManifestPath, serializer.Serialize(policyManifest), new UTF8Encoding(false));
+        ExpectFailure(delegate { BiologyUninstallPlanner.Build(policyRoot, policyManifestPath); }, "unexpected uninstall policy accepted");
+    }
+
     private static void TestBiologyOwnedAllowlist(string root)
     {
         PrepareGameRoot(root);
@@ -160,6 +199,19 @@ internal static class BiologyUninstallCoreTests
         BiologyManifestFile wrongOwner = Entry("engine/tools/scc.exe", generic, "Biology", "redscript", BiologyUninstallPlanner.GenericDependencyPolicy);
         string wrongManifest = WriteManifest(genericRoot, new[] { wrongOwner }, "Biology");
         ExpectFailure(delegate { BiologyUninstallPlanner.Build(genericRoot, wrongManifest); }, "generic dependency without upstream ownership accepted");
+    }
+
+    private static void TestPreferencesPreservedByDefault(string root)
+    {
+        PrepareGameRoot(root);
+        string owned = WriteFile(root, "mods/Biology/info.json", "owned");
+        string ini = WriteFile(root, "red4ext/plugins/mod_settings/user.ini",
+            "[CyberpunkRealism.Settings.CRRealpassSettings]\r\nenabled = false\r\ne3FirstPersonHudVisuals = false\r\n\r\n[Other.Mod]\r\nvalue = keep\r\n");
+        string expected = File.ReadAllText(ini);
+        string manifestPath = WriteManifest(root, new[] { Entry("mods/Biology/info.json", owned, "Biology", "id", BiologyUninstallPlanner.BiologyOwnedPolicy) }, "Biology");
+        BiologyUninstallPlan plan = BiologyUninstallPlanner.Build(root, manifestPath);
+        BiologyUninstallExecutor.Execute(plan, new BiologyExecutionOptions { SkipRedmodRefresh = true, RemovePreferences = false });
+        Check(File.Exists(ini) && File.ReadAllText(ini) == expected, "default uninstall modified Biology/user preferences");
     }
 
     private static void TestPreferenceOptInIsSurgical(string root)
