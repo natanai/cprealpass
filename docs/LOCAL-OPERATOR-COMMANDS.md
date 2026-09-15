@@ -287,7 +287,7 @@ It publishes derived metadata only, never proprietary Cyberpunk payload.
 
 1. **Look here first.** If a catalog command covers the task, use it rather than reconstructing its internals in chat.
 2. **Never assume a permanent repo path.** Repo-dependent operations must discover `natanai/cprealpass` under `C:\Games` or create a uniquely signed clone automatically.
-3. Never use or recreate `C:\Games\CyberpunkRealism`.
+3. Do not use or recreate `C:\Games\CyberpunkRealism`; that path convention is retired.
 4. Branch-specific/local-audit work should use a fresh uniquely signed worktree/checkout, not silently mutate an arbitrary existing repo.
 5. **Every user-returned evidence operation must create a `.txt` report file** and print its absolute path; ask the user to attach it rather than paste a transcript.
 6. Evidence reports must preserve clear PASS and FAIL outcomes.
