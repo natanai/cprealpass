@@ -35,6 +35,14 @@ The entire `game-reference/` tree is intentionally excluded from Git and is not 
 
 A GitHub-safe snapshot of the local environment is tracked under `reference/cyberpunk/`. Read that snapshot before assuming which frameworks, deployed scripts, archive payloads, or game files are present.
 
+For a broad environment refresh after a Cyberpunk patch or major local install change, ask the user to run this tracked read-only scanner:
+
+```powershell
+& "C:\Games\CyberpunkRealism\tools\Refresh-LocalGameReference.ps1"
+```
+
+That command reads the game installation and rewrites only the GitHub-safe metadata under `reference/cyberpunk/`; it does not modify game files or commit/push anything. For a narrow implementation question, prefer a smaller targeted probe instead of refreshing or extracting everything.
+
 ## Remote-agent protocol
 
 GitHub/branch agents are explicitly allowed—and expected when useful—to ask the user to run PowerShell or CMD commands when direct evidence from the installed game would materially improve the work.
