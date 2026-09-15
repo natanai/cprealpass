@@ -39,7 +39,8 @@ Check ($painRuntime.Contains('CRPainModel.UseMaxDoc(this.state)')) 'MaxDoc does 
 # Vanilla MaxDoc identity/integration.
 Check ($bodyHooks.Contains('@wrapMethod(UseHealChargeAction)')) 'MaxDoc is not intercepted at native healing-item action boundary.'
 Check ($bodyHooks.Contains('gamedataConsumableBaseName.FirstAidWhiff')) 'Vanilla MaxDoc/FirstAidWhiff family is not recognized.'
-Check ($bodyHooks.Contains('CRPainRuntime.Get().UseMaxDoc()')) 'Native MaxDoc use does not route to pain runtime.'
+Check ($bodyHooks.Contains('painRuntime = CRPainRuntime.Get(gameInstance);')) 'Native MaxDoc use does not resolve pain authority from the action-owned session.'
+Check ($bodyHooks.Contains('IsDefined(painRuntime) && painRuntime.UseMaxDoc()')) 'Native MaxDoc use does not route to pain runtime.'
 Check ($bodyHooks.Contains('CRPainNativeEffects.Refresh(local, true)')) 'Accepted MaxDoc use does not reconstruct pain/intoxication feedback immediately.'
 Check (-not $bodyHooks.Contains('gamedataConsumableBaseName.HealthBooster')) 'Health Booster is still repurposed as MaxDoc analgesia.'
 Check (-not $bodyHooks.Contains('UseTraumaKit')) 'Source-mod medical naming leaked into native pain adapter.'
