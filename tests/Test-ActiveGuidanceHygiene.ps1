@@ -6,6 +6,7 @@ $activeFiles = @(
     'ROADMAP.md',
     'docs/ACTIVE-REDMOD-ROADMAP.md',
     'docs/BIOLOGY-REDMOD-MIGRATION.md',
+    'docs/RELEASE-ARCHITECTURE.md',
     'docs/LOCAL-GAME-REFERENCE.md',
     'docs/PARALLEL-AGENT-WORKFLOW.md',
     'docs/INTEGRATION-ORCHESTRATOR.md',
