@@ -53,10 +53,16 @@ Require $catalog 'No mods found.*failure|failure.*No mods found' 'Catalog must e
 Require $presentationBootstrap '\[Parameter\(Mandatory=\$true\)\]\[string\]\$Branch' 'Presentation bootstrap must require the exact branch explicitly.'
 Require $presentationBootstrap '\[ValidatePattern\(''\^\[0-9a-fA-F\]\{40\}\$''\)\].*\$ExpectedHead' 'Presentation bootstrap must require an exact 40-character head SHA.'
 Require $presentationBootstrap 'Biology-Presentation-Audit-' 'Presentation bootstrap must create a uniquely named text evidence report.'
-Require $presentationBootstrap 'origin.*natanai/cprealpass|natanai/cprealpass.*origin|repoPattern' 'Presentation bootstrap must discover cprealpass by repository identity.'
-Require $presentationBootstrap 'cprealpass-repo-' 'Presentation bootstrap must clone a uniquely signed seed when no repo exists.'
+Require $presentationBootstrap 'repoPattern' 'Presentation bootstrap must identify cprealpass by repository identity.'
+Require $presentationBootstrap '\.git\\config' 'Presentation bootstrap must inspect Git config before invoking Git against a discovery candidate.'
+Require $presentationBootstrap 'Skipping unusable cprealpass seed candidate' 'Presentation bootstrap must tolerate stale/unusable local repository candidates.'
+Require $presentationBootstrap 'No usable cprealpass seed checkout found\. Cloning seed' 'Presentation bootstrap must explicitly support the zero-local-repository path.'
+Require $presentationBootstrap 'cprealpass-repo-' 'Presentation bootstrap must clone a uniquely signed seed when no usable repo exists.'
+Require $presentationBootstrap 'ProcessStartInfo' 'Presentation bootstrap must isolate native Git stderr/exit handling from PowerShell terminating-error behavior.'
+Require $presentationBootstrap 'ArgumentList\.Add' 'Presentation bootstrap must pass Git arguments without shell string reconstruction.'
+Require $presentationBootstrap 'Invoke-GitSafe' 'Presentation bootstrap must route Git calls through the safe native-process wrapper.'
 Require $presentationBootstrap 'cprealpass-presentation-audit-' 'Presentation bootstrap must use a uniquely signed disposable audit checkout.'
-Require $presentationBootstrap 'worktree add --detach' 'Presentation bootstrap must isolate the exact worker revision in a detached worktree.'
+Require $presentationBootstrap "'worktree','add','--detach'" 'Presentation bootstrap must isolate the exact worker revision in a detached worktree.'
 Require $presentationBootstrap 'Audit-PresentationContracts\.ps1' 'Presentation bootstrap must invoke the repository-owned presentation audit.'
 Require $presentationBootstrap 'try\s*\{' 'Presentation bootstrap must own exception handling inside the script file.'
 Require $presentationBootstrap 'catch\s*\{' 'Presentation bootstrap must preserve failure evidence inside the script file.'
@@ -64,6 +70,9 @@ Require $presentationBootstrap 'finally\s*\{' 'Presentation bootstrap must print
 Require $presentationBootstrap 'ATTACH THIS FILE TO CHATGPT:' 'Presentation bootstrap must end with the attachment handoff rather than pasted console output.'
 if ($presentationBootstrap.Contains('C:\Games\CyberpunkRealism')) {
     throw 'Presentation bootstrap reintroduced the retired fixed C:\Games\CyberpunkRealism repo path.'
+}
+if ($presentationBootstrap -match '\$origin\s*=\s*\(&\s*git\s+-C') {
+    throw 'Presentation bootstrap must not probe arbitrary C:\Games directories with direct git -C discovery calls.'
 }
 
 Require $prepare 'Read-Host.*exhaustive vanilla hash verification' 'Milestone orchestrator must ask the user whether to run the expensive full baseline comparison.'
@@ -103,7 +112,7 @@ Require $audit 'Stop-Transcript' 'Compatibility audit must finalize the evidence
 Require $audit 'LOCAL EVIDENCE REPORT:' 'Compatibility audit must print the absolute evidence-file handoff path.'
 Require $audit 'Return that \.txt file' 'Compatibility audit must instruct the user to return the file instead of pasted console output.'
 Require $audit 'FAIL: Biology native-contract audit did not complete' 'Compatibility audit report must preserve a clear failure outcome.'
-Require $audit 'PASS: Biology native-contract audit completed' 'Compatibility audit report must preserve a clear success outcome.'
+Require $audit 'PASS: Biology native-contract audit completed' 'Audit text evidence must clearly preserve success outcome.'
 Require $audit 'textEvidenceReport' 'Compatibility JSON metadata must point to the corresponding text evidence report.'
 if ($audit.Contains("[string]`$RepoRoot = 'C:\Games\CyberpunkRealism'")) {
     throw 'Compatibility audit reintroduced the retired fixed C:\Games\CyberpunkRealism repo default.'
@@ -114,4 +123,4 @@ Require $cleanRoom 'fast sanity' 'Clean-room policy must define the lightweight 
 Require $cleanRoom 'must not.*verified against recorded vanilla baseline|not.*verified against recorded vanilla baseline' 'Clean-room policy must prevent overclaiming when the exhaustive hash check is skipped.'
 Require $cleanRoom 'LOCAL-OPERATOR-COMMANDS\.md' 'Clean-room policy must defer routine user commands to the canonical catalog.'
 
-Write-Host 'PASS: local operator commands self-bootstrap cprealpass with unique workspaces, keep compound exception handling inside parser-safe repository scripts, return text evidence files instead of pasted transcripts, preserve clean-room policy, and fail closed on REDmod false positives.'
+Write-Host 'PASS: local operator commands self-bootstrap cprealpass with unique workspaces, safely tolerate zero/stale local repos, keep compound exception handling inside parser-safe repository scripts, return text evidence files instead of pasted transcripts, preserve clean-room policy, and fail closed on REDmod false positives.'
