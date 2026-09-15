@@ -38,8 +38,12 @@ $patterns = @(
     '\bm_nameFrame\b'
 )
 
-$files = @(Get-ChildItem -LiteralPath $scriptRoot -Recurse -File -Filter '*.reds')
-if ($files.Count -eq 0) { throw "No .reds files found under official REDmod script tree: $scriptRoot" }
+# REDmod's official decompiled game sources are .script files. Tolerate .reds too so
+# the probe remains useful if a supported toolchain starts exposing redscript copies.
+$files = @(Get-ChildItem -LiteralPath $scriptRoot -Recurse -File | Where-Object {
+    $_.Extension -in @('.script','.reds')
+})
+if ($files.Count -eq 0) { throw "No .script/.reds files found under official REDmod script tree: $scriptRoot" }
 
 $hits = [Collections.Generic.List[object]]::new()
 foreach ($file in $files) {
