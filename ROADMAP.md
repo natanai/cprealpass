@@ -29,6 +29,10 @@ That parent thread is responsible for:
 
 The parent thread is **not** a fourth broad feature lane. Substantive subsystem fixes normally return to the appropriate worker branch/agent. Read `docs/INTEGRATION-ORCHESTRATOR.md` for the canonical routing rules.
 
+Copy/paste-ready parent-thread startup/replacement packet:
+
+- `docs/handoffs/PARENT-INTEGRATION.md`
+
 ## Current worker branches
 
 The current refactor is intentionally split across up to three implementation agents:
