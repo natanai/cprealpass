@@ -13,7 +13,7 @@ public class CRRealpassSettings extends ScriptableSystem {
   @runtimeProperty("ModSettings.category", "General")
   @runtimeProperty("ModSettings.category.order", "0")
   @runtimeProperty("ModSettings.displayName", "Enable Biology")
-  @runtimeProperty("ModSettings.description", "Enable or disable the complete Biology overhaul. When off, Biology gameplay and presentation adapters yield to Cyberpunk's native behavior. Reload the current save after changing this setting so every runtime adapter starts from the same state.")
+  @runtimeProperty("ModSettings.description", "Enable or disable the complete Biology overhaul while REDlauncher Enable mods is ON. REDlauncher Enable mods OFF always yields to Cyberpunk's native behavior regardless of this saved preference. Reload the current save after changing this setting so every runtime adapter starts from the same state.")
   @runtimeProperty("ModSettings.order", "0")
   public let enabled: Bool = true;
 
@@ -29,10 +29,24 @@ public class CRRealpassSettings extends ScriptableSystem {
     return GameInstance.GetScriptableSystemsContainer(game).Get(n"CyberpunkRealism.Settings.CRRealpassSettings") as CRRealpassSettings;
   }
 
+  // REDlauncher activation authority is deliberately outside persistent settings.
+  // The sentinel record exists only in Biology's official REDmod tweak payload and
+  // is therefore absent from the vanilla TweakDB path when the launcher does not
+  // start the game with deployed REDmods. Loose redscript/RED4ext/ArchiveXL/Mod
+  // Settings files may still load, but they cannot make this predicate true.
+  public static func IsLauncherActivated() -> Bool {
+    return TweakDBInterface.GetBool(t"Items.BiologyLauncherActivationMarker.stackable", false);
+  }
+
   public static func IsEnabled(game: GameInstance) -> Bool {
-    let settings: ref<CRRealpassSettings> = CRRealpassSettings.Get(game);
-    // Fail toward the authored/default Biology state during startup. A missing
-    // settings singleton must never silently disable the overhaul.
+    let settings: ref<CRRealpassSettings>;
+    if !CRRealpassSettings.IsLauncherActivated() {
+      return false;
+    }
+    settings = CRRealpassSettings.Get(game);
+    // Once REDmod is authoritatively active, a missing provider singleton still
+    // falls toward Biology's authored default. Saved preferences can narrow an
+    // active Biology session but can never force activation with launcher mods OFF.
     return !IsDefined(settings) || settings.enabled;
   }
 

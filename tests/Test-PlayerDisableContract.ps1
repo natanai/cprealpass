@@ -1,0 +1,64 @@
+$ErrorActionPreference = 'Stop'
+if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'Test-PlayerDisableContract.ps1 requires PowerShell 7 or newer.' }
+. "$PSScriptRoot\..\tools\Common.ps1"
+$project = Get-ProjectRoot
+
+$markerPath = Join-Path $project 'mods\Biology\tweaks\base\gameplay\static_data\database\items\weapons\parts\biology_activation.tweak'
+$settingsPath = Join-Path $project 'src\redscript\CyberpunkRealism\RealpassSettings.reds'
+$builderPath = Join-Path $project 'tools\Build-BiologyPackage.ps1'
+$installPath = Join-Path $project 'manifest\redmod-install-contract.json'
+$packagePath = Join-Path $project 'manifest\redmod-package.json'
+$docPath = Join-Path $project 'docs\PLAYER-DISABLE-UNINSTALL.md'
+$operatorDocPath = Join-Path $project 'docs\LOCAL-OPERATOR-COMMANDS.md'
+$verifyPath = Join-Path $project 'tools\Verify-BiologyRemoval.ps1'
+foreach ($path in @($markerPath,$settingsPath,$builderPath,$installPath,$packagePath,$docPath,$operatorDocPath,$verifyPath)) {
+    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Missing player-disable contract asset: $path" }
+}
+
+$marker = Get-Content -Raw -LiteralPath $markerPath
+$settings = Get-Content -Raw -LiteralPath $settingsPath
+$builder = Get-Content -Raw -LiteralPath $builderPath
+$install = Get-Content -Raw -LiteralPath $installPath | ConvertFrom-Json
+$package = Get-Content -Raw -LiteralPath $packagePath | ConvertFrom-Json
+$doc = Get-Content -Raw -LiteralPath $docPath
+$operatorDoc = Get-Content -Raw -LiteralPath $operatorDocPath
+
+if ($marker -notmatch 'Items\.BiologyLauncherActivationMarker\s*:\s*IconicWeaponModAbilityBase' -or $marker -notmatch 'stackable\s*=\s*true') {
+    throw 'REDmod-owned Biology launcher activation marker drifted.'
+}
+if ($settings -notmatch 'public static func IsLauncherActivated\(\) -> Bool' -or $settings -notmatch 'Items\.BiologyLauncherActivationMarker\.stackable') {
+    throw 'Biology settings accessor does not consume the REDmod-owned launcher marker.'
+}
+if ($settings -notmatch 'if !CRRealpassSettings\.IsLauncherActivated\(\)\s*\{\s*return false;') {
+    throw 'Launcher-off contract is not fail-closed before the persisted Biology preference.'
+}
+if ($settings -notmatch 'CRRealpassSettings\.IsEnabled\(game\).*e3FirstPersonHudVisuals') {
+    throw 'E3 presentation preference is no longer subordinate to the Biology master activation boundary.'
+}
+if ($builder -notmatch [regex]::Escape('mods/Biology/tweaks/base/gameplay/static_data/database/items/weapons/parts/biology_activation.tweak')) {
+    throw 'Canonical player package builder does not package the REDmod activation marker.'
+}
+if ($builder -notmatch [regex]::Escape('Uninstall Biology.exe') -or $builder -notmatch [regex]::Escape('Build-BiologyUninstaller.ps1')) {
+    throw 'Canonical player package builder does not compile/package the self-contained uninstaller.'
+}
+if ($builder -notmatch 'generic-dependency-shared') { throw 'Canonical package has not adopted the shared/preserve generic dependency uninstall policy.' }
+if ($install.launcherActivation.signal -ne 'Items.BiologyLauncherActivationMarker.stackable' -or $install.playerUninstaller.binary -ne 'Uninstall Biology.exe') {
+    throw 'Install contract lost launcher activation or player uninstaller identity.'
+}
+if ($install.playerUninstaller.preferencesDefault -ne 'preserve' -or $install.playerUninstaller.genericDependencies -ne 'preserve') {
+    throw 'Install contract lost conservative preference/generic dependency defaults.'
+}
+if (@($install.neverRecursivelyOwnedRoots) -notcontains 'mods' -or @($install.neverRecursivelyOwnedRoots) -notcontains 'r6') {
+    throw 'Install contract no longer protects shared roots from recursive ownership.'
+}
+if ($package.redmod.launcherActivationMarker -ne 'Items.BiologyLauncherActivationMarker.stackable') {
+    throw 'REDmod package contract and runtime activation signal disagree.'
+}
+if ($doc -notmatch 'Launcher-OFF runtime audit' -or $doc -notmatch 'may still load' -or $doc -notmatch 'MILESTONE CLEAN-ROOM') {
+    throw 'Player disable/uninstall documentation lost audit or attended-test boundaries.'
+}
+if ($operatorDoc -notmatch 'Verify-BiologyRemoval\.ps1' -or $operatorDoc -notmatch 'double-click.*Uninstall Biology\.exe') {
+    throw 'Canonical local-operator catalog does not expose player hard-uninstall verification.'
+}
+
+Write-Host 'PASS: Biology launcher activation is REDmod-owned/fail-closed and the exact player artifact couples the marker, ownership receipt, and Uninstall Biology.exe.'

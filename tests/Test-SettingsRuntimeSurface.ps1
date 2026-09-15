@@ -41,6 +41,9 @@ Check (-not $surface.Contains('@runtimeProperty("ModSettings.displayName", "Enab
 Check ($surface.Contains('public class CRRealpassSettings extends ScriptableSystem')) 'Compatibility settings class is not hosted by a ScriptableSystem singleton.'
 Check ($surface.Contains('enabled: Bool = true;')) 'Global Biology master setting is missing or does not default on.'
 Check ($surface.Contains('e3FirstPersonHudVisuals: Bool = true;')) 'E3 presentation setting is missing or does not default on.'
+Check ($surface.Contains('public static func IsLauncherActivated() -> Bool')) 'Biology settings lost the REDlauncher activation boundary.'
+Check ($surface.Contains('Items.BiologyLauncherActivationMarker.stackable')) 'Biology settings do not consume the REDmod-owned activation marker.'
+Check ($surface -match 'if !CRRealpassSettings\.IsLauncherActivated\(\)\s*\{\s*return false;') 'Persisted Biology preference can bypass launcher OFF.'
 Check ($surface.Contains('ModSettings.RegisterListenerToClass(this)')) 'Settings are not registered for live adapter updates.'
 Check ($surface.Contains('ModSettings.UnregisterListenerToClass(this)')) 'Settings adapter does not unregister cleanly.'
 Check ($surface.Contains('@if(ModuleExists("ModSettingsModule"))')) 'Provider listener calls are not guarded by provider availability.'
@@ -52,14 +55,9 @@ Check ($boolFields.Count -eq 2 -and $boolFields -contains 'enabled' -and $boolFi
 
 Check (-not $policy.Contains('traditionalHealthBarsEnabled')) 'Traditional healthbar player preference survived in runtime policy.'
 Check ($policy.Contains('public static func TraditionalHealthBars') -and $policy.Contains('return false;')) 'Final no-healthbar authored release decision is not fixed in policy.'
-
-# Analgesic-overuse presentation is authored behavior, not a separate player setting.
 Check (-not $pain.Contains('CRRealpassSettings')) 'Pain presentation became independently configurable instead of following the global runtime/body gate.'
 Check ($pain.Contains('CRPainNativeEffects.SyncIntoxication(player, pain.intoxication)')) 'Authored analgesic-overuse presentation call is missing.'
 Check ($pain.Contains('player.crPainModifiers.Sync(player, pain)')) 'Pain-derived weapon handling was accidentally removed.'
-
-# Both public settings must be consumed by Biology-owned semantics. The E3 preference
-# drives the actual visual slices; the name-data enrichment seam may also consult it.
 Check ($e3Hud.Contains('CRRealpassSettings.UseE3FirstPersonHudVisuals(GetGameInstance())')) 'E3 preference is not consumed by the first-person HUD slice.'
 Check ($e3Nameplates.Contains('CRRealpassSettings.UseE3FirstPersonHudVisuals(puppet.GetGame())')) 'E3 preference is not consumed by the NPC nameplate slice.'
 Check ($nameplates.Contains('CRRealpassSettings.UseE3FirstPersonHudVisuals(puppet.GetGame())')) 'Scanned-civilian name enrichment lost the accepted presentation gate.'
@@ -91,4 +89,4 @@ Check ($contract.releaseProfile.e3InspiredFirstPersonHud -eq $true -and $contrac
 Check ($contract.releaseProfile.nativeModernScanner -eq $true) 'Native modern scanner target is not locked on.'
 Check ($contract.developmentFeedbackFallback.traditionalPlayerHealthBarsVisibleUntilReplacementAccepted -eq $false) 'Old player healthbar fallback was re-enabled after attended rejection.'
 
-Write-Host "PASS: $script:checks Biology settings/runtime checks; visible branding is Biology, semantic accessors are provider-neutral, and the E3 toggle owns only the HUD/nameplate skin."
+Write-Host "PASS: $script:checks Biology settings/runtime checks; visible branding is Biology, REDlauncher activation is fail-closed, semantic accessors are provider-neutral, and the E3 toggle owns only the HUD/nameplate skin."
