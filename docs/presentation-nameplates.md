@@ -1,78 +1,74 @@
 # Biology NPC nameplates
 
-Status: project-original identity and E3 visual seams implemented; fresh exact compile and attended acceptance pending
+Status: attended follow-up implementation; exact compile and live acceptance pending  
 Last updated: 2026-09-15
 
 ## Product intent
 
-Biology keeps Cyberpunk's native NPC identity, projection and visibility policy while adding two deliberately separate owned behaviors:
+Biology's E3 presentation includes an **ambient identity/nameplate treatment during ordinary first-person focus**. Scanner mode is not required just to get the baseline nameplate.
 
-1. `src/redscript/CyberpunkRealism/NameplatesNative.reds` provides a narrow data-only fallback for an ordinary civilian who has been successfully scanned but whose stock focus-data name is empty even though the public crowd identity is allowed.
-2. `src/redscript/CyberpunkRealism/E3NameplatesNative.reds` adds the optional Biology-owned red E3-inspired frame/rail treatment to the native nameplate controller when the E3 presentation preference is enabled.
+The implementation is deliberately split:
 
-Neither implementation requires the Project E3 runtime, its archive, its scanner, or its private nameplate widget fields.
+1. `NameplatesNative.reds` resolves the identity string while preserving native knowledge/permission authority.
+2. `E3NameplatesNative.reds` owns the red/minimal visual presentation and the narrow native projection lifecycle needed to make the identity surface actually visible.
+3. `NoHealthbars.reds` separately suppresses actor HP presentation while Biology is enabled. It is not part of the E3 nameplate success criterion.
 
-## Identity permission boundary
+No Project E3 runtime script/archive/tweak executes in Biology.
 
-The public-name fallback requires all of the following:
+## Identity precedence
 
-- target is an attached `NPCPuppet`;
-- target has been scanned;
-- target is a civilian;
-- target is not the current quest target;
-- neither `hide_nametag` nor the dynamic `Puppet.HideNameplate` flag hides identity;
-- `Character_Record.UiNameplate()` exists, is enabled, and is exactly `UINameplate.CrowdSettings`;
-- the puppet persistent state exists and does not advertise an alternative identity;
-- the effective scanner visibility preset (including a forced preset) allows the name.
+Biology does not keep a second identity database.
 
-If stock `NPCNextToTheCrosshair.name` is already nonempty, it always wins. The fallback reads only `GameObject.GetDisplayName()` and assigns it to the incoming stock focus/nameplate data before the original `NameplateVisualsLogicController.SetVisualData(...)` runs.
+1. Native `NPCNextToTheCrosshair.name` always wins when populated.
+2. If native focus identity is empty, an ordinary public civilian may use `GameObject.GetDisplayName()` only when:
+   - the NPC is attached and a civilian;
+   - it is not being handled as a quest target by the generic fallback;
+   - neither `hide_nametag` nor dynamic `Puppet.HideNameplate` hides identity;
+   - `Character_Record.UiNameplate()` exists, is enabled, and is `UINameplate.CrowdSettings`;
+   - persistent state does not advertise an alternative identity;
+   - the native `ScannerModulePreset().ShoulShowName()` permission says the public name is showable.
+3. When scanning later causes native focus/nameplate data to contain a richer identity, step 1 automatically supersedes the fallback. Biology therefore gets scanner enrichment without storing learned identities itself.
 
-Because the stock renderer still executes, its distance/projection/dialogue/mounting/defeated-state/settings/visibility behavior remains authoritative. The identity seam does not directly show the name text widget, frame, health bar or attitude decorations.
+`ScannerModulePreset()` is used here as native **permission authority**, not as a requirement that scanner mode has already been entered.
 
-## E3 visual boundary
+## Ambient visibility seam
 
-`E3NameplatesNative.reds` is a separate presentation-only seam. It creates Biology-owned INK widgets on the native `NameplateVisualsLogicController` root: open asymmetric red rails, a small accent/tick treatment, and a restrained `BIO // ID` identifier. The visual layer is shown only when `CRRealpassSettings.UseE3FirstPersonHudVisuals(...)` is true.
+The previous implementation only decorated `NameplateVisualsLogicController.SetVisualData(...)`, which attended testing showed was insufficient: a random civilian with E3 ON had no visible nameplate, while cops only showed a narrow red strip.
 
-The E3 visual seam deliberately does **not**:
+The follow-up also uses the current `NpcNameplateGameController.OnScreenProjectionUpdate(...) -> Void` lifecycle, evidenced directly by the preserved Project E3 2.31.p2 reference source. After native projection logic runs, Biology may make the existing native `m_displayName` surface visible only when:
 
-- replace the native name string or permission rules;
-- read current/max health or reconstruct an NPC health meter;
-- reach into the historical Project E3 `m_nameTextMain`, `m_nameFrame`, `m_nameBG` or equivalent private widget fields;
-- hook scanner or quickhack controllers;
-- load a replacement scanner/nameplate archive;
-- control Biology's actor-health suppression policy.
+- E3 presentation is enabled;
+- native `GetNameplateVisible()` is true;
+- the native buffered character nameplate record exists and is enabled;
+- the visual controller confirms a legitimate native-rendered/public-fallback name is available.
 
-Therefore E3 OFF yields the Biology-specific red frame treatment while the stock/native nameplate renderer remains authoritative. Biology-wide barless health remains independent of this preference.
+Biology does not create a second floating-name projection system and does not replace native distance, mounting, dialogue, scene or projection authority.
 
-## What the identity fallback deliberately does not do
+## Visual treatment
 
-- reveal quest-hidden or custom/alternative identities;
-- invent names from archetype, affiliation or other hidden records;
-- force names globally;
-- change NPC attitude/health presentation;
-- override the player's stock NPC-name setting;
-- create a second scanner/nameplate controller.
+`E3NameplatesNative.reds` styles the native identity text/frame with the Biology-owned red/minimal language and adds an open asymmetric Biology-owned bracket. It does not render health, level, rarity, damage preview or a scanner panel.
 
-## Public native API evidence
+The native 2.31 `m_nameTextMain` and `m_nameFrame` refs are used because the supplied Project E3 2.31.p2 source demonstrates those fields belong to `NameplateVisualsLogicController`; they are not Project E3-added fields.
 
-The stock 2.31 nameplate controller exposes `SetVisualData(puppet, incomingData, opt isNewNpc)` and renders `incomingData.name`; stock visibility remains a separate decision. This makes enriching an otherwise-empty permitted public name before calling `wrappedMethod` narrower and more patch-resilient than replacing the nameplate identity system.
+## E3 OFF
 
-Both `NameplatesNative.reds` and `E3NameplatesNative.reds` are registered in `manifest/native-seams.json` so a future game API change fails at the explicit 2.31 boundary rather than silently altering simulation logic. Exact installed-game compilation remains the authority for the native signature and INK controller compatibility.
+With Biology still enabled and E3 presentation off:
+
+- Biology E3 nameplate styling/ambient force-show behavior yields;
+- Biology-wide actor-health suppression remains unchanged;
+- identity/scanner systems remain native;
+- modern scanner/quickhack remains unchanged.
 
 ## Acceptance
 
-Attend at least these cases with the owned combined candidate:
+The parent-integrated attended candidate must verify:
 
-1. capture the same focused NPC with E3 ON and E3 OFF; the Biology-owned red frame must be unmistakably present only with E3 ON;
-2. scan an ordinary unnamed civilian and confirm an allowed public name appears/readably persists through focus changes;
-3. ordinary civilian before scan does not gain the fallback merely from proximity;
-4. quest target remains governed by stock quest presentation;
-5. NPC with an alternative identity retains the alternative/hidden behavior;
-6. `hide_nametag` / dynamic HideNameplate still suppress identity;
-7. dialogue/scene transitions retain native visibility behavior;
-8. friendly/neutral/hostile attitudes still render with native rules;
-9. Biology actor-healthbar suppression does not remove the name/scanner text and does not become dependent on the E3 preference;
-10. look away/back and scanner open/close do not leave stale names or stale E3 frame state;
-11. open the modern scanner/quickhack interface with E3 ON and confirm it remains the current native scanner rather than an E3 scanner restoration.
+1. random civilian ordinary direct look/focus with E3 ON, before scanner — baseline identity/nameplate visible where native public-name policy permits;
+2. same relevant civilian after scanner information is acquired — richer native identity/context appears if the game supplies it;
+3. police/combatant ordinary focus with E3 ON — full identity/nameplate treatment, not only a narrow red strip;
+4. E3 OFF removes Biology's E3 nameplate treatment;
+5. hidden/alternative/quest-sensitive identities are not revealed by the generic fallback;
+6. look-away/back, scanner open/close, dialogue and combat transitions do not leave stale Biology nameplate widgets;
+7. modern scanner/quickhack remains the current native Cyberpunk interface.
 
-Previous screenshots from the retired integration demonstrated that readable scanned civilian names are desirable, but they are not acceptance evidence for this new owned implementation. The new matched ON/OFF screenshots must come from the exact combined release-shaped candidate under review.
+Previous screenshots from the retired integration are not acceptance evidence for this implementation.

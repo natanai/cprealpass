@@ -2,8 +2,18 @@ $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot\..\tools\Common.ps1"
 $project = Get-ProjectRoot
 $path = Join-Path $project 'tools/Audit-GameContracts.ps1'
-if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw 'Missing proactive local game contract audit tool.' }
+$presentationPath = Join-Path $project 'tools/Audit-PresentationContracts.ps1'
+$probePath = Join-Path $project 'tools/Probe-PresentationNativeContracts.ps1'
+$localReferencePath = Join-Path $project 'docs/LOCAL-GAME-REFERENCE.md'
+$migrationPath = Join-Path $project 'docs/BIOLOGY-REDMOD-MIGRATION.md'
+foreach ($required in @($path,$presentationPath,$probePath,$localReferencePath,$migrationPath)) {
+    if (-not (Test-Path -LiteralPath $required -PathType Leaf)) { throw "Missing proactive local game contract audit file: $required" }
+}
 $source = Get-Content -Raw -LiteralPath $path
+$presentation = Get-Content -Raw -LiteralPath $presentationPath
+$probe = Get-Content -Raw -LiteralPath $probePath
+$localReference = Get-Content -Raw -LiteralPath $localReferencePath
+$migration = Get-Content -Raw -LiteralPath $migrationPath
 $script:checks = 0
 function Check($condition,[string]$message) { if (-not $condition) { throw $message }; $script:checks++ }
 
@@ -22,10 +32,20 @@ foreach ($needle in @(
     'compatibility-audit.json',
     'baseScriptBundleSha256',
     'hookFingerprintSha256',
-    'readOnlyGameAudit = $true'
+    'readOnlyGameAudit = $true',
+    'local-game-contract-audit-',
+    'Start-Transcript',
+    'Stop-Transcript',
+    'LOCAL EVIDENCE REPORT:',
+    'textEvidenceReport'
 )) {
     Check ($source.Contains($needle)) "Game-contract audit lost required behavior/evidence: $needle"
 }
+
+# Repository path is contextual: derive it from the tool checkout unless explicitly
+# supplied. The retired fixed C:\Games\CyberpunkRealism checkout must never return.
+Check ($source.Contains('Split-Path -Parent $PSScriptRoot')) 'Game-contract audit does not derive its default repo root from its own checkout.'
+Check (-not $source.Contains("[string]`$RepoRoot = 'C:\Games\CyberpunkRealism'")) 'Game-contract audit reintroduced the retired fixed local repo path.'
 
 # The audit may read the installed game and write repository-side derived metadata,
 # but it must never deploy, mutate, launch, monitor, or repair Cyberpunk itself.
@@ -42,12 +62,48 @@ foreach ($forbidden in @(
     'Upgrade.ps1'
 )) {
     Check (-not $source.Contains($forbidden)) "Read-only game audit gained a forbidden game/runtime side effect: $forbidden"
+    Check (-not $probe.Contains($forbidden)) "Read-only presentation probe gained a forbidden game/runtime side effect: $forbidden"
 }
 
 Check ($source.Contains("scope = 'Static/native contract compatibility audit.")) 'Audit report does not state its limited evidence scope.'
 Check ($source.Contains('Runtime semantics, UI rendering, save behavior, quest behavior and gameplay feel still require attended testing.')) 'Audit overclaims what static/exact-compile evidence establishes.'
 Check ($source.Contains('previousSnapshotPresent')) 'Audit does not compare against the previous tracked compatibility snapshot.'
 Check ($source.Contains('baseScriptBundleChanged')) 'Audit does not report official base-script changes.'
-Check ($source.Contains('hookFingerprintChanged')) 'Audit does not report changes in the RealPass native-hook surface.'
+Check ($source.Contains('hookFingerprintChanged')) 'Audit does not report changes in the Biology native-hook surface.'
+Check ($source.Contains('FAIL: Biology native-contract audit did not complete.')) 'Audit text evidence does not clearly preserve failure outcome.'
+Check ($source.Contains('PASS: Biology native-contract audit completed.')) 'Audit text evidence does not clearly preserve success outcome.'
+Check ($source.Contains('Return that .txt file')) 'Audit does not instruct the operator to return the text evidence file.'
 
-Write-Host "PASS: $script:checks proactive game-contract audit policy checks."
+# Presentation-specific local evidence combines the exact compile with a read-only
+# symbol/signature search over CDPR's installed REDmod decompiled scripts.
+foreach ($needle in @('Audit-GameContracts.ps1','Probe-PresentationNativeContracts.ps1','presentation-local-audit-','LOCAL EVIDENCE REPORT:','Attach that .txt file','PRESENTATION LOCAL AUDIT RESULT')) {
+    Check ($presentation.Contains($needle)) "Presentation local audit wrapper lost required behavior: $needle"
+}
+Check ($presentation.Contains('-ReportPath $ReportPath')) 'Presentation wrapper does not consolidate exact-compile output into its single text evidence report.'
+Check ($probe.Contains('tools\redmod\scripts')) 'Presentation native probe is not grounded in the installed official REDmod decompiled scripts.'
+Check ($probe.Contains('Primary evidence is the installed official REDmod decompiled script tree.')) 'Presentation probe no longer declares installed REDmod scripts as primary native evidence.'
+Check ($probe.Contains("@('.script','.reds')")) 'Presentation native probe must search REDmod .script sources (with optional .reds tolerance), not assume loose redscript format.'
+foreach ($needle in @('MinimapContainerController','IronsightGameController','QuestTrackerGameController','WeaponRosterGameController','HotkeysWidgetController','CrosshairGameController_Tech_Hex','NpcNameplateGameController','NameplateVisualsLogicController','OnInitialize','OnScreenProjectionUpdate','OnCompassUpdate')) {
+    Check ($probe.Contains($needle)) "Presentation native probe no longer checks required current-game symbol: $needle"
+}
+Check ($probe.Contains('$minimapRelative = ''cyberpunk/UI/widgets/minimap/minimap.script''')) 'Presentation probe no longer pins current minimap evidence to the installed native minimap script.'
+Check ($probe.Contains('$minimapInitializeFound')) 'Presentation probe no longer requires the current minimap initialization lifecycle from installed REDmod source.'
+Check ($probe.Contains('GetRelativePath')) 'Presentation probe should return narrow relative script-path evidence rather than proprietary file dumps.'
+Check ($probe.Contains('Read-only symbol/signature evidence only')) 'Presentation probe does not state its read-only narrow-evidence boundary.'
+
+# Canonical investigation policy: readable native script contracts come from the
+# installed official REDmod source tree before web/community mirrors when practical.
+Check ($localReference.Contains('Prefer the installed official REDmod script tree for script contracts')) 'Local-game reference no longer prioritizes installed REDmod script archaeology.'
+Check ($localReference.Contains('tools\redmod\scripts')) 'Local-game reference does not identify the official installed REDmod script tree.'
+Check ($localReference.Contains('web/community script dumps')) 'Local-game reference does not explicitly demote web/community script mirrors below direct installed-game evidence.'
+Check ($localReference.Contains('Do not assume or recreate `C:\Games\CyberpunkRealism`')) 'Local-game reference does not explicitly retire the fixed repository layout.'
+
+# Project-wide architecture must require an official-path investigation before
+# established community workarounds become foundational dependencies/seams.
+Check ($migration.Contains('Official-path-first development rule')) 'REDmod migration no longer declares the official-path-first development rule.'
+Check ($migration.Contains('tools\redmod\bin\redMod.exe')) 'REDmod migration no longer requires direct consideration of the installed official executable.'
+Check ($migration.Contains('Historical mods often optimized for the tooling/ecosystem available at the time.')) 'REDmod migration no longer warns against inheriting community architecture by popularity.'
+Check ($migration.Contains('after the official REDmod route was directly investigated')) 'REDSCRIPT-BETTER classification is no longer conditioned on direct REDmod investigation.'
+Check ($migration.Contains('official REDmod capability investigated')) 'Migration inventory no longer records which official capability was evaluated before fallback.'
+
+Write-Host "PASS: $script:checks proactive game-contract audit policy checks, including checkout-relative repo discovery, exact compile text evidence, installed-2.31 REDmod-first native script probing, and official-path-first architecture policy."
