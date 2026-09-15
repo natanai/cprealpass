@@ -17,6 +17,7 @@ $cleanRoom = Read 'docs/CLEAN-ROOM-TESTING.md'
 $prepare = Read 'tools/Prepare-BiologyMilestoneTest.ps1'
 $sanity = Read 'tools/Test-VanillaGameSanity.ps1'
 $compare = Read 'tools/Compare-GameToVanillaBaseline.ps1'
+$deploy = Read 'tools/Deploy-BiologyRedmod.ps1'
 
 Require $agents 'LOCAL OPERATOR COMMAND GATE' 'AGENTS.md must make the local operator command catalog mandatory.'
 Require $agents 'docs/LOCAL-OPERATOR-COMMANDS\.md' 'Agents must be directed to the canonical local operator command catalog.'
@@ -33,6 +34,7 @@ Require $catalog 'VERIFY \[' 'Catalog must document visible durable comparison p
 Require $catalog 'Capture-VanillaGameBaseline\.ps1' 'Catalog must document deliberate baseline refresh/publish rather than silently deleting that capability.'
 Require $catalog 'Reset-BiologyIteration\.ps1' 'Catalog must document iteration reset.'
 Require $catalog 'Audit-GameContracts\.ps1' 'Catalog must document direct compatibility audit.'
+Require $catalog 'No mods found.*failure|failure.*No mods found' 'Catalog must explain that an empty REDmod set is a deployment failure for installed Biology.'
 
 Require $prepare 'Read-Host.*exhaustive vanilla hash verification' 'Milestone orchestrator must ask the user whether to run the expensive full baseline comparison.'
 Require $prepare '\$runExhaustive = \$answer -in' 'Milestone exhaustive verification must default to off unless explicitly accepted.'
@@ -54,9 +56,19 @@ Require $sanity 'not a full-file/hash proof' 'Fast sanity check must not overcla
 Require $compare 'VERIFY \[\{0\}\].*files.*GiB.*elapsed' 'Full baseline comparison must emit host-independent durable progress.'
 Require $compare 'Write-Progress' 'Full baseline comparison should retain native Write-Progress in addition to durable console output.'
 
+Require $deploy 'ProcessStartInfo' 'REDmod deploy must control native argument boundaries explicitly.'
+Require $deploy 'ArgumentList\.Add' 'REDmod deploy must use native ArgumentList rather than ambiguous shell string reconstruction.'
+Require $deploy "Invoke-Redmod @\('deploy','-root'," 'REDmod deploy must try the current split root form.'
+Require $deploy '"-root=\$game"' 'REDmod deploy must retain the documented equals-form fallback.'
+Require $deploy 'No root specified' 'REDmod deploy must detect ignored explicit-root arguments.'
+Require $deploy 'Invalid root path found' 'REDmod deploy must detect invalid-root fallback.'
+Require $deploy 'No mods found, no deployment is needed' 'REDmod deploy must detect empty mod discovery even when REDmod exits zero.'
+Require $deploy 'Commandlet deploy has succeeded' 'REDmod deploy must require positive deploy completion evidence.'
+Require $deploy 'Deployment is NOT accepted|not recognized as a deployable REDmod' 'REDmod deploy must fail closed on deceptive exit-zero output.'
+
 Require $cleanRoom 'exhaustive.*optional|optional.*exhaustive' 'Clean-room policy must explicitly allow the expensive hash pass to be optional after a fresh reinstall.'
 Require $cleanRoom 'fast sanity' 'Clean-room policy must define the lightweight post-reinstall evidence path.'
 Require $cleanRoom 'must not.*verified against recorded vanilla baseline|not.*verified against recorded vanilla baseline' 'Clean-room policy must prevent overclaiming when the exhaustive hash check is skipped.'
 Require $cleanRoom 'LOCAL-OPERATOR-COMMANDS\.md' 'Clean-room policy must defer routine user commands to the canonical catalog.'
 
-Write-Host 'PASS: local operator commands are standardized, milestone prep asks before expensive hashing, and visible full-scan progress is enforced.'
+Write-Host 'PASS: local operator commands are standardized, milestone prep asks before expensive hashing, visible full-scan progress is enforced, and REDmod exit-zero false positives fail closed.'

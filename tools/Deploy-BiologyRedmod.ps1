@@ -16,8 +16,64 @@ if ($version.FileVersion -ne '2.3.1.0' -or $version.ProductVersion -ne '2.31') {
     throw "This deployment contract is evidenced for REDmod file 2.3.1.0 / product 2.31; installed tool reports $($version.FileVersion) / $($version.ProductVersion)."
 }
 
+function Invoke-Redmod([string[]]$Arguments) {
+    $psi = [Diagnostics.ProcessStartInfo]::new()
+    $psi.FileName = $redmod
+    $psi.UseShellExecute = $false
+    $psi.RedirectStandardOutput = $true
+    $psi.RedirectStandardError = $true
+    $psi.CreateNoWindow = $true
+    $psi.WorkingDirectory = Split-Path -Parent $redmod
+    foreach ($arg in $Arguments) { [void]$psi.ArgumentList.Add($arg) }
+
+    $process = [Diagnostics.Process]::new()
+    $process.StartInfo = $psi
+    if (-not $process.Start()) { throw 'Could not start official REDmod executable.' }
+    $stdout = $process.StandardOutput.ReadToEnd()
+    $stderr = $process.StandardError.ReadToEnd()
+    $process.WaitForExit()
+    $combined = (($stdout,$stderr | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }) -join "`n").Trim()
+    [pscustomobject]@{ ExitCode=$process.ExitCode; Output=$combined; Args=$Arguments }
+}
+
+function Write-Attempt($attempt,[string]$label) {
+    Write-Host ''
+    Write-Host $label -ForegroundColor Cyan
+    if (-not [string]::IsNullOrWhiteSpace($attempt.Output)) { Write-Host $attempt.Output }
+}
+
+function Has-BadRootSignal([string]$text) {
+    $text -match '(?im)No root specified|Invalid root path found'
+}
+
 Write-Host "Deploying installed REDmods with explicit root: $game"
-& $redmod 'deploy' ("-root=$game")
-$code = $LASTEXITCODE
-if ($code -ne 0) { throw "REDmod deploy failed with exit code $code." }
-Write-Host 'PASS: REDmod deploy command completed. This is deployment evidence only; it does not prove launcher enablement, relaunch persistence, or attended in-game behavior.' -ForegroundColor Green
+
+# Current 2.31 accepts the conventional split form used by current community
+# tooling. ProcessStartInfo.ArgumentList guarantees the game path remains one
+# argument even though it contains spaces.
+$attempt = Invoke-Redmod @('deploy','-root',$game)
+Write-Attempt $attempt 'REDmod deploy attempt: deploy -root <game>'
+
+# Older official documentation shows -root=<path>. Retry only when REDmod itself
+# proves the first form was not parsed as a root argument. A failed parsing
+# attempt cannot have deployed Biology because REDmod did not resolve the game.
+if (Has-BadRootSignal $attempt.Output) {
+    Write-Host 'REDmod did not consume the split root form; retrying documented -root=<path> form...' -ForegroundColor Yellow
+    $attempt = Invoke-Redmod @('deploy',("-root=$game"))
+    Write-Attempt $attempt 'REDmod deploy attempt: deploy -root=<game>'
+}
+
+if ($attempt.ExitCode -ne 0) { throw "REDmod deploy failed with exit code $($attempt.ExitCode)." }
+if (Has-BadRootSignal $attempt.Output) {
+    throw 'REDmod returned exit 0 but did not consume the explicit game root. Deployment is NOT accepted.'
+}
+if ($attempt.Output -match '(?im)No mods found, no deployment is needed') {
+    throw 'REDmod returned exit 0 but reported no mods found. Biology is installed at mods\Biology\info.json but was not recognized as a deployable REDmod; route this as a package-recognition failure.'
+}
+if ($attempt.Output -notmatch '(?im)\[DEPLOY\]' -or $attempt.Output -notmatch '(?im)Commandlet deploy has succeeded') {
+    throw 'REDmod returned exit 0 without the expected deploy-stage/success evidence. Deployment is NOT accepted.'
+}
+
+Write-Host ''
+Write-Host 'PASS: REDmod consumed the explicit game root and completed a real deployment without reporting an empty mod set.' -ForegroundColor Green
+Write-Host 'This proves only direct REDmod deployment. It does not prove launcher enablement, relaunch persistence, or attended in-game behavior.' -ForegroundColor DarkGray

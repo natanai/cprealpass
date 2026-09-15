@@ -156,6 +156,8 @@ pwsh ./tools/Deploy-BiologyRedmod.ps1 `
 
 This uses the directly evidenced official REDmod executable and explicit game root. Deployment success is not gameplay acceptance.
 
+The helper is deliberately fail-closed. REDmod sometimes returns exit code `0` even when it ignored the requested game root or found nothing to deploy. Therefore any output containing `No root specified`, `Invalid root path found`, or `No mods found, no deployment is needed` is a deployment **failure** for an installed Biology candidate, not a pass. Positive deployment also requires the actual `[DEPLOY]` stage and `Commandlet deploy has succeeded` evidence.
+
 For normal milestone preparation, prefer **Command 0**, which invokes this automatically after installing the exact generated ZIP.
 
 ---
