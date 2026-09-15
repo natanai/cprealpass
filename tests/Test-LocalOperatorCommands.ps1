@@ -58,7 +58,7 @@ Require $compare 'Write-Progress' 'Full baseline comparison should retain native
 
 Require $deploy 'ProcessStartInfo' 'REDmod deploy must control native argument boundaries explicitly.'
 Require $deploy 'ArgumentList\.Add' 'REDmod deploy must use native ArgumentList rather than ambiguous shell string reconstruction.'
-Require $deploy "@\('deploy','-root',\$game\)" 'REDmod deploy must try the current split root form.'
+Require $deploy "Invoke-Redmod @\('deploy','-root'," 'REDmod deploy must try the current split root form.'
 Require $deploy '"-root=\$game"' 'REDmod deploy must retain the documented equals-form fallback.'
 Require $deploy 'No root specified' 'REDmod deploy must detect ignored explicit-root arguments.'
 Require $deploy 'Invalid root path found' 'REDmod deploy must detect invalid-root fallback.'
