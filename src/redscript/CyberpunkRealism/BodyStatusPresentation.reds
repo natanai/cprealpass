@@ -8,7 +8,10 @@ import CyberpunkRealism.Physiology.*
 
 public class CRBodyStatusPresentation extends IScriptable {
   public static func Owns() -> Bool {
-    return CRBodyRuntimePolicy.Enabled() && CRBodyRuntime.Get().OwnsNeeds();
+    // Presentation is a safe lifecycle boundary for retrying the same authoritative
+    // ScriptableSystem after save/session restoration reset its transient running
+    // state. No view model or menu owns a second body state.
+    return CRBiologyRuntimeAvailability.EnsureActive();
   }
 
   private static func RegionStatus(state: ref<CRInjuryState>, region: Int32) -> String {
