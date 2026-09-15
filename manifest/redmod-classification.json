@@ -140,8 +140,9 @@
     {
       "id": "official-redmod-cli-on-supported-2.31-install",
       "scope": "actual installed tools/redmod/bin/redMod.exe path/version/help contract",
-      "classification": "UNKNOWN — NEEDS DIRECT GAME PROBE",
-      "reason": "Repository/web evidence describes the official interface, but the supported local 2.31 installation must confirm the exact installed executable/version/CLI before the workflow is called locally proven."
+      "classification": "REDMOD-NATIVE",
+      "reason": "Direct read-only probe on the supported Cyberpunk 2077 2.31 installation confirmed tools/redmod/bin/redMod.exe, file version 2.3.1.0 / product version 2.31, the deploy module, and the global -root parameter. The probe also showed REDmod's default-root heuristic can resolve incorrectly outside the game root, so deterministic tooling must pass -root explicitly.",
+      "evidence": "docs/evidence/REDMOD-2.31-PROBE-2026-09-15.md"
     },
     {
       "id": "redmod-conflict-precedence-on-supported-2.31-install",
