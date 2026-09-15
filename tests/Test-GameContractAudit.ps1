@@ -5,13 +5,15 @@ $path = Join-Path $project 'tools/Audit-GameContracts.ps1'
 $presentationPath = Join-Path $project 'tools/Audit-PresentationContracts.ps1'
 $probePath = Join-Path $project 'tools/Probe-PresentationNativeContracts.ps1'
 $localReferencePath = Join-Path $project 'docs/LOCAL-GAME-REFERENCE.md'
-foreach ($required in @($path,$presentationPath,$probePath,$localReferencePath)) {
+$migrationPath = Join-Path $project 'docs/BIOLOGY-REDMOD-MIGRATION.md'
+foreach ($required in @($path,$presentationPath,$probePath,$localReferencePath,$migrationPath)) {
     if (-not (Test-Path -LiteralPath $required -PathType Leaf)) { throw "Missing proactive local game contract audit file: $required" }
 }
 $source = Get-Content -Raw -LiteralPath $path
 $presentation = Get-Content -Raw -LiteralPath $presentationPath
 $probe = Get-Content -Raw -LiteralPath $probePath
 $localReference = Get-Content -Raw -LiteralPath $localReferencePath
+$migration = Get-Content -Raw -LiteralPath $migrationPath
 $script:checks = 0
 function Check($condition,[string]$message) { if (-not $condition) { throw $message }; $script:checks++ }
 
@@ -96,4 +98,12 @@ Check ($localReference.Contains('tools\redmod\scripts')) 'Local-game reference d
 Check ($localReference.Contains('web/community script dumps')) 'Local-game reference does not explicitly demote web/community script mirrors below direct installed-game evidence.'
 Check ($localReference.Contains('Do not assume or recreate `C:\Games\CyberpunkRealism`')) 'Local-game reference does not explicitly retire the fixed repository layout.'
 
-Write-Host "PASS: $script:checks proactive game-contract audit policy checks, including checkout-relative repo discovery, exact compile text evidence, and installed-2.31 REDmod-first native script probing."
+# Project-wide architecture must require an official-path investigation before
+# established community workarounds become foundational dependencies/seams.
+Check ($migration.Contains('Official-path-first development rule')) 'REDmod migration no longer declares the official-path-first development rule.'
+Check ($migration.Contains('tools\redmod\bin\redMod.exe')) 'REDmod migration no longer requires direct consideration of the installed official executable.'
+Check ($migration.Contains('Historical mods often optimized for the tooling/ecosystem available at the time.')) 'REDmod migration no longer warns against inheriting community architecture by popularity.'
+Check ($migration.Contains('after the official REDmod route was directly investigated')) 'REDSCRIPT-BETTER classification is no longer conditioned on direct REDmod investigation.'
+Check ($migration.Contains('official REDmod capability investigated')) 'Migration inventory no longer records which official capability was evaluated before fallback.'
+
+Write-Host "PASS: $script:checks proactive game-contract audit policy checks, including checkout-relative repo discovery, exact compile text evidence, installed-2.31 REDmod-first native script probing, and official-path-first architecture policy."
