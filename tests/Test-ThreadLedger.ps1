@@ -14,7 +14,6 @@ $parent = Read-Project 'docs/INTEGRATION-ORCHESTRATOR.md'
 $parallel = Read-Project 'docs/PARALLEL-AGENT-WORKFLOW.md'
 $handoff = Read-Project 'docs/handoffs/PARENT-INTEGRATION.md'
 
-# The ledger must explicitly separate conversation usability from lane work state.
 foreach ($token in @(
     'canonical active conversation/lane registry',
     'Thread-state vocabulary',
@@ -25,32 +24,33 @@ foreach ($token in @(
     'Lane-work-state vocabulary',
     '`READY-PARENT`',
     '`MERGED`',
+    '`CLOSED`',
     'A clear new goal should normally get a new lane/thread'
 )) {
     Check ($ledger.Contains($token)) "Thread ledger contract missing: $token"
 }
 
-# Same-lane replacement and new-goal behavior must be explicit so long chats do not
-# become permanent hidden project state.
 Check ($ledger -match 'P01\.1\s*->\s*P01\.2') 'Parent replacement generation rule is missing.'
 Check ($ledger -match 'same ongoing lane[\s\S]*next generation[\s\S]*W\d{2}\.2') 'Worker replacement generation rule is missing.'
 Check ($ledger -match 'materially new goal[\s\S]*fresh `W##`|materially new goal[\s\S]*new `W##`') 'New-goal/new-lane rule is missing.'
 
-# Current parent and the user-confirmed exact-compile repair thread must be visible.
+# Current parent and known worker lanes must remain explicitly registered, but this
+# test must not freeze a worker into ACTIVE forever. Lane lifecycle belongs in the
+# ledger and can legitimately advance from ACTIVE -> READY-PARENT/CLOSED/MERGED.
 Check ($ledger.Contains('**P01.1**')) 'Current parent thread ID is not registered.'
 Check ($ledger.Contains('`PARENT 1`')) 'Current parent visible alias is not registered.'
 Check ($ledger.Contains('**W06.1**')) 'Exact-compile repair thread ID is not registered.'
 Check ($ledger.Contains('Lane - INTEGRATION EXACT-COMPILE REPAIR')) 'Exact-compile repair visible alias is not registered.'
 Check ($ledger.Contains('Issue #50')) 'Exact-compile repair issue is not registered.'
 Check ($ledger.Contains('agent/integration-exact-compile-repair')) 'Exact-compile repair branch is not registered.'
-Check ($ledger.Contains('User confirmed this thread is actively running')) 'User-confirmed active repair state is not recorded.'
+$w06Row = [regex]::Match($ledger, '(?m)^\| \*\*W06\.1\*\*.*$').Value
+Check (-not [string]::IsNullOrWhiteSpace($w06Row)) 'W06.1 ledger row is missing.'
+Check ($w06Row -match '\*\*(ACTIVE|USABLE|TOO-LONG|RETIRED)\*\*') 'W06.1 thread state is not explicit.'
+Check ($w06Row -match '\*\*(IN-PROGRESS|WAITING|READY-PARENT|BLOCKED|MERGED|SUPERSEDED|CLOSED)\*\*') 'W06.1 lane work state is not explicit.'
 
-# There should be one ACTIVE parent conversation in the table. Workers may also be
-# active, but the parent identity itself must be singular.
 $activeParentRows = [regex]::Matches($ledger, '(?m)^\| \*\*P\d{2}\.\d+\*\*.*\| \*\*ACTIVE\*\* \|')
 Check ($activeParentRows.Count -eq 1) "Expected exactly one ACTIVE parent thread row, found $($activeParentRows.Count)."
 
-# Parent and worker canonical docs must make the ledger hard to miss.
 foreach ($pair in @(
     @{ Name = 'parent orchestrator'; Text = $parent },
     @{ Name = 'parallel worker workflow'; Text = $parallel },
