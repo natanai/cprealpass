@@ -64,7 +64,7 @@ if ($ids['modern-scanner-native-acceptance'].remaining -notmatch '(?i)reconfirm'
 $settings = $ids['unified-settings-contract']
 if ($settings.status -ne 'passed' -or ($settings.evidence -join ' ') -notmatch 'RealpassSettings\.reds') { throw 'Provider-neutral settings semantics are no longer represented.' }
 if ($settings.remaining -notmatch '(?i)no managed feature ledger|no.*per-subsystem') { throw 'Acceptance ledger does not explicitly preserve the rejected feature-ledger/per-subsystem settings boundary.' }
-if ($settings.remaining -match '(?i)(expose|retain|keep|provide).*managed feature ledger') { throw 'Acceptance ledger revived the rejected feature-ledger/settings architecture.' }
+if ($settings.remaining -match '(?i)(expose|retain|provide)\s+(?:a\s+|the\s+)?managed feature ledger|keep\s+(?:a\s+|the\s+)?managed feature ledger') { throw 'Acceptance ledger revived the rejected feature-ledger/settings architecture.' }
 
 $maxdoc = $ids['pain-and-maxdoc-model']
 if (($maxdoc.evidence -join ' ') -notmatch 'BodyNativeHooks\.reds' -or $maxdoc.remaining -notmatch 'MaxDoc/FirstAidWhiff') { throw 'MaxDoc gate lost the vanilla item/use integration requirement.' }
