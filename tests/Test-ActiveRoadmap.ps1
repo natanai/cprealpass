@@ -63,7 +63,8 @@ foreach ($retired in @(
 }
 
 Require $migration 'does \*\*not\*\* define current worker branch names|does \*\*not\*\* hard-code current worker branch names|does not.*current worker branch names' 'Architecture doc must defer live branch state to roadmap/issues.'
-Require $parallel 'does \*\*not\*\* hard-code current worker branch names|does not.*hard-code current worker branch names' 'Parallel policy must remain branch-agnostic.'
+Require $parallel 'Current code work still belongs.*current GitHub issues/PRs|does \*\*not\*\* hard-code current worker branch names|does not.*hard-code current worker branch names' 'Parallel policy must remain branch-agnostic for implementation state while delegating conversation state to THREAD-LEDGER.md.'
+Require $parallel 'THREAD-LEDGER\.md' 'Parallel policy must expose the canonical conversation registry.'
 Require $handoffIndex 'issue-specific and temporary' 'Handoff index must explain that merged worker packets are retired rather than canonical forever.'
 
 Write-Host 'PASS: active guidance points at current attended follow-ups while dated historical evidence remains preserved.'
