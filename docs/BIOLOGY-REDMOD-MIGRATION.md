@@ -83,6 +83,23 @@ The exact folder contents are evidence-driven. Do not manufacture a REDmod subfo
 
 The official REDmod toolchain is the **first routing option** for systems it can own cleanly. A finished Biology release should be as self-contained and self-reliant as practical and should avoid requiring players to assemble a stack of community gameplay mods or framework dependencies.
 
+## Official-path-first development rule
+
+Biology does not merely *package* through REDmod when convenient. The project should learn the game on CDPR's terms whenever the installed official tooling can expose the needed truth.
+
+For each new native/game-internal problem, use this order before copying an established community workaround:
+
+1. inspect the installed official REDmod decompiled script tree under `tools\redmod\scripts` for current class/event/field/controller ownership;
+2. inspect or invoke the installed official `tools\redmod\bin\redMod.exe` when its own command surface can answer the packaging/deploy/resource question directly;
+3. use official REDmod package/script/tweak/archive mechanisms where they express the required behavior cleanly;
+4. only then consider redscript wrappers, RED4ext, ArchiveXL, TweakXL, Codeware, CET, or another community technique — and only with a written reason the official route is insufficient or materially more brittle.
+
+The existence or popularity of a community workaround is **not evidence that it is the best route for Biology**. Historical mods often optimized for the tooling/ecosystem available at the time. Biology should re-evaluate those assumptions against Cyberpunk 2.31's installed REDmod capabilities.
+
+This may mean occasionally re-deriving functionality that community mods already solved. That is acceptable when it yields a smaller, more official, more inspectable compatibility boundary.
+
+The project must not blindly force REDmod where it cannot safely express a narrow behavior. “Official-path-first” means **investigate and prefer the official path every time**, not “ignore evidence that a whole-file REDmod replacement would be less stable than a tiny additive seam.” Deviations must be evidence-backed exceptions, not defaults inherited from modding convention.
+
 ## Dependency ladder
 
 For every runtime requirement, prefer the highest viable layer:
@@ -99,15 +116,15 @@ A dependency does **not** survive merely because the current build already uses 
 
 Official REDmod script modding uses modified `.script` files at their vanilla paths and resolves conflicts on a per-file basis. That can be appropriate when Biology intentionally owns an entire file/resource, but it can also be brittle across patches because a copied 2.31 vanilla file can become stale after CDPR changes unrelated code in that same file.
 
-A narrow additive/wrapper seam may therefore be **more patch-resilient** than an official whole-file replacement. The project must choose the route that minimizes the actual compatibility surface, not the route with the most official branding.
+A narrow additive/wrapper seam may therefore be **more patch-resilient** than an official whole-file replacement. The project must choose the route that minimizes the actual compatibility surface after the official route has been investigated directly.
 
 The migration question for every current mechanism is therefore:
 
 ```text
-Does official REDmod express this behavior cleanly without copying more vanilla implementation than necessary?
+What can current installed REDmod do here, and does it express this behavior cleanly without copying more vanilla implementation than necessary?
 ```
 
-If yes, migrate it to REDmod. If no, keep the smallest justified Biology-owned fallback.
+If yes, migrate it to REDmod. If not, record the specific limitation/risk and keep the smallest justified Biology-owned fallback.
 
 ## Required migration classification
 
@@ -115,10 +132,12 @@ Every current runtime feature/file family must be audited and assigned one of th
 
 - `REDMOD-NATIVE` — official REDmod is clearly the preferred final route.
 - `REDMOD-POSSIBLE-BUT-BRITTLE` — technically possible through REDmod, but likely increases patch/conflict surface compared with a narrower seam.
-- `REDSCRIPT-BETTER` — an additive/wrapper redscript seam is demonstrably narrower/more resilient than REDmod whole-file replacement.
+- `REDSCRIPT-BETTER` — an additive/wrapper redscript seam is demonstrably narrower/more resilient than REDmod whole-file replacement **after the official REDmod route was directly investigated**.
 - `REQUIRES-NATIVE-EXTENSION` — the feature cannot be implemented adequately through vanilla/REDmod/redscript and requires a generic native framework.
 - `REMOVE/RETHINK` — the current mechanism exists because of historical architecture and should disappear rather than be migrated.
-- `UNKNOWN — NEEDS DIRECT GAME PROBE` — do not guess; use `reference/cyberpunk/` or request a targeted local inspection.
+- `UNKNOWN — NEEDS DIRECT GAME/REDMOD PROBE` — do not guess; use `reference/cyberpunk/`, installed `tools\redmod\scripts`, `redMod.exe`, or request a targeted local inspection.
+
+For every classification below `REDMOD-NATIVE`, preserve the evidence explaining why the higher official layer was rejected.
 
 The audit should cover at minimum:
 
@@ -214,6 +233,7 @@ Create a machine-readable/runtime inventory mapping each current file/feature to
 - patch-risk rationale;
 - conflict/load-order implications;
 - required dependency;
+- official REDmod capability investigated;
 - evidence/probe needed;
 - migration owner/branch.
 
@@ -233,14 +253,14 @@ Move assets/tweaks/resources and other clearly REDmod-native content first. Remo
 
 ### Phase 4 — decide script seams individually
 
-For each script-based behavior, compare:
+For each script-based behavior, first inspect current installed REDmod source/tool capability, then compare:
 
 - REDmod whole-file `.script` replacement;
 - Biology-owned redscript wrapper/addition;
 - native/plugin alternative;
 - removal/re-design.
 
-Choose the smallest stable seam. Add compatibility probes for every version-sensitive fallback.
+Choose the smallest stable seam. Add compatibility probes for every version-sensitive fallback and document why REDmod itself was not selected when it loses.
 
 ### Phase 5 — dependency reduction
 
@@ -277,8 +297,8 @@ The REDmod migration is not complete until all are true:
 
 1. player-facing/product/package identity is **Biology**;
 2. the package is as close as practical to a single `mods/Biology` installation;
-3. official REDmod owns every runtime surface it can own without increasing patch fragility;
-4. each non-REDmod runtime dependency has a written, current, feature-specific justification;
+3. official REDmod has been directly investigated for every runtime surface, and owns every surface it can own without increasing patch fragility;
+4. each non-REDmod runtime dependency or redscript fallback has a written, current, feature-specific justification tied to a demonstrated REDmod limitation/risk;
 5. no source gameplay/presentation mod executes at runtime;
 6. no framework remains solely because it happened to exist in an older development stack;
 7. Biology's touched systems have documented precedence/conflict behavior;
