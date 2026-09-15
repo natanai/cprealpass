@@ -1,6 +1,6 @@
-// Biology-owned restrained E3-inspired crosshair accent.
-// The native tech-weapon crosshair remains responsible for spread, charge, ADS and
-// aiming behavior. Biology does not reproduce Project E3's ADS hiding/layout logic.
+// Biology-owned restrained E3-inspired crosshair styling for the neutral HUD.
+// Native tech-weapon crosshair logic remains responsible for spread, charge, ADS and
+// aiming behavior. Biology changes presentation only.
 module CyberpunkRealism.Presentation
 
 import CyberpunkRealism.Settings.*
@@ -13,7 +13,7 @@ private final func CRCreateBiologyE3CrosshairFrame() -> Void {
   if IsDefined(this.crBiologyE3CrosshairFrame) {
     return;
   }
-  let root: ref<inkCompoundWidget> = this.GetRootWidget() as inkCompoundWidget;
+  let root: ref<inkCompoundWidget> = this.GetRootCompoundWidget();
   if !IsDefined(root) {
     return;
   }
@@ -24,7 +24,6 @@ private final func CRCreateBiologyE3CrosshairFrame() -> Void {
   this.crBiologyE3CrosshairFrame.SetHAlign(inkEHorizontalAlign.Center);
   this.crBiologyE3CrosshairFrame.SetVAlign(inkEVerticalAlign.Center);
   this.crBiologyE3CrosshairFrame.SetSize(Vector2(108.0, 108.0));
-  this.crBiologyE3CrosshairFrame.SetAffectsLayoutWhenHidden(false);
   this.crBiologyE3CrosshairFrame.Reparent(root, -1);
 
   CRBiologyE3Primitives.AddRect(this.crBiologyE3CrosshairFrame, n"CRBiologyE3CrosshairTLH", 8.0, 8.0, 22.0, 2.0, 0.72);
@@ -35,9 +34,11 @@ private final func CRCreateBiologyE3CrosshairFrame() -> Void {
 
 @addMethod(CrosshairGameController_Tech_Hex)
 private final func CRRefreshBiologyE3CrosshairFrame() -> Void {
+  let enabled: Bool = CRRealpassSettings.UseE3FirstPersonHudVisuals(GetGameInstance());
   this.CRCreateBiologyE3CrosshairFrame();
+  CRBiologyE3Primitives.TintNeutralHudRoot(this.GetRootWidget(), enabled);
   if IsDefined(this.crBiologyE3CrosshairFrame) {
-    this.crBiologyE3CrosshairFrame.SetVisible(CRRealpassSettings.UseE3FirstPersonHudVisuals(GetGameInstance()));
+    this.crBiologyE3CrosshairFrame.SetVisible(enabled);
   }
 }
 
