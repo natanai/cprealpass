@@ -1,15 +1,22 @@
-# Active parallel handoffs
+# Handoffs
 
-These are the current copy/paste-ready work packets for the Biology REDmod refactor.
+This directory contains only durable handoff packets that are still useful as reusable workflow entry points.
 
-Use separate branches and merge through PR/CI before attended testing:
+## Active durable handoff
 
-1. [`REDMOD-FOUNDATION.md`](REDMOD-FOUNDATION.md) -> `agent/redmod-foundation`
-2. [`BIOLOGY-UI-RUNTIME.md`](BIOLOGY-UI-RUNTIME.md) -> `agent/biology-ui-runtime`
-3. [`PRESENTATION-HUD-NAMEPLATES.md`](PRESENTATION-HUD-NAMEPLATES.md) -> `agent/presentation-hud-nameplates`
+- [`PARENT-INTEGRATION.md`](PARENT-INTEGRATION.md) — start/replace the long-lived parent integration/orchestration thread.
 
-All three lanes should branch from the same canonical `main` revision after the roadmap/baseline documentation is merged. Each PR must record its exact starting SHA.
+## Worker handoff policy
 
-The project owner normally tests the **combined merged `main`**, not three separately layered branch installs.
+Worker handoffs are usually **issue-specific and temporary**. Once a worker branch is merged and its task has moved into attended follow-up, its old copy/paste packet should not remain here pretending to be active.
 
-See `../../ROADMAP.md`, `../ACTIVE-REDMOD-ROADMAP.md`, and `../PARALLEL-AGENT-WORKFLOW.md`.
+Current worker branches and issue-specific instructions belong in:
+
+1. root `ROADMAP.md`;
+2. `../ACTIVE-REDMOD-ROADMAP.md`;
+3. current GitHub issues/PRs and their comments;
+4. the latest attended test record when a follow-up is evidence-driven.
+
+Git history preserves retired handoffs when historical research is needed.
+
+The project owner normally tests one combined canonical `main` candidate, not separately layered worker branches.
