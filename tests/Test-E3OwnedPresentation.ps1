@@ -35,7 +35,9 @@ foreach ($key in @('quest','navigation','weapon','crosshair','hotkey')) {
     Check ($source[$key].Contains('TintNeutralHudRoot')) "$key neutral-HUD seam does not visibly restyle the native root in the red/minimal language."
 }
 Check ($source.quest.Contains('@wrapMethod(QuestTrackerGameController)')) 'Persistent quest/objective tracker is not part of the neutral E3 HUD implementation.'
-Check ($source.navigation.Contains('@wrapMethod(IronsightGameController)')) 'Persistent navigation host is not part of the neutral E3 HUD implementation.'
+Check ($source.navigation.Contains('@wrapMethod(MinimapContainerController)')) 'Persistent minimap/navigation host is not part of the neutral E3 HUD implementation.'
+Check ($source.navigation.Contains('protected cb func OnInitialize() -> Bool')) 'Current minimap adapter lost the directly established 2.31 initialization seam.'
+Check (-not $source.navigation.Contains('@wrapMethod(IronsightGameController)')) 'Navigation styling still relies on the weapon/ironsight controller instead of the current minimap host.'
 Check ($source.weapon.Contains('@wrapMethod(WeaponRosterGameController)')) 'Persistent weapon/ammo roster is not part of the neutral E3 HUD implementation.'
 Check ($source.crosshair.Contains('@wrapMethod(CrosshairGameController_Tech_Hex)')) 'Ordinary applicable crosshair presentation is not part of the neutral E3 HUD implementation.'
 Check ($source.hotkey.Contains('@wrapMethod(HotkeysWidgetController)')) 'Persistent quick-slot/D-pad presentation is not part of the neutral E3 HUD implementation.'
