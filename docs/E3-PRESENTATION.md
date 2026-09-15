@@ -61,6 +61,19 @@ Observed:
 
 Do not count health-bar suppression as evidence that the E3 presentation works. Likewise, the narrow cop strip and the earlier incorrect civilian-nameplate interpretation are not evidence that E3 presentation succeeded.
 
+## Direct installed-game evidence
+
+For native script ownership, the supported installed game's official REDmod decompiled scripts are preferred over online mirrors whenever they contain the needed contract.
+
+The 2026-09-15 read-only local audit against Cyberpunk 2077 2.31 established:
+
+- the candidate at `b7e067a400c2667dfc9598865718d13867966c09` exact-compiled successfully against the installed `r6\cache\final.redscripts`;
+- `tools\redmod\scripts\cyberpunk\UI\widgets\minimap\minimap.script` contains `MinimapContainerController`, establishing the current persistent minimap host;
+- `IronsightGameController` exists separately in the weapon/ironsight script path and is not used as Biology's persistent navigation skin host;
+- current nameplate source exposes `NameplateVisualsLogicController`, `m_nameTextMain`, `m_nameFrame`, and `NpcNameplateGameController`/`m_displayName` as expected.
+
+The branch therefore moved `E3NavigationHudNative.reds` from the historical Project E3 `IronsightGameController` assumption to current `MinimapContainerController`. Because that source change happened after the successful `b7e067a...` compile, the final branch head must be exact-compiled again before handoff.
+
 ## Nameplate knowledge boundary
 
 Biology does not invent a second identity database.
@@ -95,11 +108,12 @@ The final Biology runtime uses current native 2.31 controller/data authority plu
 
 For each in-scope neutral-HUD element:
 
-1. preserve the current native controller as information/interaction authority;
-2. hook only the narrow lifecycle/update seam needed for presentation;
-3. register every hook-bearing Biology file in `manifest/native-seams.json`;
-4. avoid copied vanilla or Project E3 controller bodies when post-native styling is sufficient;
-5. exact-compile the combined candidate against supported Cyberpunk 2077 2.31 before packaging.
+1. inspect the installed official REDmod decompiled source first when it can establish current controller/lifecycle ownership;
+2. preserve the current native controller as information/interaction authority;
+3. hook only the narrow lifecycle/update seam needed for presentation;
+4. register every hook-bearing Biology file in `manifest/native-seams.json`;
+5. avoid copied vanilla or Project E3 controller bodies when post-native styling is sufficient;
+6. exact-compile the combined candidate against supported Cyberpunk 2077 2.31 before packaging.
 
 ## Attended acceptance contract
 
@@ -118,6 +132,6 @@ A reviewer must be able to identify the E3-ON ordinary-gameplay screenshot witho
 
 ## Current follow-up implementation
 
-Issue #40's `agent/presentation-attended-followup` branch expands the owned neutral HUD across current native controller roots for quest tracking, navigation, weapon/ammo, applicable crosshair and quick-slot presentation, while keeping game data/interaction authority native. It also changes civilian public-name fallback from scanner-gated to ambient-permitted and uses the native nameplate screen-projection lifecycle so identity can actually appear during ordinary focus.
+Issue #40's `agent/presentation-attended-followup` branch expands the owned neutral HUD across current native controller roots for quest tracking, the current `MinimapContainerController`, weapon/ammo, applicable crosshair and quick-slot presentation, while keeping game data/interaction authority native. It also changes civilian public-name fallback from scanner-gated to ambient-permitted and uses the native nameplate screen-projection lifecycle so identity can actually appear during ordinary focus.
 
-This remains **source/contract implementation pending exact local 2.31 compile and parent-coordinated attended acceptance**. Cloud CI cannot prove visual placement or in-game fidelity.
+Cloud CI remains necessary but cannot prove native compile compatibility or visual placement. The current head requires a fresh exact local 2.31 compile after the minimap-host correction, followed by parent-coordinated attended acceptance.
