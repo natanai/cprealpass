@@ -70,7 +70,10 @@ Require $deploy 'No mods found, no deployment is needed' 'REDmod deploy must det
 Require $deploy 'Commandlet deploy has succeeded' 'REDmod deploy must require positive deploy completion evidence.'
 Require $deploy 'Deployment is NOT accepted|not recognized as a deployable REDmod' 'REDmod deploy must fail closed on deceptive exit-zero output.'
 
-Require $officialProbe 'tools\\redmod\\bin\\redMod\.exe' 'Official REDmod probe must call the game-provided CDPR executable directly.'
+# The probe may build the official path from segments rather than hard-code one full string.
+# What matters is that it resolves tools\redmod plus bin\redMod.exe under the asserted game root.
+Require $officialProbe "Join-Path \$game 'tools\\redmod'" 'Official REDmod probe must resolve the game-provided tools\\redmod root.'
+Require $officialProbe "Join-Path \$redmodRoot 'bin\\redMod\.exe'" 'Official REDmod probe must call the game-provided CDPR executable directly.'
 Require $officialProbe "Arguments @\('--help'\)|@\('--help'\)" 'Official REDmod probe must query the installed tool help surface.'
 Require $officialProbe 'ProcessStartInfo' 'Official REDmod probe must control native invocation boundaries.'
 Require $officialProbe 'Get-Sha256' 'Official REDmod probe must fingerprint the executable used as evidence.'
