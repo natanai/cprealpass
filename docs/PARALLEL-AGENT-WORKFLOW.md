@@ -14,23 +14,47 @@ For the current Biology REDmod refactor, the active lane definitions and handoff
 
 Those current attended-evidence-informed lanes supersede any older generic split.
 
+Parallel implementation is coordinated by one parent/integration thread. Its canonical policy lives in `INTEGRATION-ORCHESTRATOR.md`.
+
 The default development pattern is:
 
 ```text
-current canonical main
-      |
-      +-- agent/lane-a-...   -> PR -> CI -> merge
-      |
-      +-- agent/lane-b-...   -> PR -> CI -> merge
-      |
-      +-- agent/lane-c-...   -> PR -> CI -> merge
-                                  |
-                                  v
-                         combined canonical main
-                                  |
-                                  v
-                      one attended combined test
+                   parent / integration thread
+                              |
+current canonical main        |
+      |                       |
+      +-- agent/lane-a-...   -> PR -> CI --+
+      |                       |             |
+      +-- agent/lane-b-...   -> PR -> CI --+--> parent merge/integration review
+      |                       |             |             |
+      +-- agent/lane-c-...   -> PR -> CI --+             v
+                                                   combined canonical main
+                                                            |
+                                                            v
+                                                 one attended combined test
+                                                            |
+                                                            v
+                                                durable test record + routing
+                                                            |
+                                                            v
+                                                  original/new worker lanes
 ```
+
+## Parent / worker distinction
+
+Worker lanes own implementation. The parent thread owns integration state.
+
+The parent thread should:
+
+- track current `main`, open worker PRs/issues, and merge dependencies;
+- decide merge order and whether a short-lived integration branch is needed;
+- coordinate the clean local-test handoff after selected lanes are integrated;
+- capture attended results under `docs/test-runs/`;
+- route findings back to the original worker when appropriate or create/recommend a new follow-up lane when cleaner.
+
+The parent should **not** silently become another broad subsystem developer. Small merge glue and integration-only fixes are acceptable; substantive feature work normally returns to a worker branch.
+
+See `INTEGRATION-ORCHESTRATOR.md` for the complete merge/test/evidence/routing policy.
 
 ## Core rule
 
@@ -103,6 +127,8 @@ If the lane truly depends on unmerged work, either:
 
 Do not quietly base a branch on another agent's unpublished/unidentified worktree.
 
+The parent/integration thread should normally read/merge from current `main` rather than maintain a permanent branch. If combined-risk staging is needed, use a short-lived disposable `integration/<milestone>` branch, then retire it after the combination is accepted or rejected.
+
 ## Ownership boundaries
 
 Each handoff must state what the lane **owns** and what it must **not** redesign.
@@ -152,7 +178,8 @@ An active lane should report back with:
 - CI/test status;
 - any direct local evidence needed;
 - whether it discovered additional safe parallel work;
-- whether it is ready for PR/merge.
+- whether it is ready for PR/merge;
+- any overlaps/merge dependencies the parent integration thread must know.
 
 If the lane discovers a second large independent problem, it should explicitly say something like:
 
@@ -169,21 +196,25 @@ Before a parallel branch is merged:
 - the PR should identify its base SHA and any dependent PR;
 - it should state overlapping files/areas with other active branches;
 - superseded code/docs should be removed rather than left as competing active paths;
-- any required follow-up lane should be explicit.
+- any required follow-up lane should be explicit;
+- the parent/integration thread should understand what still requires attended acceptance.
 
 Do not merge a branch merely because it has “lots of progress.” Merge when its owned contract is internally coherent.
 
 ## Integration order
 
-When multiple branches are ready:
+When multiple branches are ready, the parent thread should normally:
 
-1. merge foundational schema/contract/package changes first;
-2. update/rebase dependent branches against the resulting `main` if necessary;
-3. merge independent implementation lanes;
-4. resolve integration conflicts deliberately — do not choose “ours/theirs” blindly in canonical files;
-5. run post-merge CI on the combined `main`;
-6. build **one combined release-shaped candidate** from fresh canonical source;
-7. test the combined behavior in-game.
+1. inspect all ready PRs and their dependencies;
+2. merge foundational schema/contract/package changes first where other lanes depend on them;
+3. update/rebase dependent branches against the resulting `main` if necessary;
+4. merge independent implementation lanes;
+5. resolve integration conflicts deliberately — do not choose “ours/theirs” blindly in canonical files;
+6. run post-merge CI on the combined `main`;
+7. build **one combined release-shaped candidate** from fresh canonical source;
+8. coordinate one attended in-game test;
+9. write the durable test record;
+10. route each actionable finding to its original lane, a new follow-up lane, an integration issue, or a tiny parent-owned integration fix.
 
 The project owner prefers testing integrated milestones, not separately reinstalling the game for every agent branch.
 
@@ -199,6 +230,8 @@ Use the test tiers in `docs/CLEAN-ROOM-TESTING.md`:
 - large structural milestone / dependency or package change -> milestone clean-room test.
 
 The exact test handoff still must identify the canonical `main` SHA and package artifact.
+
+Meaningful attended results should be recorded under `docs/test-runs/` using the template there so the evidence can be redistributed without relying on chat history.
 
 ## Conflict prevention
 
@@ -216,7 +249,7 @@ Particular conflict hotspots:
 - package/distribution manifests;
 - CI test lists.
 
-These can still be changed in parallel when necessary, but one lane should be designated as the integration owner.
+These can still be changed in parallel when necessary, but one lane should be designated as the implementation owner and the parent thread should own the final integration decision.
 
 ## Current Biology REDmod split
 
@@ -269,8 +302,10 @@ The workflow is working when:
 
 - large tasks are split when useful without the user having to design the split;
 - agents can work independently without silently redefining each other's scope;
+- a parent integration thread keeps merge/test state coherent;
 - branches are reviewable and merge in a known order;
 - canonical docs remain singular rather than forked into competing instructions;
 - attended failures are preserved as acceptance requirements rather than forgotten after refactors;
 - the user tests one coherent combined build from `main`;
+- live findings are routed back to named owners instead of becoming orphan chat notes;
 - local game state remains auditable and is not layered with mystery branch residue.

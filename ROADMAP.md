@@ -11,11 +11,31 @@ Before doing new implementation work, read:
 3. `docs/PRE-REDMOD-LIVE-BASELINE-2026-09-15.md` — what the current build actually did in-game
 4. `docs/ACTIVE-REDMOD-ROADMAP.md` — detailed issue ledger, sequencing, acceptance gates
 5. `docs/BIOLOGY-REDMOD-MIGRATION.md` — architectural direction and rationale
-6. `docs/PARALLEL-AGENT-WORKFLOW.md` — branch/coordination rules
+6. `docs/PARALLEL-AGENT-WORKFLOW.md` — worker-lane branch/coordination rules
+7. `docs/INTEGRATION-ORCHESTRATOR.md` — parent-thread merge, local-test, evidence, and redistribution policy
 
-## Current next branches
+## Parent integration/orchestration thread
 
-The next refactor is intentionally split across up to three agents:
+Parallel worker lanes are coordinated by one long-lived **parent integration thread**.
+
+That parent thread is responsible for:
+
+- reviewing/ordering merges and keeping canonical `main` coherent;
+- deciding when multiple lane heads need a temporary integration branch before main;
+- coordinating the user's clean local test against one exact combined `main` candidate;
+- recording attended screenshots/logs/results under `docs/test-runs/`;
+- routing each live-test finding back to the original lane when appropriate, or creating/recommending a new follow-up lane when that is cleaner;
+- preventing the user from having to manually synchronize multiple agent threads.
+
+The parent thread is **not** a fourth broad feature lane. Substantive subsystem fixes normally return to the appropriate worker branch/agent. Read `docs/INTEGRATION-ORCHESTRATOR.md` for the canonical routing rules.
+
+Copy/paste-ready parent-thread startup/replacement packet:
+
+- `docs/handoffs/PARENT-INTEGRATION.md`
+
+## Current worker branches
+
+The current refactor is intentionally split across up to three implementation agents:
 
 - `agent/redmod-foundation` — official REDmod package/dependency foundation
 - `agent/biology-ui-runtime` — Biology body shell, body-state lifecycle, navigation/drill-down
@@ -26,6 +46,18 @@ Copy/paste-ready lane specifications live in:
 - `docs/handoffs/REDMOD-FOUNDATION.md`
 - `docs/handoffs/BIOLOGY-UI-RUNTIME.md`
 - `docs/handoffs/PRESENTATION-HUD-NAMEPLATES.md`
+
+## Current integration cycle
+
+The intended cycle is:
+
+```text
+worker branches -> PR/CI -> parent merge/integration review -> canonical main
+       -> one release-shaped local test -> docs/test-runs record
+       -> findings routed back to original/new worker lanes -> repeat
+```
+
+Do not install three separate worker branches into the game merely because three agents are active. The user normally tests selected work only after it is integrated into a coherent canonical candidate.
 
 ## Most important attended findings driving this work
 

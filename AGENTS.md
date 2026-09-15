@@ -1,6 +1,6 @@
 # Biology agent instructions
 
-Last updated: **2026-09-14**
+Last updated: **2026-09-15**
 
 **Biology** is the player-facing product identity for this foundational Cyberpunk 2077 body/physiology overhaul. The repository and some internal identifiers still use `cprealpass`, `RealPass`, and `CR*` during migration; do not perform a risky mass rename merely for cosmetics.
 
@@ -31,6 +31,25 @@ For the full workflow, branch/ownership rules, handoff template, merge order and
 - `docs/BIOLOGY-REDMOD-MIGRATION.md`
 
 If an agent foresees a large undertaking that can be split, it should explicitly report that fact to the user and provide the handoff rather than silently serializing everything.
+
+## PARENT INTEGRATION GATE — worker lanes report into one integration thread
+
+Parallel feature lanes are coordinated by a long-lived **parent/integration thread**. Read `docs/INTEGRATION-ORCHESTRATOR.md` before acting as that parent or before making cross-lane merge/test decisions.
+
+The parent/integration thread owns:
+
+- merge readiness and merge order across worker PRs;
+- short-lived integration branches when combined risk is high;
+- exact canonical-`main` awareness;
+- clean local-test handoffs after selected lanes are integrated;
+- durable attended test records under `docs/test-runs/`;
+- routing live findings back to the original lane when appropriate, or creating/recommending a new lane when the finding is substantial, cross-cutting, or the original context is stale.
+
+The parent thread is **not** a fourth broad implementation lane. It should normally return substantive subsystem fixes to their owner. It may handle only small merge glue, integration-only fixes, documentation/test-contract alignment, and deliberate conflict resolution.
+
+Worker agents should make their PRs easy for the parent to integrate: state the exact branch/head, owned scope, CI status, remaining attended acceptance, direct-game probes, overlaps, and merge dependencies.
+
+When attended testing reveals a failure, do not leave it only in chat. The parent should tie it to an exact `main` SHA/artifact, record it in `docs/test-runs/`, and give the receiving worker enough evidence to reproduce/understand the expected vs observed behavior without needing the parent conversation transcript.
 
 ## TEST HANDOFF GATE — read before telling the user a build is ready to test
 
@@ -81,14 +100,15 @@ See `docs/CLEAN-ROOM-TESTING.md` before giving live-test instructions.
 2. `docs/BIOLOGY-REDMOD-MIGRATION.md` — current product/package/dependency migration direction.
 3. `docs/DECISION-HISTORY.md` — when decisions changed and which misunderstandings the user already corrected.
 4. `docs/PARALLEL-AGENT-WORKFLOW.md` — branch/lane/handoff/merge rules.
-5. The focused architecture document relevant to the task, for example:
+5. `docs/INTEGRATION-ORCHESTRATOR.md` — parent-thread merge/test/evidence/routing rules when coordinating multiple lanes.
+6. The focused architecture file relevant to the task, for example:
    - `docs/BIOLOGY-UI.md`
    - `docs/SETTINGS-ARCHITECTURE.md`
    - `docs/E3-PRESENTATION.md`
    - `docs/PATCH-RESILIENCE.md`
    - `docs/RELEASE-ARCHITECTURE.md`
    - `docs/CLEAN-ROOM-TESTING.md`
-6. Machine-readable manifests/tests for the implementation contract.
+7. Machine-readable manifests/tests for the implementation contract.
 
 Do **not** reconstruct current intent from old commits, closed branch workplans, historical prototypes, or old `RealPass` naming before reading the files above.
 
@@ -240,5 +260,7 @@ When the user changes/corrects a requirement:
 - preserve history through Git.
 
 When large work can be parallelized, also update/provide the branch handoffs described in `docs/PARALLEL-AGENT-WORKFLOW.md`.
+
+When attended testing produces actionable evidence, the parent/integration thread should record and route it under `docs/INTEGRATION-ORCHESTRATOR.md` rather than leaving it only in conversation history.
 
 Current tracked game baseline is Cyberpunk 2077 `2.31`; refresh/audit after later patches or whenever compatibility depends on a newer local state.
