@@ -67,7 +67,7 @@ Rules:
 Before saying “ready to test”, “launch it”, or equivalent, the agent must state:
 
 1. **Test mode:** `ITERATION` or `MILESTONE CLEAN-ROOM`.
-2. **Source state:** the exact canonical `main` commit/revision being tested.
+2. **Source state:** the exact canonical `main` revision being tested.
 3. **Game-state evidence:** either “verified against recorded vanilla baseline” or why a milestone reinstall is required.
 4. **Artifact:** the release-shaped package being tested, not an accumulated repo/game state.
 
