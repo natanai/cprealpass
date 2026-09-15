@@ -71,7 +71,33 @@ When an agent asks the user to run a local evidence/audit/probe operation, it mu
 - Tell the user to attach that file to the owning ChatGPT thread.
 - Machine-readable JSON may still be produced for automation, but it does not replace the user-returned text evidence file.
 
-`tools/Audit-GameContracts.ps1` follows this rule directly and prints an absolute `LOCAL EVIDENCE REPORT:` line. `tools/Bootstrap-PresentationAudit.ps1` owns the same pattern for branch-specific presentation audits.
+`tools/Audit-GameContracts.ps1` follows this rule directly and prints an absolute `LOCAL EVIDENCE REPORT:` line. Repository-owned `Bootstrap-*.ps1` evidence entrypoints must also obey the canonical failure-durable bootstrap contract below.
+
+## Canonical failure-durable probe/bootstrap contract
+
+A repo-owned local probe is **not complete unless its useful evidence survives failure**. A nonzero child exit code by itself is not enough: if the attachable report says only `exit 1` while the child stderr or terminating exception was lost, the probe is incomplete and must not be treated as valid diagnostic evidence.
+
+For user-returned local probes/audits, the canonical bootstrap must:
+
+1. **Pin revision identity.** When branch-specific, require the intended branch plus an exact 40-character expected head, fetch that branch, record the fetched head, and refuse to continue if it differs.
+2. **Use disposable isolation.** Discover `natanai/cprealpass` by origin or create a uniquely signed seed clone, then use a uniquely signed detached/disposable checkout or worktree for the requested revision.
+3. **Default the installed game/tool tree to read-only.** The Cyberpunk/REDmod installation must be treated as read-only unless mutation is explicitly the purpose of the operator command.
+4. **Fingerprint the authority being inspected.** Record the exact supported game/native/tool identity relevant to the question, such as product/file version and, when useful, SHA-256 of the executable/tool actually inspected.
+5. **Collect bounded evidence.** Capture only the files/symbols/schema excerpts needed to answer the current question rather than dumping proprietary trees or huge console transcripts.
+6. **State the proof boundary.** Clearly distinguish source/symbol/schema evidence from exact compilation, official REDmod deployment, or live-runtime/attended proof. Source evidence must never be reported as deployment or runtime acceptance.
+7. **Produce one attachable plain-text report.** The same `.txt` file must contain the useful result on both success and failure.
+8. **Preserve child-process diagnostics before throwing.** For every child process whose output matters, capture **stdout, stderr, exit code, and actual exception/error text** into that same report. On nonzero exit, throw only after those diagnostics have been persisted.
+9. **Record bootstrap context.** The report must include requested branch/head when applicable, fetched head, disposable checkout/worktree path, and the game/native/tool identity used as evidence.
+10. **Always expose one attachment handoff.** Success and failure paths must both end by printing exactly one obvious:
+
+```text
+ATTACH THIS FILE TO CHATGPT:
+<absolute path to report.txt>
+```
+
+For external/native child processes, the preferred PowerShell implementation uses `System.Diagnostics.ProcessStartInfo` with `UseShellExecute = false`, `RedirectStandardOutput = true`, `RedirectStandardError = true`, and `ArgumentList` for safe argument boundaries. Read stdout/stderr, wait for exit, persist both streams plus the exit code, and only then evaluate success/failure. The outer `catch` must add the exception type and message to the report, and the attachment handoff belongs in a `finally`-equivalent path.
+
+`tools/Bootstrap-RedmodActivationSentinelProbe.ps1` and `tools/Bootstrap-PresentationAudit.ps1` are current examples of this contract. Their inner evidence may fail, but the user-returned `.txt` must still explain **why** it failed rather than merely recording a nonzero exit.
 
 Attended-test source workspaces are disposable and milestone-specific. Prefer uniquely signed names such as:
 
@@ -253,7 +279,7 @@ LOCAL EVIDENCE REPORT: C:\...\reports\local-game-contract-audit-....txt
 
 Attach that `.txt` file to the owning ChatGPT thread. This is investigation evidence, not attended runtime acceptance.
 
-For branch-specific presentation audits, use repository-owned `tools/Bootstrap-PresentationAudit.ps1`; it discovers or creates a usable cprealpass seed, fetches the exact branch/head, creates a uniquely signed detached worktree, runs the presentation audit, and prints `ATTACH THIS FILE TO CHATGPT:` followed by the evidence path.
+For branch-specific presentation audits, use repository-owned `tools/Bootstrap-PresentationAudit.ps1`; it discovers or creates a usable cprealpass seed, fetches the exact branch/head, creates a uniquely signed detached worktree, fingerprints the game identity, runs the presentation audit through redirected child stdout/stderr capture, preserves child exit/error evidence in the same report, and prints `ATTACH THIS FILE TO CHATGPT:` followed by the evidence path.
 
 ---
 
@@ -290,13 +316,14 @@ It publishes derived metadata only, never proprietary Cyberpunk payload.
 3. Do not use or recreate `C:\Games\CyberpunkRealism`; that path convention is retired.
 4. Branch-specific/local-audit work should use a fresh uniquely signed worktree/checkout, not silently mutate an arbitrary existing repo.
 5. **Every user-returned evidence operation must create a `.txt` report file** and print its absolute path; ask the user to attach it rather than paste a transcript.
-6. Evidence reports must preserve clear PASS and FAIL outcomes.
-7. For foundational runtime/package questions, probe the installed game/CDPR/REDmod toolchain before assuming the established community route is necessary.
-8. Prefer one repository-owned entrypoint over a long chain of unrelated commands.
-9. Long operations must expose durable console progress; `Write-Progress` alone is insufficient.
-10. Do not describe a fast sanity pass as a full baseline/hash verification.
-11. After a freshly uninstalled/residual-directory-deleted/reinstalled game, let the user choose whether the additional exhaustive hash check is worth the time. Default is **No**.
-12. Iteration cleanup on a reused install remains stricter: `Reset-BiologyIteration.ps1` must prove the return to the tracked baseline before layering another package.
-13. After a player hard-uninstall test, prefer `Verify-BiologyRemoval.ps1`; do not invent destructive cleanup or misclassify intentionally preserved generic dependencies as Biology residue.
-14. If a command fails, return its evidence report to the owning agent; do not improvise destructive cleanup commands.
-15. If an operation becomes recurring, codify it here and in `tools/` with CI coverage before treating it as standard.
+6. Evidence reports must preserve clear PASS and FAIL outcomes **and the actual child diagnostics needed to explain failures**. A child nonzero exit with missing stderr/exception evidence is an incomplete probe.
+7. Branch-specific probe bootstraps must pin the requested branch and exact head, record the fetched head and disposable checkout, and follow the canonical failure-durable probe/bootstrap contract above.
+8. For foundational runtime/package questions, probe the installed game/CDPR/REDmod toolchain before assuming the established community route is necessary.
+9. Prefer one repository-owned entrypoint over a long chain of unrelated commands.
+10. Long operations must expose durable console progress; `Write-Progress` alone is insufficient.
+11. Do not describe a fast sanity pass as a full baseline/hash verification.
+12. After a freshly uninstalled/residual-directory-deleted/reinstalled game, let the user choose whether the additional exhaustive hash check is worth the time. Default is **No**.
+13. Iteration cleanup on a reused install remains stricter: `Reset-BiologyIteration.ps1` must prove the return to the tracked baseline before layering another package.
+14. After a player hard-uninstall test, prefer `Verify-BiologyRemoval.ps1`; do not invent destructive cleanup or misclassify intentionally preserved generic dependencies as Biology residue.
+15. If a command fails, return its evidence report to the owning agent; do not improvise destructive cleanup commands.
+16. If an operation becomes recurring, codify it here and in `tools/` with CI coverage before treating it as standard.

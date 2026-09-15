@@ -3,22 +3,20 @@ param(
     [Parameter(Mandatory=$true)][string]$Branch,
     [Parameter(Mandatory=$true)][ValidatePattern('^[0-9a-fA-F]{40}$')][string]$ExpectedHead,
     [string]$GamesRoot = 'C:\Games',
-    [string]$GamePath = 'C:\Games\Steam\steamapps\common\Cyberpunk 2077'
+    [string]$GameRoot = 'C:\Games\Steam\steamapps\common\Cyberpunk 2077'
 )
 
 $ErrorActionPreference = 'Stop'
-if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'Bootstrap-PresentationAudit.ps1 requires PowerShell 7 or newer.' }
+if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'Bootstrap-RedmodActivationSentinelProbe.ps1 requires PowerShell 7 or newer.' }
 
 $GamesRoot = [IO.Path]::GetFullPath($GamesRoot)
-$GamePath = [IO.Path]::GetFullPath($GamePath)
+$GameRoot = [IO.Path]::GetFullPath($GameRoot)
 $signature = [DateTime]::Now.ToString('yyyyMMdd-HHmmss') + '-' + [guid]::NewGuid().ToString('N').Substring(0,8)
-$reportPath = Join-Path $GamesRoot ('Biology-Presentation-Audit-' + $signature + '.txt')
+$reportPath = Join-Path $GamesRoot ('Biology-Redmod-Activation-Sentinel-Probe-' + $signature + '.txt')
 $repoUrl = 'https://github.com/natanai/cprealpass.git'
 $repoPattern = '(?i)(?:github\.com[/:])natanai/cprealpass(?:\.git)?$'
 $seedRepo = $null
 $auditRoot = $null
-$fetchedHead = $null
-$auditExit = $null
 $failed = $false
 
 function Add-Evidence([string]$text) {
@@ -58,13 +56,7 @@ function Invoke-NativeSafe([string]$FilePath,[string[]]$Arguments,[switch]$Echo)
             Write-Host $line
         }
     }
-
-    [pscustomobject]@{
-        ExitCode = $exitCode
-        StdOut = $stdout
-        StdErr = $stderr
-        Output = @($combined)
-    }
+    [pscustomobject]@{ ExitCode=$exitCode; StdOut=$stdout; StdErr=$stderr; Output=@($combined) }
 }
 
 function Invoke-GitSafe([string[]]$Arguments,[switch]$Echo) {
@@ -73,69 +65,46 @@ function Invoke-GitSafe([string[]]$Arguments,[switch]$Echo) {
 
 function Get-CprealpassSeed {
     foreach ($directory in @(Get-ChildItem -LiteralPath $GamesRoot -Directory -ErrorAction SilentlyContinue)) {
-        # A normal clone has .git/config. Worktrees use a .git pointer file; those are
-        # deliberately not selected as the reusable seed because their common repo may
-        # have been removed. If only worktrees remain, create a fresh signed seed clone.
         $configPath = Join-Path $directory.FullName '.git\config'
         if (-not (Test-Path -LiteralPath $configPath -PathType Leaf)) { continue }
-
         try {
             $config = Get-Content -Raw -LiteralPath $configPath -ErrorAction Stop
         } catch {
             Add-Evidence "Skipping unreadable Git config candidate: $($directory.FullName)"
             continue
         }
-
-        $urls = [regex]::Matches($config, '(?im)^\s*url\s*=\s*(?<url>.+?)\s*$')
+        $urls = [regex]::Matches($config,'(?im)^\s*url\s*=\s*(?<url>.+?)\s*$')
         $matchesRepo = $false
         foreach ($urlMatch in $urls) {
             $normalized = $urlMatch.Groups['url'].Value.Trim().TrimEnd('/')
-            if ($normalized -match $repoPattern) {
-                $matchesRepo = $true
-                break
-            }
+            if ($normalized -match $repoPattern) { $matchesRepo = $true; break }
         }
         if (-not $matchesRepo) { continue }
-
         $check = Invoke-GitSafe -Arguments @('-C',$directory.FullName,'rev-parse','--show-toplevel')
-        if ($check.ExitCode -eq 0) {
-            return $directory.FullName
-        }
-
+        if ($check.ExitCode -eq 0) { return $directory.FullName }
         Add-Evidence "Skipping unusable cprealpass seed candidate: $($directory.FullName)"
-        foreach ($line in $check.Output) { Add-Evidence ("  git: " + [string]$line) }
     }
     return $null
 }
 
-if (-not (Test-Path -LiteralPath $GamesRoot -PathType Container)) {
-    throw "Games root does not exist: $GamesRoot"
-}
+if (-not (Test-Path -LiteralPath $GamesRoot -PathType Container)) { throw "Games root does not exist: $GamesRoot" }
 
 @(
-    'BIOLOGY PRESENTATION LOCAL AUDIT BOOTSTRAP',
+    'BIOLOGY W07.1 REDMOD ACTIVATION SENTINEL PROBE BOOTSTRAP',
     ('Started: ' + [DateTime]::Now.ToString('o')),
     ('Branch: ' + $Branch),
     ('Expected head: ' + $ExpectedHead),
-    ('Game: ' + $GamePath),
-    'Policy: branch checkout is disposable; the installed game is read-only for this audit.',
+    ('Game root: ' + $GameRoot),
+    'Policy: branch checkout is disposable; the installed game is read-only for this probe.',
     ''
 ) | Set-Content -LiteralPath $reportPath -Encoding utf8
 
 try {
     if (-not (Get-Command git -ErrorAction SilentlyContinue)) { throw 'git is not available on PATH.' }
     if (-not (Get-Command pwsh -ErrorAction SilentlyContinue)) { throw 'PowerShell 7 (pwsh) is not available on PATH.' }
-    if (-not (Test-Path -LiteralPath $GamePath -PathType Container)) { throw "Cyberpunk game directory does not exist: $GamePath" }
-
-    $gameExe = Join-Path $GamePath 'bin\x64\Cyberpunk2077.exe'
-    if (-not (Test-Path -LiteralPath $gameExe -PathType Leaf)) { throw "Cyberpunk executable does not exist: $gameExe" }
-    $gameVersion = (Get-Item -LiteralPath $gameExe).VersionInfo.ProductVersion
-    $gameSha256 = (Get-FileHash -LiteralPath $gameExe -Algorithm SHA256).Hash
-    Add-Evidence "Cyberpunk product version: $gameVersion"
-    Add-Evidence "Cyberpunk executable SHA-256: $gameSha256"
+    if (-not (Test-Path -LiteralPath $GameRoot -PathType Container)) { throw "Cyberpunk game directory does not exist: $GameRoot" }
 
     $seedRepo = Get-CprealpassSeed
-
     if ([string]::IsNullOrWhiteSpace($seedRepo)) {
         $seedRepo = Join-Path $GamesRoot ('cprealpass-repo-' + $signature)
         Add-Evidence "No usable cprealpass seed checkout found. Cloning seed: $seedRepo"
@@ -152,65 +121,54 @@ try {
     if ($fetch.ExitCode -ne 0) { throw "Could not fetch $Branch (git exit $($fetch.ExitCode))." }
 
     $resolve = Invoke-GitSafe -Arguments @('-C',$seedRepo,'rev-parse',("refs/remotes/origin/{0}" -f $Branch))
-    if ($resolve.ExitCode -ne 0) {
-        foreach ($line in $resolve.Output) { Add-Evidence ("git: " + [string]$line) }
-        throw 'Could not resolve fetched branch head.'
-    }
+    if ($resolve.ExitCode -ne 0) { throw 'Could not resolve fetched branch head.' }
     $fetchedHead = $resolve.StdOut.Trim()
     Add-Evidence "Fetched head: $fetchedHead"
     if ($fetchedHead -ne $ExpectedHead) {
-        throw "Branch head moved. Expected $ExpectedHead but fetched $fetchedHead. Refusing to audit a different revision."
+        throw "Branch head moved. Expected $ExpectedHead but fetched $fetchedHead. Refusing to probe a different revision."
     }
 
-    $auditRoot = Join-Path $GamesRoot ('cprealpass-presentation-audit-' + $signature)
+    $auditRoot = Join-Path $GamesRoot ('cprealpass-redmod-activation-probe-' + $signature)
     if (Test-Path -LiteralPath $auditRoot) { throw "Unique audit path unexpectedly exists: $auditRoot" }
-
-    Add-Evidence "Creating disposable audit checkout: $auditRoot"
+    Add-Evidence "Creating disposable probe checkout: $auditRoot"
     $worktree = Invoke-GitSafe -Arguments @('-C',$seedRepo,'worktree','add','--detach',$auditRoot,$ExpectedHead) -Echo
-    if ($worktree.ExitCode -ne 0) { throw "Could not create disposable audit checkout (git exit $($worktree.ExitCode))." }
+    if ($worktree.ExitCode -ne 0) { throw "Could not create disposable probe checkout (git exit $($worktree.ExitCode))." }
 
     Write-Host ''
-    Write-Host "AUDIT CHECKOUT: $auditRoot" -ForegroundColor Cyan
-    Write-Host "AUDIT HEAD:     $ExpectedHead" -ForegroundColor Cyan
+    Write-Host "PROBE CHECKOUT: $auditRoot" -ForegroundColor Cyan
+    Write-Host "PROBE HEAD:     $ExpectedHead" -ForegroundColor Cyan
     Write-Host ''
 
     Add-Evidence ''
-    Add-Evidence '=== INNER PRESENTATION AUDIT PROCESS OUTPUT ==='
-    $auditProcess = Invoke-NativeSafe -FilePath 'pwsh' -Arguments @(
-        '-NoLogo','-NoProfile','-File',(Join-Path $auditRoot 'tools\Audit-PresentationContracts.ps1'),
-        '-GamePath',$GamePath,
+    Add-Evidence '=== INNER PROBE PROCESS OUTPUT ==='
+    $probe = Invoke-NativeSafe -FilePath 'pwsh' -Arguments @(
+        '-NoLogo','-NoProfile','-File',(Join-Path $auditRoot 'tools\Probe-RedmodActivationSentinel.ps1'),
+        '-GameRoot',$GameRoot,
         '-ReportPath',$reportPath
     ) -Echo
-    $auditExit = $auditProcess.ExitCode
+    $probeExit = $probe.ExitCode
 
     Add-Evidence ''
-    Add-Evidence '=== LOCAL AUDIT BOOTSTRAP CONTEXT ==='
+    Add-Evidence '=== PROBE BOOTSTRAP CONTEXT ==='
     Add-Evidence "Seed checkout: $seedRepo"
-    Add-Evidence "Disposable audit checkout: $auditRoot"
+    Add-Evidence "Disposable probe checkout: $auditRoot"
     Add-Evidence "Requested branch: $Branch"
-    Add-Evidence "Fetched head: $fetchedHead"
-    Add-Evidence "Audited head: $ExpectedHead"
-    Add-Evidence "Audit process exit code: $auditExit"
+    Add-Evidence "Probed head: $ExpectedHead"
+    Add-Evidence "Probe process exit code: $probeExit"
     Add-Evidence ('Completed: ' + [DateTime]::Now.ToString('o'))
-
-    if ($auditExit -ne 0) {
-        throw "Presentation audit returned exit code $auditExit. See INNER PRESENTATION AUDIT PROCESS OUTPUT above for captured stdout/stderr and child error evidence."
-    }
+    if ($probeExit -ne 0) { throw "Activation-sentinel probe returned exit code $probeExit. See INNER PROBE FAILURE / process output above." }
 } catch {
     $failed = $true
     Add-Evidence ''
-    Add-Evidence '=== LOCAL AUDIT BOOTSTRAP FAILURE ==='
+    Add-Evidence '=== PROBE BOOTSTRAP FAILURE ==='
     Add-Evidence ('Time: ' + [DateTime]::Now.ToString('o'))
     Add-Evidence ('Exception type: ' + $_.Exception.GetType().FullName)
     Add-Evidence ('Error: ' + $_.Exception.Message)
     Add-Evidence "Seed checkout: $seedRepo"
-    Add-Evidence "Disposable audit checkout: $auditRoot"
-    Add-Evidence "Requested branch: $Branch"
-    Add-Evidence "Fetched head: $fetchedHead"
+    Add-Evidence "Disposable probe checkout: $auditRoot"
     Add-Evidence "Expected head: $ExpectedHead"
-    Add-Evidence "Audit process exit code: $auditExit"
     Write-Host ''
-    Write-Host 'The audit encountered a failure. The text report contains the child stdout/stderr and exception evidence.' -ForegroundColor Yellow
+    Write-Host 'The probe encountered a failure. The text report contains the inner error evidence.' -ForegroundColor Yellow
 } finally {
     Write-Host ''
     Write-Host '============================================================' -ForegroundColor Cyan
