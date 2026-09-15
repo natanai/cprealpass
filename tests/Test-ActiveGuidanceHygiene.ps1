@@ -107,7 +107,7 @@ if ($packageRecipe.id -ne 'biology-source' -or $packageRecipe.name -notmatch 'Bi
 }
 
 $workflow = Read-Tracked '.github/workflows/ci.yml'
-if ($workflow -notmatch '(?m)^name: Biology CI$' -or $workflow -match '(?i)realpass-development-source|realpass-offline-reports|Run cloud-safe realpass checks') {
+if (-not $workflow.StartsWith('name: Biology CI') -or $workflow -match '(?i)realpass-development-source|realpass-offline-reports|Run cloud-safe realpass checks') {
     $violations.Add('Active GitHub Actions surfaces still advertise stale RealPass CI/artifact identity.')
 }
 
