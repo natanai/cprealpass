@@ -1,4 +1,4 @@
-name: realpass CI
+name: Biology CI
 
 on:
   push:
@@ -9,12 +9,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: realpass-ci-${{ github.workflow }}-${{ github.ref }}
+  group: biology-ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   offline-validation:
-    name: Offline models, contracts, and safe package
+    name: Offline models, contracts, and safe source artifact
     runs-on: windows-latest
     timeout-minutes: 20
 
@@ -29,11 +29,11 @@ jobs:
           Write-Host "Ref: $env:GITHUB_REF"
           pwsh --version
 
-      - name: Run cloud-safe realpass checks
+      - name: Run cloud-safe Biology checks
         shell: pwsh
         run: ./tests/Run-CI.ps1
 
-      - name: Build redistribution-safe development source package
+      - name: Build redistribution-safe Biology development source package
         shell: pwsh
         run: ./tools/Build-Package.ps1
 
@@ -41,16 +41,16 @@ jobs:
         shell: pwsh
         run: |
           $archives = @(Get-ChildItem -LiteralPath ./dist -Filter '*.zip' -File)
-          if ($archives.Count -ne 1) { throw "Expected exactly one development package, found $($archives.Count)." }
-          $scanRoot = Join-Path $env:RUNNER_TEMP 'realpass-artifact-scan'
+          if ($archives.Count -ne 1) { throw "Expected exactly one development source package, found $($archives.Count)." }
+          $scanRoot = Join-Path $env:RUNNER_TEMP 'biology-artifact-scan'
           if (Test-Path -LiteralPath $scanRoot) { Remove-Item -LiteralPath $scanRoot -Recurse -Force }
           Expand-Archive -LiteralPath $archives[0].FullName -DestinationPath $scanRoot
           ./tools/Test-ArtifactPolicy.ps1 -Root $scanRoot
 
-      - name: Upload development source package
+      - name: Upload Biology development source package
         uses: actions/upload-artifact@v4
         with:
-          name: realpass-development-source-${{ github.sha }}
+          name: biology-development-source-${{ github.sha }}
           path: dist/*.zip
           if-no-files-found: error
           retention-days: 14
@@ -59,7 +59,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: realpass-offline-reports-${{ github.sha }}
+          name: biology-offline-reports-${{ github.sha }}
           path: reports/*.json
           if-no-files-found: ignore
           retention-days: 14
