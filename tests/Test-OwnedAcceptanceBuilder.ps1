@@ -17,7 +17,9 @@ foreach ($needle in @('DarkFuture','Project\s*E3','Codeware')) {
     Check ($source.Contains($needle)) "Owned builder lost forbidden-runtime guard: $needle"
 }
 Check ($source.Contains('import\s+ModSettings')) 'Owned builder does not reject direct Mod Settings imports.'
-Check ($source.Contains('ModSettings\.(?:Register|Unregister|GetInstance')) 'Owned builder does not reject direct Mod Settings policy/API coupling.'
+# Register/Unregister listener calls are the one allowed provider lifecycle boundary.
+Check ($source.Contains('ModSettings\.(?:GetInstance|GetMods|GetCategories|GetVars|AcceptChanges|RejectChanges|RestoreDefaults)')) 'Owned builder does not reject direct Mod Settings policy/API coupling.'
+Check (-not $source.Contains('ModSettings\.(?:Register|Unregister|GetInstance')) 'Owned builder still treats allowed listener lifecycle calls as forbidden policy coupling.'
 Check (-not $source.Contains('ModSettings|Mod Settings')) 'Owned builder still blanket-rejects accepted Mod Settings runtime-property metadata.'
 Check ($source.Contains('Trauma\s+Kit') -and $source.Contains('UseTraumaKit')) 'Owned builder no longer rejects Dark Future Trauma Kit identity leakage.'
 Check ($source.Contains('vanillaIdentityPolicy')) 'Owned acceptance report does not record vanilla-identity policy.'
