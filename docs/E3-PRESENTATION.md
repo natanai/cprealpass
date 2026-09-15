@@ -37,7 +37,7 @@ The REDmod migration may conclude that the official mod enable/disable boundary 
 
 ## 2026-09-15 attended pre-REDmod evidence
 
-The exact clean-room candidate at `ec8ba06451c3cbacabfad24f1479e1537147d0c9` launched successfully, but the attended test showed that the presentation target above is **not implemented yet**.
+The exact clean-room candidate at `ec8ba06451c3cbacabfad24f1479e1537147d0c9` launched successfully, but the attended test showed that the presentation target above was **not implemented yet in that candidate**.
 
 Observed:
 
@@ -51,7 +51,7 @@ Interpretation:
 
 - **do not count health-bar suppression as evidence that the E3 presentation works.** Barless actor-health is a Biology-wide product rule while Biology is enabled.
 - The optional E3 preference needs a clearly visible E3-specific effect: ON should visibly activate the Biology-owned E3-inspired HUD/nameplate treatment; OFF should yield those E3-specific treatments while leaving Biology simulation and barless-health policy unchanged.
-- The current setting therefore lacks a convincing attended success signal because the full HUD/nameplate treatment is absent.
+- The pre-refactor candidate therefore lacked a convincing attended success signal because the full HUD/nameplate treatment was absent.
 
 The full baseline and issue IDs are in:
 
@@ -108,6 +108,15 @@ A reviewer should be able to identify the E3 ON capture without reading the sett
 
 ## Current implementation status
 
-The repository has an owned settings boundary, global-master concept, accepted Biology-on actor-health suppression, and an owned scanned-civilian name fallback. It **does not yet contain the full red E3-style first-person HUD recreation or accepted E3-inspired nameplate styling**.
+Issue #30's `agent/presentation-hud-nameplates` lane now contains the first project-original executable presentation slices:
 
-Core red HUD framing, navigation/quest/interaction treatment, and full E3-inspired nameplates remain implementation work. Do not describe the presentation as complete until an attended build visibly demonstrates the matched-screenshot contract above.
+- `E3FirstPersonHud.reds` creates a Biology-owned red asymmetric lower-left first-person rail/frame treatment on the native biomonitor HUD host. It is controlled only by the E3 presentation preference and does not render or read a health value.
+- `E3NameplatesNative.reds` creates a matching Biology-owned red rail/frame treatment on the native NPC nameplate controller. Native identity, projection and visibility rules remain authoritative.
+- `NameplatesNative.reds` remains the separate data-only scanned-civilian public-name fallback.
+- `NoHealthbars.reds` remains the separate Biology-wide actor-health suppression policy and does not consult the E3 presentation preference.
+- the player-facing settings surface now says `Biology`, `Enable Biology`, and `E3-inspired HUD + nameplates`, while compatibility identifiers remain internal where renaming them would add unnecessary migration risk;
+- cloud regression checks explicitly reject Project E3 runtime dependencies, scanner/quickhack ownership, external E3 UI resources, health-state coupling, and unregistered 2.31 native seams.
+
+These source slices are **implemented, but not yet attended-accepted**. Cloud CI can prove ownership/contract boundaries, not visual placement or exact game-runtime compatibility. Before calling the presentation complete or merge-ready, exact-compile the combined release-shaped candidate against Cyberpunk 2077 2.31 and perform the matched screenshot acceptance above. If the first-person frame is not visually unmistakable enough in the live game, expand the owned framing/status language before acceptance rather than treating hidden health bars as success.
+
+Compass/navigation/quest/activity/interaction/crosshair migration remains optional follow-on presentation work unless attended comparison shows those elements are necessary for the intended recognizable 2018/E3 result.

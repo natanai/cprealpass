@@ -1,15 +1,18 @@
 {
   "schemaVersion": 4,
   "product": "realpass",
+  "playerFacingProduct": "Biology",
   "surface": {
     "provider": "mod-settings",
-    "purpose": "a global RealPass master switch plus one E3-inspired presentation preference",
+    "providerRole": "optional-ui-and-persistence-adapter",
+    "semanticOwner": "biology",
+    "purpose": "a global Biology master switch plus one Biology-owned E3-inspired presentation preference",
     "publicGameplaySettings": false,
     "publicBalanceSettings": false,
     "publicMasterEnable": true,
     "publicPresentationPreferences": true,
     "persistenceOwner": "mod-settings",
-    "notes": "When RealPass is enabled, one authored physical simulation runs with no subsystem or balance tuning. The global master switch may disable the complete overhaul; the only other editable setting controls the E3-inspired HUD/nameplate presentation."
+    "notes": "The semantic settings API is Biology-owned and provider-neutral. Mod Settings is only the current UI/persistence adapter. When Biology is enabled, one authored physical simulation runs with no subsystem or balance tuning. The global master switch may disable the complete overhaul; the only other editable setting controls Biology's E3-inspired HUD/nameplate presentation."
   },
   "featureLedger": [],
   "releaseProfile": {
@@ -28,22 +31,25 @@
   "developmentFeedbackFallback": {
     "traditionalPlayerHealthBarsVisibleUntilReplacementAccepted": false,
     "traditionalNpcHealthBarsVisibleUntilReplacementAccepted": false,
-    "rule": "Attended feedback explicitly accepted barless actor presentation for RealPass-on play. Turning the global RealPass master switch off restores native HUD/nameplate behavior."
+    "rule": "Attended feedback explicitly accepted barless actor presentation for Biology-on play. The E3 preference does not own health-bar suppression. Turning the global Biology master switch off restores native HUD/nameplate behavior."
   },
   "publicControls": [
     {
       "id": "realpass.enabled",
+      "compatibilityId": true,
+      "displayName": "Enable Biology",
       "type": "bool",
       "default": true,
       "authority": "global-master",
-      "description": "Turns the complete RealPass overhaul on or off. Reload the current save after changing it so every adapter begins from the same state."
+      "description": "Turns the complete Biology overhaul on or off. Reload the current save after changing it so every adapter begins from the same state."
     },
     {
       "id": "presentation.e3-first-person-hud-visuals",
+      "displayName": "E3-inspired HUD + nameplates",
       "type": "bool",
       "default": true,
       "authority": "presentation-only",
-      "description": "Toggles the red E3-inspired first-person HUD and NPC-nameplate visual layer. The physical simulation and modern scanner remain unchanged."
+      "description": "Toggles Biology's red E3-inspired first-person HUD and NPC-nameplate visual layer. The physical simulation, barless-health policy, and native modern scanner/quickhack interface remain unchanged."
     }
   ],
   "developmentProfileKeys": [
@@ -59,8 +65,9 @@
     "Development profile keys exist only to isolate authorities during compilation, calibration and attended diagnosis.",
     "A release builder fixes gameplay/presentation authority keys to the release profile and diagnostics off.",
     "Individual development authority gates are never persisted as normal player preferences.",
-    "The global RealPass master switch is the sole player control allowed to stop the authored overhaul as a whole.",
-    "The E3-inspired HUD preference may suppress only the E3-inspired visual skin/nameplate presentation; underlying physical state and consequences continue unchanged while RealPass remains enabled."
+    "The global Biology master switch is the sole player control allowed to stop the authored overhaul as a whole.",
+    "The E3-inspired HUD preference may suppress only Biology-owned E3-specific visual skin/nameplate presentation; underlying physical state, the barless-health policy, and consequences continue unchanged while Biology remains enabled.",
+    "Provider-specific UI/persistence code may adapt these two booleans but may not own or redefine their semantics."
   ],
   "forbiddenPublicSettings": [
     "body.enabled",
@@ -87,5 +94,5 @@
     "cosmetic-transmog-authority"
   ],
   "numericPublicBalanceControlsAllowed": false,
-  "binaryPreferenceRule": "Public booleans are limited to the complete RealPass master switch and the E3-inspired presentation preference. No individual physical authority, rate, damage, protection, injury, pain, treatment or recovery parameter is player-tunable."
+  "binaryPreferenceRule": "Public booleans are limited to the complete Biology master switch and the E3-inspired presentation preference. No individual physical authority, rate, damage, protection, injury, pain, treatment or recovery parameter is player-tunable."
 }
