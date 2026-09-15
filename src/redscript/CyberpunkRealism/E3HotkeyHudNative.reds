@@ -29,7 +29,6 @@ private final func CRCreateBiologyE3HotkeyFrame() -> Void {
   CRBiologyE3Primitives.AddRect(this.crBiologyE3HotkeyFrame, n"CRBiologyE3HotkeyLeft", 0.0, 18.0, 3.0, 70.0, 0.76);
   CRBiologyE3Primitives.AddRect(this.crBiologyE3HotkeyFrame, n"CRBiologyE3HotkeyTop", 0.0, 18.0, 158.0, 3.0, 0.76);
   CRBiologyE3Primitives.AddRect(this.crBiologyE3HotkeyFrame, n"CRBiologyE3HotkeyTick", 169.0, 18.0, 22.0, 3.0, 0.52);
-  CRBiologyE3Primitives.AddLabel(this.crBiologyE3HotkeyFrame, n"CRBiologyE3HotkeyLabel", "QUICK", 14.0, 28.0, 11, 0.58);
 }
 
 @addMethod(HotkeysWidgetController)
