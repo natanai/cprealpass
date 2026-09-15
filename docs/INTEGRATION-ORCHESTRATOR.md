@@ -3,19 +3,22 @@
 Status: **canonical parent-thread policy**  
 Last updated: **2026-09-15**
 
+> **MANDATORY CURRENT-THREAD LOOKUP:** Before creating, reusing, replacing, or routing work to any ChatGPT conversation, read `THREAD-LEDGER.md`. The parent owns that ledger and must keep it current.
+
 The long-lived parent integration thread keeps parallel Biology workers coherent, mergeable and testable. It is not primarily a feature-development lane and must not quietly become a fourth broad implementation lane.
 
-Current worker names belong in root `ROADMAP.md`, `ACTIVE-REDMOD-ROADMAP.md`, and GitHub issues/PRs. This policy intentionally stays branch-agnostic.
+Current worker implementation names belong in root `ROADMAP.md`, `ACTIVE-REDMOD-ROADMAP.md`, GitHub issues/PRs, and the canonical conversation registry in `THREAD-LEDGER.md`. This policy intentionally stays branch-agnostic.
 
 ## Parent-thread responsibilities
 
-The parent owns five things:
+The parent owns six things:
 
-1. **Merge orchestration** — exact-main awareness, PR scope/CI/overlap review, merge order and conflict resolution.
-2. **Local-test orchestration** — one reproducible attended path against an exact integrated artifact.
-3. **Evidence capture** — convert screenshots, logs, tool-generated reports and observations into durable test records.
-4. **Finding triage** — give every actionable attended finding an explicit owner/route.
-5. **Redistribution** — produce issue updates/copy-paste handoffs so workers do not depend on the parent chat transcript.
+1. **Thread/lane continuity** — maintain `THREAD-LEDGER.md`, including the active parent, active workers, usable historical threads, replacements and too-long transitions.
+2. **Merge orchestration** — exact-main awareness, PR scope/CI/overlap review, merge order and conflict resolution.
+3. **Local-test orchestration** — one reproducible attended path against an exact integrated artifact.
+4. **Evidence capture** — convert screenshots, logs, tool-generated reports and observations into durable test records.
+5. **Finding triage** — give every actionable attended finding an explicit owner/route.
+6. **Redistribution** — produce issue updates/copy-paste handoffs so workers do not depend on the parent chat transcript.
 
 ## What the parent may implement
 
@@ -28,20 +31,36 @@ The parent may handle:
 
 Substantive body runtime, Biology UI, presentation, package/release, combat, clothing or simulation work normally goes to a worker lane.
 
+## Thread/lane registry rule
+
+`docs/THREAD-LEDGER.md` is the official registry for conversation continuity.
+
+The parent must use it to distinguish:
+
+- **lane goal** from **conversation instance**;
+- currently `ACTIVE` conversations from merely `USABLE` older ones;
+- worker completion (`READY-PARENT`) from thread usability;
+- a thread that has become `TOO-LONG` from a lane that is still active.
+
+A clear new goal should normally receive a new worker lane/thread even when an older usable conversation exists. Old usable threads are context reserves, not default routing destinations.
+
+When the user reports that any thread—including the parent—has become too long, update the ledger before continuing substantial work there. The same lane may continue in the next thread generation (`P01.1 -> P01.2`, `W06.1 -> W06.2`); a materially new goal gets a new base lane ID instead.
+
 ## Current-state lookup
 
-Before making merge/test decisions, the parent should read:
+Before making merge/test/routing decisions, the parent should read:
 
 1. `AGENTS.md`
-2. root `ROADMAP.md`
-3. `AGREED-GOALS.md`
-4. this document
-5. `PARALLEL-AGENT-WORKFLOW.md`
-6. `CLEAN-ROOM-TESTING.md`
-7. `ACTIVE-REDMOD-ROADMAP.md`
-8. `LOCAL-OPERATOR-COMMANDS.md`
-9. latest relevant `docs/test-runs/` record
-10. current open issues/PRs
+2. `THREAD-LEDGER.md`
+3. root `ROADMAP.md`
+4. `AGREED-GOALS.md`
+5. this document
+6. `PARALLEL-AGENT-WORKFLOW.md`
+7. `CLEAN-ROOM-TESTING.md`
+8. `ACTIVE-REDMOD-ROADMAP.md`
+9. `LOCAL-OPERATOR-COMMANDS.md`
+10. latest relevant `docs/test-runs/` record
+11. current open issues/PRs
 
 Do not reconstruct current state from merged worker handoffs or dated baseline files.
 
@@ -59,6 +78,8 @@ Before merging, verify:
 - dependencies/overlaps with other workers are explicit;
 - shared-file conflicts have a deliberate resolution plan;
 - remaining local/direct-game acceptance is documented.
+
+When a worker becomes ready, update its ledger row to `READY-PARENT` rather than leaving the user to remember which chat has finished.
 
 ## Merge order
 
@@ -148,11 +169,15 @@ Record:
 
 ### Route A — return to the original worker lane/thread
 
-Prefer the **original agent** when the finding is clearly in its still-current owned scope and a follow-up on that implementation is natural.
+Prefer the **original agent** only when the finding is clearly in its still-current owned scope, the ledger marks that thread `ACTIVE` or `USABLE`, and the existing context materially helps a true continuation.
 
-### Route B — new follow-up branch for the same subsystem
+Do not route to an old thread solely because it exists.
 
-Prefer a **new agent/thread** when the original branch is already merged, the defect is substantial/deeper than expected, or the original context has become stale.
+### Route B — new follow-up branch/thread for the same subsystem
+
+Prefer a **new agent/thread** when the original branch is already merged, the defect is substantial/deeper than expected, the goal is materially new, or the original context has become stale/too long.
+
+Assign a new `W##` lane in `THREAD-LEDGER.md` unless this is strictly a replacement conversation for the same still-active lane.
 
 ### Route C — cross-lane integration issue
 
@@ -168,6 +193,7 @@ Do not use Route D merely because the parent is convenient.
 
 A worker handoff should include:
 
+- official thread/lane ID from `THREAD-LEDGER.md`;
 - exact tested main SHA;
 - exact artifact/checksum;
 - Cyberpunk version;
@@ -183,10 +209,10 @@ The implementation worker should not need the parent conversation to understand 
 
 ## Active-worker reporting
 
-The parent should periodically summarize:
+The parent should periodically summarize from the ledger:
 
 ```text
-<lane> — issue/branch/PR — status — CI — merge dependency — remaining attended acceptance
+<thread ID> — <lane> — issue/branch/PR — thread state — lane work state — CI — merge dependency — remaining attended acceptance
 ```
 
 Do not ask the user to remember which old thread owns what.
@@ -195,9 +221,18 @@ Do not ask the user to remember which old thread owns what.
 
 The repository and GitHub state, not chat memory, are the source of continuity.
 
-Before replacing a parent thread, update durable state where needed and provide:
+Before replacing a parent thread:
+
+1. mark the current parent thread `TOO-LONG` in `THREAD-LEDGER.md` when that is the reason for replacement;
+2. create the next parent conversation generation (for example `P01.2`);
+3. add the successor row as `ACTIVE`;
+4. update durable integration state where needed;
+5. provide the replacement parent the current integration packet.
+
+That packet must include:
 
 - current main SHA;
+- active/usable thread ledger state;
 - active worker issues/PRs;
 - merge order/dependencies;
 - latest attended test record;
@@ -211,6 +246,8 @@ Reusable startup packet: `docs/handoffs/PARENT-INTEGRATION.md`.
 The orchestration model is working when:
 
 - workers focus on clear subsystem ownership;
+- new goals normally receive clean new lanes rather than opportunistically reusing old chats;
+- the parent can identify exactly which conversations are active, usable, too long or retired from `THREAD-LEDGER.md`;
 - merges happen deliberately;
 - active docs do not resurrect merged branch plans;
 - the user tests one coherent canonical artifact;
