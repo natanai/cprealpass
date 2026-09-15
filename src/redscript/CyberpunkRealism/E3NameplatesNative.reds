@@ -49,18 +49,6 @@ private final func CRCreateBiologyE3Nameplate() -> Void {
   this.CRBiologyE3NameplateRect(n"CRBiologyE3NameplateBottom", 22.0, 52.0, 214.0, 2.0, 0.78);
   this.CRBiologyE3NameplateRect(n"CRBiologyE3NameplateAccent", 330.0, 0.0, 24.0, 6.0, 1.00);
   this.CRBiologyE3NameplateRect(n"CRBiologyE3NameplateTick", 366.0, 0.0, 13.0, 2.0, 0.58);
-
-  let label: ref<inkText> = new inkText();
-  label.SetName(n"CRBiologyE3NameplateLabel");
-  label.SetText("ID // SUBJECT");
-  label.SetFontFamily("base\\gameplay\\gui\\fonts\\raj\\raj.inkfontfamily");
-  label.SetFontStyle(n"Regular");
-  label.SetFontSize(11);
-  label.SetFitToContent(true);
-  label.SetTranslation(330.0, 10.0);
-  label.SetTintColor(CRBiologyE3Primitives.Red());
-  label.SetOpacity(0.66);
-  label.Reparent(this.crBiologyE3NameplateFrame, -1);
 }
 
 @addMethod(NameplateVisualsLogicController)
@@ -76,8 +64,8 @@ public final func CRRefreshBiologyE3Nameplate(puppet: ref<GameObject>, data: NPC
     this.crBiologyE3NameplateFrame.SetVisible(showName);
   }
 
-  // These are native 2.31 NameplateVisualsLogicController refs used by the preserved
-  // Project E3 source; no Project E3-added field is required here.
+  // These are native 2.31 NameplateVisualsLogicController refs evidenced by the
+  // preserved Project E3 2.31.p2 source; no Project E3-added field is required here.
   nameText = inkWidgetRef.Get(this.m_nameTextMain) as inkText;
   if IsDefined(nameText) && showName {
     nameText.SetText(name);
