@@ -281,6 +281,8 @@ LOCAL EVIDENCE REPORT: C:\...\reports\local-game-contract-audit-....txt
 
 Attach that `.txt` file to the owning ChatGPT thread rather than pasting the console transcript. This is investigation evidence, not attended runtime acceptance.
 
+For a branch-specific audit when no stable local checkout is assumed, the agent must provide one paste block that applies the mandatory discovery/bootstrap rule above, fetches the exact branch/head, creates a uniquely signed detached audit worktree, and invokes this tool from that worktree. The user should only have to return the generated `.txt` report.
+
 ---
 
 ## Command 8 — publish the current GitHub-safe game reference snapshot
