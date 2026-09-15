@@ -10,6 +10,19 @@ function Read([string]$relative) {
 function Require([string]$text,[string]$pattern,[string]$message) {
     if ($text -notmatch $pattern) { throw $message }
 }
+function Require-FailureDurableChildBootstrap([string]$relative,[string]$text) {
+    Require $text 'ProcessStartInfo' "$relative must invoke evidence-bearing child processes through ProcessStartInfo."
+    Require $text 'RedirectStandardOutput\s*=\s*\$true' "$relative must redirect child stdout."
+    Require $text 'RedirectStandardError\s*=\s*\$true' "$relative must redirect child stderr."
+    Require $text 'ArgumentList\.Add' "$relative must preserve child argument boundaries with ArgumentList."
+    Require $text 'StdOut|stdout' "$relative must retain child stdout for the attachable report."
+    Require $text 'StdErr|stderr' "$relative must retain child stderr for the attachable report."
+    Require $text 'ExitCode|exit code' "$relative must retain the child exit code."
+    Require $text 'Exception type:' "$relative must preserve the outer exception type in failure evidence."
+    Require $text 'Error:' "$relative must preserve the outer exception/error message in failure evidence."
+    Require $text 'finally\s*\{' "$relative must expose its attachment handoff from a finally-equivalent path."
+    Require $text 'ATTACH THIS FILE TO CHATGPT:' "$relative must always print the attachment handoff."
+}
 
 $agents = Read 'AGENTS.md'
 $catalog = Read 'docs/LOCAL-OPERATOR-COMMANDS.md'
@@ -21,6 +34,7 @@ $deploy = Read 'tools/Deploy-BiologyRedmod.ps1'
 $officialProbe = Read 'tools/Probe-OfficialRedmod.ps1'
 $audit = Read 'tools/Audit-GameContracts.ps1'
 $presentationBootstrap = Read 'tools/Bootstrap-PresentationAudit.ps1'
+$activationBootstrap = Read 'tools/Bootstrap-RedmodActivationSentinelProbe.ps1'
 $removalVerifier = Read 'tools/Verify-BiologyRemoval.ps1'
 
 Require $agents 'LOCAL OPERATOR COMMAND GATE' 'AGENTS.md must make the local operator command catalog mandatory.'
@@ -38,6 +52,23 @@ Require $catalog 'Mandatory evidence-report rule' 'Catalog must define the text 
 Require $catalog 'plain-text.*\.txt|\.txt.*evidence report' 'Catalog must require user-returned local evidence as a text file.'
 Require $catalog 'attach.*file.*ChatGPT|attach.*\.txt' 'Catalog must tell agents to request the report file rather than pasted console output.'
 Require $catalog 'failure.*success|PASS.*FAIL|FAIL.*PASS' 'Evidence report policy must cover failures as well as successful runs.'
+Require $catalog 'Canonical failure-durable probe/bootstrap contract' 'Catalog must generalize the failure-durable child-process evidence rule.'
+Require $catalog 'not complete unless its useful evidence survives failure' 'Catalog must state that evidence durability is part of probe completeness.'
+Require $catalog 'exact 40-character expected head' 'Canonical probe contract must require exact branch/head pinning when branch-specific.'
+Require $catalog 'uniquely signed detached/disposable checkout|uniquely signed.*worktree' 'Canonical probe contract must require isolated disposable revision workspaces.'
+Require $catalog 'read-only unless mutation is explicitly the purpose' 'Canonical probe contract must default installed game/tool trees to read-only.'
+Require $catalog 'Fingerprint the authority being inspected' 'Canonical probe contract must fingerprint the exact game/native/tool authority.'
+Require $catalog 'Collect bounded evidence' 'Canonical probe contract must reject indiscriminate tree/console dumping.'
+Require $catalog 'source/symbol/schema evidence.*exact compilation|exact compilation.*source/symbol/schema evidence' 'Canonical probe contract must distinguish source evidence from exact compile/deploy/runtime proof.'
+Require $catalog 'stdout, stderr, exit code, and actual exception/error text' 'Canonical probe contract must preserve all useful child failure diagnostics.'
+Require $catalog 'requested branch/head.*fetched head.*disposable checkout/worktree path' 'Canonical probe report must record revision and checkout context.'
+Require $catalog 'nonzero child exit code.*not enough|nonzero exit.*incomplete probe' 'Catalog must explicitly reject opaque nonzero-exit-only reports.'
+Require $catalog 'ATTACH THIS FILE TO CHATGPT:' 'Canonical probe contract must expose the one obvious attachment handoff.'
+Require $catalog 'ProcessStartInfo' 'Canonical probe contract must recommend explicit native child process capture.'
+Require $catalog 'RedirectStandardOutput = true' 'Canonical probe contract must require redirected child stdout.'
+Require $catalog 'RedirectStandardError = true' 'Canonical probe contract must require redirected child stderr.'
+Require $catalog 'ArgumentList' 'Canonical probe contract must require safe child argument boundaries.'
+Require $catalog 'outer `catch` must add the exception type and message' 'Canonical probe contract must preserve the actual outer exception evidence.'
 Require $catalog 'Command 0 — bootstrap a disposable milestone workspace' 'Catalog must provide the no-local-repo bootstrap path.'
 Require $catalog 'Prepare-BiologyMilestoneTest\.ps1' 'Catalog must route milestone preparation through the repository-owned orchestrator.'
 Require $catalog 'exhaustive.*defaults to \*\*No\*\*' 'Catalog must make the expensive fresh-reinstall hash scan optional and default it off.'
@@ -63,18 +94,43 @@ Require $presentationBootstrap '\.git\\config' 'Presentation bootstrap must insp
 Require $presentationBootstrap 'Skipping unusable cprealpass seed candidate' 'Presentation bootstrap must tolerate stale/unusable local repository candidates.'
 Require $presentationBootstrap 'No usable cprealpass seed checkout found\. Cloning seed' 'Presentation bootstrap must explicitly support the zero-local-repository path.'
 Require $presentationBootstrap 'cprealpass-repo-' 'Presentation bootstrap must clone a uniquely signed seed when no usable repo exists.'
-Require $presentationBootstrap 'ProcessStartInfo' 'Presentation bootstrap must isolate native Git stderr/exit handling.'
-Require $presentationBootstrap 'ArgumentList\.Add' 'Presentation bootstrap must pass Git arguments without shell string reconstruction.'
+Require $presentationBootstrap 'Invoke-NativeSafe' 'Presentation bootstrap must use the durable native-process capture path for the child audit.'
+Require $presentationBootstrap 'ProcessStartInfo' 'Presentation bootstrap must isolate child stdout/stderr/exit handling.'
+Require $presentationBootstrap 'RedirectStandardOutput\s*=\s*\$true' 'Presentation bootstrap must capture child stdout.'
+Require $presentationBootstrap 'RedirectStandardError\s*=\s*\$true' 'Presentation bootstrap must capture child stderr.'
+Require $presentationBootstrap 'ArgumentList\.Add' 'Presentation bootstrap must pass child arguments without shell string reconstruction.'
 Require $presentationBootstrap 'Invoke-GitSafe' 'Presentation bootstrap must route Git calls through the safe native-process wrapper.'
 Require $presentationBootstrap 'cprealpass-presentation-audit-' 'Presentation bootstrap must use a uniquely signed disposable audit checkout.'
 Require $presentationBootstrap "'worktree','add','--detach'" 'Presentation bootstrap must isolate the exact worker revision in a detached worktree.'
 Require $presentationBootstrap 'Audit-PresentationContracts\.ps1' 'Presentation bootstrap must invoke the repository-owned presentation audit.'
+Require $presentationBootstrap 'INNER PRESENTATION AUDIT PROCESS OUTPUT' 'Presentation bootstrap must persist the child process output in the attachable report.'
+Require $presentationBootstrap '\$auditProcess\.ExitCode' 'Presentation bootstrap must capture the child audit exit code explicitly.'
+Require $presentationBootstrap 'Audit process exit code:' 'Presentation bootstrap must write the child exit code into the report.'
+Require $presentationBootstrap 'StdOut|stdout' 'Presentation bootstrap must retain child stdout rather than only exit status.'
+Require $presentationBootstrap 'StdErr|stderr' 'Presentation bootstrap must retain child stderr rather than only exit status.'
+Require $presentationBootstrap 'Exception type:' 'Presentation bootstrap must preserve the actual outer exception type.'
+Require $presentationBootstrap 'Error:' 'Presentation bootstrap must preserve the actual outer exception message.'
+Require $presentationBootstrap 'Cyberpunk product version:' 'Presentation bootstrap must fingerprint the inspected game version.'
+Require $presentationBootstrap 'Cyberpunk executable SHA-256:' 'Presentation bootstrap must fingerprint the inspected game executable.'
 Require $presentationBootstrap 'try\s*\{' 'Presentation bootstrap must own exception handling inside the script file.'
 Require $presentationBootstrap 'catch\s*\{' 'Presentation bootstrap must preserve failure evidence inside the script file.'
 Require $presentationBootstrap 'finally\s*\{' 'Presentation bootstrap must print the report path from a parser-safe script file.'
 Require $presentationBootstrap 'ATTACH THIS FILE TO CHATGPT:' 'Presentation bootstrap must end with the attachment handoff rather than pasted console output.'
+if ($presentationBootstrap -match '(?s)&\s*pwsh.*Audit-PresentationContracts\.ps1') { throw 'Presentation bootstrap regressed to direct child invocation that can lose stderr/terminating exception evidence.' }
 if ($presentationBootstrap.Contains('C:\Games\CyberpunkRealism')) { throw 'Presentation bootstrap reintroduced the retired fixed repo path.' }
 if ($presentationBootstrap -match '\$origin\s*=\s*\(&\s*git\s+-C') { throw 'Presentation bootstrap must not probe arbitrary C:\Games directories with direct git -C discovery calls.' }
+
+# General regression: repository-owned Bootstrap-*.ps1 evidence entrypoints that
+# invoke a child pwsh and hand a .txt back to ChatGPT must preserve the child's
+# stdout/stderr/exit and outer exception evidence before they report failure.
+$bootstrapRoot = Join-Path $project 'tools'
+foreach ($bootstrapFile in @(Get-ChildItem -LiteralPath $bootstrapRoot -File -Filter 'Bootstrap-*.ps1')) {
+    $text = Get-Content -Raw -LiteralPath $bootstrapFile.FullName
+    if ($text -notmatch 'ATTACH THIS FILE TO CHATGPT:' -or $text -notmatch "FilePath\s+'pwsh'|FileName\s*=\s*'pwsh'|FileName\s*=\s*\"pwsh\"") { continue }
+    Require-FailureDurableChildBootstrap -relative ('tools/' + $bootstrapFile.Name) -text $text
+}
+Require-FailureDurableChildBootstrap -relative 'tools/Bootstrap-PresentationAudit.ps1' -text $presentationBootstrap
+Require-FailureDurableChildBootstrap -relative 'tools/Bootstrap-RedmodActivationSentinelProbe.ps1' -text $activationBootstrap
 
 Require $prepare 'Read-Host.*exhaustive vanilla hash verification' 'Milestone orchestrator must ask the user whether to run the expensive full baseline comparison.'
 Require $prepare '\$runExhaustive = \$answer -in' 'Milestone exhaustive verification must default to off unless explicitly accepted.'
@@ -137,4 +193,4 @@ Require $cleanRoom 'fast sanity' 'Clean-room policy must define the lightweight 
 Require $cleanRoom 'must not.*verified against recorded vanilla baseline|not.*verified against recorded vanilla baseline' 'Clean-room policy must prevent overclaiming when the exhaustive hash check is skipped.'
 Require $cleanRoom 'LOCAL-OPERATOR-COMMANDS\.md' 'Clean-room policy must defer routine user commands to the canonical catalog.'
 
-Write-Host 'PASS: local operator commands self-bootstrap cprealpass with unique workspaces, return text evidence files, preserve hard-uninstall verification and clean-room policy, probe official REDmod directly, and fail closed on REDmod false positives.'
+Write-Host 'PASS: local operator commands self-bootstrap cprealpass with unique workspaces, return failure-durable text evidence files, preserve hard-uninstall verification and clean-room policy, probe official REDmod directly, and fail closed on REDmod false positives.'
