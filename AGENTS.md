@@ -77,7 +77,9 @@ Rules:
 - delete any residual `Cyberpunk 2077` game directory after uninstall;
 - reinstall through Steam;
 - optionally launch vanilla once and exit;
-- capture/refresh the GitHub-safe vanilla baseline before adding Biology;
+- use the canonical milestone operator flow in `docs/LOCAL-OPERATOR-COMMANDS.md`;
+- after a just-completed uninstall + residual-directory deletion + reinstall, the user may decline the additional exhaustive whole-game hash comparison; the fast vanilla sanity probe still runs and the evidence must explicitly say the exhaustive hash check was skipped;
+- refresh/publish the tracked vanilla baseline when the clean reference itself needs to change, such as after a supported Cyberpunk patch, rather than blindly re-hashing the entire game twice for every milestone;
 - use a fresh clone/download of current canonical `main`;
 - build the release-shaped Biology test package and install/deploy it exactly as a player would.
 
@@ -87,12 +89,30 @@ Before saying “ready to test”, “launch it”, or equivalent, the agent mus
 
 1. **Test mode:** `ITERATION` or `MILESTONE CLEAN-ROOM`.
 2. **Source state:** the exact canonical `main` revision being tested.
-3. **Game-state evidence:** either “verified against recorded vanilla baseline” or why a milestone reinstall is required.
+3. **Game-state evidence:** exactly what was established — for example `verified against recorded vanilla baseline`, or `fresh Steam reinstall + fast sanity; exhaustive hash check skipped`.
 4. **Artifact:** the release-shaped package being tested, not an accumulated repo/game state.
 
-Do not casually instruct the user to reinstall Cyberpunk for every small change, and do not casually reuse an unknown modded game directory.
+Do not casually instruct the user to reinstall Cyberpunk for every small change, do not casually reuse an unknown modded game directory, and do not overstate a skipped hash scan as baseline verification.
 
 See `docs/CLEAN-ROOM-TESTING.md` before giving live-test instructions.
+
+## LOCAL OPERATOR COMMAND GATE — do not invent routine PowerShell in chat
+
+Before asking the user to run PowerShell/CMD against their local repo or Cyberpunk install, read:
+
+- `docs/LOCAL-OPERATOR-COMMANDS.md`
+
+That file is the **canonical user-run command surface**. If a catalogued command covers the operation, use it instead of recreating its internals in a new paste block. Routine milestone preparation, vanilla sanity/hash checks, baseline capture, package build, REDmod deployment, iteration reset, compatibility audit and snapshot publishing are all standardized there.
+
+Rules:
+
+- prefer one repository-owned command over a long hand-written shell sequence;
+- agents may substitute the exact main SHA, disposable test-root name and known game path only where the catalog explicitly permits it;
+- if a recurring operation is missing or inefficient, improve the tool/catalog/test contract first rather than inventing another private variant;
+- one-off shell probes are allowed only for genuinely narrow, preferably read-only evidence questions not covered by the catalog;
+- long operations must provide durable console progress; `Write-Progress` alone is not sufficient because some hosts hide it;
+- attended milestone workspaces are disposable and should normally be named like `C:\Games\Biology-Test-<YYYY-MM-DD>-<short-main-sha>` rather than assuming a permanent `C:\Games\CyberpunkRealism` checkout;
+- never claim a fast sanity check is equivalent to the strict full baseline/hash comparison.
 
 ## Read order — do this before changing scope or architecture
 
@@ -101,14 +121,15 @@ See `docs/CLEAN-ROOM-TESTING.md` before giving live-test instructions.
 3. `docs/DECISION-HISTORY.md` — when decisions changed and which misunderstandings the user already corrected.
 4. `docs/PARALLEL-AGENT-WORKFLOW.md` — branch/lane/handoff/merge rules.
 5. `docs/INTEGRATION-ORCHESTRATOR.md` — parent-thread merge/test/evidence/routing rules when coordinating multiple lanes.
-6. The focused architecture file relevant to the task, for example:
+6. `docs/LOCAL-OPERATOR-COMMANDS.md` before asking the user to run local commands.
+7. The focused architecture file relevant to the task, for example:
    - `docs/BIOLOGY-UI.md`
    - `docs/SETTINGS-ARCHITECTURE.md`
    - `docs/E3-PRESENTATION.md`
    - `docs/PATCH-RESILIENCE.md`
    - `docs/RELEASE-ARCHITECTURE.md`
    - `docs/CLEAN-ROOM-TESTING.md`
-7. Machine-readable manifests/tests for the implementation contract.
+8. Machine-readable manifests/tests for the implementation contract.
 
 Do **not** reconstruct current intent from old commits, closed branch workplans, historical prototypes, or old `RealPass` naming before reading the files above.
 
@@ -155,27 +176,35 @@ If correctness depends on a vanilla class, method, event, record, resource path,
 
 ## Local game access available through the user
 
-Known Windows paths:
+Known stable Windows path:
 
-- repository/workspace: `C:\Games\CyberpunkRealism`
 - Cyberpunk 2077: `C:\Games\Steam\steamapps\common\Cyberpunk 2077`
-- read-only game junction: `C:\Games\CyberpunkRealism\game-reference\live`
-- safe selective extraction area: `C:\Games\CyberpunkRealism\game-reference\extracted`
-- local generated indexes: `C:\Games\CyberpunkRealism\game-reference\index`
-- GitHub-safe derived snapshot: `reference\cyberpunk\`
-- GitHub-safe vanilla baseline: `reference\cyberpunk\vanilla-baseline\`
 
-`game-reference\live` points at the real game installation. Treat it as **read-only** during investigation. Never ask the user to edit/delete/rename/repack through that junction merely to inspect something.
+Repository/workspace paths are **not stable**. For attended milestones, prefer a disposable workspace such as:
+
+```text
+C:\Games\Biology-Test-<YYYY-MM-DD>-<short-main-sha>\
+    operator\
+    candidate\
+```
+
+Within whichever checkout is active:
+
+- safe selective extraction area: `game-reference\extracted`;
+- local generated indexes: `game-reference\index`;
+- GitHub-safe derived snapshot: `reference\cyberpunk\`;
+- GitHub-safe vanilla baseline: `reference\cyberpunk\vanilla-baseline\`.
+
+If a checkout contains `game-reference\live`, it points at the real game installation. Treat it as **read-only** during investigation. Never ask the user to edit/delete/rename/repack through that junction merely to inspect something.
 
 The tracked vanilla baseline contains only derived metadata (paths, sizes, hashes, versions/timestamps), never proprietary game content.
 
 ## Preferred proactive compatibility audit
 
-After a Cyberpunk patch, major REDmod/framework/install change, or before basing foundational code on native seams, prefer the read-only compatibility audit:
+After a Cyberpunk patch, major REDmod/framework/install change, or before basing foundational code on native seams, prefer the repository-owned read-only compatibility audit from the active checkout:
 
 ```powershell
-Set-Location 'C:\Games\CyberpunkRealism'
-pwsh ./tools/Audit-GameContracts.ps1
+pwsh ./tools/Audit-GameContracts.ps1 -GamePath 'C:\Games\Steam\steamapps\common\Cyberpunk 2077'
 ```
 
 A successful audit is not runtime acceptance, but it should catch signature/type/linkage changes and refresh durable evidence.
@@ -186,13 +215,14 @@ For a narrow implementation question, prefer a smaller targeted probe rather tha
 
 When a local probe would materially improve the work:
 
-1. give one copy/paste-ready PowerShell block;
-2. use known absolute paths when possible;
-3. make it read-only whenever possible;
-4. explain exactly what uncertainty it resolves;
-5. filter large output locally or write it to a file before asking the user to return it;
-6. prefer paths, hashes, symbol names, record IDs, metadata and narrow tool output over proprietary file contents;
-7. record durable conclusions in tracked code/docs/tests so another agent does not rediscover them.
+1. check `docs/LOCAL-OPERATOR-COMMANDS.md` first and use the catalogued command whenever one exists;
+2. give one copy/paste-ready command/block only when needed;
+3. use known absolute paths when possible;
+4. make it read-only whenever possible;
+5. explain exactly what uncertainty it resolves;
+6. filter large output locally or write it to a file before asking the user to return it;
+7. prefer paths, hashes, symbol names, record IDs, metadata and narrow tool output over proprietary file contents;
+8. record durable conclusions in tracked code/docs/tests so another agent does not rediscover them.
 
 ## Patch-resilience design rules
 
