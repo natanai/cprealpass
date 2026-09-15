@@ -71,7 +71,10 @@ public class CRBiologyPresentation extends IScriptable {
 
   public static func Current() -> ref<CRBiologyViewModel> {
     let result: ref<CRBiologyViewModel> = new CRBiologyViewModel();
-    if !CRBodyStatusPresentation.Owns() {
+    // Player attachment is still the normal startup activation edge, but the menu
+    // must be able to recover from ScriptableSystem/save ordering without presenting
+    // a healthy-looking placeholder. This retries the same authoritative runtime.
+    if !CRBiologyRuntimeAvailability.EnsureActive() || !CRBodyStatusPresentation.Owns() {
       return result;
     }
     let body: ref<CRBodyState> = CRBodyRuntime.Get().GetBodySnapshot();
