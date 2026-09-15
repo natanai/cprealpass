@@ -47,9 +47,6 @@ public final func CRPublicCrowdNameAllowed(puppet: wref<GameObject>) -> Bool {
   // legitimate scanner/nameplate information. This is a permission check, not a
   // requirement that the player has already entered scanner mode.
   preset = character.ScannerModulePreset();
-  if TDBID.IsValid(ps.GetForcedScannerPreset()) {
-    preset = TweakDBInterface.GetScannerModuleVisibilityPresetRecord(ps.GetForcedScannerPreset());
-  }
   return IsDefined(preset) && preset.ShoulShowName();
 }
 
