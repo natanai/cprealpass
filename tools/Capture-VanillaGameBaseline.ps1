@@ -17,12 +17,14 @@ $baselineFiles = Join-Path $baselineRoot 'files.csv'
 $baselineEnvironment = Join-Path $baselineRoot 'environment.json'
 
 # A vanilla baseline must not knowingly contain the standard loose-mod surfaces.
+# The stock/empty REDmod directory is a special case: CDPR's documented empty
+# state contains only mods\.stub. Permit that exact zero-byte marker and nothing
+# else under mods.
 $forbiddenRoots = @(
     'archive\pc\mod',
     'red4ext',
     'bin\x64\plugins\cyber_engine_tweaks',
-    'r6\scripts',
-    'mods'
+    'r6\scripts'
 )
 $forbidden = [Collections.Generic.List[string]]::new()
 foreach ($relative in $forbiddenRoots) {
@@ -30,6 +32,18 @@ foreach ($relative in $forbiddenRoots) {
     if (Test-Path -LiteralPath $path) {
         $files = @(Get-ChildItem -LiteralPath $path -File -Recurse -Force -ErrorAction SilentlyContinue)
         if ($files.Count -gt 0) { $forbidden.Add("$relative ($($files.Count) file(s))") }
+    }
+}
+
+$modsRoot = Join-Path $game 'mods'
+if (Test-Path -LiteralPath $modsRoot) {
+    $modFiles = @(Get-ChildItem -LiteralPath $modsRoot -File -Recurse -Force -ErrorAction SilentlyContinue)
+    foreach ($file in $modFiles) {
+        $relativeToMods = [IO.Path]::GetRelativePath($modsRoot, $file.FullName).Replace('\','/')
+        $isVanillaStub = $relativeToMods -eq '.stub' -and $file.Length -eq 0
+        if (-not $isVanillaStub) {
+            $forbidden.Add("mods/$relativeToMods ($($file.Length) byte(s))")
+        }
     }
 }
 if ($forbidden.Count -gt 0) {
