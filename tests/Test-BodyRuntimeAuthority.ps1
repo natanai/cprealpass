@@ -120,7 +120,8 @@ Check ($nativeHooks -match 'FinishSkipHours\(Cast<Float>\(hours\), this\.crRealp
 # GameInstance convenience guarantee.
 Check ($ownedBuilder.Contains('$sourceRoot = Resolve-SafeChildPath $project ''src/redscript/CyberpunkRealism''')) 'Owned acceptance builder source root no longer points at the complete project REDscript tree.'
 Check ($ownedBuilder.Contains('$sourceFiles = @(Get-ChildItem -LiteralPath $sourceRoot -File -Filter ''*.reds'' | Sort-Object Name)')) 'Owned acceptance builder no longer enumerates every project REDscript file.'
-Check ($packageBuilder -match 'owned-runtime-manifest\.json') 'Biology package builder no longer consumes the exact owned-runtime manifest.'
+Check ($packageBuilder.Contains('$runtimeManifestRelative = & "$PSScriptRoot\Build-OwnedRuntimeProfile.ps1" @profileArgs')) 'Biology package builder no longer obtains its exact runtime manifest from the owned-runtime profile builder.'
+Check ($packageBuilder.Contains('$runtimeManifest = Get-Content -Raw -LiteralPath $runtimeManifestPath | ConvertFrom-Json')) 'Biology package builder no longer consumes the runtime manifest it exact-compiled.'
 Check ($ownedBuilder -match 'exact') 'Owned-runtime builder no longer documents/enforces exact compilation semantics.'
 Check ($dependencyGraph -match '"id": "codeware"[\s\S]*?"status": "not-required"') 'Dependency graph no longer records Codeware as non-required.'
 Check ($dependencyGraph -match '"id": "redscript"[\s\S]*?"status": "required-current-runtime"') 'Dependency graph no longer records redscript as required current runtime.'
