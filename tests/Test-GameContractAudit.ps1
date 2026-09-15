@@ -4,12 +4,14 @@ $project = Get-ProjectRoot
 $path = Join-Path $project 'tools/Audit-GameContracts.ps1'
 $presentationPath = Join-Path $project 'tools/Audit-PresentationContracts.ps1'
 $probePath = Join-Path $project 'tools/Probe-PresentationNativeContracts.ps1'
-foreach ($required in @($path,$presentationPath,$probePath)) {
-    if (-not (Test-Path -LiteralPath $required -PathType Leaf)) { throw "Missing proactive local game contract audit tool: $required" }
+$localReferencePath = Join-Path $project 'docs/LOCAL-GAME-REFERENCE.md'
+foreach ($required in @($path,$presentationPath,$probePath,$localReferencePath)) {
+    if (-not (Test-Path -LiteralPath $required -PathType Leaf)) { throw "Missing proactive local game contract audit file: $required" }
 }
 $source = Get-Content -Raw -LiteralPath $path
 $presentation = Get-Content -Raw -LiteralPath $presentationPath
 $probe = Get-Content -Raw -LiteralPath $probePath
+$localReference = Get-Content -Raw -LiteralPath $localReferencePath
 $script:checks = 0
 function Check($condition,[string]$message) { if (-not $condition) { throw $message }; $script:checks++ }
 
@@ -77,11 +79,21 @@ foreach ($needle in @('Audit-GameContracts.ps1','Probe-PresentationNativeContrac
 }
 Check ($presentation.Contains('-ReportPath $ReportPath')) 'Presentation wrapper does not consolidate exact-compile output into its single text evidence report.'
 Check ($probe.Contains('tools\redmod\scripts')) 'Presentation native probe is not grounded in the installed official REDmod decompiled scripts.'
+Check ($probe.Contains('Primary evidence is the installed official REDmod decompiled script tree.')) 'Presentation probe no longer declares installed REDmod scripts as primary native evidence.'
 Check ($probe.Contains("@('.script','.reds')")) 'Presentation native probe must search REDmod .script sources (with optional .reds tolerance), not assume loose redscript format.'
-foreach ($needle in @('MinimapContainerController','IronsightGameController','QuestTrackerGameController','WeaponRosterGameController','HotkeysWidgetController','CrosshairGameController_Tech_Hex','NpcNameplateGameController','NameplateVisualsLogicController','OnScreenProjectionUpdate','OnCompassUpdate')) {
+foreach ($needle in @('MinimapContainerController','IronsightGameController','QuestTrackerGameController','WeaponRosterGameController','HotkeysWidgetController','CrosshairGameController_Tech_Hex','NpcNameplateGameController','NameplateVisualsLogicController','OnInitialize','OnScreenProjectionUpdate','OnCompassUpdate')) {
     Check ($probe.Contains($needle)) "Presentation native probe no longer checks required current-game symbol: $needle"
 }
+Check ($probe.Contains("$minimapRelative = 'cyberpunk/UI/widgets/minimap/minimap.script'")) 'Presentation probe no longer pins current minimap evidence to the installed native minimap script.'
+Check ($probe.Contains('$minimapInitializeFound')) 'Presentation probe no longer requires the current minimap initialization lifecycle from installed REDmod source.'
 Check ($probe.Contains('GetRelativePath')) 'Presentation probe should return narrow relative script-path evidence rather than proprietary file dumps.'
 Check ($probe.Contains('Read-only symbol/signature evidence only')) 'Presentation probe does not state its read-only narrow-evidence boundary.'
 
-Write-Host "PASS: $script:checks proactive game-contract audit policy checks, including checkout-relative repo discovery, exact compile text evidence, and installed-2.31 REDmod presentation symbol probing."
+# Canonical investigation policy: readable native script contracts come from the
+# installed official REDmod source tree before web/community mirrors when practical.
+Check ($localReference.Contains('Prefer the installed official REDmod script tree for script contracts')) 'Local-game reference no longer prioritizes installed REDmod script archaeology.'
+Check ($localReference.Contains('tools\redmod\scripts')) 'Local-game reference does not identify the official installed REDmod script tree.'
+Check ($localReference.Contains('web/community script dumps')) 'Local-game reference does not explicitly demote web/community script mirrors below direct installed-game evidence.'
+Check (-not $localReference.Contains('C:\Games\CyberpunkRealism')) 'Local-game reference reintroduced the retired fixed repository layout.'
+
+Write-Host "PASS: $script:checks proactive game-contract audit policy checks, including checkout-relative repo discovery, exact compile text evidence, and installed-2.31 REDmod-first native script probing."
