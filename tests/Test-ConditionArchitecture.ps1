@@ -5,7 +5,6 @@ $script:checks = 0
 function Check($condition,[string]$message) { if (-not $condition) { throw $message }; $script:checks++ }
 
 $goals = Get-Content -Raw -LiteralPath (Join-Path $project 'AGREED-GOALS.md')
-$conditionDoc = Get-Content -Raw -LiteralPath (Join-Path $project 'docs/CONDITION-UI.md')
 $biologyDoc = Get-Content -Raw -LiteralPath (Join-Path $project 'docs/BIOLOGY-UI.md')
 $provenancePath = Join-Path $project 'src/redscript/CyberpunkRealism/InjuryProvenance.reds'
 $presentationPath = Join-Path $project 'src/redscript/CyberpunkRealism/ConditionPresentation.reds'
@@ -38,7 +37,9 @@ foreach ($goal in @('G-043','G-044','G-045','G-046','G-047','G-048','G-049','G-0
     Check ($goals.Contains($goal)) "Canonical Biology/condition goal missing: $goal"
 }
 
-Check ($conditionDoc.Contains('superseded by `BIOLOGY-UI.md`')) 'Superseded Condition document does not point to Biology.'
+# The superseded Condition instruction packet is intentionally absent; Biology is the
+# only active body-interface architecture document in the current tree.
+Check (-not (Test-Path -LiteralPath (Join-Path $project 'docs/CONDITION-UI.md'))) 'Superseded Condition instruction packet returned to the active tree.'
 Check ($biologyDoc.Contains('Cyberware is installed equipment within the body') -and $biologyDoc.Contains('Biology submode')) 'Biology contract does not establish Cyberware as a Biology submode.'
 Check ($biologyDoc.Contains('The Biology screen is **always available**') -and $biologyDoc.Contains('supported Biology nodes must remain visible')) 'Biology contract does not preserve healthy-state inspectability.'
 Check ($biologyDoc.Contains('actual carried items') -and $biologyDoc.Contains('never manually removes items')) 'Biology item actions risk becoming a duplicate inventory.'

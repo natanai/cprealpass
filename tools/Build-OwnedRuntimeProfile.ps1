@@ -16,11 +16,11 @@ if ((Test-Path -LiteralPath $output) -or (Test-Path -LiteralPath $report)) {
     throw 'Build ID already exists; owned runtime profiles are immutable. Use a new BuildId.'
 }
 
-# Generic plumbing only. Mod Settings is intentionally present again because the
-# accepted product surface uses it for runtime presence, a concise read-only-ish
-# feature ledger and binary presentation/accessibility preferences. ArchiveXL is a
-# declared dependency of the pinned Mod Settings release. None of these components
-# owns RealPass simulation policy.
+# Generic plumbing only. Mod Settings is present because the accepted public surface
+# contains exactly two Boolean controls: the global RealPass master switch and the
+# presentation-only E3 HUD/nameplate visual preference. ArchiveXL is a declared
+# dependency of the pinned Mod Settings release. None of these components owns
+# RealPass simulation policy.
 $genericIds = @('red4ext','redscript','archivexl','mod-settings')
 & "$PSScriptRoot\Acquire-Components.ps1" -ComponentIds $genericIds
 if ($LASTEXITCODE -ne 0) { throw 'Generic framework acquisition/verification failed.' }
@@ -104,7 +104,7 @@ $record = [ordered]@{
     coreBuildId = $coreBuildId
     fileCount = $files.Count
     manifestPath = $outputRelative
-    scope = 'Deployable development profile containing project-original RealPass runtime plus pinned RED4ext/redscript/ArchiveXL/Mod Settings plumbing. Mod Settings provides status/ledger and binary presentation preferences only. No Dark Future, Project E3 or Input Loader runtime content. Does not deploy or launch the game.'
+    scope = 'Deployable development profile containing project-original RealPass runtime plus pinned RED4ext/redscript/ArchiveXL/Mod Settings plumbing. Mod Settings provides the global RealPass master switch and presentation-only E3 visual preference; no subsystem or balance controls. No Dark Future, Project E3 or Input Loader runtime content. Does not deploy or launch the game.'
 }
 Write-JsonFile $record $report
 Write-Host "PASS: deployable owned runtime profile $BuildId compiled with $($files.Count) files. Nothing was deployed or launched."
