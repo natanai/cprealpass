@@ -86,7 +86,7 @@ Require $audit 'Return that \.txt file' 'Compatibility audit must instruct the u
 Require $audit 'FAIL: Biology native-contract audit did not complete' 'Compatibility audit report must preserve a clear failure outcome.'
 Require $audit 'PASS: Biology native-contract audit completed' 'Compatibility audit report must preserve a clear success outcome.'
 Require $audit 'textEvidenceReport' 'Compatibility JSON metadata must point to the corresponding text evidence report.'
-if ($audit -match "\[string\]\$RepoRoot\s*=\s*'C:\\\\Games\\\\CyberpunkRealism'") {
+if ($audit.Contains("[string]`$RepoRoot = 'C:\Games\CyberpunkRealism'")) {
     throw 'Compatibility audit reintroduced the retired fixed C:\Games\CyberpunkRealism repo default.'
 }
 
