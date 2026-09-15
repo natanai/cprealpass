@@ -15,8 +15,8 @@ public class CRRealpassSettings extends ScriptableSystem {
   @runtimeProperty("ModSettings.order", "10")
   public let e3FirstPersonHudVisuals: Bool = true;
 
-  public static func Get() -> ref<CRRealpassSettings> {
-    return GameInstance.GetScriptableSystemsContainer(GetGameInstance()).Get(n"CyberpunkRealism.Settings.CRRealpassSettings") as CRRealpassSettings;
+  public static func Get(game: GameInstance) -> ref<CRRealpassSettings> {
+    return GameInstance.GetScriptableSystemsContainer(game).Get(n"CyberpunkRealism.Settings.CRRealpassSettings") as CRRealpassSettings;
   }
 
   // Listener registration keeps the ScriptableSystem singleton synchronized with
@@ -27,13 +27,19 @@ public class CRRealpassSettings extends ScriptableSystem {
     ModSettings.RegisterListenerToClass(this);
   }
 
+  @if(!ModuleExists("ModSettingsModule"))
+  private func OnAttach() -> Void {}
+
   @if(ModuleExists("ModSettingsModule"))
   private func OnDetach() -> Void {
     ModSettings.UnregisterListenerToClass(this);
   }
 
-  public static func UseE3FirstPersonHudVisuals() -> Bool {
-    let settings: ref<CRRealpassSettings> = CRRealpassSettings.Get();
+  @if(!ModuleExists("ModSettingsModule"))
+  private func OnDetach() -> Void {}
+
+  public static func UseE3FirstPersonHudVisuals(game: GameInstance) -> Bool {
+    let settings: ref<CRRealpassSettings> = CRRealpassSettings.Get(game);
     // Fail toward the authored/default presentation if the system is temporarily
     // unavailable during startup; this never changes simulation state.
     return !IsDefined(settings) || settings.e3FirstPersonHudVisuals;
