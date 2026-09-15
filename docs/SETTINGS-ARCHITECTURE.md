@@ -1,20 +1,21 @@
 # realpass configuration architecture
 
+Status: canonical public-settings contract
+Last updated: 2026-09-14
+
 ## Goal
 
-RealPass has one authored physical simulation, but that does **not** require an empty settings page. The public configuration surface has three deliberately narrow jobs:
+RealPass has one authored physical simulation. Its normal player-facing settings page is intentionally tiny: **exactly one editable setting**.
 
-1. make it obvious that RealPass is installed/active;
-2. provide a concise feature ledger describing the major systems RealPass owns;
-3. expose a very small number of binary presentation/accessibility preferences that do not alter hidden physical simulation.
+That setting is:
 
-Configuration must never turn the release into a difficulty/balance sandbox.
+- **E3 first-person HUD visuals** — `On` by default. It enables the RealPass-owned red E3-inspired first-person HUD and NPC-nameplate presentation. Turning it off changes presentation only. It does not change body state, injury, combat, armor, pain, treatment, recovery, the modern scanner, or any other simulation authority.
 
-The release contract is recorded in `manifest/settings.json` and `manifest/runtime-origin-policy.json`. Internal module ownership remains in `manifest/runtime-modules.json`. `RuntimePolicyModel.reds` remains an engine-independent development/build gate model; those authority gates are not player preferences.
+RealPass appearing under `Settings > Mods` is itself sufficient to show that the mod/settings integration is active. Do not fill the page with fake one-value status controls, implementation inventory, patch notes, diagnostics, or a feature ledger.
 
 ## Release behavior
 
-A normal release keeps the accepted simulation authorities together:
+A normal RealPass release keeps the accepted simulation authorities together:
 
 ```text
 body = on
@@ -25,127 +26,79 @@ cyberware physiology = on where implemented
 presentation authority = on
 diagnostics = off
 native modern scanner = on
+E3-inspired first-person HUD/nameplates = authored visual target
 ```
 
-Two players on the same RealPass version should therefore have the same authored damage, ballistics, armor, injury, physiology, pain, treatment and recovery rules.
+Two players on the same RealPass version therefore get the same damage, ballistics, armor, injury, physiology, pain, treatment and recovery rules regardless of the HUD-visual preference.
 
-The player may choose whether certain **presentation channels** are shown when doing so does not alter those rules. A preference is acceptable only when the hidden simulation and gameplay consequences remain identical.
+## E3 presentation boundary
 
-## Mod Settings is a status/ledger surface
+The product goal is not to run the external Project E3 HUD mod. The goal is to reproduce the desired visual language inside RealPass:
 
-RealPass intentionally appears in Cyberpunk's Mod Settings menu.
+- red E3-inspired first-person HUD styling;
+- E3-inspired NPC nameplates;
+- native modern scanner/quickhack behavior retained;
+- RealPass-owned source/assets and runtime authority;
+- no requirement that players install Project E3 separately.
 
-The surface should be compact and stable. It is **not** patch notes, release history, diagnostics, raw telemetry or a list of every implementation detail.
+Historical Project E3 code/assets may be studied as reference/provenance where permitted, but the standalone RealPass runtime must not depend on its scripts, archive, tweak payload, save state, or settings implementation.
 
-The first owned surface uses two kinds of entry:
+## The sole public setting
 
-- a one-value informational state such as `Active` / `Managed by RealPass` for the concise feature ledger;
-- a true binary preference for an optional presentation/accessibility channel.
+`presentation.e3-first-person-hud-visuals`
 
-Current ledger categories are deliberately broad:
+- type: Boolean;
+- default: `true`;
+- presentation-only;
+- gates the RealPass-owned E3-inspired HUD/nameplate skin;
+- does not disable presentation authority as a whole;
+- does not restore traditional balance/gameplay configuration;
+- does not replace the modern scanner with E3 scanner behavior.
 
-- Body and physiology;
-- Injury, bleeding and recovery;
-- Pain and MaxDoc analgesia;
-- Combat and ballistics;
-- Physical armor and protection;
-- Presentation and feedback.
-
-Biology should be added to the visible ledger once its native player-facing shell is accepted, rather than advertising unfinished UI merely because a view-model exists in source.
-
-## What players may toggle
-
-Public preferences must be boolean and non-authoritative. Examples that can qualify include contextual vocalization, a fullscreen discomfort effect, or another redundant cue when disabling that cue does not remove or rebalance the underlying state or consequence.
-
-The first accepted preference candidate is:
-
-- **Fullscreen disorientation effects** — controls only the fullscreen/audio loop used to communicate excessive overlapping analgesia. Pain, analgesic load, injury, weapon-handling consequences, blood loss and recovery continue unchanged.
-
-A new public boolean requires the same proof before it is added.
+Analgesic-disorientation feedback, pain consequences, injury effects, and other authored body feedback are not separate player settings. They remain part of the fixed RealPass experience unless a later explicit product decision says otherwise.
 
 ## What players may never tune
 
-Do not expose numeric or scale-style controls for physical simulation. In particular, no public setting may provide:
+The normal settings page must not expose:
 
+- body/injury/combat/armor enable switches;
 - damage multipliers;
 - hunger/hydration rates;
 - bleeding multipliers;
-- pain strength or analgesia curves;
+- pain or analgesia scales;
 - armor/protection scaling;
 - MaxDoc dose/decay thresholds;
 - recovery speed;
-- other Float/Int tuning values that create different simulation balance.
+- cosmetic-transmog authority;
+- diagnostics;
+- any Float/Int balance control.
 
-Likewise, normal players do not get switches that disable core authorities such as body simulation, injury, ballistics, armor, bleeding or recovery.
-
-The rule is:
-
-```text
-same hidden simulation + optional presentation channel = potentially valid
-```
-
-not:
-
-```text
-player changes the physical rules = valid RealPass preference
-```
-
-## Transitional feedback is acceptance-gated
-
-The final authored presentation still aims to avoid traditional actor HP meters and permanent survival-meter walls. However, attended development must not remove the player's only useful feedback before a RealPass replacement actually works in-game.
-
-During development, suppression is therefore **replacement-gated**:
-
-- leave a native indicator available when removing it would make the current build unreadable;
-- treat that native indicator as a temporary fallback, not the final product target;
-- suppress it only after the corresponding Biology/HUD/gameplay feedback passes attended acceptance;
-- never replace it with a pile of RealPass percentage bars merely to make the fallback disappear.
-
-This distinction matters because the first owned live screenshots showed the stock `HEALTH INDICATOR` still visible while the Biology replacement was not yet usable. Hiding that indicator immediately would make the build less testable without advancing the actual product.
-
-## Development configuration
-
-Internal gates still matter. During development an engineer may need a body-only build, a combat-without-presentation comparison, diagnostics, or another narrow profile. These controls remain build/test tooling only.
-
-The model is:
-
-```text
-development authority may run = build acceptance gate AND development profile gate AND valid native lifecycle/state
-```
-
-For a release candidate, development-profile authority gates are fixed to the one accepted product configuration.
+Internal development gates may still exist for isolation, exact compilation, and diagnosis. They are not player preferences.
 
 ## Mod Settings dependency boundary
 
-Mod Settings is permitted again because it serves a narrow generic UI/persistence role. It must not own RealPass policy or simulation state.
+Mod Settings is generic UI/persistence plumbing only. RealPass owns the setting label, default, policy, and visual behavior.
 
-RealPass source should prefer runtime-property metadata and project-owned preference accessors over wiring the simulation directly to Mod Settings internals. If Mod Settings disappeared, the intended repair would be to replace this presentation/configuration plumbing without changing the physical model.
+The RealPass settings singleton may register/unregister as a Mod Settings listener so an accepted change is reflected live and persisted. It must not use Mod Settings as a simulation-policy owner or query it to define body/combat/injury balance.
 
-The owned runtime may therefore include pinned generic dependencies needed by Mod Settings, while the source-mod ownership prohibition remains unchanged: Dark Future and Project E3 cannot execute RealPass gameplay or presentation policy.
+If Mod Settings were replaced in the future, the physical simulation should not change.
 
-## Diagnostics
+## Transitional health feedback
 
-Diagnostics remain development-only and opt-in through attended build/session tooling. They must never become a background watcher, service or persistent telemetry system.
+Traditional actor-health suppression remains replacement-gated during development. The final target is still no traditional actor HP bars, but a useful native indicator may remain temporarily until the RealPass-owned HUD/Biology feedback has passed attended testing.
 
-Diagnostics may expose exact numerical state because their purpose is verification. The ordinary Mod Settings ledger must not become a disguised diagnostics page.
-
-## Physical outfits are not a settings toggle
-
-The vanilla Outfit/wardrobe convenience is being reinterpreted as a physical equipment-loadout behavior, not retained as cosmetic transmog and not exposed as a switch between realism and transmog.
-
-What V appears to wear must ultimately match the physical equipment RealPass uses for protection/coverage. Configuration must not provide a "keep cosmetic transmog" escape hatch that reintroduces two contradictory equipment realities.
+This is independent of the E3 visual toggle: turning the E3-inspired skin off does not change the underlying acceptance gate or physical simulation.
 
 ## Acceptance criteria
 
-Configuration work is accepted only when:
+Configuration is accepted only when:
 
-1. `Settings > Mods` visibly identifies RealPass as active;
-2. the page contains a concise feature ledger rather than patch notes or diagnostics;
-3. core body/injury/combat/armor authorities cannot be disabled there;
-4. no public Float/Int/numeric balance controls exist;
-5. every editable public control is binary and demonstrably presentation/accessibility-only;
-6. diagnostics cannot be enabled accidentally from the normal release page;
-7. internal authorities can still be isolated through development-only tooling;
-8. temporary native health/needs feedback is not removed until replacement feedback is accepted;
-9. final release acceptance still removes traditional actor HP presentation where technically safe once replacements are proven;
-10. Mod Settings remains generic plumbing rather than the owner of simulation policy.
+1. `Settings > Mods` lists **RealPass**;
+2. RealPass contains exactly one editable setting: **E3 first-person HUD visuals**;
+3. that setting is Boolean and defaults `On`;
+4. toggling it changes only the RealPass-owned E3-inspired HUD/nameplate presentation;
+5. the modern scanner/quickhack UI remains native and usable in either setting state;
+6. no gameplay/balance/diagnostic controls appear;
+7. no fake read-only feature-ledger controls appear;
+8. RealPass does not require the external Project E3 runtime;
+9. all simulation authority remains identical with the toggle on or off.
