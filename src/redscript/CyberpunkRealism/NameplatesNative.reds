@@ -1,8 +1,10 @@
-// Project-original scanned-civilian name fallback.
-// Extends only the stock name data handed to the stock nameplate renderer. It has
-// no source-mod runtime dependency and does not reveal authored hidden identities,
-// alternative names, quest targets or globally disabled names.
+// RealPass-owned NPC name fallback used by the E3-inspired first-person HUD layer.
+// Extends only the stock name data handed to the stock renderer. It has no Project
+// E3 runtime dependency and does not reveal authored hidden identities, alternative
+// names, quest targets or globally disabled names.
 module CyberpunkRealism.Presentation
+
+import CyberpunkRealism.Settings.*
 
 @addMethod(NameplateVisualsLogicController)
 private final func CRScannedCrowdNameAllowed(puppet: wref<GameObject>) -> Bool {
@@ -11,6 +13,9 @@ private final func CRScannedCrowdNameAllowed(puppet: wref<GameObject>) -> Bool {
   let nameplate: wref<UINameplate_Record>;
   let preset: wref<ScannerModuleVisibilityPreset_Record>;
   let ps: ref<ScriptedPuppetPS>;
+  if !CRRealpassSettings.UseE3FirstPersonHudVisuals() {
+    return false;
+  }
   if !IsDefined(npc) || !npc.IsAttached() || !npc.IsScanned() || !npc.IsCharacterCivilian() || this.IsQuestTarget() {
     return false;
   }
@@ -42,7 +47,8 @@ public final func SetVisualData(puppet: ref<GameObject>, const incomingData: scr
   // never mutated in place.
   let resolved: NPCNextToTheCrosshair = Deref(incomingData);
   // Native focus data always wins. Only recover an empty public crowd name after a
-  // permitted completed scan; the stock renderer retains every visibility decision.
+  // permitted completed scan while the E3-inspired presentation is enabled; the
+  // stock renderer retains every visibility decision.
   if !IsStringValid(resolved.name) && this.CRScannedCrowdNameAllowed(puppet) {
     resolved.name = puppet.GetDisplayName();
   }
