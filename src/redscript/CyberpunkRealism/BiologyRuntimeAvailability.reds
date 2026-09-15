@@ -12,6 +12,10 @@ public class CRBiologyRuntimeAvailability extends IScriptable {
     return CRBodyRuntimePolicy.Enabled() && CRRealpassSettings.IsEnabled(GetGameInstance());
   }
 
+  public static func Enabled(game: GameInstance) -> Bool {
+    return CRBodyRuntimePolicy.Enabled() && CRRealpassSettings.IsEnabled(game);
+  }
+
   public static func EnsureActive() -> Bool {
     if !CRBiologyRuntimeAvailability.Enabled() {
       return false;
@@ -33,6 +37,20 @@ public class CRBiologyRuntimeAvailability extends IScriptable {
     return runtime.OwnsNeeds();
   }
 
+  public static func EnsureActive(game: GameInstance) -> Bool {
+    if !CRBiologyRuntimeAvailability.Enabled(game) {
+      return false;
+    }
+    let runtime: ref<CRBodyRuntime> = CRBiologySessionAuthority.Body(game);
+    if !IsDefined(runtime) {
+      return false;
+    }
+    if !runtime.IsRunning() || !runtime.OwnsNeeds() {
+      runtime.Activate();
+    }
+    return runtime.IsRunning() && runtime.OwnsNeeds();
+  }
+
   public static func FailureReason() -> String {
     if !CRBodyRuntimePolicy.Enabled() {
       return "BODY RUNTIME BUILD GATE CLOSED";
@@ -47,6 +65,39 @@ public class CRBiologyRuntimeAvailability extends IScriptable {
     }
     if !runtime.OwnsNeeds() {
       return "BODY STATE NOT INITIALIZED";
+    }
+    return "";
+  }
+
+  public static func FailureReason(game: GameInstance) -> String {
+    if !CRBodyRuntimePolicy.Enabled() {
+      return "BODY RUNTIME BUILD GATE CLOSED";
+    }
+    if !CRRealpassSettings.IsEnabled(game) {
+      return "BIOLOGY DISABLED";
+    }
+    let probe: Int32 = CRBiologySessionAuthority.BodyProbe(game);
+    if probe == 1 {
+      return "BODY RUNTIME SESSION CONTEXT UNAVAILABLE";
+    }
+    if probe == 2 {
+      return "BODY RUNTIME SYSTEM NOT REGISTERED";
+    }
+    let runtime: ref<CRBodyRuntime> = CRBiologySessionAuthority.Body(game);
+    if !IsDefined(runtime) {
+      return "BODY RUNTIME SYSTEM MISSING";
+    }
+    if !runtime.HasAuthorityPlayer() {
+      return "BODY RUNTIME PLAYER UNAVAILABLE";
+    }
+    if runtime.HasUnsupportedSaveVersion() {
+      return "BODY SAVE VERSION UNSUPPORTED";
+    }
+    if !runtime.OwnsNeeds() {
+      return "BODY RUNTIME NOT INITIALIZED";
+    }
+    if !runtime.IsRunning() {
+      return "BODY RUNTIME NOT RUNNING";
     }
     return "";
   }

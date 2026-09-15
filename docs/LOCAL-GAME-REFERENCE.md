@@ -7,7 +7,7 @@ Last updated: **2026-09-15**
 
 Remote GitHub agents do not directly browse the user's installed Cyberpunk 2077 filesystem. Biology therefore keeps redistribution-safe derived metadata under `reference/cyberpunk/` and may ask the user to run narrow local probes when direct supported-build evidence materially improves correctness.
 
-This is part of Biology's patch-resilience strategy: foundational integrations should be based on the actual supported game build and semantic contracts rather than stale web examples or assumptions inherited from another mod.
+This is part of Biology's patch-resilience strategy: foundational integrations should be based on the actual supported game build and semantic contracts rather than stale web examples, web/community script dumps, or assumptions inherited from another mod.
 
 ## Important path rule
 
@@ -17,19 +17,44 @@ The game path is currently known:
 C:\Games\Steam\steamapps\common\Cyberpunk 2077
 ```
 
-The repository/workspace path is **not** stable.
-
-Do not assume a permanent checkout such as `C:\Games\CyberpunkRealism` or any other fixed repo location. Attended test workspaces are disposable and normally live under a milestone-specific directory such as:
+The repository/workspace path is **not** stable. Do not assume or recreate `C:\Games\CyberpunkRealism` or any other fixed repo location. Attended test workspaces are disposable and normally live under a milestone-specific directory such as:
 
 ```text
-C:\Games\Biology-Test-<YYYY-MM-DD>-<short-main-sha>\
+C:\Games\Biology-Test-<short-main-sha>-<YYYYMMDD-HHmmss>-<random8>\
     operator\
     candidate\
 ```
 
-Repository tools should derive the project root from the checkout they are running from unless a tool explicitly needs a supplied path.
+Repository tools should derive the project root from the checkout they are running from unless a tool explicitly needs a supplied path. Before asking the user to run anything, read `docs/LOCAL-OPERATOR-COMMANDS.md`.
 
-Before asking the user to run anything, read `docs/LOCAL-OPERATOR-COMMANDS.md`.
+## Prefer the installed official REDmod script tree for script contracts
+
+For questions about a Cyberpunk script class, event, function, field, controller, lifecycle, inheritance relationship, or nearby implementation context, prefer the official REDmod decompiled script tree from the installed supported game whenever it contains the needed evidence:
+
+```text
+C:\Games\Steam\steamapps\common\Cyberpunk 2077\tools\redmod\scripts
+```
+
+This is direct evidence from the user's installed 2.31 build, not a web mirror. Use narrow searches and preserve only the relevant relative paths, symbol names, signatures, or short diagnostic conclusions. Do not commit bulk decompiled Cyberpunk source.
+
+Examples of facts that should normally be established here before searching online include current controller/class existence, event/function names, inheritance, editable/private field names visible in the decompiled source, lifecycle ownership, and whether an older Project E3 or community-mod seam still maps to the current game.
+
+For presentation work, `tools/Probe-PresentationNativeContracts.ps1` is the focused example. It reads `tools\redmod\scripts` without modifying the game and reports current HUD/nameplate/minimap controller evidence.
+
+## Exact compilation is the hard script-compatibility gate
+
+Readable REDmod source evidence answers what the installed game exposes. It does not prove that Biology's additive/wrapper code compiles against that build. Exact compatibility is checked against:
+
+```text
+C:\Games\Steam\steamapps\common\Cyberpunk 2077\r6\cache\final.redscripts
+```
+
+A strong native-seam workflow is:
+
+1. inspect the installed REDmod `.script` source for the current contract;
+2. implement the smallest Biology-owned seam;
+3. exact-compile against the installed `final.redscripts`;
+4. perform attended runtime acceptance only after those static gates pass.
 
 ## Two tracked evidence families
 
@@ -45,9 +70,7 @@ reference\cyberpunk\
 
 contains redistribution-safe metadata describing the installation when the snapshot was last refreshed. Depending on the tool/version, that can include environment/version information, filesystem indexes, framework/plugin inventories, installed-script metadata, archive inventories and native-contract fingerprints.
 
-This snapshot may describe vanilla, a Biology test installation or another deliberate state. Treat timestamps/version fields as dated evidence.
-
-Use the canonical snapshot command from `docs/LOCAL-OPERATOR-COMMANDS.md` rather than reconstructing a publish workflow in chat.
+This snapshot may describe vanilla, a Biology test installation or another deliberate state. Treat timestamps/version fields as dated evidence. Use the canonical snapshot command from `docs/LOCAL-OPERATOR-COMMANDS.md` rather than reconstructing a publish workflow in chat.
 
 ### Known-clean vanilla baseline
 
@@ -65,9 +88,7 @@ contains derived metadata for a deliberately clean vanilla reference:
 - supported game/executable version;
 - capture time and aggregate counts.
 
-It contains no Cyberpunk payload content.
-
-Baseline capture is a deliberate maintenance operation, normally after a supported game patch or when the canonical clean reference must change. It is not a required second 85+ GiB read immediately after every fresh reinstall.
+It contains no Cyberpunk payload content. Baseline capture is a deliberate maintenance operation, normally after a supported game patch or when the canonical clean reference must change. It is not a required second 85+ GiB read immediately after every fresh reinstall.
 
 Use the catalogued baseline capture/compare commands in `docs/LOCAL-OPERATOR-COMMANDS.md`.
 
@@ -81,20 +102,19 @@ tools/Reset-BiologyIteration.ps1
 
 The old RealPass reset route is legacy only and must not be presented as the normal current command.
 
-The Biology reset is conservative: it uses the installed Biology ownership manifest, validates file identity, removes only safely proven package-owned paths, and fails closed when state cannot be proven safe.
-
-The current testing policy is in `docs/CLEAN-ROOM-TESTING.md`.
+The Biology reset is conservative: it uses the installed Biology ownership manifest, validates file identity, removes only safely proven package-owned paths, and fails closed when state cannot be proven safe. The current testing policy is in `docs/CLEAN-ROOM-TESTING.md`.
 
 ## Evidence priority
 
 For questions about what Cyberpunk itself contains, exposes, names, calls, stores or does, use this order:
 
-1. current Biology source/tests/docs and `reference/cyberpunk/`;
-2. targeted direct inspection of the user's supported game installation;
-3. official CDPR/REDmod/framework/tool documentation and release notes;
-4. community guides/examples as secondary evidence.
+1. current Biology source/tests/docs and already-recorded `reference/cyberpunk/` evidence;
+2. the installed official REDmod decompiled script tree under `tools\redmod\scripts` for readable script contracts;
+3. targeted direct inspection/exact compile against the user's supported game installation;
+4. official CDPR/REDmod/framework/tool documentation and release notes;
+5. web/community script dumps, guides and examples only as secondary evidence.
 
-Do not substitute internet examples for a small direct probe when the installed supported build can answer the question more authoritatively.
+Do not substitute internet examples for a small direct probe when the installed supported build can answer the question more authoritatively. Community examples can suggest candidate seams, but supported installed-game evidence should confirm foundational contracts.
 
 ## Local generated workspace
 
@@ -108,11 +128,7 @@ game-reference\
 reports\         # generated local reports
 ```
 
-Those locations are relative to the **active checkout**, not a permanent absolute repository path.
-
-If `game-reference\live` exists, it reaches the real installation and must be treated as read-only during investigation.
-
-Only redistribution-safe derived metadata under tracked `reference/cyberpunk/` belongs in Git.
+Those locations are relative to the **active checkout**, not a permanent absolute repository path. If `game-reference\live` exists, it reaches the real installation and must be treated as read-only during investigation. Only redistribution-safe derived metadata under tracked `reference/cyberpunk/` belongs in Git.
 
 ## What remote agents may request
 
@@ -120,6 +136,7 @@ Good reasons for a targeted local probe include:
 
 - exact vanilla resource/controller/script paths;
 - class/function/event/stat/status-effect/TweakDB record existence;
+- direct REDmod script-source evidence for controller/lifecycle ownership;
 - inventory/equipment/controller/state-machine behavior;
 - installed framework versions;
 - relevant logs;
@@ -150,13 +167,13 @@ not:
 run long command -> user manually copies a large console transcript into chat
 ```
 
-Console summaries are still useful, but the report is the durable return artifact when the output matters to an agent.
-
-If a command fails after it has started collecting evidence, it should still preserve a useful report where practical and state that the run failed.
+Console summaries are still useful, but the report is the durable return artifact when the output matters to an agent. If a command fails after it has started collecting evidence, it should still preserve a useful report where practical and state that the run failed.
 
 ## WolvenKit / selective extraction
 
-If archive-level inspection is needed, first use the repository's current toolchain/reference guidance. Selective extraction belongs under the active checkout's gitignored workspace, for example:
+REDmod's installed script tree should be used before archive extraction when the question is purely about script behavior.
+
+If archive-level inspection is needed, use the repository's current toolchain/reference guidance. Selective extraction belongs under the active checkout's gitignored workspace, for example:
 
 ```text
 game-reference\extracted\
@@ -170,6 +187,7 @@ Appropriate derived additions include:
 
 - technical conclusions;
 - vanilla resource/symbol/record names;
+- narrow native signatures needed by Biology adapters;
 - small indexes/hashes;
 - compatibility probes/scripts;
 - versioned environment metadata;
@@ -180,6 +198,7 @@ Do **not** commit:
 
 - vanilla `.archive` containers;
 - game executables/DLLs;
+- bulk REDmod-decompiled game scripts;
 - textures, meshes, audio, videos or other proprietary game payload;
 - bulk decompiled/extracted game content;
 - the local `game-reference/` workspace;

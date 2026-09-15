@@ -21,9 +21,12 @@ public class CRBodyTestPolicy extends IScriptable {
 
 public class CRBodyTickCallback extends DelayCallback {
   public let generation: Int32;
+  public let crOwner: wref<CRBodyRuntime>;
 
   public func Call() -> Void {
-    CRBodyRuntime.Get().HandleTick(this.generation);
+    if IsDefined(this.crOwner) {
+      this.crOwner.HandleTick(this.generation);
+    }
   }
 }
 
@@ -51,6 +54,18 @@ public class CRBodyRuntime extends ScriptableSystem {
     return GameInstance.GetScriptableSystemsContainer(GetGameInstance()).Get(NameOf<CRBodyRuntime>()) as CRBodyRuntime;
   }
 
+  public func AuthorityGame() -> GameInstance {
+    return this.GetGameInstance();
+  }
+
+  public func HasAuthorityPlayer() -> Bool {
+    return IsDefined(this.Player());
+  }
+
+  public func HasUnsupportedSaveVersion() -> Bool {
+    return this.unsupportedSaveVersion;
+  }
+
   private func OnAttach() -> Void {
     this.ResetTransientState();
   }
@@ -60,8 +75,14 @@ public class CRBodyRuntime extends ScriptableSystem {
   }
 
   private func OnDetach() -> Void {
-    CRFieldCareActionRuntime.Get().Cancel(false);
-    CRInjuryEffectsRuntime.Get().Suspend();
+    let fieldCare: ref<CRFieldCareActionRuntime> = CRBiologySessionAuthority.FieldCare(this.GetGameInstance());
+    let effects: ref<CRInjuryEffectsRuntime> = CRBiologySessionAuthority.InjuryEffects(this.GetGameInstance());
+    if IsDefined(fieldCare) {
+      fieldCare.Cancel(false);
+    }
+    if IsDefined(effects) {
+      effects.Suspend();
+    }
     this.running = false;
     this.tickGeneration += 1;
     this.tickScheduled = false;
@@ -124,9 +145,17 @@ public class CRBodyRuntime extends ScriptableSystem {
   }
 
   public func Suspend() -> Void {
+    let fieldCare: ref<CRFieldCareActionRuntime>;
+    let effects: ref<CRInjuryEffectsRuntime>;
     this.TestSnapshot("suspend");
-    CRFieldCareActionRuntime.Get().Cancel(false);
-    CRInjuryEffectsRuntime.Get().Suspend();
+    fieldCare = CRBiologySessionAuthority.FieldCare(this.GetGameInstance());
+    effects = CRBiologySessionAuthority.InjuryEffects(this.GetGameInstance());
+    if IsDefined(fieldCare) {
+      fieldCare.Cancel(false);
+    }
+    if IsDefined(effects) {
+      effects.Suspend();
+    }
     this.running = false;
     this.tickGeneration += 1;
     this.tickScheduled = false;
@@ -181,11 +210,11 @@ public class CRBodyRuntime extends ScriptableSystem {
   }
 
   private func Player() -> ref<PlayerPuppet> {
-    return GameInstance.GetPlayerSystem(GetGameInstance()).GetLocalPlayerMainGameObject() as PlayerPuppet;
+    return GameInstance.GetPlayerSystem(this.GetGameInstance()).GetLocalPlayerMainGameObject() as PlayerPuppet;
   }
 
   private func InMenu() -> Bool {
-    let board: ref<IBlackboard> = GameInstance.GetBlackboardSystem(GetGameInstance()).Get(GetAllBlackboardDefs().UI_System);
+    let board: ref<IBlackboard> = GameInstance.GetBlackboardSystem(this.GetGameInstance()).Get(GetAllBlackboardDefs().UI_System);
     return IsDefined(board) && board.GetBool(GetAllBlackboardDefs().UI_System.IsInMenu);
   }
 
@@ -198,11 +227,11 @@ public class CRBodyRuntime extends ScriptableSystem {
   }
 
   private func WorldSeconds() -> Int32 {
-    return GameTime.GetSeconds(GameInstance.GetTimeSystem(GetGameInstance()).GetGameTime());
+    return GameTime.GetSeconds(GameInstance.GetTimeSystem(this.GetGameInstance()).GetGameTime());
   }
 
   private func SimSeconds() -> Float {
-    return GameInstance.GetSimTime(GetGameInstance()).ToFloat();
+    return GameInstance.GetSimTime(this.GetGameInstance()).ToFloat();
   }
 
   private func ResetClock() -> Void {
@@ -220,7 +249,7 @@ public class CRBodyRuntime extends ScriptableSystem {
 
   private func Exertion() -> Float {
     let player: ref<PlayerPuppet> = this.Player();
-    if !IsDefined(player) || VehicleComponent.IsMountedToVehicle(GetGameInstance(), player) {
+    if !IsDefined(player) || VehicleComponent.IsMountedToVehicle(this.GetGameInstance(), player) {
       return 0.0;
     }
     // Provisional movement proxy. It is intentionally owned here and can later be
@@ -236,13 +265,17 @@ public class CRBodyRuntime extends ScriptableSystem {
   }
 
   public func Observe() -> Void {
+    let effects: ref<CRInjuryEffectsRuntime>;
     if !this.running || !IsDefined(this.clock) || !IsDefined(this.inputs) || !IsDefined(this.body) {
       return;
     }
     let hours: Float = CRClockModel.Observe(this.clock, this.WorldSeconds(), this.SimSeconds(), this.NativeStateAllowed(false));
     this.ApplyHours(hours, false, this.Exertion());
     if this.OwnsLocalizedInjuries() && !this.inputs.faulted {
-      CRInjuryEffectsRuntime.Get().Advance(hours, this.config, false);
+      effects = CRBiologySessionAuthority.InjuryEffects(this.GetGameInstance());
+      if IsDefined(effects) {
+        effects.Advance(hours, this.config, false);
+      }
     }
     CRBodyInputs.Drain(this.inputs, this.body, this.config);
     this.Publish();
@@ -256,8 +289,9 @@ public class CRBodyRuntime extends ScriptableSystem {
     }
     callback = new CRBodyTickCallback();
     callback.generation = this.tickGeneration;
+    callback.crOwner = this;
     this.tickScheduled = true;
-    GameInstance.GetDelaySystem(GetGameInstance()).DelayCallback(callback, 1.0);
+    GameInstance.GetDelaySystem(this.GetGameInstance()).DelayCallback(callback, 1.0);
   }
 
   public func HandleTick(generation: Int32) -> Void {
@@ -284,7 +318,10 @@ public class CRBodyRuntime extends ScriptableSystem {
   }
 
   public func BeginSkip() -> Void {
-    CRFieldCareActionRuntime.Get().Cancel(false);
+    let fieldCare: ref<CRFieldCareActionRuntime> = CRBiologySessionAuthority.FieldCare(this.GetGameInstance());
+    if IsDefined(fieldCare) {
+      fieldCare.Cancel(false);
+    }
     if !this.running || !IsDefined(this.clock) {
       return;
     }
@@ -294,13 +331,17 @@ public class CRBodyRuntime extends ScriptableSystem {
   }
 
   public func FinishSkipHours(hoursRequested: Float, sleeping: Bool) -> Void {
+    let effects: ref<CRInjuryEffectsRuntime>;
     if !this.running || !IsDefined(this.clock) || !IsDefined(this.inputs) || !IsDefined(this.body) {
       return;
     }
     let hours: Float = CRClockModel.FinishSkip(this.clock, this.WorldSeconds(), this.SimSeconds(), hoursRequested);
     this.ApplyHours(hours, sleeping, 0.0);
     if this.OwnsLocalizedInjuries() && !this.inputs.faulted {
-      CRInjuryEffectsRuntime.Get().Advance(hours, this.config, sleeping);
+      effects = CRBiologySessionAuthority.InjuryEffects(this.GetGameInstance());
+      if IsDefined(effects) {
+        effects.Advance(hours, this.config, sleeping);
+      }
     }
     CRBodyInputs.Drain(this.inputs, this.body, this.config);
     this.Publish();
@@ -312,7 +353,10 @@ public class CRBodyRuntime extends ScriptableSystem {
   }
 
   public func RefreshInjuryEffects() -> Void {
-    CRInjuryEffectsRuntime.Get().Refresh(this.body, this.config, this.NativeStateAllowed(false) && this.OwnsLocalizedInjuries());
+    let effects: ref<CRInjuryEffectsRuntime> = CRBiologySessionAuthority.InjuryEffects(this.GetGameInstance());
+    if IsDefined(effects) {
+      effects.Refresh(this.body, this.config, this.NativeStateAllowed(false) && this.OwnsLocalizedInjuries());
+    }
   }
 
   private func Publish() -> Void {
@@ -330,7 +374,10 @@ public class CRBodyRuntime extends ScriptableSystem {
       return false;
     }
     this.Observe();
-    CRFieldCareActionRuntime.Get().Cancel(true);
+    let fieldCare: ref<CRFieldCareActionRuntime> = CRBiologySessionAuthority.FieldCare(this.GetGameInstance());
+    if IsDefined(fieldCare) {
+      fieldCare.Cancel(true);
+    }
     let accepted: Bool = CRBodyInputs.Injury(this.inputs, region, tissue, bone, cyberware, externalBleed, internalBleed);
     if accepted {
       CRBodyInputs.Drain(this.inputs, this.body, this.config);
@@ -357,20 +404,25 @@ public class CRBodyRuntime extends ScriptableSystem {
   // closed; CanContinueFieldCare remains the stricter gameplay gate.
   public func CanUseFieldCare() -> Bool {
     let player: ref<PlayerPuppet> = this.Player();
-    return !this.fieldCareBusy && this.OwnsLocalizedInjuries() && this.NativeStateAllowed(true) && IsDefined(this.inputs) && !this.inputs.faulted && IsDefined(player) && !player.IsInCombat() && !VehicleComponent.IsMountedToVehicle(GetGameInstance(), player);
+    return !this.fieldCareBusy && this.OwnsLocalizedInjuries() && this.NativeStateAllowed(true) && IsDefined(this.inputs) && !this.inputs.faulted && IsDefined(player) && !player.IsInCombat() && !VehicleComponent.IsMountedToVehicle(this.GetGameInstance(), player);
   }
 
   public func CanContinueFieldCare() -> Bool {
     let player: ref<PlayerPuppet> = this.Player();
-    return this.OwnsLocalizedInjuries() && this.NativeStateAllowed(false) && IsDefined(this.inputs) && !this.inputs.faulted && IsDefined(player) && !player.IsInCombat() && !VehicleComponent.IsMountedToVehicle(GetGameInstance(), player);
+    return this.OwnsLocalizedInjuries() && this.NativeStateAllowed(false) && IsDefined(this.inputs) && !this.inputs.faulted && IsDefined(player) && !player.IsInCombat() && !VehicleComponent.IsMountedToVehicle(this.GetGameInstance(), player);
   }
 
   public func UseFieldCare(region: Int32, kind: Int32) -> Int32 {
-    return CRFieldCareActionRuntime.Get().Begin(region, kind);
+    let fieldCare: ref<CRFieldCareActionRuntime> = CRBiologySessionAuthority.FieldCare(this.GetGameInstance());
+    if !IsDefined(fieldCare) {
+      return 0;
+    }
+    return fieldCare.Begin(region, kind);
   }
 
   public func CommitFieldCare(action: ref<CRFieldCareAction>) -> Int32 {
-    if !CRFieldCareActionRuntime.Get().IsCompleting(action) || !this.CanUseFieldCare() {
+    let fieldCare: ref<CRFieldCareActionRuntime> = CRBiologySessionAuthority.FieldCare(this.GetGameInstance());
+    if !IsDefined(fieldCare) || !fieldCare.IsCompleting(action) || !this.CanUseFieldCare() {
       return 0;
     }
     let region: Int32 = action.region;

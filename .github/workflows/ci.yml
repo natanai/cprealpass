@@ -33,6 +33,10 @@ jobs:
         shell: pwsh
         run: ./tests/Run-CI.ps1
 
+      - name: Build inspectable Biology player uninstaller
+        shell: pwsh
+        run: ./tools/Build-BiologyUninstaller.ps1 -OutputPath './dist/Uninstall Biology.exe'
+
       - name: Build redistribution-safe Biology development source package
         shell: pwsh
         run: ./tools/Build-Package.ps1
@@ -46,6 +50,14 @@ jobs:
           if (Test-Path -LiteralPath $scanRoot) { Remove-Item -LiteralPath $scanRoot -Recurse -Force }
           Expand-Archive -LiteralPath $archives[0].FullName -DestinationPath $scanRoot
           ./tools/Test-ArtifactPolicy.ps1 -Root $scanRoot
+
+      - name: Upload Biology player uninstaller
+        uses: actions/upload-artifact@v4
+        with:
+          name: biology-player-uninstaller-${{ github.sha }}
+          path: dist/Uninstall Biology.exe
+          if-no-files-found: error
+          retention-days: 14
 
       - name: Upload Biology development source package
         uses: actions/upload-artifact@v4

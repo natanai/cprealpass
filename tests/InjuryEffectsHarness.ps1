@@ -19,7 +19,13 @@ $classes=foreach($name in @('CRNPCInjuryBridge','CRInjuryModifierSlot','CRInjury
  $s=[regex]::Replace($s,'(?m)^\s*CRPainNativeEffects\.Refresh\(localPlayer, IsDefined\(body\) && enabled && CRInjuryEffectsBridge\.Allowed\(localPlayer, true\)\);\r?\n','')
  $s=[regex]::Replace($s,'(public|private) func (\w+)\(','$1 static func CRInstance_$2(')
  $s=[regex]::Replace($s,'return GameInstance.GetScriptableSystemsContainer\(GetGameInstance\(\)\).+?;', 'return CREffectsFixture.runtime;')
- $s=$s.Replace('GetGameInstance()','CREffectsFixture.game').Replace('array<ref<CRInjuryModifierSlot>>','CRModifierSlots = new CRModifierSlots()').Replace('array<ref<NPCPuppet>>','CRNpcList = new CRNpcList()')
+ # Production ScriptableSystem methods use their own session. Translate that owner
+ # context before the generic global fixture rewrite so `this.` cannot turn into a
+ # fake fixture member. The explicit Biology body lookup maps to the same one-body
+ # fixture authority that these model tests already exercise.
+ $s=$s.Replace('this.GetGameInstance()','CREffectsFixture.game').Replace('GetGameInstance()','CREffectsFixture.game')
+ $s=$s.Replace('CRBiologySessionAuthority.Body(CREffectsFixture.game)','CRBodyRuntime.Get()')
+ $s=$s.Replace('array<ref<CRInjuryModifierSlot>>','CRModifierSlots = new CRModifierSlots()').Replace('array<ref<NPCPuppet>>','CRNpcList = new CRNpcList()')
  $s
 }
 $generated=Join-Path $project ('staging/injury-effects-test-'+[guid]::NewGuid().ToString('N')+'.reds')

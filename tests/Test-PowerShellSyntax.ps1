@@ -1,12 +1,8 @@
 $ErrorActionPreference = 'Stop'
+if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'Test-PowerShellSyntax.ps1 requires PowerShell 7 or newer.' }
 . "$PSScriptRoot\..\tools\Common.ps1"
 $project = Get-ProjectRoot
 
-# Cloud contract tests frequently inspect orchestration scripts as text. That is useful
-# for policy assertions but it can miss a PowerShell parser error in a path that CI
-# never executes (for example an installed-game-only builder). Parse every tracked
-# operational/test script without executing it so local preflight does not become the
-# first place basic syntax is discovered.
 $roots = @(
     (Join-Path $project 'tools'),
     (Join-Path $project 'tests')

@@ -1,6 +1,8 @@
 // Shared Biology/Cyberware body shell.
-// The stock cyberware_equip fullscreen remains the technical screen; RealPass
-// changes the player-facing hierarchy and reads body state without duplicating it.
+//
+// The stock cyberware_equip fullscreen remains the technical screen. Biology reuses
+// its body silhouette, category controllers, selection/zoom state, selector strip,
+// back stack and content anchor instead of maintaining a parallel drill-down state.
 module CyberpunkRealism.Presentation
 
 import CyberpunkRealism.Integration.*
@@ -18,7 +20,7 @@ public class CRBiologyAreaHoverEvent extends Event {
 public class CRBiologyAreaHoverOutEvent extends Event {}
 
 // Keep the exact native Cyberware menu identifier/fullscreen route. Only its visible
-// hub label changes while RealPass is enabled; master-off restores stock Cyberware.
+// hub label changes while Biology is enabled; master-off restores stock Cyberware.
 @wrapMethod(MenuHubLogicController)
 public final func SetMenusData(menuData: ref<MenuDataBuilder>, perkPoints: Int32, attrPoints: Int32) -> Void {
   wrappedMethod(menuData, perkPoints, attrPoints);
@@ -31,8 +33,9 @@ public final func SetMenusData(menuData: ref<MenuDataBuilder>, perkPoints: Int32
 }
 
 // -----------------------------------------------------------------------------
-// Stock Cyberware category anchors become Biology body-system nodes while Biology
-// mode is active. Their slot grids are hidden, not destroyed or re-authored.
+// Native Cyberware category controllers become Biology overview nodes. Their stock
+// equipment grids are hidden in Biology mode, but the controllers/anchors themselves
+// remain the interaction surface and are restored unchanged for Cyberware mode.
 // -----------------------------------------------------------------------------
 
 @addField(CyberwareInventoryMiniGrid)
@@ -67,6 +70,7 @@ public final func CRSetBiologyMode(active: Bool) -> Void {
     this.UpdateTitle(this.GetAreaHeader(this.m_equipArea));
     return;
   }
+
   this.CRInstallBiologyCallbacks();
   let area: gamedataEquipmentArea = this.m_equipArea;
   let supported: Bool = CRBiologyDetailPresentation.Supported(area);
@@ -85,6 +89,14 @@ public final func CRSetBiologyMode(active: Bool) -> Void {
     inkWidgetRef.SetVisible(this.m_isNew, true);
     this.UpdateTitle(this.GetAreaHeader(area));
   }
+}
+
+@addMethod(CyberwareInventoryMiniGrid)
+public final func CRSetBiologyOverviewNodeVisible(visible: Bool) -> Void {
+  if !this.crBiologyMode {
+    return;
+  }
+  this.GetRootWidget().SetVisible(visible && CRBiologyDetailPresentation.Supported(this.m_equipArea));
 }
 
 @addMethod(CyberwareInventoryMiniGrid)
@@ -141,17 +153,17 @@ private let crBiologyOverview: ref<inkVerticalPanel>;
 @addField(RipperDocGameController)
 private let crBiologyOverviewText: ref<inkText>;
 
+// Biology detail is mounted inside the stock inventory/content anchor. This is the
+// same spatial region Cyberware uses after selecting a body category; Biology swaps
+// the contents, not the shell/navigation state.
 @addField(RipperDocGameController)
-private let crBiologyDetailPanel: ref<inkVerticalPanel>;
+private let crBiologyNativeContent: ref<inkVerticalPanel>;
 
 @addField(RipperDocGameController)
 private let crBiologyDetailTitle: ref<inkText>;
 
 @addField(RipperDocGameController)
 private let crBiologyDetailSummary: ref<inkText>;
-
-@addField(RipperDocGameController)
-private let crBiologyDetailBack: ref<inkText>;
 
 @addField(RipperDocGameController)
 private let crBiologyMetricRows: array<ref<inkCanvas>>;
@@ -192,10 +204,10 @@ private final func CRShellWrappedText(text: String, name: CName, size: Int32, wi
 }
 
 @addMethod(RipperDocGameController)
-private final func CRShellAction(text: String, name: CName) -> ref<inkText> {
-  let widget: ref<inkText> = this.CRShellText(text, name, 20);
+private final func CRShellModeAction(text: String, name: CName) -> ref<inkText> {
+  let widget: ref<inkText> = this.CRShellText(text, name, 28);
   widget.SetInteractive(true);
-  widget.SetOpacity(0.90);
+  widget.SetOpacity(0.96);
   return widget;
 }
 
@@ -229,7 +241,7 @@ private final func CRCreateMetricRow(index: Int32) -> Void {
   value.SetTranslation(500.0, 0.0);
   value.Reparent(row, -1);
 
-  row.Reparent(this.crBiologyDetailPanel, -1);
+  row.Reparent(this.crBiologyNativeContent, -1);
   ArrayPush(this.crBiologyMetricRows, row);
   ArrayPush(this.crBiologyMetricLabels, label);
   ArrayPush(this.crBiologyMetricBackgrounds, background);
@@ -242,27 +254,37 @@ private final func CRCreateBiologyShell() -> Void {
   if !CRRealpassSettings.IsEnabled(GetGameInstance()) || IsDefined(this.crBiologyModeBar) {
     return;
   }
+
   let root: ref<inkCompoundWidget> = this.GetRootCompoundWidget();
   if !IsDefined(root) {
     return;
   }
 
+  // Overview-only internal mode control. It intentionally sits below the top hub and
+  // is substantially more legible than the attended 20 px prototype.
   this.crBiologyModeBar = new inkHorizontalPanel();
   this.crBiologyModeBar.SetName(n"CRBiologyModeBar");
   this.crBiologyModeBar.SetAnchor(inkEAnchor.TopCenter);
   this.crBiologyModeBar.SetHAlign(inkEHorizontalAlign.Center);
   this.crBiologyModeBar.SetVAlign(inkEVerticalAlign.Top);
-  this.crBiologyModeBar.SetMargin(inkMargin(0.0, 92.0, 0.0, 0.0));
-  this.crBiologyModeBar.SetChildMargin(inkMargin(14.0, 0.0, 14.0, 0.0));
+  this.crBiologyModeBar.SetMargin(inkMargin(0.0, 154.0, 0.0, 0.0));
+  this.crBiologyModeBar.SetChildMargin(inkMargin(18.0, 0.0, 18.0, 0.0));
   this.crBiologyModeBar.Reparent(root, -1);
 
-  this.crBiologyModeButton = this.CRShellAction("BIOLOGY", n"CRBiologyModeBiology");
+  this.crBiologyModeButton = this.CRShellModeAction("BIOLOGY", n"CRBiologyModeBiology");
   this.crBiologyModeButton.RegisterToCallback(n"OnRelease", this, n"OnCRBiologyModeToggle");
   this.crBiologyModeButton.Reparent(this.crBiologyModeBar, -1);
-  this.crCyberwareModeButton = this.CRShellAction("CYBERWARE", n"CRBiologyModeCyberware");
+
+  let separator: ref<inkText> = this.CRShellText("|", n"CRBiologyModeSeparator", 25);
+  separator.SetOpacity(0.52);
+  separator.Reparent(this.crBiologyModeBar, -1);
+
+  this.crCyberwareModeButton = this.CRShellModeAction("CYBERWARE", n"CRBiologyModeCyberware");
   this.crCyberwareModeButton.RegisterToCallback(n"OnRelease", this, n"OnCRBiologyModeToggle");
   this.crCyberwareModeButton.Reparent(this.crBiologyModeBar, -1);
 
+  // The only overview-specific custom content is terse status telemetry. Anatomy
+  // labels/selection remain the stock category controllers around the stock body.
   this.crBiologyOverview = new inkVerticalPanel();
   this.crBiologyOverview.SetName(n"CRBiologyOverview");
   this.crBiologyOverview.SetAnchor(inkEAnchor.BottomCenter);
@@ -271,42 +293,57 @@ private final func CRCreateBiologyShell() -> Void {
   this.crBiologyOverview.SetMargin(inkMargin(0.0, 0.0, 0.0, 62.0));
   this.crBiologyOverview.SetSize(Vector2(760.0, 0.0));
   this.crBiologyOverview.Reparent(root, -1);
+
   let overviewHeading: ref<inkText> = this.CRShellText("BODY", n"CRBiologyOverviewHeading", 21);
   overviewHeading.SetOpacity(0.72);
   overviewHeading.Reparent(this.crBiologyOverview, -1);
   this.crBiologyOverviewText = this.CRShellWrappedText("", n"CRBiologyOverviewText", 18, 760.0);
   this.crBiologyOverviewText.Reparent(this.crBiologyOverview, -1);
 
-  this.crBiologyDetailPanel = new inkVerticalPanel();
-  this.crBiologyDetailPanel.SetName(n"CRBiologyDetailPanel");
-  this.crBiologyDetailPanel.SetAnchor(inkEAnchor.BottomCenter);
-  this.crBiologyDetailPanel.SetHAlign(inkEHorizontalAlign.Center);
-  this.crBiologyDetailPanel.SetVAlign(inkEVerticalAlign.Bottom);
-  this.crBiologyDetailPanel.SetMargin(inkMargin(0.0, 0.0, 0.0, 48.0));
-  this.crBiologyDetailPanel.SetChildMargin(inkMargin(0.0, 3.0, 0.0, 3.0));
-  this.crBiologyDetailPanel.SetVisible(false);
-  this.crBiologyDetailPanel.Reparent(root, -1);
-  this.crBiologyDetailTitle = this.CRShellText("", n"CRBiologyDetailHeading", 25);
-  this.crBiologyDetailTitle.Reparent(this.crBiologyDetailPanel, -1);
-  this.crBiologyDetailSummary = this.CRShellWrappedText("", n"CRBiologyDetailSummary", 17, 620.0);
-  this.crBiologyDetailSummary.SetOpacity(0.80);
-  this.crBiologyDetailSummary.Reparent(this.crBiologyDetailPanel, -1);
+  // Mount detail into Cyberware's existing content/inventory anchor rather than the
+  // fullscreen root. Native selector/zoom/back remain outside and continue to own
+  // the structural drill-down grammar.
+  let nativeContentParent: ref<inkCompoundWidget> = inkCompoundRef.Get(this.m_inventoryViewAnchor) as inkCompoundWidget;
+  if IsDefined(nativeContentParent) {
+    this.crBiologyNativeContent = new inkVerticalPanel();
+    this.crBiologyNativeContent.SetName(n"CRBiologyNativeContent");
+    this.crBiologyNativeContent.SetHAlign(inkEHorizontalAlign.Left);
+    this.crBiologyNativeContent.SetVAlign(inkEVerticalAlign.Top);
+    this.crBiologyNativeContent.SetMargin(inkMargin(28.0, 30.0, 18.0, 0.0));
+    this.crBiologyNativeContent.SetChildMargin(inkMargin(0.0, 3.0, 0.0, 3.0));
+    this.crBiologyNativeContent.SetSize(Vector2(660.0, 0.0));
+    this.crBiologyNativeContent.SetVisible(false);
+    this.crBiologyNativeContent.Reparent(nativeContentParent, -1);
 
-  ArrayClear(this.crBiologyMetricRows);
-  ArrayClear(this.crBiologyMetricLabels);
-  ArrayClear(this.crBiologyMetricBackgrounds);
-  ArrayClear(this.crBiologyMetricFills);
-  ArrayClear(this.crBiologyMetricValues);
-  let i: Int32 = 0;
-  while i < 4 {
-    this.CRCreateMetricRow(i);
-    i += 1;
+    this.crBiologyDetailTitle = this.CRShellText("", n"CRBiologyDetailHeading", 25);
+    this.crBiologyDetailTitle.Reparent(this.crBiologyNativeContent, -1);
+    this.crBiologyDetailSummary = this.CRShellWrappedText("", n"CRBiologyDetailSummary", 17, 620.0);
+    this.crBiologyDetailSummary.SetOpacity(0.80);
+    this.crBiologyDetailSummary.Reparent(this.crBiologyNativeContent, -1);
+
+    ArrayClear(this.crBiologyMetricRows);
+    ArrayClear(this.crBiologyMetricLabels);
+    ArrayClear(this.crBiologyMetricBackgrounds);
+    ArrayClear(this.crBiologyMetricFills);
+    ArrayClear(this.crBiologyMetricValues);
+    let i: Int32 = 0;
+    while i < 4 {
+      this.CRCreateMetricRow(i);
+      i += 1;
+    }
   }
+}
 
-  this.crBiologyDetailBack = this.CRShellAction("[ OVERVIEW ]", n"CRBiologyDetailBack");
-  this.crBiologyDetailBack.SetMargin(inkMargin(0.0, 8.0, 0.0, 0.0));
-  this.crBiologyDetailBack.RegisterToCallback(n"OnRelease", this, n"OnCRBiologyDetailBack");
-  this.crBiologyDetailBack.Reparent(this.crBiologyDetailPanel, -1);
+@addMethod(RipperDocGameController)
+public final func CRBiologyInDetail() -> Bool {
+  return this.crBiologyShellMode && NotEquals(this.crBiologySelectedArea, gamedataEquipmentArea.Invalid);
+}
+
+@addMethod(RipperDocGameController)
+public final func CRBodyShellInDetail() -> Bool {
+  return Equals(this.m_filterMode, RipperdocModes.Item)
+    || this.m_isInventoryOpen
+    || NotEquals(this.crBiologySelectedArea, gamedataEquipmentArea.Invalid);
 }
 
 @addMethod(RipperDocGameController)
@@ -333,23 +370,167 @@ private final func CRSetCategoryMode(biology: Bool) -> Void {
 }
 
 @addMethod(RipperDocGameController)
+private final func CRSetBiologyOverviewNodesVisible(visible: Bool) -> Void {
+  let i: Int32 = 0;
+  while i < ArraySize(this.m_equipmentMinigrids) {
+    if IsDefined(this.m_equipmentMinigrids[i]) {
+      this.m_equipmentMinigrids[i].CRSetBiologyOverviewNodeVisible(visible);
+    }
+    i += 1;
+  }
+}
+
+@addMethod(RipperDocGameController)
+public final func CRMountBiologyActionsInNativeContent() -> Void {
+  if !IsDefined(this.crBiologyNativeContent) || !IsDefined(this.crBioActionsPanel) {
+    return;
+  }
+  this.crBioActionsPanel.SetAnchor(inkEAnchor.TopLeft);
+  this.crBioActionsPanel.SetHAlign(inkEHorizontalAlign.Left);
+  this.crBioActionsPanel.SetVAlign(inkEVerticalAlign.Top);
+  this.crBioActionsPanel.SetMargin(inkMargin(0.0, 14.0, 0.0, 0.0));
+  this.crBioActionsPanel.Reparent(this.crBiologyNativeContent, -1);
+}
+
+@addMethod(RipperDocGameController)
+private final func CRSelectBiologyConditionForArea(area: gamedataEquipmentArea) -> Void {
+  if Equals(area, gamedataEquipmentArea.FrontalCortexCW) {
+    this.crBioSelectedRegion = 1;
+    return;
+  }
+  if Equals(area, gamedataEquipmentArea.ArmsCW) {
+    let left: ref<CRConditionDescriptor> = CRConditionPresentation.Current(3);
+    this.crBioSelectedRegion = IsDefined(left) && left.valid && left.hasCondition ? 3 : 4;
+    return;
+  }
+  if Equals(area, gamedataEquipmentArea.LegsCW) {
+    let left: ref<CRConditionDescriptor> = CRConditionPresentation.Current(5);
+    this.crBioSelectedRegion = IsDefined(left) && left.valid && left.hasCondition ? 5 : 6;
+    return;
+  }
+  if Equals(area, gamedataEquipmentArea.MusculoskeletalSystemCW) || Equals(area, gamedataEquipmentArea.IntegumentarySystemCW) {
+    this.crBioSelectedRegion = this.CRBioFirstCondition();
+    return;
+  }
+  this.crBioSelectedRegion = 0;
+}
+
+@addMethod(RipperDocGameController)
+public final func CRConstrainBiologyActionsToSelectedArea() -> Void {
+  if !IsDefined(this.crBioActionsPanel) {
+    return;
+  }
+  if !this.CRBiologyInDetail() {
+    this.crBioActionsPanel.SetVisible(false);
+    return;
+  }
+
+  let area: gamedataEquipmentArea = this.crBiologySelectedArea;
+  let metabolism: Bool = Equals(area, gamedataEquipmentArea.SystemReplacementCW);
+  let careArea: Bool = Equals(area, gamedataEquipmentArea.FrontalCortexCW)
+    || Equals(area, gamedataEquipmentArea.ArmsCW)
+    || Equals(area, gamedataEquipmentArea.LegsCW)
+    || Equals(area, gamedataEquipmentArea.MusculoskeletalSystemCW)
+    || Equals(area, gamedataEquipmentArea.IntegumentarySystemCW);
+
+  this.crBioActionsPanel.SetVisible(metabolism || careArea);
+  if !metabolism {
+    this.crBioEat.SetVisible(false);
+    this.crBioDrink.SetVisible(false);
+    this.CRBioHideItemRows();
+  }
+  if !careArea {
+    this.crBioConditionsHeading.SetVisible(false);
+    let j: Int32 = 0;
+    while j < ArraySize(this.crBioConditionRows) {
+      this.crBioConditionRows[j].SetVisible(false);
+      j += 1;
+    }
+    this.crBioDress.SetVisible(false);
+    this.crBioSupport.SetVisible(false);
+    this.crBioClinical.SetVisible(false);
+    this.crBioMechanical.SetVisible(false);
+    return;
+  }
+
+  // Regional nodes show only conditions belonging to the selected anatomy. Global
+  // skin/wounds and musculoskeletal nodes may legitimately summarize several regions.
+  if Equals(area, gamedataEquipmentArea.FrontalCortexCW) {
+    let i: Int32 = 1;
+    while i < ArraySize(this.crBioConditionRows) {
+      this.crBioConditionRows[i].SetVisible(false);
+      i += 1;
+    }
+  } else {
+    if Equals(area, gamedataEquipmentArea.ArmsCW) {
+      this.crBioConditionRows[0].SetVisible(false);
+      this.crBioConditionRows[1].SetVisible(false);
+      this.crBioConditionRows[4].SetVisible(false);
+      this.crBioConditionRows[5].SetVisible(false);
+    } else {
+      if Equals(area, gamedataEquipmentArea.LegsCW) {
+        this.crBioConditionRows[0].SetVisible(false);
+        this.crBioConditionRows[1].SetVisible(false);
+        this.crBioConditionRows[2].SetVisible(false);
+        this.crBioConditionRows[3].SetVisible(false);
+      }
+    }
+  }
+}
+
+@addMethod(RipperDocGameController)
+public final func CRSyncBiologyModeSwitcher() -> Void {
+  if !IsDefined(this.crBiologyModeBar) {
+    return;
+  }
+  // Match native Cyberware: the parent/submode switch exists at overview depth only.
+  // Any native or Biology detail state must be backed out before changing modes.
+  this.crBiologyModeBar.SetVisible(!this.CRBodyShellInDetail());
+}
+
+@addMethod(RipperDocGameController)
+private final func CRSyncBiologyContentVisibility() -> Void {
+  let detail: Bool = this.CRBiologyInDetail();
+  if IsDefined(this.crBiologyOverview) {
+    this.crBiologyOverview.SetVisible(this.crBiologyShellMode && !detail);
+  }
+  if IsDefined(this.crBiologyNativeContent) {
+    this.crBiologyNativeContent.SetVisible(detail);
+  }
+  if this.crBiologyShellMode {
+    inkCompoundRef.SetVisible(this.m_selectorAnchor, detail);
+    this.CRSetBiologyOverviewNodesVisible(!detail);
+  } else {
+    inkCompoundRef.SetVisible(this.m_selectorAnchor, !this.m_isTutorial);
+  }
+  this.CRSyncBiologyModeSwitcher();
+  this.CRConstrainBiologyActionsToSelectedArea();
+}
+
+@addMethod(RipperDocGameController)
 public final func CRRefreshBiologyOverview() -> Void {
   if !IsDefined(this.crBiologyOverviewText) {
     return;
   }
-  let view: ref<CRBiologyViewModel> = CRBiologyPresentation.Current();
+  let player: wref<GameObject> = this.GetPlayerControlledObject();
+  if !IsDefined(player) {
+    this.crBiologyOverviewText.SetText("[ BIOLOGY ERROR ] BODY RUNTIME PLAYER UNAVAILABLE");
+    return;
+  }
+  let view: ref<CRBiologyViewModel> = CRBiologySessionPresentation.Current(player.GetGame());
   if !IsDefined(view) || !view.valid {
-    this.crBiologyOverviewText.SetText("Body state is unavailable.");
+    // Runtime failures remain visible; the shell never manufactures STABLE state.
+    this.crBiologyOverviewText.SetText("[ BIOLOGY ERROR ] BODY STATE UNAVAILABLE");
     return;
   }
   let text: String = view.needs;
   if view.hasEffects {
-    if !Equals(text, "") { text += "  "; }
+    if !Equals(text, "") { text += "  |  "; }
     text += view.effects;
   }
   if view.hasConditions {
-    if !Equals(text, "") { text += "  "; }
-    text += "Active condition present — select the relevant body system for detail.";
+    if !Equals(text, "") { text += "  |  "; }
+    text += "CONDITION ACTIVE";
   }
   this.crBiologyOverviewText.SetText(text);
 }
@@ -365,16 +546,24 @@ private final func CRHideMetricRows() -> Void {
 
 @addMethod(RipperDocGameController)
 private final func CRRefreshBiologyDetail() -> Void {
-  if !this.crBiologyShellMode || !IsDefined(this.crBiologyDetailPanel) {
+  if !this.CRBiologyInDetail() || !IsDefined(this.crBiologyNativeContent) {
     return;
   }
-  let detail: ref<CRBiologyDetailViewModel> = CRBiologyDetailPresentation.Current(this.crBiologySelectedArea);
+
+  let player: wref<GameObject> = this.GetPlayerControlledObject();
   this.CRHideMetricRows();
-  if !IsDefined(detail) || !detail.valid {
-    this.crBiologyDetailTitle.SetText("BODY");
-    this.crBiologyDetailSummary.SetText("No detailed model is available for this node yet.");
+  if !IsDefined(player) {
+    this.crBiologyDetailTitle.SetText(CRBiologyDetailPresentation.Label(this.crBiologySelectedArea));
+    this.crBiologyDetailSummary.SetText("[ BIOLOGY ERROR ] BODY RUNTIME PLAYER UNAVAILABLE");
     return;
   }
+  let detail: ref<CRBiologyDetailViewModel> = CRBiologySessionPresentation.Detail(player.GetGame(), this.crBiologySelectedArea);
+  if !IsDefined(detail) || !detail.valid {
+    this.crBiologyDetailTitle.SetText(CRBiologyDetailPresentation.Label(this.crBiologySelectedArea));
+    this.crBiologyDetailSummary.SetText("[ BIOLOGY ERROR ] BODY DETAIL UNAVAILABLE");
+    return;
+  }
+
   this.crBiologyDetailTitle.SetText(detail.title);
   this.crBiologyDetailSummary.SetText(detail.summary);
   let i: Int32 = 0;
@@ -388,19 +577,102 @@ private final func CRRefreshBiologyDetail() -> Void {
 }
 
 @addMethod(RipperDocGameController)
-private final func CRCloseBiologyDetail() -> Void {
+private final func CREnterBiologyDetail(area: gamedataEquipmentArea) -> Bool {
+  if !this.crBiologyShellMode || this.CRBodyShellInDetail() || !CRBiologyDetailPresentation.Supported(area) {
+    return false;
+  }
+
+  this.crBiologySelectedArea = area;
+  this.m_filterArea = area;
+  this.m_lastAreaVisited = area;
+  this.m_filteringByArea = true;
+  // Reuse the same native depth markers that Cyberware uses. Biology deliberately
+  // does not call DisplayInventory(true), because that would populate Cyberware
+  // equipment; its own read-only/body actions occupy the existing content anchor.
+  this.m_isInventoryOpen = true;
+  this.m_filterMode = RipperdocModes.Item;
+
+  this.m_audioSystem.Play(n"ui_gui_cyberware_paperdoll_zoom_in_01");
+  this.DollHover(area);
+  this.DollSelect(true);
+
+  this.m_selector.CRSetBiologyDetailMode(true);
+  this.m_selector.Show(this.EquipmentAreaToIndex(area));
+  inkCompoundRef.SetVisible(this.m_selectorAnchor, true);
+  this.SetButtonHints(true, false);
+
+  this.CRSelectBiologyConditionForArea(area);
+  this.CRSetBiologyOverviewNodesVisible(false);
+  this.CRRefreshBiologyDetail();
+  this.CRRefreshBiologyActions();
+  this.CRSyncBiologyContentVisibility();
+  return true;
+}
+
+@addMethod(RipperDocGameController)
+public final func CRHandleBiologySelectorChange(evt: ref<RipperdocSelectorChangeEvent>) -> Bool {
+  if !this.CRBiologyInDetail() || !IsDefined(evt) {
+    return false;
+  }
+
+  let area: gamedataEquipmentArea = this.IndexToEquipmentArea(evt.Index);
+  if !CRBiologyDetailPresentation.Supported(area) {
+    return true;
+  }
+
+  this.m_audioSystem.Play(n"ui_gui_tab_change");
+  this.m_filterArea = area;
+  this.m_lastAreaVisited = area;
+  this.crBiologySelectedArea = area;
+  this.m_selector.Show(evt.Index);
+
+  if IsDefined(this.m_animationController) {
+    this.m_animationController.StartSlide(evt.SlidingRight, area);
+  }
+  this.DollHover(area);
+  this.DollSelect(true);
+
+  this.CRSelectBiologyConditionForArea(area);
+  this.CRRefreshBiologyDetail();
+  this.CRRefreshBiologyActions();
+  this.CRSyncBiologyContentVisibility();
+  return true;
+}
+
+@addMethod(RipperDocGameController)
+public final func CRHandleBiologyBack() -> Bool {
+  if !this.CRBiologyInDetail() {
+    return false;
+  }
+
+  this.m_audioSystem.Play(n"ui_gui_cyberware_paperdoll_zoom_out_01");
   this.crBiologySelectedArea = gamedataEquipmentArea.Invalid;
+  this.m_lastAreaVisited = gamedataEquipmentArea.Invalid;
+  this.m_hoverArea = gamedataEquipmentArea.Invalid;
+  this.m_filterArea = gamedataEquipmentArea.Invalid;
+  this.m_filteringByArea = false;
+  this.m_isInventoryOpen = false;
+  this.m_filterMode = RipperdocModes.Default;
+
   if IsDefined(this.m_animationController) {
     this.m_animationController.SetOutside();
-    this.m_animationController.StopSelect();
-    this.m_animationController.StopHover();
   }
-  if IsDefined(this.crBiologyDetailPanel) {
-    this.crBiologyDetailPanel.SetVisible(false);
-  }
-  if IsDefined(this.crBiologyOverview) {
-    this.crBiologyOverview.SetVisible(this.crBiologyShellMode);
-  }
+  this.DollHover(gamedataEquipmentArea.Invalid);
+  this.ClearMinigridSelection();
+  this.ResetMinigridPositions();
+  this.AnimateMinigrids();
+
+  this.m_selector.CRSetBiologyDetailMode(false);
+  this.m_selector.Hide();
+  inkCompoundRef.SetVisible(this.m_selectorAnchor, false);
+  this.SetButtonHints(true, true);
+
+  this.CRSetCategoryMode(true);
+  this.CRSyncBiologyNodeInteractivity(true);
+  this.CRRefreshBiologyOverview();
+  this.CRRefreshBiologyActions();
+  this.CRSyncBiologyContentVisibility();
+  return true;
 }
 
 @addMethod(RipperDocGameController)
@@ -408,37 +680,54 @@ public final func CRApplyBiologyShellMode(biology: Bool) -> Void {
   if !CRRealpassSettings.IsEnabled(GetGameInstance()) {
     biology = false;
   }
-  if biology && this.m_isInventoryOpen {
+
+  // The attended leak was created by allowing a Biology -> Cyberware transition while
+  // the body was selected. Native Cyberware already forbids the inverse in practice;
+  // make the rule explicit and symmetric: mode changes are overview-only.
+  if this.CRBodyShellInDetail() {
+    this.CRSyncBiologyModeSwitcher();
     return;
   }
-  if this.crBiologyShellMode && !biology {
-    this.CRCloseBiologyDetail();
-  }
+
+  this.crBiologySelectedArea = gamedataEquipmentArea.Invalid;
   this.crBiologyShellMode = biology;
+  this.m_selector.CRSetBiologyDetailMode(false);
   this.CRSetCategoryMode(biology);
   this.CRSetStockMetersVisible(!biology);
+
+  if IsDefined(this.crBiologyNativeContent) {
+    this.crBiologyNativeContent.SetVisible(false);
+  }
   if IsDefined(this.crBiologyOverview) {
     this.crBiologyOverview.SetVisible(biology);
   }
-  if IsDefined(this.crBiologyDetailPanel) && !biology {
-    this.crBiologyDetailPanel.SetVisible(false);
+  if biology {
+    inkCompoundRef.SetVisible(this.m_selectorAnchor, false);
+  } else {
+    inkCompoundRef.SetVisible(this.m_selectorAnchor, !this.m_isTutorial);
   }
+
   if IsDefined(this.crBiologyModeButton) {
-    this.crBiologyModeButton.SetOpacity(biology ? 1.0 : 0.45);
+    this.crBiologyModeButton.SetOpacity(biology ? 1.0 : 0.52);
   }
   if IsDefined(this.crCyberwareModeButton) {
-    this.crCyberwareModeButton.SetOpacity(biology ? 0.45 : 1.0);
+    this.crCyberwareModeButton.SetOpacity(biology ? 0.52 : 1.0);
   }
+
   if biology {
     this.CRRefreshBiologyOverview();
   }
+  this.CRSyncBiologyNodeInteractivity(biology);
+  this.CRRefreshBiologyActions();
+  this.CRSyncBiologyContentVisibility();
 }
 
 @addMethod(RipperDocGameController)
 protected cb func OnCRBiologyModeToggle(evt: ref<inkPointerEvent>) -> Bool {
-  if !IsDefined(evt) || !evt.IsAction(n"click") || evt.IsHandled() {
+  if !IsDefined(evt) || !evt.IsAction(n"click") || evt.IsHandled() || this.CRBodyShellInDetail() {
     return false;
   }
+
   let target: wref<inkWidget> = evt.GetCurrentTarget();
   if target == this.crBiologyModeButton {
     this.CRApplyBiologyShellMode(true);
@@ -455,51 +744,28 @@ protected cb func OnCRBiologyModeToggle(evt: ref<inkPointerEvent>) -> Bool {
 
 @addMethod(RipperDocGameController)
 protected cb func OnCRBiologyAreaHoverEvent(evt: ref<CRBiologyAreaHoverEvent>) -> Bool {
-  if !this.crBiologyShellMode || !IsDefined(evt) || !CRBiologyDetailPresentation.Supported(evt.area) {
+  if !this.crBiologyShellMode || this.CRBodyShellInDetail() || !IsDefined(evt) || !CRBiologyDetailPresentation.Supported(evt.area) {
     return false;
   }
-  if IsDefined(this.m_animationController) {
-    this.m_animationController.StartHover(evt.area);
-  }
+  this.DollHover(evt.area);
   return true;
 }
 
 @addMethod(RipperDocGameController)
 protected cb func OnCRBiologyAreaHoverOutEvent(evt: ref<CRBiologyAreaHoverOutEvent>) -> Bool {
-  if !this.crBiologyShellMode || !IsDefined(evt) || !IsDefined(this.m_animationController) {
+  if !this.crBiologyShellMode || this.CRBodyShellInDetail() || !IsDefined(evt) {
     return false;
   }
-  if Equals(this.crBiologySelectedArea, gamedataEquipmentArea.Invalid) {
-    this.m_animationController.StopHover();
-  }
+  this.DollHover(gamedataEquipmentArea.Invalid);
   return true;
 }
 
 @addMethod(RipperDocGameController)
 protected cb func OnCRBiologyAreaSelectEvent(evt: ref<CRBiologyAreaSelectEvent>) -> Bool {
-  if !this.crBiologyShellMode || !IsDefined(evt) || !CRBiologyDetailPresentation.Supported(evt.area) {
+  if !IsDefined(evt) {
     return false;
   }
-  this.crBiologySelectedArea = evt.area;
-  if IsDefined(this.m_animationController) {
-    this.m_animationController.StartHover(evt.area);
-    this.m_animationController.StartSelect();
-  }
-  this.crBiologyOverview.SetVisible(false);
-  this.crBiologyDetailPanel.SetVisible(true);
-  this.CRRefreshBiologyDetail();
-  return true;
-}
-
-@addMethod(RipperDocGameController)
-protected cb func OnCRBiologyDetailBack(evt: ref<inkPointerEvent>) -> Bool {
-  if !IsDefined(evt) || !evt.IsAction(n"click") || evt.IsHandled() || !this.crBiologyShellMode {
-    return false;
-  }
-  this.CRCloseBiologyDetail();
-  this.CRRefreshBiologyOverview();
-  evt.Handle();
-  return true;
+  return this.CREnterBiologyDetail(evt.area);
 }
 
 @wrapMethod(RipperDocGameController)
@@ -510,6 +776,7 @@ protected cb func OnInitialize() -> Bool {
     this.crBiologyShellMode = false;
     return result;
   }
+
   this.CRCreateBiologyShell();
   // Ordinary menu access starts in Biology. A direct ripperdoc/vendor visit starts
   // in Cyberware because that is the service context the player intentionally chose.
@@ -529,10 +796,9 @@ protected cb func OnUninitialize() -> Bool {
   this.crCyberwareModeButton = null;
   this.crBiologyOverview = null;
   this.crBiologyOverviewText = null;
-  this.crBiologyDetailPanel = null;
+  this.crBiologyNativeContent = null;
   this.crBiologyDetailTitle = null;
   this.crBiologyDetailSummary = null;
-  this.crBiologyDetailBack = null;
   this.crBiologySelectedArea = gamedataEquipmentArea.Invalid;
   this.crBiologyShellMode = false;
   return wrappedMethod();

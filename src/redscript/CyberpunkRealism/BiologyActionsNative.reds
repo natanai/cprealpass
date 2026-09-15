@@ -1,6 +1,6 @@
 // Contextual actions inside the shared Biology/Cyberware body shell.
 // Inventory and treatment authority remain elsewhere: this file only exposes
-// relevant gateways and submits work to the existing native/item/care runtimes.
+// relevant gateways and submits work to existing native/item/care runtimes.
 module CyberpunkRealism.Presentation
 
 import CyberpunkRealism.Integration.*
@@ -69,23 +69,13 @@ private final func CRBioActionButton(text: String, name: CName) -> ref<inkText> 
 }
 
 @addMethod(RipperDocGameController)
-private final func CRBioFirstCondition() -> Int32 {
-  let region: Int32 = 1;
-  while region <= 6 {
-    let descriptor: ref<CRConditionDescriptor> = CRConditionPresentation.Current(region);
-    if IsDefined(descriptor) && descriptor.valid && descriptor.hasCondition {
-      return region;
-    }
-    region += 1;
-  }
-  return 0;
-}
-
-@addMethod(RipperDocGameController)
 private final func CRBioCreateActions() -> Void {
   if IsDefined(this.crBioActionsPanel) {
     return;
   }
+
+  // Create safely on the fullscreen root; the outer native-shell wrapper reparents
+  // this panel into m_inventoryViewAnchor once all chained OnInitialize hooks finish.
   let root: ref<inkCompoundWidget> = this.GetRootCompoundWidget();
   if !IsDefined(root) {
     return;
@@ -93,10 +83,6 @@ private final func CRBioCreateActions() -> Void {
 
   this.crBioActionsPanel = new inkVerticalPanel();
   this.crBioActionsPanel.SetName(n"CRBiologyActions");
-  this.crBioActionsPanel.SetAnchor(inkEAnchor.CenterRight);
-  this.crBioActionsPanel.SetHAlign(inkEHorizontalAlign.Right);
-  this.crBioActionsPanel.SetVAlign(inkEVerticalAlign.Center);
-  this.crBioActionsPanel.SetMargin(inkMargin(0.0, 0.0, 76.0, 0.0));
   this.crBioActionsPanel.SetChildMargin(inkMargin(0.0, 3.0, 0.0, 3.0));
   this.crBioActionsPanel.SetVisible(false);
   this.crBioActionsPanel.Reparent(root, -1);
@@ -160,6 +146,43 @@ private final func CRBioCreateActions() -> Void {
 }
 
 @addMethod(RipperDocGameController)
+private final func CRBioAreaAllowsIntake() -> Bool {
+  return this.CRBiologyInDetail() && Equals(this.crBiologySelectedArea, gamedataEquipmentArea.SystemReplacementCW);
+}
+
+@addMethod(RipperDocGameController)
+private final func CRBioRegionAllowedForSelectedArea(region: Int32) -> Bool {
+  if !this.CRBiologyInDetail() || region < 1 || region > 6 {
+    return false;
+  }
+  let area: gamedataEquipmentArea = this.crBiologySelectedArea;
+  if Equals(area, gamedataEquipmentArea.FrontalCortexCW) {
+    return region == 1;
+  }
+  if Equals(area, gamedataEquipmentArea.ArmsCW) {
+    return region == 3 || region == 4;
+  }
+  if Equals(area, gamedataEquipmentArea.LegsCW) {
+    return region == 5 || region == 6;
+  }
+  return Equals(area, gamedataEquipmentArea.MusculoskeletalSystemCW)
+    || Equals(area, gamedataEquipmentArea.IntegumentarySystemCW);
+}
+
+@addMethod(RipperDocGameController)
+private final func CRBioFirstCondition() -> Int32 {
+  let region: Int32 = 1;
+  while region <= 6 {
+    let descriptor: ref<CRConditionDescriptor> = CRConditionPresentation.Current(region);
+    if this.CRBioRegionAllowedForSelectedArea(region) && IsDefined(descriptor) && descriptor.valid && descriptor.hasCondition {
+      return region;
+    }
+    region += 1;
+  }
+  return 0;
+}
+
+@addMethod(RipperDocGameController)
 private final func CRBioHideItemRows() -> Void {
   let i: Int32 = 0;
   while i < ArraySize(this.crBioItemRows) {
@@ -182,7 +205,7 @@ private final func CRBioItemHasNativeAction(itemID: ItemID) -> Bool {
 
 @addMethod(RipperDocGameController)
 private final func CRBioUseNativeItemAction(player: wref<GameObject>, itemID: ItemID) -> Bool {
-  if !IsDefined(player) {
+  if !IsDefined(player) || !this.CRBioAreaAllowsIntake() {
     return false;
   }
   if this.crBioPickerMode == 1 {
@@ -211,14 +234,18 @@ private final func CRBioUseNativeItemAction(player: wref<GameObject>, itemID: It
 @addMethod(RipperDocGameController)
 private final func CRBioRefreshItems() -> Void {
   this.CRBioHideItemRows();
-  if this.crBioPickerMode == 0 || !this.crBiologyShellMode {
+  if this.crBioPickerMode == 0 || !this.CRBioAreaAllowsIntake() {
     return;
   }
+
   let player: ref<PlayerPuppet> = GameInstance.GetPlayerSystem(GetGameInstance()).GetLocalPlayerMainGameObject() as PlayerPuppet;
   if !IsDefined(player) {
     this.crBioActionStatus.SetText("Inventory is unavailable.");
     return;
   }
+
+  // Enumerate actual carried stacks from Cyberpunk's transaction system. The action
+  // is only surfaced if the same ItemID also has a real native eat/drink/consume path.
   let items: array<wref<gameItemData>>;
   GameInstance.GetTransactionSystem(GetGameInstance()).GetItemList(player, items);
   let i: Int32 = 0;
@@ -249,6 +276,7 @@ private final func CRBioRefreshItems() -> Void {
     }
     i += 1;
   }
+
   if shown == 0 {
     this.crBioActionStatus.SetText(this.crBioPickerMode == 1 ? "No modeled food is currently carried." : "No modeled drink is currently carried.");
   }
@@ -259,31 +287,55 @@ public final func CRRefreshBiologyActions() -> Void {
   if !IsDefined(this.crBioActionsPanel) {
     return;
   }
-  if !this.crBiologyShellMode {
+
+  this.crBioEat.SetVisible(false);
+  this.crBioDrink.SetVisible(false);
+  this.CRBioHideItemRows();
+  this.crBioConditionsHeading.SetVisible(false);
+  this.crBioDress.SetVisible(false);
+  this.crBioSupport.SetVisible(false);
+  this.crBioClinical.SetVisible(false);
+  this.crBioMechanical.SetVisible(false);
+  let clearIndex: Int32 = 0;
+  while clearIndex < ArraySize(this.crBioConditionRows) {
+    this.crBioConditionRows[clearIndex].SetVisible(false);
+    clearIndex += 1;
+  }
+
+  // Overview is inspection-only. Contextual actions occupy the native content area
+  // only after the player has deliberately entered a Biology body-system detail.
+  if !this.crBiologyShellMode || !this.CRBiologyInDetail() {
     this.crBioPickerMode = 0;
-    this.CRBioHideItemRows();
     this.crBioActionsPanel.SetVisible(false);
     return;
   }
-  this.crBioActionsPanel.SetVisible(true);
-  let view: ref<CRBiologyViewModel> = CRBiologyPresentation.Current();
-  this.crBioEat.SetVisible(IsDefined(view) && view.valid && view.showEat);
-  this.crBioDrink.SetVisible(IsDefined(view) && view.valid && view.showDrink);
 
+  let view: ref<CRBiologyViewModel> = CRBiologyPresentation.Current();
+  let intake: Bool = this.CRBioAreaAllowsIntake();
+  let showEat: Bool = intake && IsDefined(view) && view.valid && view.showEat;
+  let showDrink: Bool = intake && IsDefined(view) && view.valid && view.showDrink;
+  this.crBioEat.SetVisible(showEat);
+  this.crBioDrink.SetVisible(showDrink);
+
+  let anyCondition: Bool = false;
   let i: Int32 = 0;
   let descriptor: ref<CRConditionDescriptor>;
   while i < ArraySize(this.crBioConditionRows) {
     descriptor = CRConditionPresentation.Current(i + 1);
-    let active: Bool = IsDefined(descriptor) && descriptor.valid && descriptor.hasCondition;
+    let active: Bool = this.CRBioRegionAllowedForSelectedArea(i + 1)
+      && IsDefined(descriptor)
+      && descriptor.valid
+      && descriptor.hasCondition;
     this.crBioConditionRows[i].SetVisible(active);
     if active {
+      anyCondition = true;
       this.crBioConditionRows[i].SetText("[ " + descriptor.regionName + " — " + descriptor.title + " / " + descriptor.severity + " ]");
       this.crBioConditionRows[i].SetOpacity(i + 1 == this.crBioSelectedRegion ? 1.0 : 0.62);
     }
     i += 1;
   }
 
-  if this.crBioSelectedRegion < 1 || this.crBioSelectedRegion > 6 {
+  if this.crBioSelectedRegion < 1 || !this.CRBioRegionAllowedForSelectedArea(this.crBioSelectedRegion) {
     this.crBioSelectedRegion = this.CRBioFirstCondition();
   }
   descriptor = CRConditionPresentation.Current(this.crBioSelectedRegion);
@@ -293,18 +345,20 @@ public final func CRRefreshBiologyActions() -> Void {
   }
 
   let hasCondition: Bool = IsDefined(descriptor) && descriptor.valid && descriptor.hasCondition;
-  this.crBioConditionsHeading.SetVisible(this.crBioSelectedRegion > 0);
+  this.crBioConditionsHeading.SetVisible(anyCondition);
   this.crBioDress.SetVisible(hasCondition && descriptor.canDress);
   this.crBioSupport.SetVisible(hasCondition && descriptor.canSupport);
   let professional: Bool = Equals(this.m_screen, CyberwareScreenType.Ripperdoc);
   this.crBioClinical.SetVisible(professional && hasCondition && descriptor.canClinical);
   this.crBioMechanical.SetVisible(professional && hasCondition && descriptor.canMechanical);
+
+  this.crBioActionsPanel.SetVisible(showEat || showDrink || anyCondition);
   this.CRBioRefreshItems();
 }
 
 @addMethod(RipperDocGameController)
 protected cb func OnCRBioPicker(evt: ref<inkPointerEvent>) -> Bool {
-  if !this.crBiologyShellMode || !IsDefined(evt) || !evt.IsAction(n"click") || evt.IsHandled() {
+  if !this.CRBioAreaAllowsIntake() || !IsDefined(evt) || !evt.IsAction(n"click") || evt.IsHandled() {
     return false;
   }
   let target: wref<inkWidget> = evt.GetCurrentTarget();
@@ -325,7 +379,7 @@ protected cb func OnCRBioPicker(evt: ref<inkPointerEvent>) -> Bool {
 
 @addMethod(RipperDocGameController)
 protected cb func OnCRBioItem(evt: ref<inkPointerEvent>) -> Bool {
-  if !this.crBiologyShellMode || !IsDefined(evt) || !evt.IsAction(n"click") || evt.IsHandled() {
+  if !this.CRBioAreaAllowsIntake() || !IsDefined(evt) || !evt.IsAction(n"click") || evt.IsHandled() {
     return false;
   }
   let target: wref<inkWidget> = evt.GetCurrentTarget();
@@ -340,6 +394,7 @@ protected cb func OnCRBioItem(evt: ref<inkPointerEvent>) -> Bool {
       }
       this.crBioPickerMode = 0;
       this.CRRefreshBiologyActions();
+      this.CRRefreshBiologyDetail();
       this.CRRefreshBiologyOverview();
       evt.Handle();
       return true;
@@ -351,13 +406,13 @@ protected cb func OnCRBioItem(evt: ref<inkPointerEvent>) -> Bool {
 
 @addMethod(RipperDocGameController)
 protected cb func OnCRBioCondition(evt: ref<inkPointerEvent>) -> Bool {
-  if !this.crBiologyShellMode || !IsDefined(evt) || !evt.IsAction(n"click") || evt.IsHandled() {
+  if !this.CRBiologyInDetail() || !IsDefined(evt) || !evt.IsAction(n"click") || evt.IsHandled() {
     return false;
   }
   let target: wref<inkWidget> = evt.GetCurrentTarget();
   let i: Int32 = 0;
   while i < ArraySize(this.crBioConditionRows) {
-    if target == this.crBioConditionRows[i] {
+    if target == this.crBioConditionRows[i] && this.CRBioRegionAllowedForSelectedArea(i + 1) {
       this.crBioSelectedRegion = i + 1;
       this.crBioActionStatus.SetText("");
       this.CRRefreshBiologyActions();
@@ -381,7 +436,8 @@ private final func CRBioCareFeedback(result: Int32) -> String {
 
 @addMethod(RipperDocGameController)
 protected cb func OnCRBioCare(evt: ref<inkPointerEvent>) -> Bool {
-  if !this.crBiologyShellMode || !IsDefined(evt) || !evt.IsAction(n"click") || evt.IsHandled() || this.crBioSelectedRegion < 1 {
+  if !this.CRBiologyInDetail() || !this.CRBioRegionAllowedForSelectedArea(this.crBioSelectedRegion)
+    || !IsDefined(evt) || !evt.IsAction(n"click") || evt.IsHandled() {
     return false;
   }
   let target: wref<inkWidget> = evt.GetCurrentTarget();
@@ -395,9 +451,12 @@ protected cb func OnCRBioCare(evt: ref<inkPointerEvent>) -> Bool {
       return false;
     }
   }
+
+  // Field-care runtime owns inventory checks, timed action state and consumption.
   let result: Int32 = CRBodyRuntime.Get().UseFieldCare(this.crBioSelectedRegion, kind);
   this.crBioActionStatus.SetText(this.CRBioCareFeedback(result));
   this.CRRefreshBiologyActions();
+  this.CRRefreshBiologyDetail();
   this.CRRefreshBiologyOverview();
   evt.Handle();
   return true;
@@ -405,7 +464,9 @@ protected cb func OnCRBioCare(evt: ref<inkPointerEvent>) -> Bool {
 
 @addMethod(RipperDocGameController)
 protected cb func OnCRBioProfessional(evt: ref<inkPointerEvent>) -> Bool {
-  if !this.crBiologyShellMode || !Equals(this.m_screen, CyberwareScreenType.Ripperdoc) || !IsDefined(evt) || !evt.IsAction(n"click") || evt.IsHandled() || this.crBioSelectedRegion < 1 {
+  if !this.CRBiologyInDetail() || !Equals(this.m_screen, CyberwareScreenType.Ripperdoc)
+    || !this.CRBioRegionAllowedForSelectedArea(this.crBioSelectedRegion)
+    || !IsDefined(evt) || !evt.IsAction(n"click") || evt.IsHandled() {
     return false;
   }
   let target: wref<inkWidget> = evt.GetCurrentTarget();
@@ -419,12 +480,14 @@ protected cb func OnCRBioProfessional(evt: ref<inkPointerEvent>) -> Bool {
       return false;
     }
   }
+
   if CRProfessionalCareRuntime.Complete(this.crBioSelectedRegion, kind) {
     this.crBioActionStatus.SetText(kind == 4 ? "Clinical care completed. Biological recovery still takes body time." : "Cyberware repair completed for this region.");
   } else {
     this.crBioActionStatus.SetText("Professional care could not be completed. No injury state changed.");
   }
   this.CRRefreshBiologyActions();
+  this.CRRefreshBiologyDetail();
   this.CRRefreshBiologyOverview();
   evt.Handle();
   return true;
@@ -436,6 +499,7 @@ protected cb func OnInitialize() -> Bool {
   this.crBioPickerMode = 0;
   this.crBioSelectedRegion = 0;
   this.CRBioCreateActions();
+  this.CRMountBiologyActionsInNativeContent();
   this.CRRefreshBiologyActions();
   return result;
 }

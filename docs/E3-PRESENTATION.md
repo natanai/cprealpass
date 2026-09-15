@@ -1,167 +1,137 @@
 # Biology E3-inspired presentation target
 
-Status: canonical visual target; current attended follow-up #40 / PR #46 pending integration and live acceptance  
+Status: canonical visual target / implementation contract  
 Last updated: 2026-09-15
 
 ## Product decision
 
-Biology intentionally targets the red 2018/E3-style first-person HUD language and NPC nameplates while keeping Cyberpunk 2077's modern scanner/quickhack behavior.
+Biology targets the red/minimal 2018/E3-inspired **neutral first-person HUD** and **NPC nameplates** while keeping Cyberpunk 2077's modern scanner/quickhack behavior.
 
-The target is **not** to install or execute the external Project E3 HUD mod as a dependency. Biology must own the final implementation so the public package remains standalone.
+This does **not** mean bringing Project E3 into Biology wholesale. Project E3 is design/reference material only. Biology does not execute or redistribute its scripts, archive, tweaks, settings implementation, scanner, dialogue redesign, activity-log redesign, phone UI, or other contextual systems.
 
-## Desired player-facing result
+## Clarified neutral-HUD scope
 
-With **Enable Biology = On** and the E3-inspired presentation preference = On (both defaults while those runtime controls remain part of the product):
+The neutral HUD is the persistent/default ordinary-gameplay layer that defines what the player sees most of the time:
 
-- ordinary first-person HUD presentation uses the red E3-inspired visual language;
-- NPC nameplates use the E3-inspired presentation;
-- the modern scanner and quickhack panels remain the current native Cyberpunk experience rather than reverting to the old E3 scanner;
-- Biology physiology/injury feedback may integrate into that visual language where useful, without turning it into a permanent numeric body-meter wall;
-- traditional actor HP presentation is hidden. Attended feedback explicitly rejected the restored native red health indicator as ordinary Biology-on behavior.
+- quest/objective tracker;
+- minimap/navigation presentation;
+- weapon/ammo presentation;
+- ordinary crosshair/focus presentation where applicable;
+- quick-slot/D-pad presentation;
+- Biology's existing lower-left non-health E3 presentation;
+- NPC nameplates.
 
-With the E3-inspired presentation preference = Off while Biology remains enabled:
+The quest tracker is explicitly included because it normally occupies the top-right HUD throughout ordinary play. It should participate in the same red/minimal visual language as the other persistent HUD surfaces.
 
-- the E3-inspired visual skin/nameplate layer is disabled;
-- Biology body, combat, injury, armor, pain, treatment, recovery and other simulation behavior remains identical;
-- the barless Biology actor-health decision remains in force;
-- modern scanner behavior remains unchanged.
+Contextual UI such as dialogue choices, interaction-menu redesign, activity-log replacement animation and phone-call presentation is outside this E3 follow-up unless the project owner later asks for it separately.
 
-With **Enable Biology = Off**, if the final architecture retains an in-game master switch:
+## Required player-facing result
 
-- Biology gameplay and presentation adapters yield to native Cyberpunk behavior after the documented session/reload boundary;
-- native actor-health presentation may return;
-- native Cyberware/wardrobe/other wrapped UI behavior remains authoritative;
-- the E3 preference has no effect until Biology is enabled again.
+With **Enable Biology = On** and **E3-inspired HUD + nameplates = On**:
 
-The REDmod migration may conclude that the official mod enable/disable boundary makes a separate in-game master switch unnecessary. Do not preserve the old RealPass toggle merely for historical compatibility.
+- ordinary gameplay must read as a coherent red/minimal E3-inspired neutral HUD rather than retail Cyberpunk plus one extra red widget;
+- persistent quest, navigation, weapon/ammo, quick-slot and applicable crosshair surfaces must visually belong to that same language while preserving their native information/behavior;
+- relevant NPCs can receive an ambient E3-style identity/nameplate during ordinary look/focus without requiring scanner mode;
+- scanner-acquired native identity may enrich the ordinary nameplate afterward;
+- the modern scanner/quickhack UI remains current/native;
+- traditional actor HP bars remain suppressed because that is a Biology-wide rule, not an E3 success criterion.
 
-## Historical pre-REDmod evidence
+With E3 presentation **Off** while Biology remains enabled:
 
-The exact clean-room candidate at `ec8ba06451c3cbacabfad24f1479e1537147d0c9` launched successfully, but the attended test showed that the presentation target above was **not implemented yet in that candidate**.
+- Biology's E3-specific neutral-HUD/nameplate styling yields;
+- Biology simulation remains identical;
+- Biology-wide actor-healthbar suppression remains identical;
+- the modern scanner remains identical.
+
+## Attended evidence and correction
+
+### 2026-09-15 attended pre-REDmod evidence
+
+The exact REDmod-first milestone runtime artifact built from `8cf045664b5e4d8b4b014edfc98bf2f8eb270ba5` on Cyberpunk 2077 2.31 proved official Biology REDmod recognition/deployment, but presentation acceptance failed.
 
 Observed:
 
-- ordinary first-person gameplay still looked substantially like the modern/vanilla HUD rather than the intended red E3-inspired visual language;
-- the intended E3-inspired NPC nameplates were not active;
-- the ordinary player health bar was hidden, proving that at least some presentation behavior was executing;
-- turning `E3 first-person HUD visuals` OFF did not restore the player health bar;
-- Mod Settings still used the transitional `REALPASS`, `Enable RealPass`, and `E3 first-person HUD visuals` labels.
+- ordinary first-person gameplay still read overwhelmingly as the current retail HUD;
+- the quest/objective tracker, minimap/navigation, weapon/ammo and surrounding neutral HUD remained visibly current;
+- the small Biology red framing was insufficient to make E3 ON recognizable by itself;
+- a random civilian looked at directly with E3 ON showed **no E3 nameplate**;
+- cops/combatants with E3 ON showed only a narrow red strip, not the intended identity/nameplate presentation;
+- E3 OFF removed that red strip, proving at least partial toggle gating;
+- the current modern scanner/quickhack presentation remained intact and is an explicit PASS.
 
-Interpretation:
+Do not count health-bar suppression as evidence that the E3 presentation works. Likewise, the narrow cop strip and the earlier incorrect civilian-nameplate interpretation are not evidence that E3 presentation succeeded.
 
-- **do not count health-bar suppression as evidence that the E3 presentation works.** Barless actor-health is a Biology-wide product rule while Biology is enabled;
-- the optional E3 preference needs a clearly visible E3-specific effect: ON should visibly activate the Biology-owned E3-inspired HUD/nameplate treatment; OFF should yield those E3-specific treatments while leaving Biology simulation and barless-health policy unchanged;
-- the pre-refactor candidate therefore lacked a convincing attended success signal because the full HUD/nameplate treatment was absent.
+## Direct installed-game evidence
 
-Historical details remain in `PRE-REDMOD-LIVE-BASELINE-2026-09-15.md`.
+For native script ownership, the supported installed game's official REDmod decompiled scripts are preferred over online mirrors whenever they contain the needed contract.
 
-## Integrated REDmod attended evidence
+The 2026-09-15 read-only local audit against Cyberpunk 2077 2.31 established:
 
-The first integrated REDmod-first artifact was built from:
+- the candidate at `b7e067a400c2667dfc9598865718d13867966c09` exact-compiled successfully against the installed `r6\cache\final.redscripts`;
+- `tools\redmod\scripts\cyberpunk\UI\widgets\minimap\minimap.script` contains `MinimapContainerController`, establishing the current persistent minimap host;
+- `IronsightGameController` exists separately in the weapon/ironsight script path and is not used as Biology's persistent navigation skin host;
+- current nameplate source exposes `NameplateVisualsLogicController`, `m_nameTextMain`, `m_nameFrame`, and `NpcNameplateGameController`/`m_displayName` as expected.
 
-`8cf045664b5e4d8b4b014edfc98bf2f8eb270ba5`
+The branch therefore moved `E3NavigationHudNative.reds` from the historical Project E3 `IronsightGameController` assumption to current `MinimapContainerController`. Because that source change happened after the successful `b7e067a...` compile, the final branch head must be exact-compiled again before handoff.
 
-Artifact:
+## Nameplate knowledge boundary
 
-`biology-integrated-20260915-061136-8cf045664b5e.zip`
+Biology does not invent a second identity database.
 
-SHA-256:
+Identity precedence is:
 
-`42BACC73173EB95D84F3278593CD06DDAF665AA714F4C692DB03D553B91557CC`
+1. native `NPCNextToTheCrosshair.name` wins whenever the game already supplies identity;
+2. if that is empty, an ordinary public civilian may use `GameObject.GetDisplayName()` only when native nameplate/scanner records permit the public name and no hidden/alternative/quest policy blocks it;
+3. hidden names, alternative identities, `hide_nametag`, dynamic `HideNameplate`, disabled nameplate records and quest-specific identity policy remain protected;
+4. if scanning later supplies richer native identity, that native value automatically supersedes the fallback and enriches the post-scan ordinary nameplate.
 
-On Cyberpunk 2077 2.31, the attended presentation findings were:
+Therefore baseline ambient nameplates are not scanner-gated, but scanning may legitimately enrich them.
 
-- ordinary quest/objective/minimap/weapon/prompt presentation still read overwhelmingly modern/retail with E3 ON;
-- an ordinary civilian look/focus did not show the intended ambient E3 nameplate;
-- police showed only a narrow red strip rather than a complete identity treatment;
-- the modern scanner/quickhack UI remained intact and must stay native/current.
+## Modern scanner is a hard preserve
 
-Those failures are routed to issue #40 / PR #46. Source/compile success in that worker does not upgrade the live gate to passed.
+Biology E3 presentation must not:
 
-## Ownership and provenance boundary
+- hook/replace scanner or quickhack controllers;
+- recreate Project E3 scanner borders;
+- ship Project E3 scanner/quickhack/focus-mode resources;
+- recolor or restyle the modern scanner into the old 2018 scanner.
 
-Historical Project E3 material is reference material. The old local integration proved that a modern-scanner + E3-HUD combination is technically possible, but its external archive/scripts are not the standalone Biology runtime target.
+The safest scanner implementation is deliberate absence of an override.
 
-Do not solve the final package by silently reintroducing `basegame_3e_demo_hud.archive`, `r6/scripts/Project E3 - HUD`, its tweak payload, or its Mod Settings class as executing dependencies.
+## Ownership / provenance
 
-Instead:
+The full Project E3 component inventory and the Biology decision for each area are documented in `E3-COMPONENT-MAPPING.md` and `config/realpass-e3.json`.
 
-1. identify the current native Cyberpunk controllers/resources that own each accepted HUD/nameplate element;
-2. use installed official REDmod scripts/tooling as first-choice readable evidence for current controller/event/field ownership;
-3. recreate the accepted visual behavior in Biology-owned source/assets, using native shells where practical;
-4. keep modern scanner/quickhack exclusions explicit;
-5. exact-compile and test the resulting seams against Cyberpunk 2077 2.31;
-6. keep attribution/provenance records for reference material used during implementation.
+The final Biology runtime uses current native 2.31 controller/data authority plus Biology-owned INK/source. It must not ship `basegame_3e_demo_hud.archive` or execute Project E3 scripts/tweaks.
 
-A tiny additive Biology wrapper may still be preferable to copying a whole vanilla `.script` file when direct investigation shows it is the smaller compatibility surface. REDmod-first does not mean blindly REDmod-only.
+## Patch-resilience rule
 
-## Current accepted presentation scope
+For each in-scope neutral-HUD element:
 
-The current neutral persistent first-person target includes:
+1. inspect the installed official REDmod decompiled source first when it can establish current controller/lifecycle ownership;
+2. preserve the current native controller as information/interaction authority;
+3. hook only the narrow lifecycle/update seam needed for presentation;
+4. register every hook-bearing Biology file in `manifest/native-seams.json`;
+5. avoid copied vanilla or Project E3 controller bodies when post-native styling is sufficient;
+6. exact-compile the combined candidate against supported Cyberpunk 2077 2.31 before packaging.
 
-- quest/objective tracker presentation;
-- minimap/navigation framing;
-- weapon/ammo presentation;
-- applicable ordinary crosshair/focus treatment;
-- quick-slot/D-pad presentation;
-- existing lower-left non-health presentation;
-- ambient NPC identity/nameplates;
-- police/combatant nameplate completion where native authority permits it;
-- scan-acquired identity enrichment through native-authority nameplates where appropriate.
+## Attended acceptance contract
 
-Explicitly outside this follow-up scope:
+The next parent-integrated candidate should capture matched evidence from the same state/location:
 
-- dialogue UI redesign;
-- interaction-menu redesign;
-- activity-log replacement;
-- phone-call UI redesign;
-- Project E3's old scanner/quickhack/focus composition;
-- broad import of Project E3 runtime/archive/tweak content.
+- ordinary gameplay — E3 ON;
+- same view — E3 OFF;
+- quest/objective tracker — matched ON/OFF;
+- random civilian direct look/focus — E3 ON before scanner;
+- police/combatant direct focus — E3 ON;
+- same relevant NPC after scanning/identity acquisition where applicable;
+- modern scanner/quickhack — E3 ON;
+- ordinary combat/navigation gameplay to catch stale or overlapping presentation widgets.
 
-The top-right quest tracker is part of the neutral HUD target. The modern scanner/quickhack experience is a hard preserve.
+A reviewer must be able to identify the E3-ON ordinary-gameplay screenshot without looking at the settings screen. A tiny red Biology frame, a narrow red strip over cops, or hidden HP bars is insufficient.
 
-## Current implementation status
+## Current follow-up implementation
 
-Issue #40 / PR #46 (`agent/presentation-attended-followup`) is the current implementation owner.
+Issue #40's `agent/presentation-attended-followup` branch expands the owned neutral HUD across current native controller roots for quest tracking, the current `MinimapContainerController`, weapon/ammo, applicable crosshair and quick-slot presentation, while keeping game data/interaction authority native. It also changes civilian public-name fallback from scanner-gated to ambient-permitted and uses the native nameplate screen-projection lifecycle so identity can actually appear during ordinary focus.
 
-At its latest reviewed worker head `ff08ac0661180ad09afedba920e3962c4117c928`, the worker reported and directly audited:
-
-- exact compile against installed Cyberpunk 2077 2.31 `final.redscripts`: PASS;
-- current native presentation symbol/signature probe: PASS;
-- `MinimapContainerController` confirmed as the current persistent minimap presentation host;
-- `IronsightGameController` confirmed as a separate weapon/ironsight path rather than the minimap host;
-- current native nameplate controller/name/frame/display-name fields confirmed;
-- Biology-owned adapters added for current quest, minimap/navigation, weapon, Tech-Hex crosshair and hotkey controllers;
-- ambient civilian-name fallback broadened only where native public-name/scanner rules permit identity;
-- native name text/frame styled rather than creating a second floating-label identity system;
-- scanner/quickhack ownership, health-bar ownership, damage preview, level and rarity remain outside the E3 skin;
-- Project E3 executing content remains absent.
-
-This is **native-compile ready, not attended accepted**. Parent integration still has to combine it with the other current workers and record live behavior from one release-shaped canonical-main candidate.
-
-## Matched screenshot acceptance contract
-
-The presentation lane is accepted only from matched attended captures/observations from the integrated candidate, including:
-
-- ordinary gameplay, E3 ON;
-- ordinary gameplay, E3 OFF;
-- quest/objective/minimap/weapon areas in comparable states;
-- random civilian focus/nameplate, E3 ON;
-- police/combatant nameplate, E3 ON;
-- post-scan identity enrichment where applicable;
-- modern scanner/quickhack while E3 ON;
-- ordinary navigation/combat transitions without stale red widgets or overlap.
-
-A reviewer should be able to identify the E3 ON capture without reading the settings screen. If the only visible difference is the player health bar, the implementation has failed the intended presentation target.
-
-## Acceptance boundary
-
-Do not call this presentation complete merely because:
-
-- source tests are green;
-- native symbols were found;
-- exact compilation succeeds;
-- one red widget renders;
-- actor health bars are hidden.
-
-The current live gate is visual and behavioral: the ordinary persistent HUD must read recognizably E3-inspired with the preference ON, must yield that skin with the preference OFF, ambient NPC identity treatment must work through native authority, and the modern scanner/quickhack UI must remain intact.
+Cloud CI remains necessary but cannot prove native compile compatibility or visual placement. The current head requires a fresh exact local 2.31 compile after the minimap-host correction, followed by parent-coordinated attended acceptance.

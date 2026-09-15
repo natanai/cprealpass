@@ -27,8 +27,12 @@ Check ($package.redmod.deployHelper -eq 'tools/Deploy-BiologyRedmod.ps1') 'Packa
 Check ($package.redmod.deployCommandPolicy -match '(?i)false positives|exit code 0') 'Package contract forgot the attended REDmod false-positive lesson.'
 Check ($package.redmod.observedSupportedInstall.biologyRecognitionProven -eq $true) 'Accepted Biology REDmod recognition is not represented.'
 Check ($package.redmod.observedSupportedInstall.biologyFiveStageDeploymentProven -eq $true) 'Accepted five-stage REDmod deployment is not represented.'
+Check ($package.redmod.launcherActivationMarker -eq 'Items.BiologyLauncherActivationMarker.stackable') 'Package contract lost the REDmod-owned launcher activation marker.'
+Check ($package.generatedMetadata.playerUninstaller -eq 'Uninstall Biology.exe') 'Package contract lost player-uninstaller metadata.'
 $runtimeEntry = @($package.firstPartyFiles | Where-Object { $_.component -eq 'biology-owned-runtime' })
 Check ($runtimeEntry.Count -eq 1 -and $runtimeEntry[0].destinationRoot -eq 'r6/scripts/CyberpunkRealism' -and $runtimeEntry[0].route -eq 'REDSCRIPT-BETTER') 'Package contract lost Biology-owned supplemental REDscript destination/route.'
+$activationEntry = @($package.firstPartyFiles | Where-Object { $_.component -eq 'biology-launcher-activation' })
+Check ($activationEntry.Count -eq 1 -and $activationEntry[0].destination -match 'mods/Biology/tweaks/.+biology_activation\.tweak') 'Package contract lost Biology launcher activation tweak payload.'
 
 Check ($builder.Contains('Build-OwnedRuntimeProfile.ps1')) 'Integrated builder bypasses exact-compiled owned runtime profile.'
 Check ($builder -match 'reports[\\/]compile-') 'Integrated builder does not consume exact compile report.'
@@ -37,6 +41,7 @@ Check ($builder.Contains('$compileReport.exitCode -ne 0')) 'Integrated builder d
 Check ($builder.Contains('$compileReport.outputPresent -ne $true')) 'Integrated builder does not require compiler output.'
 Check ($builder -match '\$gameVersion\s+-ne\s+''2\.31''') 'Integrated builder does not pin the supported game version.'
 Check ($builder.Contains("'mods/Biology/info.json'")) 'Integrated builder does not include official Biology REDmod metadata.'
+Check ($builder.Contains('mods/Biology/tweaks/base/gameplay/static_data/database/items/weapons/parts/biology_activation.tweak')) 'Integrated builder does not package the launcher activation marker.'
 Check ($builder -match '\$expectedRetained\s*=\s*@\(''redscript'',''red4ext'',''archivexl'',''mod-settings''\)') 'Integrated builder retained dependency set is not exact/fail-closed.'
 foreach ($blocked in @('tweakxl','codeware','input-loader','darkfuture','project-e3')) {
     Check ($builder.ToLowerInvariant().Contains($blocked)) "Integrated builder does not explicitly reject/exclude $blocked."
@@ -47,9 +52,10 @@ Check ($builder.Contains('BIOLOGY-VERSION.txt')) 'Integrated Biology version mar
 Check ($builder.Contains('SHA256SUMS.txt')) 'Integrated checksums are missing.'
 Check ($builder.Contains('playableRuntimeIncluded = $true')) 'Integrated artifact does not declare playable runtime inclusion.'
 Check ($builder.Contains('sourceModsRequired = @()')) 'Integrated artifact does not reject source-mod runtime requirements.'
+Check ($builder.Contains('Build-BiologyUninstaller.ps1') -and $builder.Contains('Uninstall Biology.exe')) 'Integrated package does not build/embed the player uninstaller.'
+Check ($builder.Contains('generic-dependency-shared')) 'Integrated package does not distinguish shared generic dependencies at uninstall time.'
 Check (-not $builder.Contains('Build-RedmodFoundation.ps1')) 'Playable builder delegates to non-playable foundation skeleton.'
 
-# Deployment correctness belongs to the helper, not a hand-written raw redMod.exe command.
 Check ($deploy -match 'tools\\redmod\\bin\\redMod\.exe') 'Deploy helper does not use the official REDmod executable.'
 Check ($deploy -match 'ProcessStartInfo|ArgumentList') 'Deploy helper does not control native argument boundaries.'
 Check ($deploy -match 'No root specified') 'Deploy helper no longer rejects ignored-root false positives.'
@@ -75,6 +81,8 @@ foreach ($id in @('darkfuture','project-e3-hud')) {
 }
 
 Check ($settings.Contains('public static func IsEnabled(game: GameInstance)')) 'Biology master semantics are not provider-neutral.'
+Check ($settings.Contains('public static func IsLauncherActivated()')) 'Biology settings semantics lost launcher activation boundary.'
+Check ($settings.Contains('Items.BiologyLauncherActivationMarker.stackable')) 'Settings accessor does not read REDmod-owned activation marker.'
 Check ($settings.Contains('public static func UseE3FirstPersonHudVisuals(game: GameInstance)')) 'E3 presentation semantics are not provider-neutral.'
 Check ($settings.Contains('@if(ModuleExists("ModSettingsModule"))')) 'Current optional settings adapter is not guarded.'
 Check ($doc -match 'Current generic dependencies') 'Integrated documentation no longer records current dependency disposition.'
@@ -83,11 +91,14 @@ Check ($doc -notmatch '(?i)exact Lane C settings-provider blocker') 'Integrated 
 Check ($doc -match 'first.*REDmod structural milestone.*already|first integrated REDmod milestone') 'Integrated documentation still acts as though the first structural milestone has not happened.'
 
 Check ($install.ownerManifest.path -eq 'biology/build-manifest.json') 'Install contract lost exact owner manifest.'
+Check ($install.ownerManifest.schemaVersion -eq 2) 'Install contract owner receipt is not schema 2.'
+Check ($install.playerUninstaller.binary -eq 'Uninstall Biology.exe') 'Install contract lost player uninstaller.'
+Check ($install.launcherActivation.signal -eq 'Items.BiologyLauncherActivationMarker.stackable') 'Install contract lost launcher activation signal.'
 foreach ($root in @('bin','archive','engine','mods','r6','red4ext')) {
     Check (@($install.neverRecursivelyOwnedRoots) -contains $root) "Install contract permits recursive ownership of shared root $root."
 }
 Check ($install.redmodCli.biologyRecognitionProven -eq $true -and $install.redmodCli.fiveStageDeploymentProven -eq $true) 'Install contract forgot accepted REDmod deploy evidence.'
 Check ($install.remainingDirectGameGates -notcontains 'Biology REDmod recognition/deployment') 'Already accepted recognition/deployment remains listed as an open gate.'
-Check (@($install.remainingDirectGameGates).Count -ge 4) 'Genuinely open direct-game gates were collapsed into source/CI assumptions.'
+Check (@($install.remainingDirectGameGates).Count -ge 5) 'Genuinely open direct-game gates were collapsed into source/CI assumptions.'
 
-Write-Host "PASS: $script:checks integrated Biology package checks; canonical package/deploy contracts reflect accepted REDmod evidence and current follow-up ownership without stale merged-lane guidance."
+Write-Host "PASS: $script:checks integrated Biology package checks; canonical package/deploy contracts preserve accepted REDmod evidence while adding launcher-fail-closed activation, self-contained uninstall, shared-dependency safety, and current follow-up ownership."

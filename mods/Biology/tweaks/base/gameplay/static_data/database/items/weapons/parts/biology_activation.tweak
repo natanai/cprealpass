@@ -1,0 +1,11 @@
+// Biology launcher activation sentinel.
+//
+// This record is intentionally inert: no gameplay record references it. Its only
+// purpose is to provide a REDmod-owned, non-persistent truth source that loose
+// Biology REDscript can query. REDlauncher Enable mods OFF must therefore make
+// Items.BiologyLauncherActivationMarker.stackable resolve to the supplied default
+// false instead of allowing loose redscript/framework state to keep Biology active.
+Items.BiologyLauncherActivationMarker : IconicWeaponModAbilityBase
+{
+    stackable = true;
+}

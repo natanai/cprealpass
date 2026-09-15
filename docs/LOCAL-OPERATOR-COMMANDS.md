@@ -5,11 +5,7 @@ Last updated: 2026-09-15
 
 ## Why this exists
 
-The project owner can provide direct evidence from the supported local Cyberpunk 2077 installation, but that does not mean every agent should invent a new PowerShell block.
-
-**Agents must reuse this catalog for routine local operations.** If a recurring operation is missing or awkward, improve the repository tool and this document first rather than repeatedly composing bespoke shell logic in chat.
-
-One-off commands are still allowed for genuinely narrow, read-only investigation when no catalog command fits, but the agent must explain the uncertainty being resolved. If the same probe becomes useful more than once, promote it into `tools/` and add it here.
+The project owner can provide direct evidence from the supported local Cyberpunk 2077 installation, but agents should not invent a fresh PowerShell procedure every time. **Agents must reuse this catalog for routine local operations.** If a recurring operation is missing or awkward, improve the repository tool, this document, and its CI contract first.
 
 Canonical game root unless the user says otherwise:
 
@@ -17,110 +13,164 @@ Canonical game root unless the user says otherwise:
 C:\Games\Steam\steamapps\common\Cyberpunk 2077
 ```
 
-Attended-test source workspaces are disposable and milestone-specific. Do **not** assume a permanent repository checkout. Prefer:
+## Mandatory repository discovery/bootstrap rule
+
+Repository/workspace paths are **not stable**. The retired `C:\Games\CyberpunkRealism` convention must not be assumed or recreated.
+
+Before giving the user a repo-dependent PowerShell/CMD operation, the operation itself must:
+
+1. inspect immediate child directories under `C:\Games` for a usable Git checkout whose `origin` resolves to `natanai/cprealpass`;
+2. reuse a matching checkout only as a seed/control checkout when appropriate;
+3. if none exists, clone `https://github.com/natanai/cprealpass.git` automatically into a uniquely signed folder under `C:\Games`;
+4. create a fresh uniquely signed checkout/worktree for branch-specific audits or attended candidates instead of mutating an arbitrary existing checkout;
+5. print the exact repo/worktree path used.
+
+Unique signatures must contain a **timestamp and random suffix**, for example:
 
 ```text
-C:\Games\Biology-Test-<YYYY-MM-DD>-<short-main-sha>\
+20260915-031500-a1b2c3d4
 ```
 
-The user may delete that entire test workspace after the attended evidence has been returned to the parent integration thread.
+A normal reusable seed clone has `.git\config`. Worktrees may have a `.git` pointer file, so discovery code should validate candidates rather than blindly running `git -C` against arbitrary folders.
+
+Canonical discovery/bootstrap preamble when a repository-owned bootstrap tool does not already own this logic:
+
+```powershell
+$GamesRoot = 'C:\Games'
+$RepoUrl = 'https://github.com/natanai/cprealpass.git'
+$RepoPattern = '(?i)(?:github\.com[/:])natanai/cprealpass(?:\.git)?$'
+$Signature = "$(Get-Date -Format 'yyyyMMdd-HHmmss')-$([guid]::NewGuid().ToString('N').Substring(0,8))"
+
+$Repo = Get-ChildItem -LiteralPath $GamesRoot -Directory -ErrorAction SilentlyContinue |
+  ForEach-Object {
+    $Config = Join-Path $_.FullName '.git\config'
+    if (Test-Path -LiteralPath $Config -PathType Leaf) {
+      $Text = Get-Content -Raw -LiteralPath $Config -ErrorAction SilentlyContinue
+      if ($Text -match $RepoPattern) { $_.FullName }
+    }
+  } |
+  Select-Object -First 1
+
+if (-not $Repo) {
+  $Repo = Join-Path $GamesRoot "cprealpass-repo-$Signature"
+  git clone $RepoUrl $Repo
+  if ($LASTEXITCODE -ne 0) { throw 'Could not clone natanai/cprealpass.' }
+}
+
+Write-Host "CPREALPASS REPO: $Repo"
+```
+
+## Mandatory evidence-report rule
+
+When an agent asks the user to run a local evidence/audit/probe operation, it must generate a **plain-text `.txt` evidence report** for the user to attach back to ChatGPT.
+
+- Do not make copy/pasting console output into chat the normal handoff.
+- The report must be useful for **failure and success** outcomes (`FAIL`/`PASS`).
+- Use a unique filename containing timestamp plus random suffix or exact revision/build identity.
+- Print the absolute report path at the end of the operation.
+- Tell the user to attach that file to the owning ChatGPT thread.
+- Machine-readable JSON may still be produced for automation, but it does not replace the user-returned text evidence file.
+
+`tools/Audit-GameContracts.ps1` follows this rule directly and prints an absolute `LOCAL EVIDENCE REPORT:` line. `tools/Bootstrap-PresentationAudit.ps1` owns the same pattern for branch-specific presentation audits.
+
+Attended-test source workspaces are disposable and milestone-specific. Prefer uniquely signed names such as:
+
+```text
+C:\Games\Biology-Test-<short-main-sha>-<YYYYMMDD-HHmmss>-<random8>\
+```
+
+The user may delete that test workspace after evidence has been returned to the parent integration thread.
 
 ---
 
 ## Command 0 — bootstrap a disposable milestone workspace when no repo exists locally
 
-The parent supplies the exact canonical `main` SHA. Substitute only that SHA; do not add extra install/build logic around this block.
+The parent supplies the exact canonical `main` SHA. Substitute only that SHA.
 
 ```powershell
 $Sha = '<40-character canonical main SHA>'
+$GamesRoot = 'C:\Games'
+$RepoUrl = 'https://github.com/natanai/cprealpass.git'
+$RepoPattern = '(?i)(?:github\.com[/:])natanai/cprealpass(?:\.git)?$'
+$Signature = "$(Get-Date -Format 'yyyyMMdd-HHmmss')-$([guid]::NewGuid().ToString('N').Substring(0,8))"
 $ShortSha = $Sha.Substring(0,8)
-$Root = "C:\Games\Biology-Test-$(Get-Date -Format 'yyyy-MM-dd')-$ShortSha"
-$Operator = Join-Path $Root 'operator'
 
-if (Test-Path $Root) {
-    throw "Milestone workspace already exists and must not be reused: $Root"
+$Repo = Get-ChildItem -LiteralPath $GamesRoot -Directory -ErrorAction SilentlyContinue |
+  ForEach-Object {
+    $Config = Join-Path $_.FullName '.git\config'
+    if (Test-Path -LiteralPath $Config -PathType Leaf) {
+      $Text = Get-Content -Raw -LiteralPath $Config -ErrorAction SilentlyContinue
+      if ($Text -match $RepoPattern) { $_.FullName }
+    }
+  } |
+  Select-Object -First 1
+
+if (-not $Repo) {
+  $Repo = Join-Path $GamesRoot "cprealpass-repo-$Signature"
+  git clone $RepoUrl $Repo
+  if ($LASTEXITCODE -ne 0) { throw 'Clone failed.' }
 }
 
-New-Item -ItemType Directory -Path $Root -Force | Out-Null
-git clone https://github.com/natanai/cprealpass.git $Operator
-if ($LASTEXITCODE -ne 0) { throw 'Clone failed.' }
+git -C $Repo fetch origin
+if ($LASTEXITCODE -ne 0) { throw 'Fetch failed.' }
 
-git -C $Operator checkout --detach $Sha
-if ($LASTEXITCODE -ne 0) { throw 'Exact main checkout failed.' }
+$Root = Join-Path $GamesRoot "Biology-Test-$ShortSha-$Signature"
+$Operator = Join-Path $Root 'operator'
+New-Item -ItemType Directory -Path $Root -Force | Out-Null
+
+git -C $Repo worktree add --detach $Operator $Sha
+if ($LASTEXITCODE -ne 0) { throw 'Exact milestone worktree creation failed.' }
 
 pwsh "$Operator\tools\Prepare-BiologyMilestoneTest.ps1" `
   -MainSha $Sha `
   -GameRoot 'C:\Games\Steam\steamapps\common\Cyberpunk 2077' `
   -WorkspaceRoot $Root
+
+Write-Host "CPREALPASS SEED: $Repo"
+Write-Host "MILESTONE ROOT: $Root"
 ```
 
-`Prepare-BiologyMilestoneTest.ps1` owns the rest of routine milestone preparation. It:
+`Prepare-BiologyMilestoneTest.ps1` verifies the exact SHA, asks whether to run the **exhaustive full-file/hash vanilla comparison**, establishes the permitted fresh-reinstall fast-sanity path when that scan is declined, creates a second pristine candidate checkout, builds the release-shaped ZIP, installs/deploys it, records evidence, and stops before game launch.
 
-1. verifies the operator clone is on the exact SHA;
-2. asks whether the user wants the **exhaustive full-file/hash vanilla comparison**;
-3. if the user declines, requires confirmation of a just-completed Steam uninstall + residual-directory deletion + reinstall, then runs only the fast sanity probe;
-4. creates a second pristine `candidate` clone at the exact SHA;
-5. builds the release-shaped Biology ZIP;
-6. installs that exact ZIP into the game root;
-7. deploys through official REDmod with explicit `-root`;
-8. writes `milestone-prep.json` and prints concise evidence;
-9. stops before game launch so the parent can issue the attended checklist.
-
-The exhaustive hash check defaults to **No**. Skipping it after a fresh reinstall is allowed, but the evidence must say `exhaustive-hash-check-skipped`; an agent must never report that as “verified against recorded vanilla baseline.”
+The exhaustive hash check defaults to **No**. Skipping it after a fresh uninstall + residual-directory deletion + reinstall is allowed, but evidence must say `exhaustive-hash-check-skipped`; an agent must never report that as “verified against recorded vanilla baseline.”
 
 ---
 
 ## Command 1 — fast vanilla sanity check
 
-Use after a genuinely fresh Steam reinstall when an exhaustive whole-game hash comparison is unnecessary.
+Use after a genuinely fresh Steam reinstall when an exhaustive whole-game hash comparison is unnecessary:
 
 ```powershell
 pwsh ./tools/Test-VanillaGameSanity.ps1 `
   -GameRoot 'C:\Games\Steam\steamapps\common\Cyberpunk 2077'
 ```
 
-It checks:
-
-- supported Cyberpunk version;
-- expected official REDmod executable/version;
-- known loose-mod roots are empty of payload;
-- `mods` contains no payload other than the stock zero-byte `.stub` marker if present.
-
-It is deliberately **not** a proof that every vanilla file hash matches the tracked baseline.
+This is deliberately **not** a full-file/hash proof. When requested as user evidence, capture the result in the required `.txt` report.
 
 ---
 
 ## Command 2 — exhaustive vanilla baseline comparison
 
-Use when residue is uncertain, when reusing a game install for iteration, or when the user explicitly chooses the stronger check.
+Use when residue is uncertain, when reusing a game install for iteration, or when the user explicitly chooses the stronger check:
 
 ```powershell
 pwsh ./tools/Compare-GameToVanillaBaseline.ps1 `
   -GameRoot 'C:\Games\Steam\steamapps\common\Cyberpunk 2077'
 ```
 
-This checks paths, missing/extra files, sizes and SHA-256 hashes for the entire tracked baseline. Because it can take several minutes, it must show durable console progress in addition to `Write-Progress`.
-
-Expected progress form:
+The full comparison shows durable progress, for example:
 
 ```text
 VERIFY [#######-------------]  35% | 1842/5200 files | 29.4/84.0 GiB | elapsed 00:01:42
 ```
 
+When requested as user evidence, return the generated/captured `.txt` report rather than pasted console output.
+
 ---
 
 ## Command 3 — capture/publish a new vanilla baseline
 
-This is **not a routine step for every milestone**. Use it when the tracked baseline needs to change: for example after a supported Cyberpunk patch or when the parent deliberately decides the clean reference itself must be refreshed.
-
-Local capture only:
-
-```powershell
-pwsh ./tools/Capture-VanillaGameBaseline.ps1 `
-  -GameRoot 'C:\Games\Steam\steamapps\common\Cyberpunk 2077'
-```
-
-Capture and publish safe metadata on a dedicated branch:
+Use only when the clean reference itself needs to change, such as after a supported Cyberpunk patch:
 
 ```powershell
 pwsh ./tools/Capture-VanillaGameBaseline.ps1 `
@@ -128,7 +178,7 @@ pwsh ./tools/Capture-VanillaGameBaseline.ps1 `
   -Publish
 ```
 
-This operation hashes the full game and therefore has durable `HASH [...]` progress output.
+This hashes the full game and therefore has durable `HASH [...]` progress output.
 
 ---
 
@@ -141,9 +191,9 @@ pwsh ./tools/Build-BiologyPackage.ps1 `
   -GameRoot 'C:\Games\Steam\steamapps\common\Cyberpunk 2077'
 ```
 
-The builder exact-compiles the merged Biology runtime against the supported game before it emits a game-root-shaped ZIP. It does not install, deploy or launch the game.
+The builder exact-compiles the merged Biology runtime against the supported game before emitting a game-root-shaped ZIP. The current package also contains the REDmod activation marker, schema-2 ownership receipt, and `Uninstall Biology.exe`. It does not install, deploy, or launch the game.
 
-For normal milestone preparation, prefer **Command 0**, which calls this correctly from a second pristine clone.
+For normal milestone preparation, prefer **Command 0**.
 
 ---
 
@@ -154,11 +204,7 @@ pwsh ./tools/Deploy-BiologyRedmod.ps1 `
   -GameRoot 'C:\Games\Steam\steamapps\common\Cyberpunk 2077'
 ```
 
-This uses the directly evidenced CDPR REDmod executable at `tools\redmod\bin\redMod.exe` and an explicit game root. Deployment success is not gameplay acceptance.
-
-The helper is deliberately fail-closed. REDmod sometimes returns exit code `0` even when it ignored the requested game root or found nothing to deploy. Therefore any output containing `No root specified`, `Invalid root path found`, or `No mods found, no deployment is needed` is a deployment **failure** for an installed Biology candidate, not a pass. Positive deployment also requires the actual `[DEPLOY]` stage and `Commandlet deploy has succeeded` evidence.
-
-For normal milestone preparation, prefer **Command 0**, which invokes this automatically after installing the exact generated ZIP.
+The helper is deliberately fail-closed. Output containing `No root specified`, `Invalid root path found`, or `No mods found, no deployment is needed` is a deployment **failure** for an installed Biology candidate even if REDmod exits `0`. Positive deployment requires actual `[DEPLOY]` stage output and `Commandlet deploy has succeeded`.
 
 ---
 
@@ -171,26 +217,62 @@ pwsh ./tools/Reset-BiologyIteration.ps1 `
   -GameRoot 'C:\Games\Steam\steamapps\common\Cyberpunk 2077'
 ```
 
-This removes only exact manifest-owned files and then performs the strict full vanilla comparison. It fails closed to milestone clean-room if anything cannot be proven safe.
+This developer reset follows the same exact-hash/fail-closed Biology ownership semantics as the player uninstaller, but may remove an unchanged generic dependency only when the recorded vanilla baseline proves the file was absent before Biology. It then performs the strict full vanilla comparison and fails closed if safety cannot be proven.
 
 ---
 
-## Command 7 — direct compatibility audit
+## Command 7 — verify Biology-specific residue after player hard uninstall
 
-Use after a Cyberpunk patch/framework change or when a foundational native seam needs direct supported-install evidence:
+The **player-facing** hard-uninstall action is not PowerShell: close Cyberpunk 2077 and **double-click `Uninstall Biology.exe`** in the game root.
+
+For an attended/development test, follow that with the read-only verifier:
+
+```powershell
+pwsh ./tools/Verify-BiologyRemoval.ps1 `
+  -GameRoot 'C:\Games\Steam\steamapps\common\Cyberpunk 2077'
+```
+
+This checks Biology-specific runtime/package residue (`mods/Biology`, `r6/scripts/CyberpunkRealism`, Biology metadata and player uninstaller). Generic redscript/RED4ext/ArchiveXL/Mod Settings files may remain intentionally because the player uninstaller preserves shared dependencies. It never deletes anything.
+
+---
+
+## Command 8 — direct compatibility audit
+
+Use after a Cyberpunk patch/framework change or when foundational native seams need direct supported-install evidence:
 
 ```powershell
 pwsh ./tools/Audit-GameContracts.ps1 `
   -GamePath 'C:\Games\Steam\steamapps\common\Cyberpunk 2077'
 ```
 
-This is investigation evidence, not attended runtime acceptance.
+`Audit-GameContracts.ps1` derives its repository root from the checkout containing the script and automatically creates a text evidence report. At completion or failure after startup it prints:
+
+```text
+LOCAL EVIDENCE REPORT: C:\...\reports\local-game-contract-audit-....txt
+```
+
+Attach that `.txt` file to the owning ChatGPT thread. This is investigation evidence, not attended runtime acceptance.
+
+For branch-specific presentation audits, use repository-owned `tools/Bootstrap-PresentationAudit.ps1`; it discovers or creates a usable cprealpass seed, fetches the exact branch/head, creates a uniquely signed detached worktree, runs the presentation audit, and prints `ATTACH THIS FILE TO CHATGPT:` followed by the evidence path.
 
 ---
 
-## Command 8 — publish the current GitHub-safe game reference snapshot
+## Command 9 — ask the installed official REDmod tool what it can do
 
-Use when the current observed installation/framework state needs to be refreshed for remote agents:
+Use this before adopting a community/framework workaround when the uncertainty is whether CDPR's own REDmod toolchain already exposes a suitable capability:
+
+```powershell
+pwsh ./tools/Probe-OfficialRedmod.ps1 `
+  -GameRoot 'C:\Games\Steam\steamapps\common\Cyberpunk 2077'
+```
+
+This read-only probe queries the installed `tools\redmod\bin\redMod.exe`, fingerprints it, inventories official toolset signals, captures `redMod.exe --help`, and writes a text report. Community/modder practice is **fallback evidence**, not proof that the official route is unavailable or inferior. If the official route would require a broader whole-file replacement or otherwise increase compatibility risk, document that direct evidence before selecting the narrower seam.
+
+---
+
+## Command 10 — publish the current GitHub-safe game reference snapshot
+
+Use when current observed install/framework metadata needs to be refreshed for remote agents:
 
 ```powershell
 pwsh ./tools/Publish-LocalGameReferenceSnapshot.ps1 `
@@ -201,37 +283,20 @@ It publishes derived metadata only, never proprietary Cyberpunk payload.
 
 ---
 
-## Command 9 — ask the installed official REDmod tool what it can do
-
-Use this before adopting a community/framework workaround when the uncertainty is whether CDPR's own REDmod toolchain already exposes a suitable capability.
-
-```powershell
-pwsh ./tools/Probe-OfficialRedmod.ps1 `
-  -GameRoot 'C:\Games\Steam\steamapps\common\Cyberpunk 2077'
-```
-
-This probe is read-only. It directly queries the game-provided `tools\redmod\bin\redMod.exe`, records its version/hash, inventories the shipped REDmod toolset signals, captures `redMod.exe --help`, and writes a plain-text report under the active checkout's `reports/` directory.
-
-Use the report to answer questions such as:
-
-- which official REDmod modules are actually present in the supported build;
-- which root/version/tool assumptions are true on the user's installation;
-- whether an apparent “standard modding workaround” should first be replaced by or compared against an official route.
-
-The presence of an official module does not automatically prove that it is the safest implementation for every Biology seam. If the official route would require broader whole-file replacement or otherwise increase patch/conflict surface, document that direct evidence before selecting the narrower fallback.
-
----
-
 ## Rules for agents asking the user to run PowerShell
 
-1. **Look here first.** If a catalog command covers the task, use it exactly rather than reconstructing its internals in chat.
-2. For foundational runtime/package questions, **probe the game/CDPR toolchain before assuming the established community/modder route is necessary**. Community practice is fallback evidence, not proof that the official route is unavailable or inferior.
-3. Agents may substitute the exact main SHA, disposable test-root name, and known game path where the catalog explicitly permits it.
-4. Do not paste the internals of a repository tool into chat merely to avoid invoking that tool.
-5. Prefer one catalog entrypoint over a long chain of hand-written commands.
-6. Long operations must expose durable console progress. `Write-Progress` alone is not sufficient because some hosts hide it.
-7. Do not describe a fast sanity pass as a full baseline/hash verification.
-8. After a freshly uninstalled/residual-directory-deleted/reinstalled game, let the user choose whether the additional exhaustive hash check is worth the time. Default is **No**.
-9. Iteration cleanup on a reused install remains stricter: `Reset-BiologyIteration.ps1` must prove the return to the tracked baseline before layering another package.
-10. If a command fails, return the failure output/report to the owning agent; do not improvise destructive cleanup commands.
-11. If an operation becomes recurring, codify it here and in `tools/` with CI coverage before treating it as standard.
+1. **Look here first.** If a catalog command covers the task, use it rather than reconstructing its internals in chat.
+2. **Never assume a permanent repo path.** Repo-dependent operations must discover `natanai/cprealpass` under `C:\Games` or create a uniquely signed clone automatically.
+3. Do not use or recreate `C:\Games\CyberpunkRealism`; that path convention is retired.
+4. Branch-specific/local-audit work should use a fresh uniquely signed worktree/checkout, not silently mutate an arbitrary existing repo.
+5. **Every user-returned evidence operation must create a `.txt` report file** and print its absolute path; ask the user to attach it rather than paste a transcript.
+6. Evidence reports must preserve clear PASS and FAIL outcomes.
+7. For foundational runtime/package questions, probe the installed game/CDPR/REDmod toolchain before assuming the established community route is necessary.
+8. Prefer one repository-owned entrypoint over a long chain of unrelated commands.
+9. Long operations must expose durable console progress; `Write-Progress` alone is insufficient.
+10. Do not describe a fast sanity pass as a full baseline/hash verification.
+11. After a freshly uninstalled/residual-directory-deleted/reinstalled game, let the user choose whether the additional exhaustive hash check is worth the time. Default is **No**.
+12. Iteration cleanup on a reused install remains stricter: `Reset-BiologyIteration.ps1` must prove the return to the tracked baseline before layering another package.
+13. After a player hard-uninstall test, prefer `Verify-BiologyRemoval.ps1`; do not invent destructive cleanup or misclassify intentionally preserved generic dependencies as Biology residue.
+14. If a command fails, return its evidence report to the owning agent; do not improvise destructive cleanup commands.
+15. If an operation becomes recurring, codify it here and in `tools/` with CI coverage before treating it as standard.
