@@ -1,16 +1,17 @@
-// Biology-owned red/minimal navigation framing on Cyberpunk's native navigation host.
-// Native route/mappin/navigation information remains authoritative. Biology only
-// changes the persistent neutral-HUD visual language; scanner/quickhack is untouched.
+// Biology-owned red/minimal framing on Cyberpunk 2.31's current native minimap host.
+// Direct installed-game evidence on 2026-09-15 confirmed MinimapContainerController
+// in cyberpunk/UI/widgets/minimap/minimap.script. Native minimap/mappin/navigation
+// data remains authoritative; scanner/quickhack and weapon ironsight ownership stay untouched.
 module CyberpunkRealism.Presentation
 
 import CyberpunkRealism.Settings.*
 
-@addField(IronsightGameController)
-private let crBiologyE3NavFrame: ref<inkCanvas>;
+@addField(MinimapContainerController)
+private let crBiologyE3MinimapFrame: ref<inkCanvas>;
 
-@addMethod(IronsightGameController)
-private final func CRCreateBiologyE3NavFrame() -> Void {
-  if IsDefined(this.crBiologyE3NavFrame) {
+@addMethod(MinimapContainerController)
+private final func CRCreateBiologyE3MinimapFrame() -> Void {
+  if IsDefined(this.crBiologyE3MinimapFrame) {
     return;
   }
 
@@ -19,42 +20,35 @@ private final func CRCreateBiologyE3NavFrame() -> Void {
     return;
   }
 
-  this.crBiologyE3NavFrame = new inkCanvas();
-  this.crBiologyE3NavFrame.SetName(n"CRBiologyE3NavFrame");
-  this.crBiologyE3NavFrame.SetAnchor(inkEAnchor.TopRight);
-  this.crBiologyE3NavFrame.SetHAlign(inkEHorizontalAlign.Right);
-  this.crBiologyE3NavFrame.SetVAlign(inkEVerticalAlign.Top);
-  this.crBiologyE3NavFrame.SetSize(Vector2(520.0, 286.0));
-  this.crBiologyE3NavFrame.SetTranslation(-28.0, 28.0);
-  this.crBiologyE3NavFrame.Reparent(root, -1);
+  this.crBiologyE3MinimapFrame = new inkCanvas();
+  this.crBiologyE3MinimapFrame.SetName(n"CRBiologyE3MinimapFrame");
+  this.crBiologyE3MinimapFrame.SetAnchor(inkEAnchor.TopRight);
+  this.crBiologyE3MinimapFrame.SetHAlign(inkEHorizontalAlign.Right);
+  this.crBiologyE3MinimapFrame.SetVAlign(inkEVerticalAlign.Top);
+  this.crBiologyE3MinimapFrame.SetSize(Vector2(520.0, 286.0));
+  this.crBiologyE3MinimapFrame.SetTranslation(-28.0, 28.0);
+  this.crBiologyE3MinimapFrame.Reparent(root, -1);
 
-  CRBiologyE3Primitives.AddRect(this.crBiologyE3NavFrame, n"CRBiologyE3NavTop", 74.0, 0.0, 420.0, 3.0, 0.92);
-  CRBiologyE3Primitives.AddRect(this.crBiologyE3NavFrame, n"CRBiologyE3NavRight", 491.0, 0.0, 3.0, 180.0, 0.92);
-  CRBiologyE3Primitives.AddRect(this.crBiologyE3NavFrame, n"CRBiologyE3NavBottom", 278.0, 180.0, 216.0, 3.0, 0.72);
-  CRBiologyE3Primitives.AddRect(this.crBiologyE3NavFrame, n"CRBiologyE3NavAccent", 46.0, 0.0, 19.0, 7.0, 1.00);
-  CRBiologyE3Primitives.AddRect(this.crBiologyE3NavFrame, n"CRBiologyE3NavTickA", 18.0, 0.0, 18.0, 3.0, 0.62);
+  CRBiologyE3Primitives.AddRect(this.crBiologyE3MinimapFrame, n"CRBiologyE3MinimapTop", 74.0, 0.0, 420.0, 3.0, 0.92);
+  CRBiologyE3Primitives.AddRect(this.crBiologyE3MinimapFrame, n"CRBiologyE3MinimapRight", 491.0, 0.0, 3.0, 180.0, 0.92);
+  CRBiologyE3Primitives.AddRect(this.crBiologyE3MinimapFrame, n"CRBiologyE3MinimapBottom", 278.0, 180.0, 216.0, 3.0, 0.72);
+  CRBiologyE3Primitives.AddRect(this.crBiologyE3MinimapFrame, n"CRBiologyE3MinimapAccent", 46.0, 0.0, 19.0, 7.0, 1.00);
+  CRBiologyE3Primitives.AddRect(this.crBiologyE3MinimapFrame, n"CRBiologyE3MinimapTickA", 18.0, 0.0, 18.0, 3.0, 0.62);
 }
 
-@addMethod(IronsightGameController)
-private final func CRRefreshBiologyE3NavFrame() -> Void {
+@addMethod(MinimapContainerController)
+private final func CRRefreshBiologyE3MinimapFrame() -> Void {
   let enabled: Bool = CRRealpassSettings.UseE3FirstPersonHudVisuals(GetGameInstance());
-  this.CRCreateBiologyE3NavFrame();
+  this.CRCreateBiologyE3MinimapFrame();
   CRBiologyE3Primitives.TintNeutralHudRoot(this.GetRootWidget(), enabled);
-  if IsDefined(this.crBiologyE3NavFrame) {
-    this.crBiologyE3NavFrame.SetVisible(enabled);
+  if IsDefined(this.crBiologyE3MinimapFrame) {
+    this.crBiologyE3MinimapFrame.SetVisible(enabled);
   }
 }
 
-@wrapMethod(IronsightGameController)
-protected cb func OnPlayerAttach(playerPuppet: ref<GameObject>) -> Bool {
-  let result: Bool = wrappedMethod(playerPuppet);
-  this.CRRefreshBiologyE3NavFrame();
-  return result;
-}
-
-@wrapMethod(IronsightGameController)
-protected cb func OnCompassUpdate() -> Bool {
+@wrapMethod(MinimapContainerController)
+protected cb func OnInitialize() -> Bool {
   let result: Bool = wrappedMethod();
-  this.CRRefreshBiologyE3NavFrame();
+  this.CRRefreshBiologyE3MinimapFrame();
   return result;
 }
