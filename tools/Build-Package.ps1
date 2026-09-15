@@ -2,12 +2,12 @@ param([string]$RecipePath='manifest/package.json')
 . "$PSScriptRoot\Common.ps1"
 $project=Get-ProjectRoot
 $recipe=Get-Content -Raw (Resolve-SafeChildPath $project $RecipePath)|ConvertFrom-Json
-if($recipe.schemaVersion -ne 1 -or $recipe.id -notmatch '^[a-z0-9][a-z0-9-]*$' -or $recipe.version -notmatch '^[A-Za-z0-9][A-Za-z0-9.-]*$'){throw 'Invalid package identity'}
+if($recipe.schemaVersion -ne 1 -or $recipe.id -notmatch '^[a-z0-9][a-z0-9-]*$' -or $recipe.version -notmatch '^[A-Za-z0-9][A-Za-z0-9.-]*$'){throw 'Invalid development source package identity'}
 $id=$recipe.id+'-'+$recipe.version+'-'+[guid]::NewGuid().ToString('N')
 $work=Resolve-SafeChildPath $project ('staging\package-'+$id)
 $seen=@{}
 $files=@(foreach($file in $recipe.files){
- if($file.origin -ne 'project-original'){throw 'This first package builder accepts original modules only; integrate licensed extraction with explicit notices before extending it.'}
+ if($file.origin -ne 'project-original'){throw 'The development source builder accepts project-original modules only.'}
  $source=Resolve-SafeChildPath $project $file.source
  $destination=Resolve-SafeChildPath $work $file.destination
  if($seen.ContainsKey($destination)){throw 'Duplicate package destination'}
@@ -17,7 +17,9 @@ $files=@(foreach($file in $recipe.files){
 })
 foreach($file in $files){Copy-VerifiedPayload $file.source $file.target $file.sha256}
 $manifest=[ordered]@{schemaVersion=1;packageId=$recipe.id;version=$recipe.version;status=$recipe.status;gameVersion=$recipe.gameVersion;requiredExternalComponents=$recipe.requiredExternalComponents;files=@($files|Select-Object path,sha256,origin,module)}
-Write-JsonFile $manifest (Join-Path $work 'CyberpunkRealism/package-manifest.json')
+$metadataRoot=Join-Path $work 'BiologySource'
+New-Item -ItemType Directory -Force -Path $metadataRoot|Out-Null
+Write-JsonFile $manifest (Join-Path $metadataRoot 'package-manifest.json')
 $out=Join-Path $project 'dist'
 New-Item -ItemType Directory -Force -Path $out|Out-Null
 $archive=Resolve-SafeChildPath $out ($id+'.zip')
@@ -33,6 +35,6 @@ try {
   if($hash -ne $file.sha256){throw 'Archive payload hash mismatch'}
  }
 }finally{$zip.Dispose()}
-$report=[ordered]@{builtAtUtc=[DateTime]::UtcNow.ToString('o');packageId=$recipe.id;version=$recipe.version;status=$recipe.status;archive=$archive;archiveSha256=(Get-Sha256 $archive);payloadFiles=$files.Count;verified=$true;manifest=$manifest;deployment='Not deployed; this artifact packages original modules and data only, not the separately staged runtime adapter'}
+$report=[ordered]@{builtAtUtc=[DateTime]::UtcNow.ToString('o');packageId=$recipe.id;version=$recipe.version;status=$recipe.status;archive=$archive;archiveSha256=(Get-Sha256 $archive);payloadFiles=$files.Count;verified=$true;manifest=$manifest;deployment='Not deployed. This is a redistribution-safe Biology development/source artifact, not the canonical playable package.'}
 Write-JsonFile $report (Join-Path $project 'reports/package-build.json')
-Write-Host "Verified development package: $archive"
+Write-Host "Verified Biology development source package: $archive"
