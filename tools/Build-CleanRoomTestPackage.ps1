@@ -36,7 +36,7 @@ $stamp = [DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss')
 $buildId = "realpass-cleanroom-$stamp-$shortRevision"
 $packageRoot = Join-Path $OutputRoot ($buildId + '-root')
 $zipPath = Join-Path $OutputRoot ($buildId + '.zip')
-if (Test-Path -LiteralPath $packageRoot -or Test-Path -LiteralPath $zipPath) {
+if ((Test-Path -LiteralPath $packageRoot) -or (Test-Path -LiteralPath $zipPath)) {
     throw "Clean-room package output already exists for build ID: $buildId"
 }
 New-Item -ItemType Directory -Force -Path $packageRoot | Out-Null
@@ -51,7 +51,8 @@ if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($manifestRelative)) {
 }
 $manifestPath = Resolve-SafeChildPath $project ([string]$manifestRelative)
 $manifest = Get-Content -Raw -LiteralPath $manifestPath | ConvertFrom-Json
-if ($manifest.schemaVersion -ne 1 -or -not $manifest.ownedRuntime -or $manifest.gameVersion -ne (Get-Item -LiteralPath (Join-Path $game 'bin\x64\Cyberpunk2077.exe')).VersionInfo.ProductVersion) {
+$actualGameVersion = (Get-Item -LiteralPath (Join-Path $game 'bin\x64\Cyberpunk2077.exe')).VersionInfo.ProductVersion
+if ($manifest.schemaVersion -ne 1 -or -not $manifest.ownedRuntime -or $manifest.gameVersion -ne $actualGameVersion) {
     throw 'Unexpected owned runtime manifest.'
 }
 
@@ -128,6 +129,7 @@ Add-PlanFile 'UNINSTALL.txt' 'realpass' 'realpass-project-original' 'realpass-ow
 
 $realpassDir = Join-Path $packageRoot 'realpass'
 New-Item -ItemType Directory -Force -Path $realpassDir | Out-Null
+$provenanceComponents = @($components | ForEach-Object { if ($_ -eq 'realpass') { 'realpass-project-original' } else { $_ } } | Sort-Object -Unique)
 $provenance = [ordered]@{
     schemaVersion = 1
     product = 'realpass'
@@ -135,7 +137,7 @@ $provenance = [ordered]@{
     sourceRevision = $revision
     gameVersion = [string]$manifest.gameVersion
     cleanRoomTestPackage = $true
-    components = @($components | Sort-Object)
+    components = $provenanceComponents
     sourceModsRequired = @()
 }
 Write-JsonFile $provenance (Join-Path $realpassDir 'provenance.json')
@@ -155,9 +157,9 @@ $sourceForMetadata = if ($revision -match '^[A-Fa-f0-9]{7,64}$') { $revision } e
 & "$PSScriptRoot\Finalize-PlayerPackage.ps1" -Root $packageRoot -PlanPath $planRelative -Version $version -GameVersion ([string]$manifest.gameVersion) -SourceRevision $sourceForMetadata | Out-Null
 if ($LASTEXITCODE -ne 0) { throw 'Player-package finalization failed.' }
 
-# Build a simple archive whose root is the game-root-shaped package itself. The user
-# should extract the ZIP and copy its contents into the vanilla game root.
-Compress-Archive -LiteralPath (Join-Path $packageRoot '*') -DestinationPath $zipPath -CompressionLevel Optimal
+# Build an archive whose contents are already game-root-shaped. The user extracts the
+# ZIP and copies/merges those contents into the vanilla game root.
+Compress-Archive -Path (Join-Path $packageRoot '*') -DestinationPath $zipPath -CompressionLevel Optimal
 if (-not (Test-Path -LiteralPath $zipPath -PathType Leaf) -or (Get-Item -LiteralPath $zipPath).Length -le 0) {
     throw 'Clean-room package ZIP was not created.'
 }
