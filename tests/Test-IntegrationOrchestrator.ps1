@@ -14,11 +14,13 @@ $agents = Read 'AGENTS.md'
 $roadmap = Read 'ROADMAP.md'
 $orchestrator = Read 'docs/INTEGRATION-ORCHESTRATOR.md'
 $template = Read 'docs/test-runs/README.md'
+$handoff = Read 'docs/handoffs/PARENT-INTEGRATION.md'
 
 Require $agents 'PARENT INTEGRATION GATE' 'AGENTS.md must make parent integration responsibility explicit.'
 Require $agents 'docs/INTEGRATION-ORCHESTRATOR\.md' 'AGENTS.md must direct parent/integration agents to the canonical orchestration policy.'
 Require $roadmap 'Parent integration/orchestration thread' 'Root roadmap must expose the parent integration thread.'
 Require $roadmap 'docs/test-runs/' 'Root roadmap must preserve durable attended-test records.'
+Require $roadmap 'docs/handoffs/PARENT-INTEGRATION\.md' 'Root roadmap must expose the copy/paste parent-thread handoff.'
 
 foreach ($required in @(
     'Merge orchestration',
@@ -47,5 +49,10 @@ Require $template 'Canonical main SHA:' 'Attended test template must bind eviden
 Require $template 'Artifact/package:' 'Attended test template must bind evidence to an exact artifact.'
 Require $template 'Owner / route' 'Attended test template must route findings to an owner.'
 Require $template 'Accepted \| Partially accepted \| Rejected' 'Attended test template must record milestone disposition.'
+
+Require $handoff 'PARENT / INTEGRATION ORCHESTRATOR' 'Parent handoff must explicitly establish the role.'
+Require $handoff 'return it to the original worker thread/agent' 'Parent handoff must support routing findings back to the original agent.'
+Require $handoff 'create/recommend a new follow-up agent/branch' 'Parent handoff must support starting a new worker when appropriate.'
+Require $handoff 'one combined build|ONE release-shaped local test' 'Parent handoff must coordinate integrated testing instead of branch-by-branch local contamination.'
 
 Write-Host 'PASS: parent integration thread owns merge/test/evidence/routing orchestration without becoming a fourth broad feature lane.'
