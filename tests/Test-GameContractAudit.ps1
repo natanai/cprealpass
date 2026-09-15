@@ -42,13 +42,9 @@ foreach ($needle in @(
     Check ($source.Contains($needle)) "Game-contract audit lost required behavior/evidence: $needle"
 }
 
-# Repository path is contextual: derive it from the tool checkout unless explicitly
-# supplied. The retired fixed C:\Games\CyberpunkRealism checkout must never return.
 Check ($source.Contains('Split-Path -Parent $PSScriptRoot')) 'Game-contract audit does not derive its default repo root from its own checkout.'
 Check (-not $source.Contains("[string]`$RepoRoot = 'C:\Games\CyberpunkRealism'")) 'Game-contract audit reintroduced the retired fixed local repo path.'
 
-# The audit may read the installed game and write repository-side derived metadata,
-# but it must never deploy, mutate, launch, monitor, or repair Cyberpunk itself.
 foreach ($forbidden in @(
     'Copy-Item -Destination $GamePath',
     'Copy-Item -Destination $gamePath',
@@ -74,8 +70,6 @@ Check ($source.Contains('FAIL: Biology native-contract audit did not complete.')
 Check ($source.Contains('PASS: Biology native-contract audit completed.')) 'Audit text evidence does not clearly preserve success outcome.'
 Check ($source.Contains('Return that .txt file')) 'Audit does not instruct the operator to return the text evidence file.'
 
-# Presentation-specific local evidence combines the exact compile with a read-only
-# symbol/signature search over CDPR's installed REDmod decompiled scripts.
 foreach ($needle in @('Audit-GameContracts.ps1','Probe-PresentationNativeContracts.ps1','presentation-local-audit-','LOCAL EVIDENCE REPORT:','Attach that .txt file','PRESENTATION LOCAL AUDIT RESULT')) {
     Check ($presentation.Contains($needle)) "Presentation local audit wrapper lost required behavior: $needle"
 }
@@ -91,19 +85,17 @@ Check ($probe.Contains('$minimapInitializeFound')) 'Presentation probe no longer
 Check ($probe.Contains('GetRelativePath')) 'Presentation probe should return narrow relative script-path evidence rather than proprietary file dumps.'
 Check ($probe.Contains('Read-only symbol/signature evidence only')) 'Presentation probe does not state its read-only narrow-evidence boundary.'
 
-# Canonical investigation policy: readable native script contracts come from the
-# installed official REDmod source tree before web/community mirrors when practical.
 Check ($localReference.Contains('Prefer the installed official REDmod script tree for script contracts')) 'Local-game reference no longer prioritizes installed REDmod script archaeology.'
 Check ($localReference.Contains('tools\redmod\scripts')) 'Local-game reference does not identify the official installed REDmod script tree.'
 Check ($localReference.Contains('web/community script dumps')) 'Local-game reference does not explicitly demote web/community script mirrors below direct installed-game evidence.'
 Check ($localReference.Contains('Do not assume or recreate `C:\Games\CyberpunkRealism`')) 'Local-game reference does not explicitly retire the fixed repository layout.'
 
-# Project-wide architecture must require an official-path investigation before
-# established community workarounds become foundational dependencies/seams.
-Check ($migration.Contains('Official-path-first development rule')) 'REDmod migration no longer declares the official-path-first development rule.'
+# Preserve the scrubbed/current migration language while still enforcing the worker's
+# official-path-first requirement. The exact heading/wording is allowed to evolve.
+Check ($migration.Contains('Official-source-first investigation gate')) 'REDmod migration no longer declares the official-source-first investigation gate.'
 Check ($migration.Contains('tools\redmod\bin\redMod.exe')) 'REDmod migration no longer requires direct consideration of the installed official executable.'
-Check ($migration.Contains('Historical mods often optimized for the tooling/ecosystem available at the time.')) 'REDmod migration no longer warns against inheriting community architecture by popularity.'
-Check ($migration.Contains('after the official REDmod route was directly investigated')) 'REDSCRIPT-BETTER classification is no longer conditioned on direct REDmod investigation.'
-Check ($migration.Contains('official REDmod capability investigated')) 'Migration inventory no longer records which official capability was evaluated before fallback.'
+Check ($migration.Contains('modding ecosystem already “solved”')) 'REDmod migration no longer warns against inheriting community architecture by popularity.'
+Check ($migration.Contains('After directly checking the official/native option')) 'REDSCRIPT-BETTER/native fallback decisions are no longer conditioned on direct official-route investigation.'
+Check ($migration.Contains('official Cyberpunk/REDmod capabilities are directly investigated')) 'Migration acceptance no longer requires direct official capability investigation.'
 
-Write-Host "PASS: $script:checks proactive game-contract audit policy checks, including checkout-relative repo discovery, exact compile text evidence, installed-2.31 REDmod-first native script probing, and official-path-first architecture policy."
+Write-Host "PASS: $script:checks proactive game-contract audit policy checks, including checkout-relative repo discovery, exact compile text evidence, installed-2.31 REDmod-first native script probing, and official-source-first architecture policy."
