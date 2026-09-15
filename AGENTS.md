@@ -8,6 +8,21 @@ The product is intentionally designed so ordinary game patches should affect a s
 
 Read `docs/BIOLOGY-REDMOD-MIGRATION.md` before making packaging/dependency/runtime-routing decisions.
 
+## THREAD LEDGER GATE — read before creating or reusing a conversation
+
+`docs/THREAD-LEDGER.md` is the canonical registry for parent/worker conversation continuity.
+
+Before creating a new worker thread, routing work back to an older one, replacing a conversation that has become too long, or taking over as the parent/integration thread:
+
+1. read `docs/THREAD-LEDGER.md`;
+2. use the official `P##.#` / `W##.#` thread ID from the ledger;
+3. prefer a **new lane for a materially new goal** rather than reusing an older chat merely because it exists;
+4. treat `USABLE` old threads as context reserves, not standing assignments;
+5. when the user says a thread is too long, mark it `TOO-LONG` and create the documented successor before continuing substantial work;
+6. the parent owns canonical ledger updates and should keep thread state aligned with current GitHub work state.
+
+The ledger complements GitHub issues/PRs; it does not replace them.
+
 ## PARALLEL WORK GATE — proactively split large work when safe
 
 The project owner can often run **2–3 agents concurrently**. Treat that capacity as part of the normal development workflow.
@@ -27,6 +42,7 @@ Every parallel lane works on its **own branch**. Do not use `main` as a shared s
 
 For the full workflow, branch/ownership rules, handoff template, merge order and the preferred Biology REDmod migration split, read:
 
+- `docs/THREAD-LEDGER.md`
 - `docs/PARALLEL-AGENT-WORKFLOW.md`
 - `docs/BIOLOGY-REDMOD-MIGRATION.md`
 
@@ -38,6 +54,7 @@ Parallel feature lanes are coordinated by a long-lived **parent/integration thre
 
 The parent/integration thread owns:
 
+- the canonical `docs/THREAD-LEDGER.md` conversation/lane registry;
 - merge readiness and merge order across worker PRs;
 - short-lived integration branches when combined risk is high;
 - exact canonical-`main` awareness;
@@ -117,19 +134,20 @@ Rules:
 ## Read order — do this before changing scope or architecture
 
 1. `AGREED-GOALS.md` — **what the product is now**. Locked goals outrank old implementation notes.
-2. `docs/BIOLOGY-REDMOD-MIGRATION.md` — current product/package/dependency migration direction.
-3. `docs/DECISION-HISTORY.md` — when decisions changed and which misunderstandings the user already corrected.
-4. `docs/PARALLEL-AGENT-WORKFLOW.md` — branch/lane/handoff/merge rules.
-5. `docs/INTEGRATION-ORCHESTRATOR.md` — parent-thread merge/test/evidence/routing rules when coordinating multiple lanes.
-6. `docs/LOCAL-OPERATOR-COMMANDS.md` before asking the user to run local commands.
-7. The focused architecture file relevant to the task, for example:
+2. `docs/THREAD-LEDGER.md` — current parent/worker conversation registry and reuse/replacement rules.
+3. `docs/BIOLOGY-REDMOD-MIGRATION.md` — current product/package/dependency migration direction.
+4. `docs/DECISION-HISTORY.md` — when decisions changed and which misunderstandings the user already corrected.
+5. `docs/PARALLEL-AGENT-WORKFLOW.md` — branch/lane/handoff/merge rules.
+6. `docs/INTEGRATION-ORCHESTRATOR.md` — parent-thread merge/test/evidence/routing rules when coordinating multiple lanes.
+7. `docs/LOCAL-OPERATOR-COMMANDS.md` before asking the user to run local commands.
+8. The focused architecture file relevant to the task, for example:
    - `docs/BIOLOGY-UI.md`
    - `docs/SETTINGS-ARCHITECTURE.md`
    - `docs/E3-PRESENTATION.md`
    - `docs/PATCH-RESILIENCE.md`
    - `docs/RELEASE-ARCHITECTURE.md`
    - `docs/CLEAN-ROOM-TESTING.md`
-8. Machine-readable manifests/tests for the implementation contract.
+9. Machine-readable manifests/tests for the implementation contract.
 
 Do **not** reconstruct current intent from old commits, closed branch workplans, historical prototypes, or old `RealPass` naming before reading the files above.
 
@@ -289,7 +307,7 @@ When the user changes/corrects a requirement:
 - remove obsolete active workplans/instructions instead of leaving competing current directions;
 - preserve history through Git.
 
-When large work can be parallelized, also update/provide the branch handoffs described in `docs/PARALLEL-AGENT-WORKFLOW.md`.
+When large work can be parallelized, also update/provide the branch handoffs described in `docs/PARALLEL-AGENT-WORKFLOW.md` and update `docs/THREAD-LEDGER.md` for newly created/replaced conversations.
 
 When attended testing produces actionable evidence, the parent/integration thread should record and route it under `docs/INTEGRATION-ORCHESTRATOR.md` rather than leaving it only in conversation history.
 
