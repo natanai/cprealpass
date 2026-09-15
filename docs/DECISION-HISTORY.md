@@ -208,6 +208,18 @@ Current authority: `docs/LOCAL-OPERATOR-COMMANDS.md`, `tools/Audit-GameContracts
 
 Current authority: `docs/LOCAL-GAME-REFERENCE.md`, `tools/Probe-PresentationNativeContracts.ps1`, `tools/Audit-GameContracts.ps1`, and `tests/Test-GameContractAudit.ps1`.
 
+### 2026-09-15 — date-only — investigate and prefer CDPR's official path before the established modder path
+
+**Earlier failure mode:** a community technique could become the default implementation simply because previous modders commonly used it, even when current REDmod might expose a more direct official route.
+
+**User correction:** Biology should deliberately build a better working relationship with REDmod and the game on its own terms. For each problem, investigate the installed official REDmod source/tooling first — including the decompiled `tools\redmod\scripts` tree and `tools\redmod\bin\redMod.exe` command surface where relevant — before inheriting RED4ext/redscript/ArchiveXL/TweakXL/Codeware/CET patterns from other mods. Re-deriving an apparently solved feature is acceptable when it yields a more official, stable, self-contained implementation.
+
+**Nuance:** this does not require a fragile whole-file REDmod replacement when direct investigation shows a narrow Biology-owned additive seam has a materially smaller compatibility surface. The exception must be evidence-backed. “Most modders do it this way” is not sufficient justification.
+
+**Do not repeat:** do not assume the established modding ecosystem already chose the best route for Biology, and do not skip REDmod capability investigation merely because a community workaround is familiar.
+
+Current authority: `docs/BIOLOGY-REDMOD-MIGRATION.md`, `AGENTS.md`, `docs/LOCAL-GAME-REFERENCE.md`, and the REDmod/package compatibility tooling.
+
 ---
 
 ## Current product snapshot
@@ -218,7 +230,7 @@ This section is intentionally short. The detailed requirements remain in `AGREED
 - Executing gameplay/presentation behavior is Biology-owned; source mods are reference only.
 - Biology is the organizing concept for body/needs, injury, combat consequences, protection/clothing/armor, treatment/recovery and relevant cyberware interaction.
 - Native Cyberpunk identity and semantic systems are preferred where they can carry the intended behavior.
-- Official REDmod is the preferred packaging/runtime route where robust; narrower wrappers may remain when whole-file REDmod replacement would increase fragility.
+- Official REDmod is the preferred packaging/runtime route where robust; narrower wrappers may remain only after direct official-route investigation shows they reduce the compatibility surface.
 - The preferred final identity is one self-contained `mods/Biology` package plus only unavoidable explicitly justified framework payload.
 - Historical dependency stacks are being audited down rather than assumed permanent.
 - Backpack owns possessions; Biology owns body state; Cyberware is installed equipment inside the shared body/anatomy experience.
@@ -232,6 +244,7 @@ This section is intentionally short. The detailed requirements remain in `AGREED
 - Broad acceptance is release-shaped and launched normally through Steam; milestone clean-room reinstalls are periodic/structural rather than required every iteration.
 - Direct installed-game evidence outranks community examples for foundational native/REDmod contracts when a targeted local probe is practical.
 - Installed official REDmod decompiled scripts are the preferred readable source for supported-game script contracts when available; exact compile against `final.redscripts` validates Biology's compatibility afterward.
+- REDmod's own executable/tooling should be inspected or invoked directly where its command surface can answer the problem; community conventions are secondary evidence, not default architecture.
 - Local repo paths are disposable/discovered at runtime; local evidence is returned as generated `.txt` reports rather than pasted terminal logs.
 - Patch-sensitive logic belongs in small explicit compatibility seams; the simulation core should survive ordinary game patches unchanged.
 - Large separable work should use parallel branches/agents and converge in `main` before combined attended testing.
