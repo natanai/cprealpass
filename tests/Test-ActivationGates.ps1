@@ -24,26 +24,36 @@ function RequireDisabledPolicy([string]$source,[string]$class,[string]$method) {
 
 RequireDisabledPolicy $body 'CRBodyRuntimePolicy' 'Enabled'
 RequireDisabledPolicy $body 'CRBodyTestPolicy' 'Diagnostics'
-RequireDisabledPolicy $combat 'CRCombatRuntimePolicy' 'Enabled'
+RequireDisabledPolicy $combat 'CRCombatRuntimePolicy' 'BuildEnabled'
+if (-not $combat.Contains('CRCombatRuntimePolicy.BuildEnabled() && CRRealpassSettings.IsEnabled(GetGameInstance())')) {
+    throw 'Combat runtime enable path does not combine the staged build gate with the global RealPass master switch.'
+}
 
 $combatGate = @($acceptance.gates | Where-Object id -eq 'combat-native-activation')
 if ($combatGate.Count -ne 1 -or $combatGate[0].status -eq 'passed') { throw 'Combat source is gated but acceptance ledger does not identify pending native activation.' }
-if ($settings.schemaVersion -ne 3 -or $settings.surface.publicGameplaySettings -ne $false -or $settings.surface.publicBalanceSettings -ne $false) {
-    throw 'Current settings contract unexpectedly restored player gameplay/balance activation controls.'
+if ($settings.schemaVersion -ne 4 -or $settings.surface.publicGameplaySettings -ne $false -or $settings.surface.publicBalanceSettings -ne $false -or $settings.surface.publicMasterEnable -ne $true) {
+    throw 'Current settings contract does not preserve the master-only activation boundary.'
 }
 foreach ($authority in @('body','injury','combat','armor','cyberwarePhysiology','presentation')) {
-    if ($settings.releaseProfile.$authority -ne $true) { throw "Authored release profile is not locked on: $authority" }
+    if ($settings.releaseProfile.$authority -ne $true) { throw "Authored RealPass-on release profile is not locked on: $authority" }
 }
 if ($settings.releaseProfile.diagnostics -ne $false) { throw 'Authored release profile does not lock diagnostics off.' }
-foreach ($control in @($settings.publicControls)) {
-    if ([string]$control.type -ne 'bool' -or [string]$control.authority -ne 'presentation-only') {
-        throw "Public control can alter authority/activation: $($control.id)"
+$controls = @($settings.publicControls)
+if ($controls.Count -ne 2) { throw 'Expected only global master + presentation preference in public controls.' }
+foreach ($control in $controls) {
+    if ([string]$control.type -ne 'bool') { throw "Public control is not binary: $($control.id)" }
+    if ([string]$control.id -eq 'realpass.enabled') {
+        if ([string]$control.authority -ne 'global-master') { throw 'Global RealPass switch has wrong authority classification.' }
+    } elseif ([string]$control.id -eq 'presentation.e3-first-person-hud-visuals') {
+        if ([string]$control.authority -ne 'presentation-only') { throw 'E3 HUD setting gained simulation authority.' }
+    } else {
+        throw "Unexpected public control can alter authority/activation: $($control.id)"
     }
 }
 
 # Legacy body-only builder may open only the body gate in generated staging and
-# must reject combat. It remains useful for isolated body acceptance.
-foreach ($needle in @('Parameter(Mandatory=$true)','Build ID already exists','Missing disabled policy','Combat must remain disabled','body enabled, combat disabled')) {
+# must keep the combat build gate closed. It remains useful for isolated body acceptance.
+foreach ($needle in @('Parameter(Mandatory=$true)','Build ID already exists','Missing disabled policy','Combat build gate must remain disabled','body enabled, combat build gate disabled')) {
     if ($bodyAttended -notmatch [regex]::Escape($needle)) { throw "Attended body builder lost safety invariant: $needle" }
 }
 if ($bodyAttended -match '(?i)(Start-Process|Cyberpunk2077\.exe|scheduled task|Register-ScheduledTask)') {
@@ -52,7 +62,7 @@ if ($bodyAttended -match '(?i)(Start-Process|Cyberpunk2077\.exe|scheduled task|R
 
 foreach ($needle in @(
     "Set-PolicyOnce `$bodyText 'CRBodyRuntimePolicy' 'Enabled' `$true",
-    "Set-PolicyOnce `$combatText 'CRCombatRuntimePolicy' 'Enabled' `$true 'false'",
+    "Set-PolicyOnce `$combatText 'CRCombatRuntimePolicy' 'BuildEnabled' `$true 'false'",
     "Set-PolicyOnce `$bodyText 'CRBodyTestPolicy' 'Diagnostics' ([bool]`$Diagnostics) 'false'",
     'Build ID already exists; attended acceptance profiles are immutable',
     'Compile-Profile.ps1',
@@ -71,4 +81,4 @@ if ($session -match '(?i)(Start-Process|Register-ScheduledTask|New-Service)') {
     throw 'Attended session tool must not launch the game or install background automation.'
 }
 
-Write-Host 'PASS: canonical body/combat/diagnostic gates remain build-controlled; release simulation authorities are fixed, while permitted player controls are presentation-only booleans.'
+Write-Host 'PASS: canonical body/combat/diagnostic gates remain build-controlled; RealPass-on locks all authorities together, with only a global master switch plus presentation preference exposed.'
