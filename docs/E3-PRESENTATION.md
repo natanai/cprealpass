@@ -11,19 +11,27 @@ The target is **not** to install or execute the external Project E3 HUD mod as a
 
 ## Desired player-facing result
 
-With **E3 first-person HUD visuals = On** (the default):
+With **Enable RealPass = On** and **E3 first-person HUD visuals = On** (both defaults):
 
 - ordinary first-person HUD presentation uses the red E3-inspired visual language;
 - NPC nameplates use the E3-inspired presentation;
 - the modern scanner and quickhack panels remain the current native Cyberpunk experience rather than reverting to the old E3 scanner;
 - RealPass physiology/injury feedback may integrate into that visual language where useful, without turning it into a permanent numeric body-meter wall;
-- traditional actor HP presentation is removed only after replacement feedback has passed attended acceptance.
+- traditional actor HP presentation is hidden. Attended feedback explicitly rejected the restored native red health indicator as ordinary RealPass-on behavior.
 
-With the setting **Off**:
+With **E3 first-person HUD visuals = Off** while RealPass remains enabled:
 
 - the E3-inspired visual skin/nameplate layer is disabled;
 - RealPass body, combat, injury, armor, pain, treatment, recovery and other simulation behavior remains identical;
+- the barless RealPass actor-health decision remains in force;
 - modern scanner behavior remains unchanged.
+
+With **Enable RealPass = Off**:
+
+- RealPass gameplay and presentation adapters yield to native Cyberpunk behavior after the current save/session is reloaded;
+- native actor-health presentation may return;
+- native Cyberware/wardrobe/other wrapped UI behavior remains authoritative;
+- the E3 preference has no effect until RealPass is enabled again.
 
 ## Ownership and provenance boundary
 
@@ -50,16 +58,16 @@ Those historical commits are useful research evidence, not permission to make th
 
 A practical owned recreation should proceed in small visible slices:
 
-1. Mod Settings presence + single E3 visual toggle;
+1. Mod Settings presence + global master + E3 visual toggle;
 2. NPC nameplate visual behavior;
 3. core first-person red HUD framing/status presentation;
 4. compass/navigation presentation where retained;
 5. quest/activity/interaction/crosshair elements that materially define the E3 look;
-6. final replacement-gated removal of traditional actor HP presentation once RealPass feedback is readable;
+6. integrate restrained RealPass bodily/injury cues without rebuilding permanent numeric body meters;
 7. broad attended testing with the modern scanner, combat, Biology, quests and Phantom Liberty.
 
 Do not recreate old scanner assets or scanner behavior merely for visual fidelity. The modern scanner is an explicit product requirement.
 
 ## Current implementation status
 
-As of this document's creation, the repository has the owned settings boundary and an owned scanned-civilian name fallback, but it does **not yet** contain the full red E3-style first-person HUD recreation. Do not describe the presentation as complete until an attended build visibly demonstrates it.
+The repository now has the owned settings boundary, global master switch, accepted RealPass-on actor-health suppression, and an owned scanned-civilian name fallback. It **does not yet contain the full red E3-style first-person HUD recreation**. Core red HUD framing, navigation/quest/interaction treatment, and full E3-inspired nameplate styling remain implementation work. Do not describe the presentation as complete until an attended build visibly demonstrates it.
