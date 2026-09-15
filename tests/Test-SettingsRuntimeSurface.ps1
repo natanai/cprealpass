@@ -25,9 +25,11 @@ Check (Test-Path -LiteralPath $surfacePath) 'RealPass Mod Settings runtime-prope
 Check ($surface.Contains('@runtimeProperty("ModSettings.mod", "RealPass")')) 'RealPass settings metadata does not register a visible mod.'
 Check ($surface.Contains('public class CRRealpassSettings extends ScriptableSystem')) 'RealPass settings are not hosted by a ScriptableSystem singleton.'
 Check ($surface.Contains('e3FirstPersonHudVisuals: Bool = true;')) 'E3 first-person HUD setting is missing or does not default on.'
+Check ($surface.Contains('public static func Get(game: GameInstance)')) 'RealPass settings singleton does not use the current game instance.'
 Check ($surface.Contains('ModSettings.RegisterListenerToClass(this)')) 'RealPass settings are not registered for live Mod Settings updates.'
 Check ($surface.Contains('ModSettings.UnregisterListenerToClass(this)')) 'RealPass settings do not unregister cleanly.'
 Check ($surface.Contains('@if(ModuleExists("ModSettingsModule"))')) 'Mod Settings listener calls are not guarded by provider availability.'
+Check ($surface.Contains('@if(!ModuleExists("ModSettingsModule"))')) 'RealPass settings lack a no-provider lifecycle fallback.'
 Check (-not ($surface -match '(?m)^\s*import\s+ModSettings')) 'RealPass settings source imports provider internals directly.'
 # Only listener lifecycle calls are allowed. RealPass policy must never query/drive the provider as simulation authority.
 Check (-not ($surface -match '(?m)(?<!["''])\bModSettings\.(?:GetInstance|GetMods|GetCategories|GetVars|AcceptChanges|RejectChanges|RestoreDefaults)\b')) 'RealPass settings source directly couples policy to Mod Settings internals.'
@@ -45,7 +47,7 @@ Check ($pain.Contains('player.crPainModifiers.Sync(player, pain)')) 'Pain-derive
 
 # The sole setting must already be consumed by an owned presentation seam. Full red
 # E3 styling is an attended/native implementation target, but the toggle boundary is live.
-Check ($nameplates.Contains('CRRealpassSettings.UseE3FirstPersonHudVisuals()')) 'E3 presentation preference is not consumed by the owned nameplate seam.'
+Check ($nameplates.Contains('CRRealpassSettings.UseE3FirstPersonHudVisuals(puppet.GetGame())')) 'E3 presentation preference is not consumed from the current game instance by the owned nameplate seam.'
 
 $ownedProfile = @($profiles.profiles.'m1-owned-settings')
 foreach ($component in @('red4ext','redscript','archivexl','mod-settings')) {
