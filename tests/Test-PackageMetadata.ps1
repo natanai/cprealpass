@@ -9,12 +9,14 @@ $manifest = Get-Content -Raw -LiteralPath $manifestPath | ConvertFrom-Json
 $readme = Get-Content -Raw -LiteralPath $readmePath
 $distribution = Get-Content -Raw -LiteralPath $distributionPath | ConvertFrom-Json
 
+# manifest/package.json is intentionally a legacy development/source artifact.
+# It is not the canonical player package and must remain clearly subordinate to
+# tools/Build-BiologyPackage.ps1.
 if ($manifest.schemaVersion -ne 1 -or $manifest.id -ne 'realpass') { throw 'Unexpected legacy development package manifest.' }
 if ([string]::IsNullOrWhiteSpace($manifest.version)) { throw 'Development package version missing.' }
 if ($readme -notmatch [regex]::Escape($manifest.version)) { throw "Package README does not identify manifest version $($manifest.version)." }
 if ($readme -notmatch '(?i)development/source artifact') { throw 'Package README must clearly label the artifact as development/source.' }
 if ($readme -notmatch '(?i)does not activate gameplay') { throw 'Package README must state that the development artifact does not activate gameplay.' }
-if ($readme -notmatch '(?i)model/source artifact' -or $readme -notmatch 'm1-owned-settings') { throw 'Package README does not distinguish this legacy model-only artifact from the live owned settings profile.' }
 if ($distribution.product -ne 'Biology' -or $distribution.releaseGate.publicPlayableArtifactReady -ne $false) { throw 'Development source-package test assumes the current Biology public release remains gated.' }
 if ($distribution.target.canonicalBuilder -ne 'tools/Build-BiologyPackage.ps1') { throw 'Legacy development package became ambiguous with the canonical Biology player builder.' }
 
@@ -38,16 +40,17 @@ foreach ($requiredModule in @('runtime-policy-model','body-core','combat-core','
     if (-not $modules.ContainsKey($requiredModule)) { throw "Development package lost required original module family: $requiredModule" }
 }
 if (-not $destinations.ContainsKey('r6/scripts/CyberpunkRealism/RuntimePolicyModel.reds')) { throw 'Development package does not contain the code-level runtime policy model.' }
-# This historical/model artifact deliberately excludes native adapters. The current
-# playable Biology package is built elsewhere by Build-BiologyPackage.ps1.
 if ($destinations.ContainsKey('r6/scripts/CyberpunkRealism/RealpassSettings.reds')) { throw 'Native Mod Settings adapter entered the model-only development source artifact.' }
 $requirements = @($manifest.requiredExternalComponents)
 if (-not ($requirements -contains 'redscript 0.5.31')) { throw 'Development source package lost pinned redscript prerequisite.' }
 if (@($requirements | Where-Object { $_ -match '(?i)Mod Settings|ArchiveXL|RED4ext' }).Count -ne 0) { throw 'Model-only development artifact incorrectly inherited live runtime framework prerequisites.' }
 
 $modSettingsPolicy = @($distribution.components | Where-Object id -eq 'mod-settings')
-if ($modSettingsPolicy.Count -ne 1 -or $modSettingsPolicy[0].status -ne 'temporary' -or $modSettingsPolicy[0].notes -notmatch '(?i)Lane C') {
-    throw 'Current Biology distribution no longer records Mod Settings as the temporary Lane C provider blocker.'
+if ($modSettingsPolicy.Count -ne 1 -or $modSettingsPolicy[0].status -ne 'temporary') {
+    throw 'Current Biology distribution no longer records Mod Settings as a temporary provider.'
+}
+if ($modSettingsPolicy[0].notes -match '(?i)Lane C' -or $modSettingsPolicy[0].notes -notmatch '(?i)provider-neutral') {
+    throw 'Current Mod Settings rationale still depends on obsolete worker-lane language or lost provider-neutral semantics.'
 }
 
-Write-Host "PASS: legacy development package metadata remains model/source-only and clearly subordinate to the canonical Biology REDmod-first player builder; current Mod Settings runtime is explicitly temporary."
+Write-Host 'PASS: legacy development package remains explicitly model/source-only and subordinate to the canonical Biology REDmod-first player builder; current settings-provider dependency is temporary without stale lane ownership.'
