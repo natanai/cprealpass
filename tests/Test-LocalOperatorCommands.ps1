@@ -19,6 +19,7 @@ $sanity = Read 'tools/Test-VanillaGameSanity.ps1'
 $compare = Read 'tools/Compare-GameToVanillaBaseline.ps1'
 $deploy = Read 'tools/Deploy-BiologyRedmod.ps1'
 $audit = Read 'tools/Audit-GameContracts.ps1'
+$presentationBootstrap = Read 'tools/Bootstrap-PresentationAudit.ps1'
 
 Require $agents 'LOCAL OPERATOR COMMAND GATE' 'AGENTS.md must make the local operator command catalog mandatory.'
 Require $agents 'docs/LOCAL-OPERATOR-COMMANDS\.md' 'Agents must be directed to the canonical local operator command catalog.'
@@ -46,6 +47,24 @@ Require $catalog 'Reset-BiologyIteration\.ps1' 'Catalog must document iteration 
 Require $catalog 'Audit-GameContracts\.ps1' 'Catalog must document direct compatibility audit.'
 Require $catalog 'LOCAL EVIDENCE REPORT:' 'Catalog must document the machine-readable handoff line for the generated text report path.'
 Require $catalog 'No mods found.*failure|failure.*No mods found' 'Catalog must explain that an empty REDmod set is a deployment failure for installed Biology.'
+
+# Branch-specific presentation audits have a repository-owned bootstrap so the user's
+# interactive prompt never has to parse a top-level try/catch/finally sequence.
+Require $presentationBootstrap '\[Parameter\(Mandatory=\$true\)\]\[string\]\$Branch' 'Presentation bootstrap must require the exact branch explicitly.'
+Require $presentationBootstrap '\[ValidatePattern\(''\^\[0-9a-fA-F\]\{40\}\$''\)\].*\$ExpectedHead' 'Presentation bootstrap must require an exact 40-character head SHA.'
+Require $presentationBootstrap 'Biology-Presentation-Audit-' 'Presentation bootstrap must create a uniquely named text evidence report.'
+Require $presentationBootstrap 'origin.*natanai/cprealpass|natanai/cprealpass.*origin|repoPattern' 'Presentation bootstrap must discover cprealpass by repository identity.'
+Require $presentationBootstrap 'cprealpass-repo-' 'Presentation bootstrap must clone a uniquely signed seed when no repo exists.'
+Require $presentationBootstrap 'cprealpass-presentation-audit-' 'Presentation bootstrap must use a uniquely signed disposable audit checkout.'
+Require $presentationBootstrap 'worktree add --detach' 'Presentation bootstrap must isolate the exact worker revision in a detached worktree.'
+Require $presentationBootstrap 'Audit-PresentationContracts\.ps1' 'Presentation bootstrap must invoke the repository-owned presentation audit.'
+Require $presentationBootstrap 'try\s*\{' 'Presentation bootstrap must own exception handling inside the script file.'
+Require $presentationBootstrap 'catch\s*\{' 'Presentation bootstrap must preserve failure evidence inside the script file.'
+Require $presentationBootstrap 'finally\s*\{' 'Presentation bootstrap must print the report path from a parser-safe script file.'
+Require $presentationBootstrap 'ATTACH THIS FILE TO CHATGPT:' 'Presentation bootstrap must end with the attachment handoff rather than pasted console output.'
+if ($presentationBootstrap.Contains('C:\Games\CyberpunkRealism')) {
+    throw 'Presentation bootstrap reintroduced the retired fixed C:\Games\CyberpunkRealism repo path.'
+}
 
 Require $prepare 'Read-Host.*exhaustive vanilla hash verification' 'Milestone orchestrator must ask the user whether to run the expensive full baseline comparison.'
 Require $prepare '\$runExhaustive = \$answer -in' 'Milestone exhaustive verification must default to off unless explicitly accepted.'
@@ -95,4 +114,4 @@ Require $cleanRoom 'fast sanity' 'Clean-room policy must define the lightweight 
 Require $cleanRoom 'must not.*verified against recorded vanilla baseline|not.*verified against recorded vanilla baseline' 'Clean-room policy must prevent overclaiming when the exhaustive hash check is skipped.'
 Require $cleanRoom 'LOCAL-OPERATOR-COMMANDS\.md' 'Clean-room policy must defer routine user commands to the canonical catalog.'
 
-Write-Host 'PASS: local operator commands self-bootstrap cprealpass with unique workspaces, return text evidence files instead of pasted transcripts, preserve clean-room policy, and fail closed on REDmod false positives.'
+Write-Host 'PASS: local operator commands self-bootstrap cprealpass with unique workspaces, keep compound exception handling inside parser-safe repository scripts, return text evidence files instead of pasted transcripts, preserve clean-room policy, and fail closed on REDmod false positives.'
