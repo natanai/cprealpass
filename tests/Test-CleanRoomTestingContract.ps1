@@ -70,7 +70,7 @@ Require $compare "Status='HASH'" 'Baseline comparison must detect changed same-s
 Require $reset 'biology\\build-manifest\.json' 'Biology reset must require the installed Biology owner manifest.'
 Require $reset 'baselineByPath\.ContainsKey' 'Biology reset must protect paths that existed in vanilla.'
 Require $reset 'Installed package file changed since installation' 'Biology reset must refuse changed package-owned files.'
-Require $reset 'approved-dependency-owned' 'Biology reset must understand exact dependency-file ownership without owning shared roots.'
+Require $reset 'generic-dependency-shared' 'Biology reset must understand exact shared-dependency ownership without recursively owning shared roots.'
 Require $reset 'Compare-GameToVanillaBaseline\.ps1' 'Biology reset must finish with a strict whole-game baseline comparison.'
 Require $reset 'MILESTONE CLEAN-ROOM' 'Biology reset must fail closed to milestone mode.'
 Require $legacyReset 'realpass\\build-manifest\.json' 'Legacy reset must remain available for the prior package during PKG-06 transition.'
@@ -82,7 +82,7 @@ Require $package 'BIOLOGY-VERSION\.txt' 'Integrated package must emit Biology re
 Require $package 'Nothing was deployed or launched' 'Integrated builder must remain non-deploying.'
 Require $package 'Build-OwnedRuntimeProfile\.ps1' 'Integrated builder must exact-compile the complete runtime profile before artifact emission.'
 Require $package 'biology/build-manifest\.json' 'Integrated package must emit exact Biology ownership metadata.'
-Require $package 'approved-dependency-owned' 'Integrated package must account for supplemental framework files individually.'
+Require $package 'generic-dependency-shared' 'Integrated package must account for supplemental framework files individually while marking them shared/preserved for player uninstall.'
 Require $package 'sourceModsRequired = @\(\)' 'Integrated package must require no source gameplay/presentation mod runtime.'
 Require $legacyPackage 'Build-OwnedRuntimeProfile\.ps1' 'Known-working old route must remain present until PKG-06 direct replacement proof.'
 
