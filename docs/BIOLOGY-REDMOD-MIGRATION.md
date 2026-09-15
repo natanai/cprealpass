@@ -135,7 +135,7 @@ Every current runtime feature/file family must be audited and assigned one of th
 - `REDSCRIPT-BETTER` — an additive/wrapper redscript seam is demonstrably narrower/more resilient than REDmod whole-file replacement **after the official REDmod route was directly investigated**.
 - `REQUIRES-NATIVE-EXTENSION` — the feature cannot be implemented adequately through vanilla/REDmod/redscript and requires a generic native framework.
 - `REMOVE/RETHINK` — the current mechanism exists because of historical architecture and should disappear rather than be migrated.
-- `UNKNOWN — NEEDS DIRECT GAME/REDMOD PROBE` — do not guess; use `reference/cyberpunk/`, installed `tools\redmod\scripts`, `redMod.exe`, or request a targeted local inspection.
+- `UNKNOWN — NEEDS DIRECT GAME PROBE` — do not guess; use `reference/cyberpunk/`, installed `tools\redmod\scripts`, `redMod.exe`, or request a targeted local inspection before choosing a route.
 
 For every classification below `REDMOD-NATIVE`, preserve the evidence explaining why the higher official layer was rejected.
 
