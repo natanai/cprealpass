@@ -86,10 +86,10 @@ Existing conversations do not need retroactive renaming; this ledger maps their 
 
 | Thread ID | Current visible title / alias | Role / goal | Thread state | Lane work state | GitHub / branch | Parent routing note |
 |---|---|---|---|---|---|---|
-| **P01.1** | `PARENT 1` | Parent / integration orchestrator | **ACTIVE** | **IN-PROGRESS** | Issue #35; canonical feature source `2362dacf5dcd6fa8689e4f247313eab8b27b23c7` plus parent evidence/ledger commits | Current parent. The first combined milestone candidate failed official REDmod TweakDB compilation before gameplay; parent routed the new packaging failure to W07.1. If this conversation becomes too long, replace it with **P01.2** before continuing. |
-| **W07.1** | `[W07.1] REDMOD — Activation Sentinel Repair` | Repair the REDmod-owned launcher activation sentinel after attended TweakDB compile failure | **ACTIVE** | **IN-PROGRESS** | Issue #53; `agent/redmod-activation-sentinel-repair`; base `2362dacf5dcd6fa8689e4f247313eab8b27b23c7` | Fresh lane created from the exact failed canonical source. Investigate official REDmod/vanilla TweakDB support first; return a cloud-green repaired head to P01.1. Do not ask the user to install/play the worker branch directly. |
+| **P01.1** | `PARENT 1` | Parent / integration orchestrator | **ACTIVE** | **IN-PROGRESS** | Issue #35; PR #54 merged at `8d99b338cc5a5ea0ac42c44ee25ecb0e822f901e` plus later ledger-only commits | Current parent. W07.1 is merged; parent now owns official REDmod 2.31 deployment validation of the repaired canonical-main candidate, followed by launcher ON/OFF and attended gameplay acceptance. If this conversation becomes too long, replace it with **P01.2** before continuing. |
+| **W07.1** | `[W07.1] REDMOD — Activation Sentinel Repair` | Repair the REDmod-owned launcher activation sentinel after attended TweakDB compile failure | **USABLE** | **MERGED** | Issue #53 remains open for parent acceptance; PR #54 merged; `agent/redmod-activation-sentinel-repair`; worker head `b0f98c4d6df006395aaf7b5e98ab2aac2c4a1210` | Worker repair, direct official-source evidence, generalized failure-durable operator-probe contract, and cloud CI are represented on main. Do not route more work here unless the same sentinel/package-context problem directly resurfaces. |
 | **W06.1** | `Lane - INTEGRATION EXACT-COMPILE REPAIR` | Cross-lane exact-compile repair for the integrated attended follow-ups | **USABLE** | **MERGED** | Issue #50 closed; PR #52; `agent/integration-exact-compile-repair`; repaired head `8f533d8451d2a894fe3ead0eed05ac0adefb69a0` | Parent exact compile passed on integrated runtime head `1a97607332bb6237fb7516b35d1a292403fb2740`; repair is on main through PR #49. Reuse only if this same compile-repair topic directly resurfaces. |
-| **W05.1** | `Lane - PLAYER DISABLE / UNINSTALL ARCHITECTURE` | Launcher-off vanilla behavior + self-contained Biology uninstaller | **USABLE** | **MERGED** | Issue #44; PR #45 closed as superseded by integration; `agent/player-uninstall-vanilla-toggle` | Implementation is on main through PR #49. Issue #44 stays open for attended launcher ON/OFF and hard-uninstall acceptance. The newly discovered TweakDB sentinel syntax failure is owned by W07.1, not a reopening of W05.1. |
+| **W05.1** | `Lane - PLAYER DISABLE / UNINSTALL ARCHITECTURE` | Launcher-off vanilla behavior + self-contained Biology uninstaller | **USABLE** | **MERGED** | Issue #44; PR #45 closed as superseded by integration; `agent/player-uninstall-vanilla-toggle` | Implementation is on main through PR #49. Issue #44 stays open for attended launcher ON/OFF and hard-uninstall acceptance. The sentinel package-context repair is now represented on main through W07.1/PR #54. |
 | **W03.1** | `Thread 3 — E3 HUD, NPC nameplates, presentation settings` | E3-inspired neutral HUD + ambient NPC nameplates | **USABLE** | **MERGED** | Issue #40; PR #46 closed as superseded by integration; `agent/presentation-attended-followup` | Implementation is on main through PR #49. Issue #40 stays open for attended E3/nameplate/scanner acceptance. |
 | **W04.1** | `ATTENDED RUNTIME-AUTHORITY FOLLOW-UP` | Authoritative live Biology body runtime/session ownership | **USABLE** | **MERGED** | Issue #41; PR #47 closed as superseded by integration; `agent/body-runtime-attended-followup` | Implementation plus W06 compile repair are on main through PR #49. Issue #41 stays open for attended live-runtime acceptance. |
 | **W02.1** | `Thread 2 — Biology UI and body runtime` | Biology native Cyberware shell/drill-down/back/mode-state follow-up | **USABLE** | **MERGED** | Issue #39; PR #43 closed as superseded by integration; `agent/biology-ui-attended-followup` | Implementation is on main through PR #49. Issue #39 stays open for attended shell/navigation acceptance. |
@@ -107,16 +107,15 @@ P01.1 parent
   |     +-- W05.1 launcher/uninstaller MERGED
   |     +-- W06.1 exact-compile repair MERGED
   |
-  +-- exact CP2077 2.31 REDscript compile PASS
-  +-- release-shaped milestone package build PASS
-  +-- official REDmod deploy FAIL at Stage 3/5 TweakDB compilation
-  |     `-- Items.BiologyLauncherActivationMarker base/type invalid
-  |
-  +-- W07.1 / issue #53 ACTIVE sentinel repair
-  +-- gameplay acceptance PAUSED until corrected package deploys
+  +-- W07.1 / PR #54 activation-sentinel repair MERGED
+  +-- exact CP2077 2.31 REDscript compile PASS on prior integrated candidate
+  +-- first release-shaped milestone package build PASS
+  +-- first official REDmod deploy FAIL at Stage 3/5 on pre-W07 sentinel
+  +-- next parent gate: build exact repaired canonical main and require official REDmod 2.31 deploy PASS
+  +-- after deploy PASS: launcher ON/OFF + attended gameplay + hard-uninstall acceptance
 ```
 
-W07.1 is the sole active worker lane. The merged worker conversations remain context reserves only.
+No separate implementation worker is currently active. The parent owns the next direct supported-install validation step. Merged worker conversations remain context reserves only.
 
 ## Creating a new lane/thread
 
