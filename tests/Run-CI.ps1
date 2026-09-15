@@ -17,6 +17,7 @@ $tests = @(
     'Test-SettingsRuntimeSurface.ps1',
     'Test-RuntimeOriginPolicy.ps1',
     'Test-NativeSeamPolicy.ps1',
+    'Test-ProjectClassAnnotationOwnership.ps1',
     'Test-GameContractAudit.ps1',
     'Test-CleanRoomTestingContract.ps1',
     'Test-RedmodFoundation.ps1',
