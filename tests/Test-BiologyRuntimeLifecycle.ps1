@@ -42,7 +42,8 @@ Check (-not $presentation.Contains('[ BIOLOGY ERROR ] STABLE')) 'Unavailable bod
 # Native actions must retry the same authority and yield safely when it is unavailable.
 Check ($hooks.Contains('public static func Ready() -> Bool')) 'Native body consumers must share the readiness bridge.'
 Check ($hooks.Contains('return CRBiologyRuntimeAvailability.EnsureActive();')) 'Native body readiness must delegate to the authoritative bridge.'
-Check ($hooks.Contains('if !CRBodyRuntimeMasterPolicy.Ready() || !IsDefined(executor)')) 'MaxDoc/native action interception must fail open to vanilla when Biology is unavailable.'
+Check ($hooks.Contains('!CRBodyRuntimeMasterPolicy.Ready(gameInstance)')) 'MaxDoc/native action interception must use the action-owned session when checking Biology readiness.'
+Check ($hooks -match 'if !IsDefined\(executor\)[\s\S]*?!CRBodyRuntimeMasterPolicy\.Ready\(gameInstance\)[\s\S]*?wrappedMethod\(actionEffects, gameInstance\);[\s\S]*?return;') 'MaxDoc/native action interception must fail open to vanilla when Biology is unavailable.'
 
 # BIO-01/02: stock minigrids spawn asynchronously, so mode has to be applied at the
 # actual OnMinigridSpawned boundary rather than only during RipperDoc initialization.
