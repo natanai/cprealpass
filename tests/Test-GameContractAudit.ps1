@@ -84,7 +84,7 @@ Check ($probe.Contains("@('.script','.reds')")) 'Presentation native probe must 
 foreach ($needle in @('MinimapContainerController','IronsightGameController','QuestTrackerGameController','WeaponRosterGameController','HotkeysWidgetController','CrosshairGameController_Tech_Hex','NpcNameplateGameController','NameplateVisualsLogicController','OnInitialize','OnScreenProjectionUpdate','OnCompassUpdate')) {
     Check ($probe.Contains($needle)) "Presentation native probe no longer checks required current-game symbol: $needle"
 }
-Check ($probe.Contains("$minimapRelative = 'cyberpunk/UI/widgets/minimap/minimap.script'")) 'Presentation probe no longer pins current minimap evidence to the installed native minimap script.'
+Check ($probe.Contains('$minimapRelative = ''cyberpunk/UI/widgets/minimap/minimap.script''')) 'Presentation probe no longer pins current minimap evidence to the installed native minimap script.'
 Check ($probe.Contains('$minimapInitializeFound')) 'Presentation probe no longer requires the current minimap initialization lifecycle from installed REDmod source.'
 Check ($probe.Contains('GetRelativePath')) 'Presentation probe should return narrow relative script-path evidence rather than proprietary file dumps.'
 Check ($probe.Contains('Read-only symbol/signature evidence only')) 'Presentation probe does not state its read-only narrow-evidence boundary.'
@@ -94,6 +94,6 @@ Check ($probe.Contains('Read-only symbol/signature evidence only')) 'Presentatio
 Check ($localReference.Contains('Prefer the installed official REDmod script tree for script contracts')) 'Local-game reference no longer prioritizes installed REDmod script archaeology.'
 Check ($localReference.Contains('tools\redmod\scripts')) 'Local-game reference does not identify the official installed REDmod script tree.'
 Check ($localReference.Contains('web/community script dumps')) 'Local-game reference does not explicitly demote web/community script mirrors below direct installed-game evidence.'
-Check (-not $localReference.Contains('C:\Games\CyberpunkRealism')) 'Local-game reference reintroduced the retired fixed repository layout.'
+Check ($localReference.Contains('Do not assume or recreate `C:\Games\CyberpunkRealism`')) 'Local-game reference does not explicitly retire the fixed repository layout.'
 
 Write-Host "PASS: $script:checks proactive game-contract audit policy checks, including checkout-relative repo discovery, exact compile text evidence, and installed-2.31 REDmod-first native script probing."
