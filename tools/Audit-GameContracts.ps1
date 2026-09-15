@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [string]$RepoRoot = 'C:\Games\CyberpunkRealism',
+    [string]$RepoRoot,
     [string]$GamePath = 'C:\Games\Steam\steamapps\common\Cyberpunk 2077',
     [switch]$SkipCompile
 )
@@ -8,13 +8,16 @@ param(
 $ErrorActionPreference = 'Stop'
 if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'Audit-GameContracts.ps1 requires PowerShell 7 or newer.' }
 
+if ([string]::IsNullOrWhiteSpace($RepoRoot)) {
+    $RepoRoot = Split-Path -Parent $PSScriptRoot
+}
 $RepoRoot = [IO.Path]::GetFullPath($RepoRoot)
 $GamePath = [IO.Path]::GetFullPath($GamePath)
 $tools = Join-Path $RepoRoot 'tools'
 . (Join-Path $tools 'Common.ps1')
 
 if (-not (Test-Path -LiteralPath (Join-Path $RepoRoot '.git'))) {
-    throw "RealPass Git repository not found at: $RepoRoot"
+    throw "Biology/cprealpass Git repository not found at: $RepoRoot"
 }
 
 $exePath = Join-Path $GamePath 'bin\x64\Cyberpunk2077.exe'
@@ -24,7 +27,8 @@ if (-not (Test-Path -LiteralPath $baseBundle -PathType Leaf)) { throw "Cyberpunk
 
 Write-Host ''
 Write-Host '=== RealPass native-contract audit ===' -ForegroundColor Cyan
-Write-Host 'Game access is read-only. Output is written only to the RealPass repository.' -ForegroundColor DarkGray
+Write-Host 'Game access is read-only. Output is written only to the active cprealpass checkout.' -ForegroundColor DarkGray
+Write-Host "Repository: $RepoRoot" -ForegroundColor DarkGray
 Write-Host ''
 
 # Refresh the redistribution-safe machine/game snapshot first so later agents can
