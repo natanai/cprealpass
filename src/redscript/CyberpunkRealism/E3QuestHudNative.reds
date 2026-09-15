@@ -1,7 +1,6 @@
-// Biology-owned E3-inspired quest/objective presentation.
-// Native Journal and quest-tracker data remain authoritative; this adapter adds a
-// coherent red/minimal shell after native tracker updates instead of replacing the
-// large quest data/update implementation used by the historical reference mod.
+// Biology-owned E3-inspired neutral quest/objective presentation.
+// Native Journal and quest-tracker data remain authoritative; Biology restyles the
+// persistent tracker rather than replacing quest logic.
 module CyberpunkRealism.Presentation
 
 import CyberpunkRealism.Settings.*
@@ -14,7 +13,7 @@ private final func CRCreateBiologyE3QuestFrame() -> Void {
   if IsDefined(this.crBiologyE3QuestFrame) {
     return;
   }
-  let root: ref<inkCompoundWidget> = this.GetRootWidget() as inkCompoundWidget;
+  let root: ref<inkCompoundWidget> = this.GetRootCompoundWidget();
   if !IsDefined(root) {
     return;
   }
@@ -26,7 +25,6 @@ private final func CRCreateBiologyE3QuestFrame() -> Void {
   this.crBiologyE3QuestFrame.SetVAlign(inkEVerticalAlign.Top);
   this.crBiologyE3QuestFrame.SetSize(Vector2(500.0, 258.0));
   this.crBiologyE3QuestFrame.SetTranslation(-10.0, 0.0);
-  this.crBiologyE3QuestFrame.SetAffectsLayoutWhenHidden(false);
   this.crBiologyE3QuestFrame.Reparent(root, -1);
 
   CRBiologyE3Primitives.AddRect(this.crBiologyE3QuestFrame, n"CRBiologyE3QuestTop", 96.0, 0.0, 378.0, 3.0, 0.90);
@@ -38,9 +36,11 @@ private final func CRCreateBiologyE3QuestFrame() -> Void {
 
 @addMethod(QuestTrackerGameController)
 private final func CRRefreshBiologyE3QuestFrame() -> Void {
+  let enabled: Bool = CRRealpassSettings.UseE3FirstPersonHudVisuals(GetGameInstance());
   this.CRCreateBiologyE3QuestFrame();
+  CRBiologyE3Primitives.TintNeutralHudRoot(this.GetRootWidget(), enabled);
   if IsDefined(this.crBiologyE3QuestFrame) {
-    this.crBiologyE3QuestFrame.SetVisible(CRRealpassSettings.UseE3FirstPersonHudVisuals(GetGameInstance()));
+    this.crBiologyE3QuestFrame.SetVisible(enabled);
   }
 }
 
