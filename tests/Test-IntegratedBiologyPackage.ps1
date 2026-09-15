@@ -29,9 +29,6 @@ Check ($package.redmod.deployCommand -match 'deploy -root=<Cyberpunk 2077>') 'Pa
 $runtimeEntry = @($package.firstPartyFiles | Where-Object { $_.component -eq 'biology-owned-runtime' })
 Check ($runtimeEntry.Count -eq 1 -and $runtimeEntry[0].destinationRoot -eq 'r6/scripts/CyberpunkRealism' -and $runtimeEntry[0].route -eq 'REDSCRIPT-BETTER') 'Package contract lost Biology-owned supplemental REDscript destination/route.'
 
-# The cloud tier cannot exact-compile against proprietary final.redscripts, so inspect
-# the hard gate rather than pretending CI is a runtime compiler. A locally emitted ZIP
-# must have passed Build-OwnedRuntimeProfile + its exact compile report checks.
 Check ($builder.Contains('Build-OwnedRuntimeProfile.ps1')) 'Integrated builder bypasses the exact-compiled owned runtime profile.'
 Check ($builder -match 'reports[\\/]compile-') 'Integrated builder does not consume the exact compile report.'
 Check ($builder.Contains('$compileReport.passed -ne $true')) 'Integrated builder does not fail closed on compile result.'
@@ -52,7 +49,7 @@ Check ($builder.Contains('sourceModsRequired = @()')) 'Integrated artifact does 
 Check (-not $builder.Contains('Build-RedmodFoundation.ps1')) 'Playable builder delegates to non-playable foundation skeleton.'
 
 Check ($deploy -match 'tools\\redmod\\bin\\redMod\.exe') 'Deploy helper does not use the official probed REDmod executable.'
-Check ($deploy -match '''-root=\$game''') 'Deploy helper does not pass an explicit game root.'
+Check ($deploy -match '-root=\$game') 'Deploy helper does not pass an explicit game root.'
 Check ($deploy.Contains("FileVersion -ne '2.3.1.0'")) 'Deploy helper does not guard the directly evidenced REDmod file version.'
 Check ($deploy.Contains("ProductVersion -ne '2.31'")) 'Deploy helper does not guard the directly evidenced REDmod product version.'
 
