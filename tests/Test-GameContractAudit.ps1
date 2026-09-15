@@ -77,10 +77,11 @@ foreach ($needle in @('Audit-GameContracts.ps1','Probe-PresentationNativeContrac
 }
 Check ($presentation.Contains('-ReportPath $ReportPath')) 'Presentation wrapper does not consolidate exact-compile output into its single text evidence report.'
 Check ($probe.Contains("tools\\redmod\\scripts")) 'Presentation native probe is not grounded in the installed official REDmod decompiled scripts.'
+Check ($probe.Contains("@('.script','.reds')")) 'Presentation native probe must search REDmod .script sources (with optional .reds tolerance), not assume loose redscript format.'
 foreach ($needle in @('MinimapContainerController','IronsightGameController','QuestTrackerGameController','WeaponRosterGameController','HotkeysWidgetController','CrosshairGameController_Tech_Hex','NpcNameplateGameController','NameplateVisualsLogicController','OnScreenProjectionUpdate','OnCompassUpdate')) {
     Check ($probe.Contains($needle)) "Presentation native probe no longer checks required current-game symbol: $needle"
 }
 Check ($probe.Contains('GetRelativePath')) 'Presentation probe should return narrow relative script-path evidence rather than proprietary file dumps.'
 Check ($probe.Contains('Read-only symbol/signature evidence only')) 'Presentation probe does not state its read-only narrow-evidence boundary.'
 
-Write-Host "PASS: $script:checks proactive game-contract audit policy checks, including checkout-relative repo discovery, exact compile text evidence, and installed-2.31 presentation symbol probing."
+Write-Host "PASS: $script:checks proactive game-contract audit policy checks, including checkout-relative repo discovery, exact compile text evidence, and installed-2.31 REDmod presentation symbol probing."
