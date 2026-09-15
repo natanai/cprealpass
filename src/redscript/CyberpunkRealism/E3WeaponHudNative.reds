@@ -30,7 +30,6 @@ private final func CRCreateBiologyE3WeaponFrame() -> Void {
   CRBiologyE3Primitives.AddRect(this.crBiologyE3WeaponFrame, n"CRBiologyE3WeaponRight", 427.0, 0.0, 3.0, 116.0, 0.92);
   CRBiologyE3Primitives.AddRect(this.crBiologyE3WeaponFrame, n"CRBiologyE3WeaponBottom", 252.0, 116.0, 178.0, 3.0, 0.72);
   CRBiologyE3Primitives.AddRect(this.crBiologyE3WeaponFrame, n"CRBiologyE3WeaponAccent", 45.0, 0.0, 20.0, 7.0, 1.00);
-  CRBiologyE3Primitives.AddLabel(this.crBiologyE3WeaponFrame, n"CRBiologyE3WeaponLabel", "WEAPON // AMMO", 250.0, 9.0, 13, 0.80);
 }
 
 @addMethod(WeaponRosterGameController)
