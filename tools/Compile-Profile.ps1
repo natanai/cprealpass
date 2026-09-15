@@ -2,8 +2,30 @@ param([string]$ManifestPath='manifest/m3-body-alpha1.deployment.json', [string]$
 . "$PSScriptRoot\Common.ps1"
 $project=Get-ProjectRoot
 $game=Assert-GameRoot $GameRoot
+
+# The offline compiler is a development-only build dependency, not part of the
+# player runtime package. Fresh disposable clones intentionally do not carry this
+# binary, so acquire the one pinned upstream release asset on demand and verify it
+# before use. This keeps attended clean-room builds reproducible without requiring
+# a pre-existing vendor directory or a manual download.
 $cli=Join-Path $project 'vendor\redscript\redscript-cli.exe'
-if((Get-Sha256 $cli) -ne 'CDCBED2E0C943322BBCBBAC4A9C62EF29ADC5620E4B0934F0D2A31A8282B5B62'){throw 'Offline compiler hash mismatch.'}
+$cliExpected='CDCBED2E0C943322BBCBBAC4A9C62EF29ADC5620E4B0934F0D2A31A8282B5B62'
+$cliUri=[uri]'https://github.com/jac3km4/redscript/releases/download/v0.5.31/redscript-cli.exe'
+if(-not (Test-Path -LiteralPath $cli -PathType Leaf)){
+    if($cliUri.Scheme -ne 'https' -or $cliUri.Host -ne 'github.com'){throw 'Offline compiler source must be the pinned official GitHub release asset.'}
+    New-Item -ItemType Directory -Force -Path (Split-Path -Parent $cli) | Out-Null
+    $partial="$cli.$([guid]::NewGuid().ToString('N')).partial"
+    try{
+        Write-Host 'Acquiring pinned redscript 0.5.31 offline compiler for this fresh build checkout...'
+        Invoke-WebRequest -Uri $cliUri -OutFile $partial
+        if((Get-Sha256 $partial) -ne $cliExpected){throw 'Downloaded offline compiler hash mismatch.'}
+        Move-Item -LiteralPath $partial -Destination $cli
+    }finally{
+        if(Test-Path -LiteralPath $partial){Remove-Item -LiteralPath $partial -Force}
+    }
+}
+if((Get-Sha256 $cli) -ne $cliExpected){throw 'Offline compiler hash mismatch.'}
+
 $manifest=Get-Content -Raw (Resolve-SafeChildPath $project $ManifestPath) | ConvertFrom-Json
 if((Get-Item (Join-Path $game 'bin\x64\Cyberpunk2077.exe')).VersionInfo.ProductVersion -ne $manifest.gameVersion){throw 'Game version does not match compile profile.'}
 $work=Join-Path $project ('staging\compile-'+[guid]::NewGuid().ToString('N'))
