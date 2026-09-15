@@ -68,6 +68,10 @@ Require $reset 'Compare-GameToVanillaBaseline\.ps1' 'Iteration reset must finish
 
 Require $package 'game-root-shaped' 'Attended package builder must remain release-shaped.'
 Require $package 'Nothing was deployed to Cyberpunk' 'Package builder must remain non-deploying.'
+Require $package "\$origin = if \(\$entry\.PSObject\.Properties\.Name -contains 'origin'\)" 'Package ownership must be derived from semantic manifest origin rather than a historical component string.'
+Require $package "\$projectOriginal = \$origin -eq 'project-original'" 'Project-original payload must be recognized as first-party.'
+Require $package "\$dependencyComponents\.Add\(\$component\)" 'Only actual dependency components should enter the third-party license set.'
+Require $package 'foreach \(\$component in @\(\$dependencyComponents \| Sort-Object\)\)' 'License snapshot enforcement must iterate dependencies rather than project-original runtime components.'
 
 # A fresh clone must be able to exact-compile without carrying developer binaries in
 # Git. The pinned official redscript CLI is a local build dependency only and must
@@ -84,4 +88,4 @@ Require $compile "\$logsDir=Join-Path \$project 'logs'" 'Fresh-clone compile mus
 Require $compile "\$reportsDir=Join-Path \$project 'reports'" 'Fresh-clone compile must create its report output root.'
 Require $compile 'New-Item -ItemType Directory -Force -Path \$dir' 'Fresh-clone compile must materialize ignored output directories before writing.'
 
-Write-Host 'PASS: attended testing distinguishes fresh-source iteration from milestone clean-room, archives GitHub-safe game snapshots, enforces fail-closed vanilla-baseline evidence, and bootstraps all fresh-clone compile dependencies/output roots.'
+Write-Host 'PASS: attended testing distinguishes fresh-source iteration from milestone clean-room, archives GitHub-safe game snapshots, enforces fail-closed vanilla-baseline evidence, and bootstraps all fresh-clone compile/package ownership requirements.'
