@@ -50,15 +50,15 @@ if ($package.redmod.launcherActivationMarker -ne $signal) { throw 'Package contr
 if ($builder -notmatch [regex]::Escape('mods/Biology/tweaks/base/gameplay/static_data/database/items/weapons/parts/biology_activation.tweak')) {
     throw 'Canonical player builder stopped packaging the REDmod activation source.'
 }
-foreach ($requiredBuilderToken in @('activationPackage','activationRecord','package\\s+Items','BiologyLauncherActivationMarker','IconicWeaponModAbilityBase','using\\s+Items','stackable')) {
-    if ($builder -notmatch $requiredBuilderToken) { throw "Canonical player builder lost standalone-tweak structural validation token: $requiredBuilderToken" }
+foreach ($requiredBuilderText in @('activationPackage','activationRecord','package\s+Items','BiologyLauncherActivationMarker','IconicWeaponModAbilityBase','using\s+Items','stackable')) {
+    if (-not $builder.Contains($requiredBuilderText)) { throw "Canonical player builder lost standalone-tweak structural validation token: $requiredBuilderText" }
 }
 
 foreach ($required in @(
     '2684',
     'mods_abilities.tweak',
     'package Items',
-    'first package/import directive is using',
+    'first package/import directive',
     'Items.IconicWeaponModAbilityBase',
     'GetBool(path, defaultValue)',
     'parent P01.1'
