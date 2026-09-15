@@ -26,7 +26,7 @@ Require $root 'agent/biology-ui-runtime' 'Root roadmap must expose Biology UI/ru
 Require $root 'agent/presentation-hud-nameplates' 'Root roadmap must expose presentation lane.'
 
 Require $baseline 'ec8ba06451c3cbacabfad24f1479e1537147d0c9' 'Attended pre-REDmod baseline must stay tied to the exact tested revision.'
-Require $baseline 'inner top navigation still says `CYBERWARE`' 'Baseline must retain observed inner-navigation failure.'
+Require $baseline 'top navigation still says `CYBERWARE`' 'Baseline must retain observed inner-navigation failure.'
 Require $baseline 'Body state is unavailable' 'Baseline must retain observed body-state failure.'
 Require $baseline 'E3-inspired first-person HUD recreation is not visibly present' 'Baseline must retain observed HUD failure.'
 Require $baseline 'E3-inspired NPC nameplates are not active' 'Baseline must retain observed nameplate failure.'
