@@ -1,15 +1,20 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "product": "Biology",
   "packageId": "Biology",
   "foundationBaseRevision": "6fab5ba706e2a10387bb8629cccdb0868533bb97",
+  "integratedBaseRevision": "bfd6f7469139c64f0b9185724619a37e4ced5eca",
   "supportedGameVersion": "2.31",
-  "status": "foundation-skeleton-not-yet-playable",
+  "status": "playable-integrated-candidate",
+  "canonicalBuilder": "tools/Build-BiologyPackage.ps1",
+  "canonicalBuildCommand": "pwsh ./tools/Build-BiologyPackage.ps1",
+  "exactCompileRequiredBeforeArtifact": true,
   "redmod": {
     "packageRoot": "mods/Biology",
     "metadata": "mods/Biology/info.json",
     "officialToolRelativePath": "tools/redmod/bin/redMod.exe",
     "deployCommand": "tools/redmod/bin/redMod.exe deploy -root=<Cyberpunk 2077>",
+    "deployHelper": "tools/Deploy-BiologyRedmod.ps1",
     "manualModdedLaunchFlag": "-modded",
     "normalPlayerEnableRoute": "REDlauncher/Steam supported REDmod enable flow",
     "observedSupportedInstall": {
@@ -27,25 +32,56 @@
       "mods/Biology/customSounds"
     ]
   },
-  "files": [
+  "firstPartyFiles": [
     {
       "source": "mods/Biology/info.json",
       "destination": "mods/Biology/info.json",
       "owner": "Biology",
       "component": "biology-redmod-identity",
       "route": "REDMOD-NATIVE"
+    },
+    {
+      "sourceRoot": "src/redscript/CyberpunkRealism",
+      "destinationRoot": "r6/scripts/CyberpunkRealism",
+      "owner": "Biology",
+      "component": "biology-owned-runtime",
+      "route": "REDSCRIPT-BETTER",
+      "selection": "all current .reds files accepted by tools/Build-OwnedAcceptance.ps1; runtime activation gates are opened only in immutable staged copies"
     }
   ],
   "supplementalRuntime": {
     "redscript": {
-      "sourceRoot": "src/redscript/CyberpunkRealism",
-      "installedRoot": "r6/scripts/CyberpunkRealism",
-      "includedByFoundationArtifact": false,
-      "status": "retention-candidate",
+      "includedByIntegratedArtifact": true,
+      "status": "required-current-runtime",
       "route": "REDSCRIPT-BETTER",
-      "reason": "Current Biology runtime uses narrow additive/wrapper seams. REDmod script replacement is a whole vanilla-path file route and would broaden patch/conflict surface for those seams. Runtime integration remains owned by the runtime lanes and must be packaged only after their accepted file set is known."
+      "reason": "Merged Biology runtime and presentation use narrow additive/wrapper seams whose whole-file REDmod replacement would broaden patch/conflict surface."
+    },
+    "mod-settings": {
+      "includedByIntegratedArtifact": true,
+      "status": "temporary-retained-blocker",
+      "route": "REMOVE/RETHINK",
+      "reason": "PR #33 made the two preference semantics provider-neutral but did not implement another accessible persistent settings surface. Removing Mod Settings now would remove the attended-test path for master disable and E3 ON/OFF."
+    },
+    "archivexl": {
+      "includedByIntegratedArtifact": true,
+      "status": "temporary-transitive",
+      "route": "REMOVE/RETHINK",
+      "reason": "Retained solely because the current Mod Settings adapter depends on it."
+    },
+    "red4ext": {
+      "includedByIntegratedArtifact": true,
+      "status": "temporary-transitive",
+      "route": "REMOVE/RETHINK",
+      "reason": "Retained solely as transitive plumbing for ArchiveXL/Mod Settings; Biology has no project-owned RED4ext DLL/plugin."
     }
   },
+  "removedRuntimeDependencies": [
+    "tweakxl",
+    "codeware",
+    "input-loader",
+    "darkfuture",
+    "project-e3-hud"
+  ],
   "generatedMetadata": {
     "root": "biology",
     "ownerManifest": "biology/build-manifest.json",
@@ -55,13 +91,21 @@
     "installInstructions": "INSTALL.txt",
     "uninstallInstructions": "UNINSTALL.txt"
   },
+  "remainingDirectGameGates": [
+    "Biology REDmod recognition/deployment",
+    "enable/disable behavior",
+    "normal relaunch persistence",
+    "clean uninstall/reset",
+    "safe PKG-05 REDmod overlap/precedence probe"
+  ],
   "rules": [
-    "The REDmod package identity is Biology and lives under mods/Biology.",
-    "Foundation package construction must not modify a Cyberpunk installation.",
-    "Only files enumerated by this contract may enter the REDmod-native payload.",
-    "A non-REDmod runtime file may enter a future integrated release only when manifest/dependency-graph.json names its concrete Biology consumer and manifest/redmod-classification.json records an accepted route.",
+    "mods/Biology is the authoritative first-party REDmod package identity.",
+    "Build-BiologyPackage.ps1 must exact-compile the complete merged REDscript runtime against the supported installed Cyberpunk 2077 2.31 bundle before it emits a playable ZIP.",
+    "The build may not modify or deploy to the game installation.",
+    "Every installed payload file must be individually recorded with owner, component, route, replace policy and SHA-256; shared framework roots are never recursively Biology-owned.",
     "No Dark Future or Project E3 executing content may enter the package.",
     "No stock Cyberpunk executable, archive, script bundle, save, settings file, or other proprietary game payload may enter the package.",
-    "The installed REDmod 2.31 CLI/tool path is directly probed, but Biology package recognition/deployment and relaunch persistence remain direct-game gates until actually exercised."
+    "Mod Settings/ArchiveXL/RED4ext remain temporary current-candidate dependencies only because the merged presentation lane has not yet supplied another accessible persistent provider for its already provider-neutral semantics.",
+    "CI and exact compilation are not live-game acceptance; remaining direct-game gates stay open until the parent integration thread records them."
   ]
 }
