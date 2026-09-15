@@ -63,7 +63,8 @@ if ($ids['modern-scanner-native-acceptance'].remaining -notmatch '(?i)reconfirm'
 
 $settings = $ids['unified-settings-contract']
 if ($settings.status -ne 'passed' -or ($settings.evidence -join ' ') -notmatch 'RealpassSettings\.reds') { throw 'Provider-neutral settings semantics are no longer represented.' }
-if ($settings.remaining -match '(?i)managed feature ledger|individual realism systems') { throw 'Acceptance ledger revived the rejected feature-ledger/settings architecture.' }
+if ($settings.remaining -notmatch '(?i)no managed feature ledger|no.*per-subsystem') { throw 'Acceptance ledger does not explicitly preserve the rejected feature-ledger/per-subsystem settings boundary.' }
+if ($settings.remaining -match '(?i)(expose|retain|keep|provide).*managed feature ledger') { throw 'Acceptance ledger revived the rejected feature-ledger/settings architecture.' }
 
 $maxdoc = $ids['pain-and-maxdoc-model']
 if (($maxdoc.evidence -join ' ') -notmatch 'BodyNativeHooks\.reds' -or $maxdoc.remaining -notmatch 'MaxDoc/FirstAidWhiff') { throw 'MaxDoc gate lost the vanilla item/use integration requirement.' }
@@ -88,7 +89,7 @@ if ($ids['save-reload-upgrade-uninstall'].remaining -notmatch '(?i)Steam reinsta
 
 # Retired active-looking evidence paths must not return to the current ledger.
 $ledgerText = Get-Content -Raw -LiteralPath $path
-foreach ($stale in @('REALISM-SPEC.md','tools/Finalize-PlayerPackage.ps1','docs/NONBIOLOGY-WORKPLAN.md','docs/ATTENDED-ACCEPTANCE.md','managed feature ledger')) {
+foreach ($stale in @('REALISM-SPEC.md','tools/Finalize-PlayerPackage.ps1','docs/NONBIOLOGY-WORKPLAN.md','docs/ATTENDED-ACCEPTANCE.md')) {
     if ($ledgerText -match [regex]::Escape($stale)) { throw "Acceptance ledger contains retired active evidence/reference: $stale" }
 }
 
