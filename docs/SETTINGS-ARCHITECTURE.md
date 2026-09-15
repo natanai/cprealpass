@@ -1,7 +1,7 @@
 # Biology configuration architecture
 
 Status: canonical public-settings contract during REDmod migration
-Last updated: 2026-09-14
+Last updated: 2026-09-15
 
 ## Goal
 
@@ -27,6 +27,22 @@ Preferred result:
 - keep the public preference semantics unchanged regardless of provider.
 
 Do not preserve a framework stack merely to host two booleans.
+
+## 2026-09-15 attended evidence
+
+The exact pre-REDmod candidate at `ec8ba06451c3cbacabfad24f1479e1537147d0c9` demonstrated that the current Mod Settings provider is functioning technically but remains transitional:
+
+- the page is branded `REALPASS`;
+- controls are labeled `Enable RealPass` and `E3 first-person HUD visuals`;
+- both were shown enabled;
+- the intended E3 HUD/nameplate presentation was not visibly active in gameplay;
+- turning the E3 preference off did not restore the hidden player health bar.
+
+This last observation is **not** a settings bug by itself under the current canonical contract: barless actor-health belongs to Biology while Biology is enabled, whereas the E3 preference controls only the optional E3-specific skin/nameplate layer. The actual failure is that the current E3 preference has no clear attended success signal because the E3 HUD/nameplates are absent.
+
+Do not cite the current Mod Settings screenshot as evidence that the final provider/dependency stack is accepted. It proves only that the old provider can render the current controls.
+
+See `PRE-REDMOD-LIVE-BASELINE-2026-09-15.md` and `ACTIVE-REDMOD-ROADMAP.md` (`PRES-*`, `SET-*`).
 
 ## Release behavior
 
@@ -136,10 +152,11 @@ Configuration is accepted only when:
 3. both are Boolean and default `On` when present;
 4. the Biology enable boundary is all-or-nothing rather than per-system tuning;
 5. toggling **E3 first-person HUD visuals** changes only the Biology-owned E3-inspired HUD/nameplate presentation while Biology remains enabled;
-6. the modern scanner/quickhack UI remains native and usable in every setting state;
-7. traditional actor HP presentation is suppressed while Biology is enabled and may return when the whole-mod enable boundary is off;
-8. no subsystem/balance/diagnostic controls appear;
-9. no fake read-only feature-ledger controls appear;
-10. Biology does not require the external Project E3 runtime;
-11. all simulation authority remains identical with the E3 visual preference on or off;
-12. any surviving settings framework has a documented current necessity and is not retained merely because older RealPass builds used it.
+6. the E3 ON/OFF states have an obvious attended visual difference that does not rely on the health bar alone;
+7. the modern scanner/quickhack UI remains native and usable in every setting state;
+8. traditional actor HP presentation is suppressed while Biology is enabled and may return when the whole-mod enable boundary is off;
+9. no subsystem/balance/diagnostic controls appear;
+10. no fake read-only feature-ledger controls appear;
+11. Biology does not require the external Project E3 runtime;
+12. all simulation authority remains identical with the E3 visual preference on or off;
+13. any surviving settings framework has a documented current necessity and is not retained merely because older RealPass builds used it.

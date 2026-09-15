@@ -1,9 +1,11 @@
 # Biology — REDmod-first product and migration plan
 
 Status: **canonical migration direction**
-Last updated: **2026-09-14**
+Last updated: **2026-09-15**
 Current repository name: `cprealpass` (may remain during migration)
 Player-facing product name: **Biology**
+
+> **Active execution:** read `PRE-REDMOD-LIVE-BASELINE-2026-09-15.md` and `ACTIVE-REDMOD-ROADMAP.md` before starting migration work. The active roadmap incorporates attended evidence and supersedes any older generic lane split where they differ.
 
 ## Decision
 
@@ -134,6 +136,8 @@ The audit should cover at minimum:
 - any archives, tweaks, localization, sounds or animation dependencies;
 - build/install/uninstall and load-order behavior.
 
+The active three-lane plan divides this audit by consumer: Lane A owns package/dependency classification, while Lane B and Lane C must classify their own UI/runtime and presentation seams and report concrete dependency requirements back to Lane A.
+
 ## Authoritative-overlap policy
 
 Biology is intended to be **authoritative for the systems it explicitly owns**. If another mod alters the same REDmod-controlled file/resource, Biology's deployment/load-order policy should prefer Biology where REDmod can deterministically express that precedence.
@@ -169,7 +173,7 @@ Biology remains one authored simulation, not a collection of independently toggl
 The public preference contract remains intentionally tiny:
 
 - one global **Enable Biology** master switch, if a reliable whole-mod runtime switch remains practical;
-- one **E3 first-person HUD visuals** presentation preference.
+- one E3-inspired first-person HUD presentation preference.
 
 The **provider is no longer a product requirement**. Mod Settings may remain during migration only if the dependency audit proves it worthwhile. Prefer a Biology-owned settings surface (for example, a restrained preferences subsection inside Biology) if that can remove RED4ext/ArchiveXL/Mod Settings dependencies without making the implementation more brittle.
 
@@ -190,14 +194,15 @@ Do not promise launcher skipping until verified against the current supported ga
 
 ## Migration phases
 
-### Phase 0 — freeze the old packaging direction
+### Phase 0 — preserve the attended baseline and freeze the old packaging direction
 
-Until the audit below is complete:
+The pre-refactor live evidence is recorded in `PRE-REDMOD-LIVE-BASELINE-2026-09-15.md`. During migration:
 
 - do not add new third-party runtime dependencies;
 - do not add new loose legacy-package paths unless required for an urgent correctness fix;
 - do not spend large effort polishing the old RealPass root-package architecture as though it were final;
-- keep current code compiling so useful simulation work is not lost.
+- keep current code compiling so useful simulation work is not lost;
+- do not lose the attended failures by declaring source-level tests equivalent to live acceptance.
 
 ### Phase 1 — inventory and classify
 
@@ -254,7 +259,7 @@ Test Biology alone, then representative overlapping mods where practical. Establ
 
 ### Phase 7 — clean-room milestone
 
-Only after the new packaging path is coherent:
+Only after the new packaging path is coherent and the active UI/presentation lanes are integrated:
 
 - start from a recorded clean vanilla installation;
 - fresh-clone canonical `main`;
@@ -263,6 +268,7 @@ Only after the new packaging path is coherent:
 - deploy/enable it through the official path;
 - launch through Steam;
 - test Biology UI, body, needs, combat, armor/clothing, cyberware, HUD, treatment, save/reload and time progression together;
+- capture the matched screenshot set required by `ACTIVE-REDMOD-ROADMAP.md`;
 - snapshot the resulting installed game state so residue is auditable.
 
 ## Acceptance criteria for the migration
@@ -279,16 +285,51 @@ The REDmod migration is not complete until all are true:
 8. unrelated systems are not modified merely to force compatibility/load-order dominance;
 9. a clean-room install is auditable against the recorded vanilla baseline;
 10. the exact candidate passes compile/preflight, official REDmod deployment, Steam launch, save/reload and broad attended gameplay acceptance;
-11. a user can understand install/disable/remove without knowing the project's development history.
+11. Biology body state is available and inspectable in the live UI;
+12. Biology is the parent body mode with Cyberware as submode;
+13. the E3-inspired HUD/nameplate option has an obvious visible attended effect while preserving the modern scanner;
+14. a user can understand install/disable/remove without knowing the project's development history.
 
-## Parallelization
+## Parallelization — current active split
 
-This migration is intentionally large enough to split across agents. Follow `docs/PARALLEL-AGENT-WORKFLOW.md`.
+This migration is intentionally large enough to split across agents. Follow `docs/PARALLEL-AGENT-WORKFLOW.md` and the active issue ledger in `ACTIVE-REDMOD-ROADMAP.md`.
 
-A recommended initial 3-lane split is:
+The current attended-evidence-informed split is:
 
-- **Lane A — REDmod/package/dependency audit:** official skeleton, load/deploy behavior, package identity, component elimination map.
-- **Lane B — script/native seam audit:** classify current REDscript/native hooks and identify which should become REDmod `.script`, remain narrow wrappers, or be removed.
-- **Lane C — product/UI/settings migration:** Biology naming, Biology/Cyberware/settings surface, removal of RealPass/Mod Settings assumptions where safe.
+### Lane A — `agent/redmod-foundation`
 
-These lanes should work on separate branches and merge only after their contracts are individually green. The combined `main` candidate is then tested once as a whole.
+Official REDmod/package/dependency architecture:
+
+- `mods/Biology` skeleton and official deploy/load proof;
+- package/install/uninstall shape;
+- dependency graph and removal candidates;
+- REDmod overlap/load-order evidence;
+- package/dependency classification and tooling.
+
+Handoff: `handoffs/REDMOD-FOUNDATION.md`
+
+### Lane B — `agent/biology-ui-runtime`
+
+Biology body shell/runtime availability:
+
+- Biology parent / Cyberware submode hierarchy;
+- outer/inner navigation identity;
+- selector placement/behavior;
+- `Body state is unavailable` root cause;
+- persistent nodes, drill-down metrics, save/reload lifecycle.
+
+Handoff: `handoffs/BIOLOGY-UI-RUNTIME.md`
+
+### Lane C — `agent/presentation-hud-nameplates`
+
+HUD/nameplates/settings presentation:
+
+- Biology-owned E3-inspired first-person HUD;
+- Biology-owned E3-inspired NPC nameplates;
+- modern scanner preservation;
+- E3 ON/OFF semantics and matched screenshot acceptance;
+- player-facing presentation/settings identity.
+
+Handoff: `handoffs/PRESENTATION-HUD-NAMEPLATES.md`
+
+These lanes should work on separate branches and merge only after their owned contracts are individually green. The combined `main` candidate is then tested once as a whole.

@@ -9,6 +9,7 @@ if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'Run-CI.ps1 requires PowerShe
 $tests = @(
     'Test-PowerShellSyntax.ps1',
     'Test-BiologyProductDirection.ps1',
+    'Test-ActiveRoadmap.ps1',
     'Test-ModuleContract.ps1',
     'Test-SettingsContract.ps1',
     'Test-SettingsRuntimeSurface.ps1',
