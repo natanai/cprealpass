@@ -16,6 +16,8 @@ A full Cyberpunk reinstall is deliberately **not** required for every small iter
 
 The local source checkout is cheaper to replace than the game and is therefore treated more strictly: **every user-facing attended build test uses a fresh clone/download of canonical `main`.**
 
+Routine user-run commands are standardized in `docs/LOCAL-OPERATOR-COMMANDS.md`. Agents should use those repository-owned entrypoints rather than inventing new PowerShell orchestration in chat.
+
 ## Canonical integrated candidate
 
 The active REDmod-first attended package builder is:
@@ -57,8 +59,8 @@ Use iteration mode for a focused follow-up only when all of the following are tr
 3. Run the Biology manifest-based reset:
 
    ```powershell
-   Set-Location 'C:\Games\CyberpunkRealism'
-   pwsh ./tools/Reset-BiologyIteration.ps1
+   pwsh ./tools/Reset-BiologyIteration.ps1 \
+     -GameRoot 'C:\Games\Steam\steamapps\common\Cyberpunk 2077'
    ```
 
 4. The reset removes only files that are all of the following:
@@ -69,14 +71,16 @@ Use iteration mode for a focused follow-up only when all of the following are tr
 6. Build the next release-shaped candidate from fresh canonical source:
 
    ```powershell
-   pwsh ./tools/Build-BiologyPackage.ps1
+   pwsh ./tools/Build-BiologyPackage.ps1 \
+     -GameRoot 'C:\Games\Steam\steamapps\common\Cyberpunk 2077'
    ```
 
 7. Merge the generated ZIP contents into the game root exactly as a player would.
 8. Deploy REDmod through the supported path. For deterministic developer/probe use:
 
    ```powershell
-   pwsh ./tools/Deploy-BiologyRedmod.ps1 -GameRoot 'C:\Games\Steam\steamapps\common\Cyberpunk 2077'
+   pwsh ./tools/Deploy-BiologyRedmod.ps1 \
+     -GameRoot 'C:\Games\Steam\steamapps\common\Cyberpunk 2077'
    ```
 
    The helper uses official `tools/redmod/bin/redMod.exe deploy` with an explicit `-root=<Cyberpunk 2077>` and never relies on REDmod's default-root heuristic.
@@ -108,28 +112,34 @@ Use milestone clean-room mode for:
 2. Uninstall Cyberpunk 2077 in Steam.
 3. After uninstall finishes, manually remove any residual Cyberpunk 2077 game directory if it still exists.
 4. Reinstall Cyberpunk 2077 through Steam, including supported official REDmod tooling.
-5. Optionally launch vanilla once, load a save/menu, then exit. If doing so, capture the baseline **after** this vanilla launch so normal first-run artifacts are represented.
-6. Before installing Biology, capture a GitHub-safe vanilla baseline:
-
-   ```powershell
-   Set-Location 'C:\Games\CyberpunkRealism'
-   pwsh ./tools/Capture-VanillaGameBaseline.ps1
-   ```
-
-7. Use a fresh clone/download of the exact canonical `main` the parent names for the test.
-8. Build the exact integrated package:
-
-   ```powershell
-   pwsh ./tools/Build-BiologyPackage.ps1
-   ```
-
-9. Merge that ZIP into the vanilla game root.
-10. Verify `mods/Biology/info.json` is present.
-11. Deploy/enable through supported REDmod. The deterministic direct-probe helper may be used to exercise the official CLI with explicit root.
-12. Launch normally through Steam and execute the combined acceptance checklist from `ACTIVE-REDMOD-ROADMAP.md` plus the merged Lane B/Lane C PR requirements.
-13. Record the attended result under `docs/test-runs/` against the exact main SHA and exact artifact.
+5. Optionally launch vanilla once, load a save/menu, then exit.
+6. Bootstrap a disposable milestone workspace from the exact canonical `main` SHA using **Command 0** in `docs/LOCAL-OPERATOR-COMMANDS.md`.
+7. `Prepare-BiologyMilestoneTest.ps1` asks whether the user wants the **exhaustive full-file/hash comparison** against the tracked vanilla baseline.
+   - If **Yes**, run the strict baseline comparison with visible durable progress.
+   - If **No**, this is allowed only when the user confirms they just completed the Steam uninstall + residual-directory deletion + reinstall. Run `Test-VanillaGameSanity.ps1` instead.
+   - The fast sanity path checks the supported game/REDmod versions and obvious loose-mod roots, but it is **not** equivalent to verified whole-game hashes.
+8. The same canonical milestone command creates a second pristine candidate clone at the exact SHA, builds the release-shaped Biology ZIP, installs that exact ZIP, and deploys REDmod with an explicit game root.
+9. Return the generated `milestone-prep.json` / console evidence to the parent integration thread before launching the game.
+10. Launch normally through Steam only after the parent issues the attended checklist, then execute the combined acceptance checklist from `ACTIVE-REDMOD-ROADMAP.md` plus the merged Lane B/Lane C PR requirements.
+11. Record the attended result under `docs/test-runs/` against the exact main SHA and exact artifact.
 
 Deleting the game install directory is distinct from deleting save data. Biology testing must not delete saves/settings unless the user explicitly requests that separately.
+
+### Why the exhaustive post-reinstall hash pass is optional
+
+A fresh uninstall, deletion of the residual install directory, and Steam reinstall is already strong evidence that stale Biology/mod files were removed. Re-hashing every game file immediately afterward can be expensive and redundant for a user who just performed that reset.
+
+Therefore, after that exact fresh-reinstall sequence, the exhaustive baseline comparison is **optional at the user's choice** and defaults to **No** in the canonical milestone command. Skipping it does not weaken the requirement for a clean reinstall; it only avoids a second expensive proof step.
+
+When skipped, the evidence must say something equivalent to:
+
+```text
+fresh Steam reinstall + fast vanilla sanity; exhaustive hash check skipped
+```
+
+It must **not** say `verified against recorded vanilla baseline`.
+
+The exhaustive comparison remains required for iteration cleanup on a reused install, for unexplained residue/drift, or whenever the parent specifically needs full hash-level proof.
 
 ## Vanilla baseline contract
 
@@ -165,11 +175,14 @@ Git history is the running archive of GitHub-safe snapshots. Refresh/commit the 
 
 ## Capturing and publishing a clean baseline
 
+Baseline capture is a deliberate maintenance operation, **not a mandatory second full-game scan after every milestone reinstall**. Use it when the tracked clean reference itself needs to change — for example after a supported Cyberpunk patch or when the parent intentionally refreshes the canonical clean reference.
+
 On a genuinely clean installation:
 
 ```powershell
-Set-Location 'C:\Games\CyberpunkRealism'
-pwsh ./tools/Capture-VanillaGameBaseline.ps1 -Publish
+pwsh ./tools/Capture-VanillaGameBaseline.ps1 \
+  -GameRoot 'C:\Games\Steam\steamapps\common\Cyberpunk 2077' \
+  -Publish
 ```
 
 The tool:
@@ -182,14 +195,15 @@ The tool:
 6. writes only safe metadata under `reference/cyberpunk/vanilla-baseline/`;
 7. when `-Publish` is supplied, creates a dedicated `local-vanilla-baseline-*` branch, commits only `reference/cyberpunk/`, and pushes that branch.
 
-Hashing the full game reads a large amount of data. That cost belongs to milestone baseline capture, not every quick iteration.
+Hashing the full game reads a large amount of data. That cost belongs to deliberate baseline maintenance or stronger verification, not every milestone by default and not every quick iteration.
 
 ## Verifying a game against the baseline
 
-Use:
+Use the catalogued exhaustive command:
 
 ```powershell
-pwsh ./tools/Compare-GameToVanillaBaseline.ps1
+pwsh ./tools/Compare-GameToVanillaBaseline.ps1 \
+  -GameRoot 'C:\Games\Steam\steamapps\common\Cyberpunk 2077'
 ```
 
 The check is strict. It reports and fails on:
@@ -199,7 +213,13 @@ The check is strict. It reports and fails on:
 - size changes;
 - SHA-256 changes.
 
-This is the evidence required before calling a reused installation clean enough for another iteration package.
+Because the scan can take several minutes, it emits both native `Write-Progress` and durable console progress similar to:
+
+```text
+VERIFY [#######-------------]  35% | 1842/5200 files | 29.4/84.0 GiB | elapsed 00:01:42
+```
+
+This is the evidence required before calling a **reused iteration installation** fully baseline-verified. For a just-completed milestone reinstall, the user may choose the documented fast-sanity path instead.
 
 ## Why manifest-based cleanup is safe and limited
 
@@ -232,6 +252,8 @@ For every user-facing attended build test — iteration or milestone — the can
 
 Generated dependency caches and staging produced *after* the fresh checkout by the canonical package builder are allowed; they are build outputs, not hidden source inputs.
 
+For milestone tests with no pre-existing local repo, use the disposable `C:\Games\Biology-Test-<date>-<short-sha>` convention from `docs/LOCAL-OPERATOR-COMMANDS.md`. The operator clone and pristine candidate clone are intentionally separate.
+
 ## Package-under-test rule
 
 Do not treat the repository root as the player mod. The repository contains source, tests, tools and documentation that must not be copied into the game.
@@ -242,11 +264,15 @@ The intended flow is:
 
 ```text
 fresh canonical main
+-> canonical milestone/operator command
+-> optional exhaustive baseline check OR fresh-reinstall fast sanity
+-> pristine candidate clone
 -> Build-BiologyPackage.ps1
 -> exact compile succeeds
 -> generated Biology ZIP
--> merge into proven-clean game root
+-> merge into clean game root
 -> explicit-root REDmod deploy / supported enable flow
+-> parent evidence review
 -> Steam Play
 ```
 
@@ -276,7 +302,7 @@ Choose **ITERATION** when the package architecture is already accepted and the g
 
 Choose **MILESTONE CLEAN-ROOM** when the change is structural, the game/framework version changed, residue cannot be proven absent, or release-level confidence is the purpose of the test.
 
-Do not ask for a full reinstall merely because it is safer in the abstract. Do not skip a reinstall when the baseline evidence or structural-change rule requires it.
+Do not ask for a full reinstall merely because it is safer in the abstract. Do not skip a reinstall when the structural-change rule requires it. After a genuine milestone reinstall, do not force the additional exhaustive hash pass if the user declines it; record the fast-sanity evidence accurately instead.
 
 ## Agent handoff checklist
 
@@ -284,8 +310,8 @@ Before telling the user to launch a build, state all four:
 
 1. `Test mode: ITERATION` or `Test mode: MILESTONE CLEAN-ROOM`.
 2. Exact canonical `main` revision.
-3. Game-state evidence: baseline comparison passed, or milestone reinstall/baseline capture completed.
-4. Exact generated Biology ZIP to merge into the game root.
+3. Game-state evidence, accurately classified as either full baseline verification or fresh-reinstall + fast-sanity with exhaustive hash check skipped.
+4. Exact generated Biology ZIP merged into the game root.
 
 For the REDmod-first structural milestone, also state the exact deployment/enable action and record its result separately from gameplay acceptance.
 
