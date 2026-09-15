@@ -198,6 +198,16 @@ Current authority: `docs/E3-PRESENTATION.md`, `docs/E3-COMPONENT-MAPPING.md`, an
 
 Current authority: `docs/LOCAL-OPERATOR-COMMANDS.md`, `tools/Audit-GameContracts.ps1`, and the local-operator/game-contract CI tests.
 
+### 2026-09-15 — date-only — installed REDmod scripts are the preferred readable native-script evidence
+
+**Earlier failure mode:** even after direct local game access was established, agents could still reach first for online script mirrors or historical source-mod implementations when deciding which current Cyberpunk controller/event/field owned a feature.
+
+**User correction:** as often as practical, use the supported installed game's official REDmod decompiled scripts directly. For script classes, lifecycle callbacks, fields, inheritance, HUD/controller ownership, and similar native contracts, `tools\redmod\scripts` should normally be inspected before web/community mirrors. Exact compilation against the installed `r6\cache\final.redscripts` remains the hard compatibility gate after implementation.
+
+**Do not repeat:** do not treat a web script dump or another mod's wrapper as stronger evidence than the user's installed REDmod source tree. Community code can suggest a candidate seam, but Biology should confirm the supported-game contract locally before making it foundational.
+
+Current authority: `docs/LOCAL-GAME-REFERENCE.md`, `tools/Probe-PresentationNativeContracts.ps1`, `tools/Audit-GameContracts.ps1`, and `tests/Test-GameContractAudit.ps1`.
+
 ---
 
 ## Current product snapshot
@@ -221,6 +231,7 @@ This section is intentionally short. The detailed requirements remain in `AGREED
 - Vanilla Outfits are being reinterpreted as physical equipment loadouts, not a separate cosmetic protection authority.
 - Broad acceptance is release-shaped and launched normally through Steam; milestone clean-room reinstalls are periodic/structural rather than required every iteration.
 - Direct installed-game evidence outranks community examples for foundational native/REDmod contracts when a targeted local probe is practical.
+- Installed official REDmod decompiled scripts are the preferred readable source for supported-game script contracts when available; exact compile against `final.redscripts` validates Biology's compatibility afterward.
 - Local repo paths are disposable/discovered at runtime; local evidence is returned as generated `.txt` reports rather than pasted terminal logs.
 - Patch-sensitive logic belongs in small explicit compatibility seams; the simulation core should survive ordinary game patches unchanged.
 - Large separable work should use parallel branches/agents and converge in `main` before combined attended testing.
