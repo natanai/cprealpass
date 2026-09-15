@@ -2,11 +2,16 @@
 // Biology/Cyberware mode controls without giving this layer simulation authority.
 module CyberpunkRealism.Presentation
 
+import CyberpunkRealism.Settings.*
+
 @addField(CyberwareInventoryMiniGrid)
 private let crBiologyStockLabelCallbacksSuspended: Bool;
 
 @addMethod(CyberwareInventoryMiniGrid)
 public final func CRSetBiologyLabelInteractive(active: Bool) -> Void {
+  if !CRRealpassSettings.IsEnabled(GetGameInstance()) {
+    active = false;
+  }
   inkTextRef.SetInteractive(this.m_label, active);
   // The stock label callback opens cyberware-category tooltips. While this same label
   // is serving as a Biology body node, suspend only those two callbacks; restore them
@@ -37,7 +42,7 @@ private final func CRSyncBiologyNodeInteractivity(active: Bool) -> Void {
 
 @addMethod(RipperDocGameController)
 protected cb func OnCRBioModeActionSync(evt: ref<inkPointerEvent>) -> Bool {
-  if !IsDefined(evt) || !evt.IsAction(n"click") {
+  if !CRRealpassSettings.IsEnabled(GetGameInstance()) || !IsDefined(evt) || !evt.IsAction(n"click") {
     return false;
   }
   let target: wref<inkWidget> = evt.GetCurrentTarget();
@@ -59,6 +64,9 @@ protected cb func OnCRBioModeActionSync(evt: ref<inkPointerEvent>) -> Bool {
 @wrapMethod(RipperDocGameController)
 protected cb func OnInitialize() -> Bool {
   let result: Bool = wrappedMethod();
+  if !CRRealpassSettings.IsEnabled(GetGameInstance()) {
+    return result;
+  }
   if IsDefined(this.crBiologyModeButton) {
     this.crBiologyModeButton.RegisterToCallback(n"OnRelease", this, n"OnCRBioModeActionSync");
   }
