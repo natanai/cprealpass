@@ -33,7 +33,6 @@ private final func CRCreateBiologyE3NavFrame() -> Void {
   CRBiologyE3Primitives.AddRect(this.crBiologyE3NavFrame, n"CRBiologyE3NavBottom", 278.0, 180.0, 216.0, 3.0, 0.72);
   CRBiologyE3Primitives.AddRect(this.crBiologyE3NavFrame, n"CRBiologyE3NavAccent", 46.0, 0.0, 19.0, 7.0, 1.00);
   CRBiologyE3Primitives.AddRect(this.crBiologyE3NavFrame, n"CRBiologyE3NavTickA", 18.0, 0.0, 18.0, 3.0, 0.62);
-  CRBiologyE3Primitives.AddLabel(this.crBiologyE3NavFrame, n"CRBiologyE3NavLabel", "NAV // NIGHT CITY", 276.0, 9.0, 13, 0.78);
 }
 
 @addMethod(IronsightGameController)
