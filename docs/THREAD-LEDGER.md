@@ -93,12 +93,12 @@ Existing conversations do not need to be renamed retroactively; the ledger maps 
 
 | Thread ID | Current visible title / alias | Role / goal | Thread state | Lane work state | GitHub / branch | Parent routing note |
 |---|---|---|---|---|---|---|
-| **P01.1** | `PARENT 1` | Parent / integration orchestrator | **ACTIVE** | **IN-PROGRESS** | Issue #35; integration PR #49; parent-owned `integration/attended-followups-2026-09-15` | Current parent. PR #49 is blocked on W06.1 exact-compile repair. If this conversation becomes too long, replace it with **P01.2** and update this table before continuing. |
-| **W06.1** | `Lane - INTEGRATION EXACT-COMPILE REPAIR` | Cross-lane exact-compile repair for the integrated attended follow-ups | **ACTIVE** | **IN-PROGRESS** | Issue #50; `agent/integration-exact-compile-repair`; PR to target `integration/attended-followups-2026-09-15` | **User confirmed this thread is actively running.** Return repaired head to P01.1; do not merge #49 from the worker lane. |
+| **P01.1** | `PARENT 1` | Parent / integration orchestrator | **ACTIVE** | **IN-PROGRESS** | Issue #35; integration PR #49; parent-owned `integration/attended-followups-2026-09-15` | Current parent. W06.1 repair has been merged into the integration candidate. PR #49 now awaits the parent-run direct Cyberpunk 2077 2.31 exact compile of integration head `1a97607332bb6237fb7516b35d1a292403fb2740`. If this conversation becomes too long, replace it with **P01.2** and update this table before continuing. |
+| **W06.1** | `Lane - INTEGRATION EXACT-COMPILE REPAIR` | Cross-lane exact-compile repair for the integrated attended follow-ups | **USABLE** | **READY-PARENT** | Issue #50; PR #52; `agent/integration-exact-compile-repair`; repair head `8f533d8451d2a894fe3ead0eed05ac0adefb69a0` merged into integration head `1a97607332bb6237fb7516b35d1a292403fb2740` | Worker repair is complete and cloud-green. Parent owns the direct CP2077 2.31 exact-compile gate. Reuse W06.1 only if that direct compile finds a repair-specific defect that truly belongs back here. Issue #50 remains open until the parent exact compile passes. |
 | **W05.1** | `Lane - PLAYER DISABLE / UNINSTALL ARCHITECTURE` | Launcher-off vanilla behavior + self-contained Biology uninstaller | **USABLE** | **READY-PARENT** | Issue #44; PR #45; `agent/player-uninstall-vanilla-toggle`; head `f78f4daf9f9c4a612adfe5700cab87c40a3affe9` | Worker implementation is ready for parent integration/attended acceptance. Reuse only for directly relevant #44 knowledge or a narrowly requested correction. |
 | **W03.1** | `Thread 3 — E3 HUD, NPC nameplates, presentation settings` | E3-inspired neutral HUD + ambient NPC nameplates | **USABLE** | **READY-PARENT** | Issue #40; PR #46; `agent/presentation-attended-followup`; head `ff08ac0661180ad09afedba920e3962c4117c928` | Native compile/audit completed on worker head. Parent owns combined integration and attended acceptance. |
-| **W04.1** | `ATTENDED RUNTIME-AUTHORITY FOLLOW-UP` | Authoritative live Biology body runtime/session ownership | **USABLE** | **READY-PARENT** | Issue #41; PR #47; `agent/body-runtime-attended-followup`; head `44b9613155bcd2751d94ba7f04d2d27497eafacf` | Worker source is ready, but its interaction with #39 exposed the exact-compile defect now owned by W06.1. Do not reopen this lane by default for cross-lane repair. |
-| **W02.1** | `Thread 2 — Biology UI and body runtime` | Biology native Cyberware shell/drill-down/back/mode-state follow-up | **USABLE** | **READY-PARENT** | Issue #39; PR #43; `agent/biology-ui-attended-followup`; head `cc9a84bf72b5660078e50ca3a3f10d1486907372` | Use this existing context only for a direct Biology-shell continuation that genuinely benefits from it. Cross-lane compile repair is W06.1. |
+| **W04.1** | `ATTENDED RUNTIME-AUTHORITY FOLLOW-UP` | Authoritative live Biology body runtime/session ownership | **USABLE** | **READY-PARENT** | Issue #41; PR #47; `agent/body-runtime-attended-followup`; head `44b9613155bcd2751d94ba7f04d2d27497eafacf` | Worker source is ready. Its #39 integration compile defect was repaired by W06.1; do not reopen this lane unless direct/runtime evidence specifically routes a #41-owned defect back here. |
+| **W02.1** | `Thread 2 — Biology UI and body runtime` | Biology native Cyberware shell/drill-down/back/mode-state follow-up | **USABLE** | **READY-PARENT** | Issue #39; PR #43; `agent/biology-ui-attended-followup`; head `cc9a84bf72b5660078e50ca3a3f10d1486907372` | Use this existing context only for a direct Biology-shell continuation that genuinely benefits from it. The known cross-lane compile repair is now integrated via W06.1. |
 | **W01.1** | `Thread 1 — REDmod foundation` | Original REDmod package/deployment foundation | **USABLE** | **MERGED** | Issue #28; PR #31; historical branch `agent/redmod-foundation` | Foundation work is already represented on main. This conversation is historical-useful context, not the default lane for new REDmod goals. A new distinct REDmod task should normally receive a new W## lane. |
 
 ## Current integration relationship
@@ -106,11 +106,12 @@ Existing conversations do not need to be renamed retroactively; the ledger maps 
 At the time of this ledger update:
 
 ```text
-P01.1 parent
+P01.1 parent ACTIVE
   |
-  +-- PR #49 integrated candidate (blocked from merge)
+  +-- PR #49 integrated candidate @ 1a97607332bb6237fb7516b35d1a292403fb2740
+  |     awaiting parent direct CP2077 2.31 exact compile
   |
-  +-- W06.1 / issue #50 ACTIVE exact-compile repair
+  +-- W06.1 / issue #50 / PR #52 READY-PARENT (repair merged into integration candidate)
   |
   +-- W02.1 / #43 READY-PARENT
   +-- W03.1 / #46 READY-PARENT
@@ -118,7 +119,9 @@ P01.1 parent
   +-- W05.1 / #45 READY-PARENT
 ```
 
-The parent should not send the user back into all ready workers merely because those conversations remain usable. W06.1 is the active repair lane; the other worker threads are context reserves unless a specific finding is routed back to them.
+There is currently no separate worker that should be treated as actively implementing code. The next gate belongs to P01.1: directly exact-compile the repaired integrated head against supported Cyberpunk 2077 2.31. If that passes, #50 can close and the parent can continue #49 integration; if it fails, route the concrete evidence to the most appropriate existing lane or create a new lane if the failure is materially different.
+
+The parent should not send the user back into all ready workers merely because those conversations remain usable. They are context reserves unless a specific finding is routed back to them.
 
 ## Creating a new lane/thread
 
