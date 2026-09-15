@@ -13,7 +13,7 @@ private final func CRScannedCrowdNameAllowed(puppet: wref<GameObject>) -> Bool {
   let nameplate: wref<UINameplate_Record>;
   let preset: wref<ScannerModuleVisibilityPreset_Record>;
   let ps: ref<ScriptedPuppetPS>;
-  if !CRRealpassSettings.UseE3FirstPersonHudVisuals() {
+  if !IsDefined(puppet) || !CRRealpassSettings.UseE3FirstPersonHudVisuals(puppet.GetGame()) {
     return false;
   }
   if !IsDefined(npc) || !npc.IsAttached() || !npc.IsScanned() || !npc.IsCharacterCivilian() || this.IsQuestTarget() {
