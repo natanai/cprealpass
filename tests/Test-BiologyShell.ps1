@@ -70,7 +70,7 @@ Check ($shell.Contains('inkCompoundRef.SetVisible(this.m_selectorAnchor, detail)
 Check ($sync.Contains('@wrapMethod(RipperdocSelectorController)')) 'Biology does not reuse the native Ripperdoc selector controller.'
 Check ($sync.Contains('private func SwitchIndicator(toNext: Bool) -> Void')) 'Native selector cycling seam is missing.'
 Check ($sync.Contains('selectorEvent = new RipperdocSelectorChangeEvent') -or $sync.Contains('new RipperdocSelectorChangeEvent()')) 'Biology selector does not emit the native selector-change event.'
-Check ($sync.Contains('index == 3') -and $sync.Contains('index == 5') -eq $false) 'Selector support test unexpectedly includes Cyberware-only Eyes/Hands indices.'
+Check (-not $sync.Contains('index == 3') -and -not $sync.Contains('index == 5')) 'Selector support test unexpectedly includes Cyberware-only Eyes/Hands indices.'
 Check ($sync.Contains('this.m_names[0] = "HEAD / BRAIN"') -and $sync.Contains('this.m_names[9] = "LEGS"')) 'Native selector names are not repurposed for Biology.'
 Check ($sync.Contains('wrappedMethod(toNext)')) 'Native Cyberware selector behavior is not preserved outside Biology detail.'
 Check ($sync.Contains('@wrapMethod(RipperDocGameController)') -and $sync.Contains('OnSelectorChange')) 'Biology does not consume native selector-change events at the Ripperdoc controller.'
