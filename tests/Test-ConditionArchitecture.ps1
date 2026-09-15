@@ -39,11 +39,11 @@ foreach ($goal in @('G-043','G-044','G-045','G-046','G-047','G-048','G-049','G-0
 }
 
 Check ($conditionDoc.Contains('superseded by `BIOLOGY-UI.md`')) 'Superseded Condition document does not point to Biology.'
-Check ($biologyDoc.Contains('Cyberware is therefore a subsection/mode of Biology')) 'Biology contract does not establish Cyberware as a Biology submode.'
-Check ($biologyDoc.Contains('Healthy, irrelevant and imperceptible state should fade')) 'Biology overview is not intentionally quiet.'
-Check ($biologyDoc.Contains('actual carried item stacks')) 'Biology item actions risk becoming a duplicate inventory.'
+Check ($biologyDoc.Contains('Cyberware is installed equipment within the body') -and $biologyDoc.Contains('Biology submode')) 'Biology contract does not establish Cyberware as a Biology submode.'
+Check ($biologyDoc.Contains('The Biology screen is **always available**') -and $biologyDoc.Contains('supported Biology nodes must remain visible')) 'Biology contract does not preserve healthy-state inspectability.'
+Check ($biologyDoc.Contains('actual carried items') -and $biologyDoc.Contains('never manually removes items')) 'Biology item actions risk becoming a duplicate inventory.'
 
-# Overview remains qualitative and composes body/condition/pain projections.
+# Overview remains qualitative/terse and composes body/condition/pain projections.
 Check ($biologyPresentation.Contains('public class CRBiologyViewModel')) 'Biology qualitative view-model is missing.'
 Check ($biologyPresentation.Contains('CRBodyStatusPresentation.BodyStatus(body)')) 'Biology does not consume the qualitative body-status projection.'
 Check ($biologyPresentation.Contains('CRConditionPresentation.Current(region)')) 'Biology does not compose active regional conditions.'
@@ -101,4 +101,4 @@ Check ($professionalRuntime.Contains('.CompleteTreatment(region, kind, 1.0)')) '
 Check (-not $fieldCare.Contains('DarkFuture.')) 'Field-care runtime still depends on Dark Future.'
 Check ($fieldCare.Contains('GetAllBlackboardDefs().UI_System.IsInMenu')) 'Field-care menu boundary is not using native realpass-owned path.'
 
-Write-Host "PASS: $script:checks shared Biology shell, condition/provenance, inventory and treatment architecture checks."
+Write-Host "PASS: $script:checks shared persistent Biology shell, condition/provenance, inventory and treatment architecture checks."
