@@ -16,16 +16,6 @@ public class CRBiologyAreaHoverEvent extends Event {
 
 public class CRBiologyAreaHoverOutEvent extends Event {}
 
-// Keep the exact native Cyberware menu identifier/fullscreen route. Only its visible
-// hub label changes, so every stock transition still opens cyberware_equip.
-@wrapMethod(MenuHubLogicController)
-public final func SetMenusData(menuData: ref<MenuDataBuilder>, perkPoints: Int32, attrPoints: Int32) -> Void {
-  wrappedMethod(menuData, perkPoints, attrPoints);
-  let biologyData: MenuData = menuData.GetData(EnumInt(HubMenuItems.Cyberware));
-  biologyData.label = "BIOLOGY";
-  HubMenuUtils.SetMenuData(this.m_btnCyberware, biologyData);
-}
-
 // -----------------------------------------------------------------------------
 // Stock Cyberware category anchors become Biology body-system nodes while Biology
 // mode is active. Their slot grids are hidden, not destroyed or re-authored.
