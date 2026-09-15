@@ -19,6 +19,16 @@ public class CRBiologyViewModel extends IScriptable {
 }
 
 public class CRBiologyPresentation extends IScriptable {
+  private static func AddToken(text: String, token: String) -> String {
+    if Equals(token, "") {
+      return text;
+    }
+    if !Equals(text, "") {
+      text += "  |  ";
+    }
+    return text + token;
+  }
+
   private static func AddCondition(text: String, descriptor: ref<CRConditionDescriptor>) -> String {
     if !IsDefined(descriptor) || !descriptor.valid || !descriptor.hasCondition {
       return text;
@@ -36,27 +46,24 @@ public class CRBiologyPresentation extends IScriptable {
     }
     let result: String = "";
     if pain.perceivedPain >= 0.75 {
-      result = "Severe pain is interfering with concentration and control.";
+      result = CRBiologyPresentation.AddToken(result, "PAIN CRITICAL");
     } else {
       if pain.perceivedPain >= 0.45 {
-        result = "Significant pain is affecting control.";
+        result = CRBiologyPresentation.AddToken(result, "PAIN HIGH");
       } else {
         if pain.perceivedPain >= 0.15 {
-          result = "Pain is noticeable.";
+          result = CRBiologyPresentation.AddToken(result, "PAIN");
         }
       }
     }
     if pain.analgesia > 0.0 && pain.physicalPain > 0.0 {
-      if !Equals(result, "") { result += " "; }
-      result += "MaxDoc is dulling pain without repairing the injury.";
+      result = CRBiologyPresentation.AddToken(result, "ANALGESIA");
     }
     if pain.intoxication >= 0.66 {
-      if !Equals(result, "") { result += " "; }
-      result += "Analgesic overuse is causing severe disorientation.";
+      result = CRBiologyPresentation.AddToken(result, "DISORIENTATION HIGH");
     } else {
       if pain.intoxication > 0.0 {
-        if !Equals(result, "") { result += " "; }
-        result += "Analgesic overuse is causing disorientation.";
+        result = CRBiologyPresentation.AddToken(result, "DISORIENTATION");
       }
     }
     return result;
@@ -74,7 +81,7 @@ public class CRBiologyPresentation extends IScriptable {
     }
 
     result.needs = CRBodyStatusPresentation.BodyStatus(body);
-    result.hasNeeds = !Equals(result.needs, "") && !Equals(result.needs, "No strong bodily need is demanding attention.");
+    result.hasNeeds = !Equals(result.needs, "") && !Equals(result.needs, "STABLE");
     // These are presentation thresholds only. The UI never reads or displays the
     // underlying percentages; it only decides whether a contextual action is useful.
     result.showDrink = meters.hydration < 75.0;

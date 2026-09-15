@@ -60,14 +60,16 @@ Check (-not $painNative.Contains('ApplyStatusEffect') -and -not $painNative.Cont
 Check (-not $painNative.Contains('gamedataStatPoolType.Health') -and -not $painNative.Contains('CRInjuryModel.Treat(')) 'Native pain presentation became healing/HP authority.'
 Check ($injuryEffectsNative.Contains('CRPainNativeEffects.Refresh(localPlayer')) 'Pain is not refreshed from owned transient-injury reconstruction boundary.'
 
-# Overview is qualitative; exact pain/analgesia values are allowed only in deliberate
-# Biology drill-down, per G-041/G-045/G-066.
+# Overview is qualitative/terse; exact pain/analgesia values are allowed only in
+# deliberate Biology drill-down, per G-041/G-045/G-066. Status words such as
+# ANALGESIA and DISORIENTATION are permitted on the overview; numeric metrics are not.
 Check ($conditionPresentation.Contains('public let painText: String') -and $conditionPresentation.Contains('CRPainRuntime.Get().Read()')) 'Condition descriptor is not sourced from owned pain projection.'
 Check ($conditionPresentation.Contains('MaxDoc analgesia') -and -not $conditionPresentation.Contains('Trauma Kit analgesia')) 'Condition copy does not preserve vanilla MaxDoc terminology.'
 Check ($biologyOverview.Contains('CRBiologyPresentation.Effects()')) 'Biology overview lost qualitative pain/effect language.'
-Check (-not $biologyOverview.Contains('PERCEIVED PAIN') -and -not $biologyOverview.Contains('ANALGESIA') -and -not $biologyOverview.Contains('DISORIENTATION')) 'Biology overview exposes numerical pain categories.'
+Check ($biologyOverview.Contains('"PAIN HIGH"') -and $biologyOverview.Contains('"ANALGESIA"') -and $biologyOverview.Contains('"DISORIENTATION"')) 'Biology overview lost terse pain/analgesia telemetry.'
+Check (-not $biologyOverview.Contains('"PERCEIVED PAIN"') -and -not $biologyOverview.Contains('PercentText(') -and -not $biologyOverview.Contains('ToString(RoundF(')) 'Biology overview exposes exact/numeric pain metrics.'
 Check ($biologyDetail.Contains('CRPainRuntime.Get().Read()')) 'Deliberate Biology detail does not inspect authoritative pain projection.'
 Check ($biologyDetail.Contains('"PERCEIVED PAIN"') -and $biologyDetail.Contains('"ANALGESIA"') -and $biologyDetail.Contains('"DISORIENTATION"')) 'Deliberate nervous-system drill-down lacks exact pain/analgesia/overuse metrics.'
 Check (-not $biologyDetail.Contains('CRPainModel.UseMaxDoc') -and -not $biologyDetail.Contains('CRInjuryModel.Treat(')) 'Pain drill-down mutates pain/injury state.'
 
-Write-Host "PASS: $script:checks vanilla-MaxDoc analgesia ownership, embodied feedback, qualitative overview and deliberate Biology pain drill-down checks."
+Write-Host "PASS: $script:checks vanilla-MaxDoc analgesia ownership, embodied feedback, terse qualitative overview and deliberate Biology pain drill-down checks."

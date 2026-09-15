@@ -1,6 +1,6 @@
 // Project-original player-facing projection for restrained realpass biology presentation.
 // Exact simulation values stay inside the body model/diagnostics; normal UI describes
-// what V could reasonably notice or know about their body.
+// what V could reasonably notice or know about their body in terse status language.
 module CyberpunkRealism.Presentation
 
 import CyberpunkRealism.Integration.*
@@ -14,53 +14,53 @@ public class CRBodyStatusPresentation extends IScriptable {
   private static func RegionStatus(state: ref<CRInjuryState>, region: Int32) -> String {
     let r: ref<CRRegionalInjury> = CRInjuryModel.Region(state, region);
     if !CRInjuryModel.ValidRegion(r) {
-      return "unknown";
+      return "UNKNOWN";
     }
     if r.externalBleedMlPerHour + r.internalBleedMlPerHour > 0.0 {
-      return "bleeding";
+      return "BLEEDING";
     }
     if r.cyberwareDamage > 0.0 {
-      return "chrome damaged";
+      return "CHROME DAMAGE";
     }
     if CRInjuryModel.Function(state, region) < 0.5 {
-      return "impaired";
+      return "IMPAIRED";
     }
     if r.tissueDamage + r.boneDamage > 0.0 {
-      return "injured";
+      return "INJURED";
     }
-    return "ok";
+    return "OK";
   }
 
   private static func AddRegionStatus(text: String, state: ref<CRInjuryState>, region: Int32, label: String) -> String {
     let status: String = CRBodyStatusPresentation.RegionStatus(state, region);
-    if Equals(status, "ok") || Equals(status, "unknown") {
+    if Equals(status, "OK") || Equals(status, "UNKNOWN") {
       return text;
     }
     if !Equals(text, "") {
       text += "  |  ";
     }
-    return text + label + ": " + status;
+    return text + label + " " + status;
   }
 
   public static func InjuryStatus(state: ref<CRInjuryState>) -> String {
     if !IsDefined(state) || !CRInjuryModel.ValidState(state) {
-      return "INJURY STATUS UNAVAILABLE";
+      return "INJURY UNAVAILABLE";
     }
     if !CRBodyRuntime.Get().OwnsLocalizedInjuries() {
       return "";
     }
     let result: String = "";
-    result = CRBodyStatusPresentation.AddRegionStatus(result, state, 1, "Head");
-    result = CRBodyStatusPresentation.AddRegionStatus(result, state, 2, "Torso");
-    result = CRBodyStatusPresentation.AddRegionStatus(result, state, 3, "L arm");
-    result = CRBodyStatusPresentation.AddRegionStatus(result, state, 4, "R arm");
-    result = CRBodyStatusPresentation.AddRegionStatus(result, state, 5, "L leg");
-    result = CRBodyStatusPresentation.AddRegionStatus(result, state, 6, "R leg");
+    result = CRBodyStatusPresentation.AddRegionStatus(result, state, 1, "HEAD");
+    result = CRBodyStatusPresentation.AddRegionStatus(result, state, 2, "TORSO");
+    result = CRBodyStatusPresentation.AddRegionStatus(result, state, 3, "L ARM");
+    result = CRBodyStatusPresentation.AddRegionStatus(result, state, 4, "R ARM");
+    result = CRBodyStatusPresentation.AddRegionStatus(result, state, 5, "L LEG");
+    result = CRBodyStatusPresentation.AddRegionStatus(result, state, 6, "R LEG");
     if state.bloodDeficitMl > 1.0 {
       if !Equals(result, "") {
         result += "  |  ";
       }
-      result += "blood volume recovering";
+      result += "BLOOD LOW";
     }
     return result;
   }
@@ -77,42 +77,42 @@ public class CRBodyStatusPresentation extends IScriptable {
 
   private static func HydrationNeed(value: Float) -> String {
     if value < 25.0 {
-      return "intensely thirsty";
+      return "THIRST CRITICAL";
     }
     if value < 50.0 {
-      return "very thirsty";
+      return "THIRST HIGH";
     }
     if value < 75.0 {
-      return "thirsty";
+      return "THIRST";
     }
     return "";
   }
 
   private static func FoodNeed(value: Float, body: ref<CRBodyState>) -> String {
     if value < 20.0 {
-      return "weak with hunger";
+      return "HUNGER CRITICAL";
     }
     if value < 45.0 {
-      return "very hungry";
+      return "HUNGER HIGH";
     }
     if value < 70.0 {
-      return "hungry";
+      return "HUNGER";
     }
     if body.gutEnergyKcal > 150.0 {
-      return "digesting a meal";
+      return "DIGESTING";
     }
     return "";
   }
 
   private static func RestNeed(value: Float) -> String {
     if value < 20.0 {
-      return "exhausted";
+      return "FATIGUE CRITICAL";
     }
     if value < 40.0 {
-      return "very tired";
+      return "FATIGUE HIGH";
     }
     if value < 65.0 {
-      return "tired";
+      return "FATIGUE";
     }
     return "";
   }
@@ -120,21 +120,21 @@ public class CRBodyStatusPresentation extends IScriptable {
   private static func EliminationNeed(body: ref<CRBodyState>) -> String {
     let result: String = "";
     if body.bladderMl >= 550.0 {
-      result = CRBodyStatusPresentation.AddNeed(result, "urgent need to urinate");
+      result = CRBodyStatusPresentation.AddNeed(result, "BLADDER URGENT");
     } else {
       if body.bladderMl >= 400.0 {
-        result = CRBodyStatusPresentation.AddNeed(result, "need to urinate");
+        result = CRBodyStatusPresentation.AddNeed(result, "BLADDER HIGH");
       } else {
         if body.bladderMl >= 250.0 {
-          result = CRBodyStatusPresentation.AddNeed(result, "bladder becoming noticeable");
+          result = CRBodyStatusPresentation.AddNeed(result, "BLADDER RISING");
         }
       }
     }
     if body.bowelGrams >= 450.0 {
-      result = CRBodyStatusPresentation.AddNeed(result, "urgent bowel pressure");
+      result = CRBodyStatusPresentation.AddNeed(result, "BOWEL URGENT");
     } else {
       if body.bowelGrams >= 300.0 {
-        result = CRBodyStatusPresentation.AddNeed(result, "need to use the bathroom");
+        result = CRBodyStatusPresentation.AddNeed(result, "BOWEL HIGH");
       }
     }
     return result;
@@ -142,21 +142,21 @@ public class CRBodyStatusPresentation extends IScriptable {
 
   private static func HygieneNeed(body: ref<CRBodyState>) -> String {
     if body.hygieneLoad >= 25.0 {
-      return "feel noticeably dirty";
+      return "HYGIENE POOR";
     }
     if body.hygieneLoad >= 10.0 {
-      return "could use a wash";
+      return "HYGIENE LOW";
     }
     return "";
   }
 
   public static func BodyStatus(body: ref<CRBodyState>) -> String {
     if !IsDefined(body) || !body.initialized {
-      return "BODY STATUS UNAVAILABLE";
+      return "BODY UNAVAILABLE";
     }
     let meters: ref<CRBodyMeters> = CRBodyRuntime.Get().GetMeters();
     if !IsDefined(meters) || !meters.valid {
-      return "BODY STATUS UNAVAILABLE";
+      return "BODY UNAVAILABLE";
     }
     let result: String = "";
     result = CRBodyStatusPresentation.AddNeed(result, CRBodyStatusPresentation.HydrationNeed(meters.hydration));
@@ -165,7 +165,7 @@ public class CRBodyStatusPresentation extends IScriptable {
     result = CRBodyStatusPresentation.AddNeed(result, CRBodyStatusPresentation.EliminationNeed(body));
     result = CRBodyStatusPresentation.AddNeed(result, CRBodyStatusPresentation.HygieneNeed(body));
     if Equals(result, "") {
-      return "No strong bodily need is demanding attention.";
+      return "STABLE";
     }
     return result;
   }
@@ -176,7 +176,7 @@ public class CRBodyStatusPresentation extends IScriptable {
     }
     let body: ref<CRBodyState> = CRBodyRuntime.Get().GetBodySnapshot();
     if !IsDefined(body) {
-      return "BODY STATUS UNAVAILABLE";
+      return "BODY UNAVAILABLE";
     }
     let text: String = CRBodyStatusPresentation.BodyStatus(body);
     let injury: String = CRBodyStatusPresentation.InjuryStatus(body.injuries);
@@ -194,27 +194,26 @@ public class CRBodyStatusPresentation extends IScriptable {
     }
     let serving: ref<CRServing> = CRItemServing.Resolve(item);
     if !serving.recognized {
-      return "No realpass serving model is available for this item.";
+      return "UNMODELED";
     }
     let before: ref<CRBodyMeters> = CRBodyRuntime.Get().GetMeters();
     let forecast: ref<CRBodyForecastState> = CRBodyRuntime.Get().BeginForecast();
     if !IsDefined(before) || !before.valid || !CRBodyForecast.AddServing(forecast, serving) {
-      return "The body's response cannot be estimated right now.";
+      return "FORECAST UNAVAILABLE";
     }
     let after: ref<CRBodyMeters> = CRBodyForecast.Step(forecast, 1.0, false);
     if !after.valid {
-      return "The body's response cannot be estimated right now.";
+      return "FORECAST UNAVAILABLE";
     }
-    let result: String = "Effects arrive gradually as the serving is absorbed.";
     if after.hydration > before.hydration + 1.0 && after.nutrition > before.nutrition + 1.0 {
-      return result + " It should help with both thirst and hunger.";
+      return "THIRST + HUNGER";
     }
     if after.hydration > before.hydration + 1.0 {
-      return result + " It should help with thirst.";
+      return "THIRST";
     }
     if after.nutrition > before.nutrition + 1.0 {
-      return result + " It should help with hunger.";
+      return "HUNGER";
     }
-    return result;
+    return "ABSORBING";
   }
 }
