@@ -15,12 +15,12 @@ $activeFiles = @(
 )
 
 $forbidden = [ordered]@{
-    'fixed retired repo path C:\Games\CyberpunkRealism' = 'C:\\Games\\CyberpunkRealism'
     'retired RealPass iteration reset as active instruction' = 'Reset-RealPassIteration\.ps1'
     'merged REDmod foundation branch presented in active guidance' = 'agent/redmod-foundation'
     'merged Biology UI/runtime branch presented in active guidance' = 'agent/biology-ui-runtime'
     'merged presentation branch presented in active guidance' = 'agent/presentation-hud-nameplates'
 }
+$retiredRepoPathPattern = 'C:\\Games\\CyberpunkRealism'
 
 $violations = [Collections.Generic.List[string]]::new()
 foreach ($relative in $activeFiles) {
@@ -34,6 +34,35 @@ foreach ($relative in $activeFiles) {
         if ($text -match $entry.Value) {
             $violations.Add("$relative contains $($entry.Key)")
         }
+    }
+
+    # It is useful for a current document to identify the retired checkout as an
+    # explicit anti-example. Reject the path only when it appears as an instruction
+    # or unexplained current assumption rather than in a same-line warning.
+    foreach ($match in [regex]::Matches($text, '(?im)^.*' + $retiredRepoPathPattern + '.*$')) {
+        $line = $match.Value
+        if ($line -notmatch '(?i)do not|retired|legacy|obsolete|historical') {
+            $violations.Add("$relative presents the retired fixed repo path without an explicit warning")
+        }
+    }
+}
+
+# Local-reference tools owned by this cleanup must derive the active checkout rather
+# than defaulting back to the retired permanent repository path. Audit-GameContracts
+# and the broader operator catalog are intentionally owned by the active presentation
+# follow-up PR and have their own regression coverage there.
+foreach ($relative in @(
+    'tools/Refresh-LocalGameReference.ps1',
+    'tools/Publish-LocalGameReferenceSnapshot.ps1'
+)) {
+    $path = Join-Path $project $relative
+    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+        $violations.Add("Missing local-reference tool: $relative")
+        continue
+    }
+    $text = Get-Content -Raw -LiteralPath $path
+    if ($text -match $retiredRepoPathPattern) {
+        $violations.Add("$relative still hard-codes the retired repository checkout")
     }
 }
 
@@ -58,4 +87,4 @@ if ($violations.Count -gt 0) {
     throw "Active guidance hygiene failed:`n - $($violations -join "`n - ")"
 }
 
-Write-Host 'PASS: active guidance contains no retired fixed checkout, legacy reset command, or merged worker-lane instructions; historical evidence remains separate.'
+Write-Host 'PASS: active guidance does not instruct retired checkouts/resets/merged lanes, local reference tools derive the active checkout, and historical evidence remains separate.'
