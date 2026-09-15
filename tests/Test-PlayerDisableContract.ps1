@@ -23,8 +23,10 @@ $package = Get-Content -Raw -LiteralPath $packagePath | ConvertFrom-Json
 $doc = Get-Content -Raw -LiteralPath $docPath
 $operatorDoc = Get-Content -Raw -LiteralPath $operatorDocPath
 
-if ($marker -notmatch 'Items\.BiologyLauncherActivationMarker\s*:\s*IconicWeaponModAbilityBase' -or $marker -notmatch 'stackable\s*=\s*true') {
-    throw 'REDmod-owned Biology launcher activation marker drifted.'
+$markerPackage = [regex]::Match($marker,'(?m)^\s*package\s+Items\s*$')
+$markerRecord = [regex]::Match($marker,'(?m)^\s*BiologyLauncherActivationMarker\s*:\s*IconicWeaponModAbilityBase\s*$')
+if (-not $markerPackage.Success -or -not $markerRecord.Success -or $markerPackage.Index -gt $markerRecord.Index -or $marker -match '(?m)^\s*using\s+Items\s*$' -or $marker -notmatch '(?m)^\s*stackable\s*=\s*true\s*;\s*$') {
+    throw 'REDmod-owned Biology launcher activation marker standalone source grammar drifted.'
 }
 if ($settings -notmatch 'public static func IsLauncherActivated\(\) -> Bool' -or $settings -notmatch 'Items\.BiologyLauncherActivationMarker\.stackable') {
     throw 'Biology settings accessor does not consume the REDmod-owned launcher marker.'
@@ -61,4 +63,4 @@ if ($operatorDoc -notmatch 'Verify-BiologyRemoval\.ps1' -or $operatorDoc -notmat
     throw 'Canonical local-operator catalog does not expose player hard-uninstall verification.'
 }
 
-Write-Host 'PASS: Biology launcher activation is REDmod-owned/fail-closed and the exact player artifact couples the marker, ownership receipt, and Uninstall Biology.exe.'
+Write-Host 'PASS: Biology launcher activation is REDmod-owned/fail-closed and the exact player artifact couples the native-package marker, ownership receipt, and Uninstall Biology.exe.'
