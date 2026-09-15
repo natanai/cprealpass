@@ -12,12 +12,20 @@ $activeFiles = @(
     'ROADMAP.md',
     'docs/ACTIVE-REDMOD-ROADMAP.md',
     'docs/BIOLOGY-REDMOD-MIGRATION.md',
+    'docs/BIOLOGY-UI.md',
+    'docs/DEPENDENCY-AUDIT.md',
+    'docs/E3-PRESENTATION.md',
     'docs/RELEASE-ARCHITECTURE.md',
+    'docs/REDMOD-INTEGRATED-ASSEMBLY.md',
+    'docs/SETTINGS-ARCHITECTURE.md',
+    'docs/PATCH-RESILIENCE.md',
     'docs/LOCAL-GAME-REFERENCE.md',
+    'docs/LOCAL-OPERATOR-COMMANDS.md',
     'docs/PARALLEL-AGENT-WORKFLOW.md',
     'docs/INTEGRATION-ORCHESTRATOR.md',
     'docs/handoffs/README.md',
-    'docs/handoffs/PARENT-INTEGRATION.md'
+    'docs/handoffs/PARENT-INTEGRATION.md',
+    'tests/README.md'
 )
 
 $forbidden = [ordered]@{
