@@ -43,6 +43,8 @@ Require $capture 'local-vanilla-baseline-' 'Publish mode must use a dedicated sn
 Require $capture 'git -C \$project add -- ''reference/cyberpunk''' 'Publish mode must scope its commit to GitHub-safe reference metadata.'
 Require $capture 'archive\\pc\\mod' 'Vanilla capture must reject obvious mod payload roots.'
 Require $capture 'red4ext' 'Vanilla capture must reject installed RED4ext payload.'
+Require $capture "relativeToMods -eq '\.stub' -and \$file\.Length -eq 0" 'Vanilla capture must permit only the exact zero-byte REDmod .stub marker.'
+Require $capture 'mods/\$relativeToMods' 'Vanilla capture must still reject any other file under mods.'
 
 Require $publishSnapshot 'Refresh-LocalGameReference\.ps1' 'Current-state publisher must refresh the GitHub-safe snapshot first.'
 Require $publishSnapshot 'local-game-snapshot-' 'Current-state publisher must use a dedicated snapshot branch.'
