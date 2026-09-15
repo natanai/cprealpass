@@ -1,8 +1,8 @@
-﻿{
-    "RED4ext":  true,
-    "CyberEngineTweaks":  false,
-    "Redscript":  true,
-    "ArchiveXL":  true,
-    "TweakXL":  true,
-    "Codeware":  true
+{
+  "RED4ext": false,
+  "CyberEngineTweaks": false,
+  "Redscript": false,
+  "ArchiveXL": false,
+  "TweakXL": false,
+  "Codeware": false
 }
