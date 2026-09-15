@@ -21,6 +21,7 @@ $tests = @(
     'Test-RedmodFoundation.ps1',
     'Test-IntegratedBiologyPackage.ps1',
     'Test-BiologyShell.ps1',
+    'Test-BiologyNativeDrilldown.ps1',
     'Test-BiologyRuntimeLifecycle.ps1',
     'Test-ConditionArchitecture.ps1',
     'Test-PainArchitecture.ps1',
