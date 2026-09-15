@@ -3,22 +3,14 @@
   "product": "realpass",
   "surface": {
     "provider": "mod-settings",
-    "purpose": "runtime-presence, concise feature ledger, and binary presentation/accessibility preferences only",
+    "purpose": "one presentation-only toggle for the RealPass-owned E3-inspired first-person HUD/nameplate layer",
     "publicGameplaySettings": false,
     "publicBalanceSettings": false,
     "publicPresentationPreferences": true,
     "persistenceOwner": "mod-settings",
-    "notes": "A RealPass version keeps one authored physical simulation. The public surface may describe active authorities and toggle presentation channels, but never rebalance or disable the underlying simulation."
+    "notes": "A RealPass version keeps one authored physical simulation. The sole editable public setting controls only the E3-inspired HUD/nameplate presentation and never changes simulation authority."
   },
-  "featureLedger": [
-    "runtime-active",
-    "body-and-physiology",
-    "injury-bleeding-and-recovery",
-    "pain-and-maxdoc-analgesia",
-    "combat-and-ballistics",
-    "physical-armor-and-protection",
-    "presentation-and-feedback"
-  ],
+  "featureLedger": [],
   "releaseProfile": {
     "body": true,
     "injury": true,
@@ -28,7 +20,9 @@
     "presentation": true,
     "diagnostics": false,
     "traditionalActorHealthBarsFinalTarget": false,
-    "nativeModernScanner": true
+    "nativeModernScanner": true,
+    "e3InspiredFirstPersonHud": true,
+    "e3InspiredNpcNameplates": true
   },
   "developmentFeedbackFallback": {
     "traditionalPlayerHealthBarsVisibleUntilReplacementAccepted": true,
@@ -37,11 +31,11 @@
   },
   "publicControls": [
     {
-      "id": "presentation.fullscreen-disorientation-effects",
+      "id": "presentation.e3-first-person-hud-visuals",
       "type": "bool",
       "default": true,
       "authority": "presentation-only",
-      "description": "Controls only fullscreen/audio disorientation feedback for excessive analgesic load; hidden pain, dose, injury, weapon handling, bleeding and recovery remain unchanged."
+      "description": "Toggles the RealPass-owned red E3-inspired first-person HUD and NPC-nameplate visual layer. The physical simulation and modern scanner remain unchanged."
     }
   ],
   "developmentProfileKeys": [
@@ -57,7 +51,7 @@
     "Development profile keys exist only to isolate authorities during compilation, calibration and attended diagnosis.",
     "A release builder fixes gameplay/presentation authority keys to the release profile and diagnostics off.",
     "Development authority gates are never persisted as normal player preferences.",
-    "A public presentation preference may suppress a cue only when the underlying physical simulation and consequences continue unchanged."
+    "The E3-inspired HUD preference may suppress only the RealPass visual skin/nameplate presentation; underlying physical state and consequences continue unchanged."
   ],
   "forbiddenPublicSettings": [
     "body.enabled",
@@ -84,5 +78,5 @@
     "cosmetic-transmog-authority"
   ],
   "numericPublicBalanceControlsAllowed": false,
-  "binaryPreferenceRule": "A public boolean is allowed only when changing it cannot change physical state, rates, damage, protection, injury, pain state, treatment, recovery or other simulation authority."
+  "binaryPreferenceRule": "The sole public boolean changes only the RealPass-owned E3-inspired HUD/nameplate presentation and cannot change physical state, rates, damage, protection, injury, pain state, treatment, recovery or other simulation authority."
 }
