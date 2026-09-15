@@ -32,12 +32,21 @@ try {
     )) {
         if (-not ($core.Contains($needle))) { throw "Uninstaller core lost required safety contract: $needle" }
     }
+    foreach ($needle in @(
+        'options.SkipRedmodRefresh = true',
+        'Directory.Exists(biologyRedmod)',
+        'REDmod refresh was deliberately not run because mods/Biology still contains',
+        'AppendResidualDirectory(result, biologyScripts',
+        'AppendResidualDirectory(result, biologyMetadata'
+    )) {
+        if (-not ($program.Contains($needle))) { throw "Player front-end lost partial-uninstall/REDmod safety contract: $needle" }
+    }
     if ($core -match '(?i)Directory\.Delete\([^\)]*,\s*true\s*\)' -or $core -match '(?i)DeleteDirectory\w*Recursive') {
         throw 'Player uninstaller contains recursive directory deletion.'
     }
     if ($program -match '(?i)powershell|pwsh|vortex') { throw 'Player uninstaller unexpectedly invokes a developer/mod-manager tool.' }
 
-    Write-Host 'PASS: player-facing Biology uninstaller compiles as one EXE and its deterministic safety suite passes.'
+    Write-Host 'PASS: player-facing Biology uninstaller compiles as one EXE, deterministic planner tests pass, and partial Biology residue cannot be blindly redeployed.'
 }
 finally {
     if (Test-Path -LiteralPath $work) { Remove-Item -LiteralPath $work -Recurse -Force }
