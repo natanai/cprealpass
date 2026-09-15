@@ -16,6 +16,11 @@ Check (-not $source.Contains("`$excluded = @('FieldCareUI.reds')")) 'Owned build
 foreach ($needle in @('DarkFuture','Project\s*E3','Codeware')) {
     Check ($source.Contains($needle)) "Owned builder lost forbidden-runtime guard: $needle"
 }
+Check ($source.Contains('function Remove-RedscriptComments')) 'Owned builder no longer distinguishes provenance comments from executable source-mod references.'
+Check ($source.Contains('(?<literal>')) 'Comment stripper no longer preserves string literals for forbidden runtime/resource scanning.'
+Check ($source.Contains('$scanText = Remove-RedscriptComments $text')) 'Forbidden-runtime scan is not using comment-stripped REDscript.'
+Check ($source.Contains('if ($scanText -match $pattern)')) 'Forbidden-runtime guard is not applied to executable/comment-stripped REDscript.'
+Check (-not $source.Contains('if ($text -match $pattern)')) 'Forbidden-runtime guard regressed to scanning raw comments as executable dependencies.'
 Check ($source.Contains('import\s+ModSettings')) 'Owned builder does not reject direct Mod Settings imports.'
 # Register/Unregister listener calls are the allowed provider lifecycle boundary;
 # policy may read only the RealPass-owned singleton, never provider internals.
@@ -49,4 +54,4 @@ foreach ($forbidden in @('Upgrade.ps1','Deploy.ps1','Copy-Item -LiteralPath $sou
 }
 Check ($source.Contains('Nothing was deployed or launched')) 'Owned builder does not make its compile-only boundary explicit.'
 
-Write-Host "PASS: $script:checks owned acceptance-builder contract checks; staged build gates coexist with the global RealPass master and accepted barless presentation."
+Write-Host "PASS: $script:checks owned acceptance-builder contract checks; staged build gates coexist with the global RealPass master, accepted barless presentation, and comment-aware source-mod rejection."

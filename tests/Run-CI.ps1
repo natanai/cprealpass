@@ -2,10 +2,9 @@ $ErrorActionPreference = 'Stop'
 if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'Run-CI.ps1 requires PowerShell 7 or newer.' }
 
 # Only tests reproducible from the public source tree and relevant to the current
-# vanilla-first, project-owned runtime path belong here. Superseded runtime bridge/
-# popup/localization sources are removed from production rather than hidden behind
-# release-path exclusions. Historical integration tests that require local acquired
-# source/game state remain outside this cloud tier.
+# vanilla-first, project-owned runtime path belong here. Exact integrated compilation
+# against Cyberpunk's proprietary final.redscripts remains a local build gate inside
+# Build-BiologyPackage.ps1 rather than a cloud-CI claim.
 $tests = @(
     'Test-PowerShellSyntax.ps1',
     'Test-BiologyProductDirection.ps1',
@@ -19,6 +18,7 @@ $tests = @(
     'Test-GameContractAudit.ps1',
     'Test-CleanRoomTestingContract.ps1',
     'Test-RedmodFoundation.ps1',
+    'Test-IntegratedBiologyPackage.ps1',
     'Test-BiologyShell.ps1',
     'Test-BiologyRuntimeLifecycle.ps1',
     'Test-ConditionArchitecture.ps1',

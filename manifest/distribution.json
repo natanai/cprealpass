@@ -1,22 +1,28 @@
 {
-  "schemaVersion": 1,
-  "product": "realpass",
+  "schemaVersion": 2,
+  "product": "Biology",
   "target": {
     "experience": "one-download-normal-launch",
-    "preferredInstall": "game-root-shaped-zip",
-    "fallbackInstall": "single-bootstrap-installer-only-if-update-safety-requires-it",
-    "normalLaunch": "Steam / normal Cyberpunk 2077 executable",
+    "preferredInstall": "game-root-shaped-redmod-first-zip",
+    "officialPackageIdentity": "mods/Biology",
+    "canonicalBuilder": "tools/Build-BiologyPackage.ps1",
+    "normalLaunch": "Steam / supported normal Cyberpunk 2077 launch after REDmod enable/deploy",
     "specialLauncherRequiredAfterInstall": false
   },
   "releaseGate": {
     "publicPlayableArtifactReady": false,
-    "reason": "The owned source and constrained runtime profile are assembled, but the integrated candidate still requires fresh exact Cyberpunk 2077 2.31 compilation, attended native settings/Biology/Outfit/HUD/gameplay/save/quest/performance acceptance, final calibration and final archive/notices/checksum verification before a public playable release.",
+    "candidatePlayableAfterExactCompile": true,
+    "reason": "The integrated Biology package path is now assembled and exact-compile-gated, but public release remains blocked on supported-install REDmod recognition/deployment, enable/disable and relaunch persistence, clean uninstall/reset, PKG-05 overlap evidence, combined Lane B/C attended acceptance, and final release audit.",
     "mustPass": [
       "runtime-module-contract",
       "scope-audit",
       "dependency-license-and-notice-audit",
       "no-blocked-or-unrequired-runtime-in-artifact",
-      "offline-tests-and-script-compilation",
+      "integrated-exact-redscript-compile-2.31",
+      "redmod-recognition-and-deploy",
+      "redmod-enable-disable-relaunch-persistence",
+      "clean-uninstall-reset",
+      "redmod-overlap-precedence-probe",
       "native-body-acceptance",
       "native-combat-injury-acceptance",
       "native-presentation-acceptance",
@@ -28,36 +34,44 @@
   },
   "components": [
     {
-      "id": "realpass-project-original",
+      "id": "biology-project-original",
       "source": "repository",
       "licenseClass": "project-original",
       "artifactPolicy": "bundle",
       "status": "allowed",
-      "notes": "Only the accepted runtime payload belongs in a player artifact; tests, reports, staging and source-only tooling stay out."
+      "notes": "Complete accepted Biology runtime payload plus official mods/Biology metadata. Tests, reports, staging, reference mods and source-only tooling stay out."
     },
     {
       "id": "redscript",
       "source": "manifest/components.json",
       "licenseClass": "MIT",
-      "artifactPolicy": "bundle-pinned-runtime-with-license-after-live-acceptance",
+      "artifactPolicy": "bundle-pinned-runtime-with-license",
       "status": "allowed",
-      "notes": "Required script loader/compiler plumbing for the owned runtime. Bundle the pinned official Windows payload and required MIT notice in the final one-download package after live acceptance."
+      "notes": "Directly required by accepted Biology-owned additive/wrapper runtime seams. Bundle only exact pinned files with required notice and per-file ownership."
     },
     {
       "id": "red4ext",
       "source": "manifest/components.json",
       "licenseClass": "MIT-plus-third-party-notices",
-      "artifactPolicy": "bundle-pinned-runtime-with-required-notices-after-live-acceptance",
-      "status": "allowed",
-      "notes": "Required generic dependency of the pinned ArchiveXL/Mod Settings plumbing. RED4ext owns no RealPass gameplay policy."
+      "artifactPolicy": "bundle-temporarily-with-required-notices",
+      "status": "temporary",
+      "notes": "No Biology-owned native plugin. Retained only as transitive plumbing for ArchiveXL/Mod Settings until the Lane C settings-provider blocker is resolved."
     },
     {
       "id": "archivexl",
       "source": "manifest/components.json",
       "licenseClass": "MIT-plus-third-party-notices",
-      "artifactPolicy": "bundle-pinned-runtime-with-required-notices-after-live-acceptance",
-      "status": "allowed",
-      "notes": "Required by the pinned Mod Settings release used for the accepted RealPass settings surface. ArchiveXL owns no RealPass gameplay policy or resources."
+      "artifactPolicy": "bundle-temporarily-with-required-notices",
+      "status": "temporary",
+      "notes": "No direct Biology resource consumer. Retained only because the current accessible Mod Settings adapter depends on it."
+    },
+    {
+      "id": "mod-settings",
+      "source": "manifest/components.json",
+      "licenseClass": "MIT",
+      "artifactPolicy": "bundle-temporarily-with-license",
+      "status": "temporary",
+      "notes": "Current player-accessible/persistent adapter for the already provider-neutral Enable Biology and E3-inspired HUD + nameplates booleans. Remove when Lane C supplies/accepts a replacement provider or deliberate install/deploy boundary."
     },
     {
       "id": "tweakxl",
@@ -65,7 +79,7 @@
       "licenseClass": "MIT-plus-third-party-notices",
       "artifactPolicy": "do-not-bundle",
       "status": "not-required",
-      "notes": "No current RealPass production source/data path requires TweakXL."
+      "notes": "No current Biology production source/data path requires TweakXL."
     },
     {
       "id": "codeware",
@@ -73,15 +87,7 @@
       "licenseClass": "MIT-plus-third-party-notices",
       "artifactPolicy": "do-not-bundle",
       "status": "not-required",
-      "notes": "The owned dynamic Biology/nameplate UI uses native Ink/REDscript APIs and has no Codeware import."
-    },
-    {
-      "id": "mod-settings",
-      "source": "manifest/components.json",
-      "licenseClass": "MIT",
-      "artifactPolicy": "bundle-pinned-runtime-with-license-after-live-acceptance",
-      "status": "allowed",
-      "notes": "Provides the accepted RealPass presence/read-only feature ledger and binary presentation/accessibility preference surface. It does not own body, injury, combat, armor or other simulation policy."
+      "notes": "Merged Biology Ink/REDscript UI uses native APIs and has no Codeware dependency."
     },
     {
       "id": "input-loader",
@@ -89,23 +95,23 @@
       "licenseClass": "MIT",
       "artifactPolicy": "do-not-bundle",
       "status": "not-required",
-      "notes": "The current owned runtime adds no custom input binding requiring Input Loader."
+      "notes": "Current Biology runtime adds no custom input binding requiring Input Loader."
     },
     {
       "id": "darkfuture",
       "source": "historical/reference adaptations",
       "licenseClass": "reference-only-for-final-runtime",
-      "artifactPolicy": "never-bundle-in-realpass-runtime",
+      "artifactPolicy": "never-bundle-in-biology-runtime",
       "status": "blocked",
-      "notes": "Historical research/provenance may remain in the repository, but executing Dark Future content is forbidden from owned/live/public RealPass candidates."
+      "notes": "Historical research/provenance may remain in the repository, but executing Dark Future content is forbidden from Biology candidates."
     },
     {
       "id": "project-e3-hud",
       "source": "historical/reference presentation",
       "licenseClass": "author-specific-permissions",
-      "artifactPolicy": "never-bundle-in-realpass-runtime",
+      "artifactPolicy": "never-bundle-in-biology-runtime",
       "status": "blocked",
-      "notes": "Accepted presentation behavior is recreated with RealPass-owned source plus stock Cyberpunk UI. Original/modified Project E3 runtime assets remain forbidden from the standalone artifact."
+      "notes": "PR #33 recreates accepted presentation with Biology-owned source plus native Cyberpunk UI. Project E3 runtime/assets remain forbidden."
     },
     {
       "id": "cyberpunk-game-files",
@@ -113,7 +119,7 @@
       "licenseClass": "proprietary-game-content",
       "artifactPolicy": "never-bundle",
       "status": "blocked",
-      "notes": "No Cyberpunk executable, stock archives, compiled cache, saves or user settings enter a RealPass artifact."
+      "notes": "No Cyberpunk executable, stock archive, final.redscripts, save or user settings may enter a Biology artifact. The installed final.redscripts is read only as the exact-compile base."
     }
   ],
   "forbiddenArtifactPatterns": [
@@ -134,11 +140,13 @@
   ],
   "artifactRequirements": [
     "Game-root-relative paths only for runtime payload.",
-    "The final artifact contains only allowed runtime components: project-original RealPass payload plus the pinned redscript, RED4ext, ArchiveXL and Mod Settings runtime selected by the accepted deployment profile.",
-    "A short INSTALL.txt at the archive root explains game-root extraction, ordinary Steam launch and uninstall/repair expectations.",
-    "A VERSION/BUILD identifier and SHA-256 checksum are generated deterministically.",
-    "Required licenses and third-party notices for every bundled generic dependency plus RealPass notices are included without development-only files.",
-    "The artifact content list is generated and verified before upload.",
-    "Blocked or not-required components cause the public-playable release job to fail closed rather than silently expanding the dependency stack."
+    "The official first-party REDmod identity is mods/Biology.",
+    "The integrated artifact contains Biology project-original runtime plus pinned redscript and only the temporary RED4ext/ArchiveXL/Mod Settings chain still required by the unresolved settings-provider accessibility blocker.",
+    "Every installed file is represented by exact owner/component/route/replace-policy/SHA-256 metadata; shared framework roots are never recursively Biology-owned.",
+    "INSTALL.txt documents explicit REDmod -root deployment, normal Steam launch target, and remaining attended gates.",
+    "BIOLOGY-VERSION.txt, provenance, owner manifest and SHA-256 checksums are generated for the exact candidate.",
+    "Required licenses and third-party notices for every bundled generic dependency are included without development-only files.",
+    "Blocked or not-required components cause artifact construction to fail closed rather than silently expanding the dependency stack.",
+    "Public release remains gated until direct-game and attended acceptance is recorded; successful CI/exact compilation is not live acceptance."
   ]
 }

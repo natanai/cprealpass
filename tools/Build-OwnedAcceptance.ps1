@@ -37,6 +37,20 @@ if ($presentRetired.Count -gt 0) {
 }
 $candidateFiles = @($sourceFiles)
 
+# Dependency/source-mod scanning applies to executable REDscript rather than comments.
+# Provenance comments are allowed to say that a source mod is NOT required. String
+# literals are deliberately preserved, so an executable/resource/UI reference such as
+# "Project E3" still fails closed.
+function Remove-RedscriptComments([string]$text) {
+    $pattern = '(?ms)(?<literal>"(?:\\.|[^"\\])*"|''(?:\\.|[^''\\])*'')|(?<comment>//.*?$|/\*.*?\*/)'
+    $regex = [regex]::new($pattern)
+    return $regex.Replace($text, [System.Text.RegularExpressions.MatchEvaluator]{
+        param([System.Text.RegularExpressions.Match]$match)
+        if ($match.Groups['literal'].Success) { return $match.Value }
+        return ' '
+    })
+}
+
 # Fail closed on source-mod/runtime-host imports and source-mod nomenclature that
 # would silently rebrand vanilla gameplay items. Mod Settings metadata plus guarded
 # RegisterListenerToClass/UnregisterListenerToClass lifecycle calls are allowed as
@@ -52,8 +66,9 @@ $forbiddenOwnedPatterns = @(
 )
 foreach ($file in $candidateFiles) {
     $text = Get-Content -Raw -LiteralPath $file.FullName
+    $scanText = Remove-RedscriptComments $text
     foreach ($pattern in $forbiddenOwnedPatterns) {
-        if ($text -match $pattern) { throw "Owned candidate source has forbidden dependency or source-mod identity: $($file.Name) / $pattern" }
+        if ($scanText -match $pattern) { throw "Owned candidate source has forbidden dependency or source-mod identity: $($file.Name) / $pattern" }
     }
 }
 
