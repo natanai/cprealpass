@@ -8,6 +8,7 @@ if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'Run-CI.ps1 requires PowerShe
 # source/game state remain outside this cloud tier.
 $tests = @(
     'Test-PowerShellSyntax.ps1',
+    'Test-BiologyProductDirection.ps1',
     'Test-ModuleContract.ps1',
     'Test-SettingsContract.ps1',
     'Test-SettingsRuntimeSurface.ps1',
@@ -73,4 +74,4 @@ $elapsed = [DateTime]::UtcNow - $started
 if ($failed.Count -gt 0) {
     throw "CI failed: $($failed -join ', ')"
 }
-Write-Host "`nPASS: $($tests.Count) cloud-safe owned-path realpass checks in $([Math]::Round($elapsed.TotalSeconds,1)) seconds."
+Write-Host "`nPASS: $($tests.Count) cloud-safe owned-path Biology checks in $([Math]::Round($elapsed.TotalSeconds,1)) seconds."
