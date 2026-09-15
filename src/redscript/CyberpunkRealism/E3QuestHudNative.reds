@@ -31,7 +31,6 @@ private final func CRCreateBiologyE3QuestFrame() -> Void {
   CRBiologyE3Primitives.AddRect(this.crBiologyE3QuestFrame, n"CRBiologyE3QuestRight", 471.0, 0.0, 3.0, 214.0, 0.90);
   CRBiologyE3Primitives.AddRect(this.crBiologyE3QuestFrame, n"CRBiologyE3QuestBottom", 250.0, 214.0, 224.0, 3.0, 0.68);
   CRBiologyE3Primitives.AddRect(this.crBiologyE3QuestFrame, n"CRBiologyE3QuestAccent", 67.0, 0.0, 20.0, 7.0, 1.00);
-  CRBiologyE3Primitives.AddLabel(this.crBiologyE3QuestFrame, n"CRBiologyE3QuestLabel", "OBJECTIVE // ACTIVE", 244.0, 9.0, 13, 0.82);
 }
 
 @addMethod(QuestTrackerGameController)
