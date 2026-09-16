@@ -34,8 +34,8 @@ foreach ($key in $paths.Keys) { $source[$key] = Get-Content -Raw -LiteralPath $p
 $mapping = Get-Content -Raw -LiteralPath $mappingPath
 $presentation = Get-Content -Raw -LiteralPath $presentationPath
 
-# W03.2 must materially affect ordinary first-person presentation through owned,
-# reversible widgets rather than merely tinting native roots.
+# W03.2 materially affects ordinary first-person presentation through owned,
+# reversible widgets rather than tinting native roots.
 foreach ($key in @('quest','navigation','weapon','crosshair','hotkey','interaction')) {
     Check ($source[$key].Contains('CRRealpassSettings.UseE3FirstPersonHudVisuals(GetGameInstance())')) "$key presentation seam is not gated by the single E3 preference."
     Check (-not $source[$key].Contains('TintNeutralHudRoot')) "$key still mutates a native HUD root tint instead of yielding cleanly on E3 OFF."
@@ -49,16 +49,16 @@ Check (-not $source.navigation.Contains('@wrapMethod(IronsightGameController)'))
 Check ($source.weapon.Contains('@wrapMethod(WeaponRosterGameController)') -and $source.weapon.Contains('WEAPON // AMMO') -and $source.weapon.Contains('CRBiologyE3WeaponWash')) 'Weapon/ammo roster does not receive the W03.2 E3 shell.'
 Check ($source.hotkey.Contains('@wrapMethod(HotkeysWidgetController)') -and $source.hotkey.Contains('QUICK // INPUT')) 'Hotkey/D-pad surface does not receive the W03.2 E3 shell.'
 
-# W03.1 only touched Tech-Hex. W03.2 must cover the normal crosshair container while
+# W03.1 only touched Tech-Hex. W03.2 covers the normal crosshair container while
 # preserving each weapon controller's aiming/spread/charge semantics.
 Check ($source.crosshair.Contains('@wrapMethod(gameuiCrosshairContainerController)')) 'General current crosshair container is not part of W03.2 ordinary focus presentation.'
 Check ($source.crosshair.Contains('@wrapMethod(CrosshairGameController_Tech_Hex)')) 'Tech-Hex specialization unexpectedly disappeared.'
 Check ($source.crosshair.Contains('CRBiologyE3FocusFrame')) 'General crosshair/focus frame is missing.'
-foreach ($forbidden in @('@replaceMethod(gameuiCrosshairContainerController)','OnPSMVisionStateChanged','GetActiveCrosshairGameController')) {
+foreach ($forbidden in @('@replaceMethod(gameuiCrosshairContainerController)','protected cb func OnPSMVisionStateChanged','GetActiveCrosshairGameController()')) {
     Check (-not $source.crosshair.Contains($forbidden)) "Crosshair styling took over native crosshair/vision behavior: $forbidden"
 }
 
-# Materially recurring prompt/activity surfaces are now audited and narrowly styled.
+# Materially recurring prompt/activity surfaces are narrowly styled.
 Check ($source.interaction.Contains('@wrapMethod(interactionWidgetGameController)')) 'Ordinary interaction prompt surface is not covered.'
 Check ($source.interaction.Contains('protected cb func OnUpdateInteraction(argValue: Variant) -> Bool')) 'Interaction adapter lost the evidenced current update seam.'
 Check ($source.interaction.Contains('INTERACTION')) 'Interaction adapter lacks visible E3 identity.'
@@ -67,7 +67,7 @@ Check (-not $source.interaction.Contains('FromVariant<InteractionChoiceHubData>'
 Check (-not $source.interaction.Contains('AsyncSpawnFromLocal')) 'W03.2 interaction presentation started owning option spawning.'
 Check ($source.activity.Contains('@wrapMethod(activityLogEntryLogicController)')) 'Transient activity presentation is not covered.'
 Check ($source.activity.Contains('textLetterCase.UpperCase') -and $source.activity.Contains('CRBiologyE3Primitives.Red()')) 'Activity entries do not use the shared E3 text language.'
-Check (-not $source.activity.Contains('@replaceMethod') -and -not $source.activity.Contains('inkAnimController')) 'W03.2 activity styling took over native queue/animation behavior.'
+Check (-not $source.activity.Contains('@replaceMethod') -and -not $source.activity.Contains('new inkAnimController')) 'W03.2 activity styling took over native queue/animation behavior.'
 
 # Existing lower-left slice remains presentation-only, never a replacement health meter.
 Check ($source.lowerLeft.Contains('CRBiologyE3HudFrame')) 'Lower-left E3 HUD root is missing.'
@@ -81,12 +81,12 @@ foreach ($forbidden in @('StatPoolType.Health','GetStatPoolValue','SetStatPoolVa
 Check ($source.identity.Contains('CRResolveBiologyAmbientName')) 'Owned ambient identity resolver is missing.'
 Check ($source.identity.Contains('if IsStringValid(data.name)')) 'Native focus/nameplate identity does not explicitly win.'
 Check (-not $source.identity.Contains('npc.IsScanned()')) 'Ambient civilian identity is still structurally scanner-only.'
-Check (-not $source.identity.Contains('ScannerModulePreset')) 'Baseline ambient identity is still coupled to scanner-module records.'
-Check (-not $source.identity.Contains('UINameplate.CrowdSettings')) 'Civilian fallback is still restricted to one assumed crowd nameplate record ID.'
+Check (-not $source.identity.Contains('character.ScannerModulePreset()')) 'Baseline ambient identity is still coupled to scanner-module records.'
+Check (-not $source.identity.Contains('t"UINameplate.CrowdSettings"')) 'Civilian fallback is still restricted to one assumed crowd nameplate record ID.'
 Check ($source.identity.Contains('ps.HasAlternativeName()')) 'Ambient fallback can reveal an authored alternative identity.'
 Check ($source.identity.Contains('hide_nametag') -and $source.identity.Contains('Puppet.HideNameplate')) 'Ambient fallback lost native hidden-name gates.'
 Check ($source.identity.Contains('GetDisplayName()')) 'Ambient fallback lost the native public display-name source.'
-foreach ($forbidden in @('FullDisplayName','ArchetypeData','Affiliation().LocalizedName')) {
+foreach ($forbidden in @('record.FullDisplayName()','record.ArchetypeData()','record.Affiliation()')) {
     Check (-not $source.identity.Contains($forbidden)) "Ambient fallback started deriving non-public identity records: $forbidden"
 }
 
@@ -123,12 +123,12 @@ Check ($controls[0].id -eq 'presentation.e3-first-person-hud-visuals' -and $cont
 Check ($source.preferenceUi.Contains('E3 HUD + NAMEPLATES') -and $source.preferenceUi.Contains('ToggleE3FirstPersonHudVisuals')) 'Biology-owned E3 preference editor lost its control/persistence path.'
 Check (-not ($source.settings -match '(?i)ModSettings|runtimeProperty|ModuleExists')) 'Provider registration returned to production settings source.'
 
-# Durable archaeology must reflect W03.2 rather than the obsolete “prompts/activity absent” decision.
+# Durable archaeology reflects W03.2 rather than the obsolete prompts/activity omission.
 foreach ($needle in @('interactionWidgetGameController','activityLogEntryLogicController','gameuiCrosshairContainerController','SetElementVisibility','modern scanner','W13')) {
     Check ($mapping.Contains($needle)) "W03.2 component mapping lost required audited responsibility/evidence: $needle"
 }
-Check ($mapping.Contains('dialogue') -and $mapping.Contains('intentionally not ported')) 'Dialogue audit/decision is not documented rather than silently ignored.'
-Check ($presentation.Contains('presentation/hook behavior problem') -and $presentation.Contains('owned overlays')) 'Canonical E3 presentation contract does not record the W13/W03.2 correction.'
+Check (($mapping -match '(?i)dialogue') -and ($mapping -match '(?i)intentionally not ported')) 'Dialogue audit/decision is not documented rather than silently ignored.'
+Check (($presentation -match 'presentation/hook behavior problem') -and ($presentation -match 'owned.*overlays')) 'Canonical E3 presentation contract does not record the W13/W03.2 correction.'
 
 $allowed = @($seams.allowedHookFiles)
 foreach ($file in @('E3FirstPersonHud.reds','E3QuestHudNative.reds','E3NavigationHudNative.reds','E3WeaponHudNative.reds','E3CrosshairHudNative.reds','E3HotkeyHudNative.reds','E3InteractionHudNative.reds','E3ActivityHudNative.reds','E3NameplatesNative.reds','NameplatesNative.reds')) {
