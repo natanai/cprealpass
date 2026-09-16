@@ -47,6 +47,7 @@ $audit = Read 'tools/Audit-GameContracts.ps1'
 $presentationBootstrap = Read 'tools/Bootstrap-PresentationAudit.ps1'
 $activationBootstrap = Read 'tools/Bootstrap-RedmodActivationSentinelProbe.ps1'
 $transitionProbeBootstrap = Read 'tools/Bootstrap-LegacyFrameworkTransitionProbe.ps1'
+$transitionProbe = Read 'tools/Probe-LegacyFrameworkTransition.ps1'
 $transitionCleanupBootstrap = Read 'tools/Bootstrap-LegacyFrameworkTransitionCleanup.ps1'
 $legacyCandidateBootstrap = Read 'tools/Bootstrap-BiologyPostTransitionCandidate.ps1'
 $managedCandidate = Read 'tools/Bootstrap-BiologyManagedPostTransitionCandidate.ps1'
@@ -137,7 +138,9 @@ foreach ($pair in @(
 )) {
     Require-FailureDurableChildBootstrap $pair.Name $pair.Text
 }
-Require $transitionProbeBootstrap 'SAFE-TO-APPLY' 'W11 transition probe must retain plan authorization semantics.'
+Require $transitionProbeBootstrap 'Probe-LegacyFrameworkTransition\.ps1' 'W11 transition bootstrap must invoke the canonical read-only transition probe.'
+Require $transitionProbe 'SAFE-TO-APPLY' 'W11 transition probe must retain plan authorization semantics.'
+Require $transitionProbe 'PLAN SHA-256' 'W11 transition probe must hash-bind its generated plan.'
 Require $transitionCleanupBootstrap 'ExpectedPlanSha256' 'W11 transition cleanup must remain plan/hash bound.'
 Require $prepare 'exhaustive-hash-check-skipped' 'Milestone prep must explicitly record skipped exhaustive hashing.'
 Require $sanity 'not a full-file/hash proof' 'Fast sanity must not overclaim baseline verification.'
