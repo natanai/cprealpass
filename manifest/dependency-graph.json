@@ -30,12 +30,27 @@
         "Biology-owned HUD/nameplate presentation hooks",
         "native hook seams listed in manifest/native-seams.json",
         "save-persistent Biology E3 presentation preference ScriptableSystem",
-        "Biology-owned E3 preference editor in the shared body shell"
+        "Biology-owned E3 preference editor in the shared body shell",
+        "SCC compiler and r6/config/cybercmd/scc.toml startup compilation task definition"
       ],
       "bundledByBiology": true,
       "plannedAction": "retain while accepted additive/wrapper seams remain; reassess only in a dedicated follow-up if a demonstrably narrower official route replaces every consumer",
       "rationale": "Biology currently uses additive/wrapper annotations and project-owned ScriptableSystem/UI code. Replacing those narrow hooks with whole vanilla REDmod .script files would copy broader upstream implementation and increase conflict/patch surface.",
       "licenseProvenance": "manifest/components.json:redscript"
+    },
+    {
+      "id": "cybercmd",
+      "kind": "generic-startup-task-runner",
+      "status": "required-current-runtime",
+      "route": "REDSCRIPT-STARTUP",
+      "consumerFeatures": [
+        "execute redscript's r6/config/cybercmd/scc.toml InvokeScc task on supported game startup",
+        "regenerate r6/cache/modded/final.redscripts from current r6/scripts sources when RED4ext/CET are absent"
+      ],
+      "bundledByBiology": true,
+      "plannedAction": "retain only while redscript startup compilation depends on scc.toml and Biology intentionally does not restore RED4ext/CET",
+      "rationale": "W13 attended follow-up evidence proved the exact deployed Biology candidate had current REDscript sources and compiler/config files but a stale configured final.redscripts because no cybercmd or RED4ext task runner remained after framework cleanup. The standalone cybercmd archive is the narrow upstream-supported executor for that existing InvokeScc task; it is not Biology activation authority.",
+      "licenseProvenance": "manifest/components.json:cybercmd"
     },
     {
       "id": "tweakxl",
@@ -118,15 +133,15 @@
     {
       "id": "red4ext",
       "removedByIssue": 61,
-      "reason": "Its only Biology role was transitive support for the retired ArchiveXL/Mod Settings chain; Biology owns no RED4ext plugin."
+      "reason": "Biology owns no RED4ext plugin and does not need the broader retired settings/framework chain. W13 preserves that retirement by using standalone cybercmd solely for the redscript startup task instead of restoring RED4ext."
     }
   ],
   "rules": [
     "A dependency without at least one concrete current Biology consumer is not retained.",
-    "The only directly feature-justified supplemental runtime framework in the current source is redscript.",
+    "The current supplemental runtime dependencies are redscript for Biology's additive/wrapper REDscript runtime and cybercmd solely to execute redscript's startup InvokeScc task without RED4ext/CET.",
     "The E3 presentation preference is Biology-owned save state and does not justify a settings framework stack.",
     "Whole-mod public activation belongs to the REDmod launcher sentinel rather than a second persisted preference.",
-    "A future worker requesting a new dependency must identify the exact feature, why vanilla/REDmod/current redscript cannot satisfy it, and the package/install consequence before this graph changes.",
+    "A future worker requesting a new dependency must identify the exact feature, why vanilla/REDmod/current runtime cannot satisfy it, and the package/install consequence before this graph changes.",
     "Bundled third-party components require pinned version/hash/license/provenance and exact per-file ownership.",
     "No source gameplay/presentation mod may execute or be bundled."
   ]
