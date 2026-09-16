@@ -18,16 +18,18 @@ $probe = Read 'tools/Bootstrap-W09RedmodPostUninstallStateProbe.ps1'
 # Recovery is deliberately placed at the official deploy boundary, after exact
 # Biology/REDmod validation, and prepares only the shared directory REDmod writes
 # into. It must not synthesize any generated cache payload.
-Require $deploy "Resolve-SafeChildPath\s+\$game\s+'r6\\cache\\modded'" 'Deploy helper must resolve exactly r6/cache/modded under the explicit game root.'
+$prepareLiteral = "Resolve-SafeChildPath `$game 'r6\cache\modded'"
+$invokeLiteral = "Invoke-Redmod @('deploy','-root',`$game)"
+if (-not $deploy.Contains($prepareLiteral)) { throw 'Deploy helper must resolve exactly r6/cache/modded under the explicit game root.' }
 Require $deploy 'New-Item\s+-ItemType\s+Directory\s+-Path\s+\$moddedRoot\s+-Force' 'Deploy helper must idempotently create only the missing REDmod output directory.'
-Require $deploy 'FileVersion\s+-ne\s+''2\.3\.1\.0''|FileVersion\)\s+-ne\s+''2\.3\.1\.0''' 'Deploy helper must remain pinned to the evidenced REDmod 2.3.1.0 file version.'
-Require $deploy 'ProductVersion\s+-ne\s+''2\.31''|ProductVersion\)\s+-ne\s+''2\.31''' 'Deploy helper must remain pinned to the evidenced REDmod 2.31 product version.'
-Require $deploy "Invoke-Redmod @\('deploy','-root',\$game\)" 'Deploy helper must continue invoking official REDmod with an explicit game root.'
+Require $deploy 'FileVersion\s+-ne\s+''2\.3\.1\.0''' 'Deploy helper must remain pinned to the evidenced REDmod 2.3.1.0 file version.'
+Require $deploy 'ProductVersion\s+-ne\s+''2\.31''' 'Deploy helper must remain pinned to the evidenced REDmod 2.31 product version.'
+if (-not $deploy.Contains($invokeLiteral)) { throw 'Deploy helper must continue invoking official REDmod with an explicit game root.' }
 
-$prepareIndex = $deploy.IndexOf("Resolve-SafeChildPath `$game 'r6\cache\modded'", [StringComparison]::Ordinal)
-$invokeIndex = $deploy.IndexOf("Invoke-Redmod @('deploy','-root',`$game)", [StringComparison]::Ordinal)
+$prepareIndex = $deploy.IndexOf($prepareLiteral, [StringComparison]::Ordinal)
+$invokeIndex = $deploy.IndexOf($invokeLiteral, [StringComparison]::Ordinal)
 if ($prepareIndex -lt 0 -or $invokeIndex -lt 0 -or $prepareIndex -gt $invokeIndex) {
-    throw 'REDmod output-root preparation must occur immediately before the first real deploy invocation, not during uninstall/build/package work.'
+    throw 'REDmod output-root preparation must occur before the first real deploy invocation, not during uninstall/build/package work.'
 }
 
 foreach ($forbidden in @(
