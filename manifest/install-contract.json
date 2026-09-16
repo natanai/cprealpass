@@ -44,7 +44,8 @@
     "preserveSaves": true,
     "preferencesLiveInSaves": true,
     "removeOnlyEmptyOwnedDirectories": true,
-    "refreshRedmodStateAfterRemoval": true
+    "refreshRedmodStateAfterRemoval": true,
+    "preserveGenericDependencies": ["redscript", "cybercmd"]
   },
   "stateAndSaves": {
     "saveDataIsNeverInArtifact": true,
@@ -58,6 +59,7 @@
     "game-must-be-closed-for-installer-or-uninstaller-writes",
     "supported-game-version-must-match-release-metadata",
     "artifact-sha256-and-file-manifest-must-verify",
+    "redscript-startup-task-runner-must-be-present-in-release",
     "unknown-collision-must-fail-closed-for-assisted-updates",
     "changed-owned-file-must-not-be-auto-deleted",
     "blocked-component-must-not-be-present",
@@ -70,6 +72,7 @@
     "engine/tools",
     "engine/config/base",
     "r6/config/cybercmd",
+    "bin/x64",
     "biology",
     "LICENSES"
   ],
@@ -84,7 +87,8 @@
   "notes": [
     "runtimeRoots are allowed locations, not a claim that every final release uses every root",
     "the player-facing package contains only roots actually required by that exact build",
-    "redscript is the only retained generic runtime dependency and is tracked per file",
+    "redscript and standalone cybercmd are the only retained generic runtime dependencies and are tracked per file; cybercmd only executes redscript's scc.toml startup compilation task",
+    "the REDmod-owned Biology activation marker remains the sole whole-mod activation authority; redscript/cybercmd plumbing is non-authoritative",
     "the public artifact never includes developer deployment receipts, reports, staging, saves, game executables, stock game archives or local ReferenceMods payload",
     "full Steam reinstall is exceptional clean-room/recovery, not the normal Biology uninstall path"
   ]
