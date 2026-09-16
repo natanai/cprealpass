@@ -1,0 +1,62 @@
+BIOLOGY MANAGED FAILED-INSTALL RECOVERY
+Started: 2026-09-16T12:56:23.8817135-05:00
+Requested canonical recovery source: c1068c7889a0ff4f75e88ebbad1c9e1c671b70ef
+Repository evidence id: legacy-20260916-04d4c158-first-install-failure
+Game root: C:\Games\Steam\steamapps\common\Cyberpunk 2077
+Proof boundary: repository-backed exact payload hashes, or legacy empty-owned-root-only evidence. Shared redscript/cybercmd is never deleted.
+
+No usable local cprealpass checkout found. Creating signed seed clone: C:\Games\cprealpass-repo-20260916-125623-08eef570
+--- git clone seed ---
+exit=0
+stdout:
+
+stderr:
+Cloning into 'C:\Games\cprealpass-repo-20260916-125623-08eef570'...
+--- git fetch origin main ---
+exit=0
+stdout:
+
+stderr:
+
+--- git rev-parse fetched origin/main ---
+exit=0
+stdout:
+c1068c7889a0ff4f75e88ebbad1c9e1c671b70ef
+stderr:
+
+Resolved canonical recovery source: c1068c7889a0ff4f75e88ebbad1c9e1c671b70ef
+--- git worktree add managed recovery source ---
+exit=0
+stdout:
+HEAD is now at c1068c7 Merge W15.2 managed operator evidence lifecycle
+stderr:
+Preparing worktree (detached HEAD c1068c7)
+Evidence source revision: 04d4c1584df4b0823e093422b98cf4c5575c7b19
+Evidence recovery mode: empty-owned-roots-only
+Evidence historical artifact SHA-256: 76A86A77A3C7AE36306B203C7946B88C5D56E1F7B0689489DA7EAF6D8783C796
+Cyberpunk product version: 2.31
+Cyberpunk executable SHA-256: A7DE82945C03E041FC7339FCF9066224D98DB2F5D80FEA50F7947BB350A60991
+
+=== COMPLETE READ/PLAN PHASE — NO GAME MUTATION YET ===
+DIR | remove-if-empty | mods/Biology
+Plan summary: exact Biology-owned files to remove=0; empty Biology-owned directories eligible=1; shared files preserved=0.
+PLAN STATUS: SAFE-TO-APPLY — all ambiguity checks completed before mutation.
+
+=== APPLY MANAGED FAILED-INSTALL RECOVERY ===
+
+=== POST-RECOVERY READ-ONLY BIOLOGY RESIDUE VERIFIER ===
+--- Verify-BiologyRemoval.ps1 ---
+exit=0
+stdout:
+PASS: no Biology-specific package/runtime residue was found.
+Generic redscript/RED4ext/ArchiveXL/Mod Settings files are intentionally outside this check because player uninstall preserves shared dependencies.
+True
+stderr:
+
+
+RESULT: PASS
+Recovery mutation performed: True
+Exact Biology-owned files removed: 0
+Shared redscript/cybercmd deletion count: 0
+Post-recovery Biology-specific residue verifier: PASS
+Completed: 2026-09-16T12:56:27.3826094-05:00
