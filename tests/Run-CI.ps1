@@ -27,6 +27,7 @@ $tests = @(
     'Test-RedmodPostUninstallDeployRecovery.ps1',
     'Test-RedmodActivationSentinelProbe.ps1',
     'Test-InstalledRuntimeActivationProbe.ps1',
+    'Test-RedscriptStartupRuntime.ps1',
     'Test-RedmodActivationSentinelContract.ps1',
     'Test-IntegratedBiologyPackage.ps1',
     'Test-PlayerDisableContract.ps1',
