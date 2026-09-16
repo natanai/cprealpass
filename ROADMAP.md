@@ -2,170 +2,114 @@
 
 **This file is the active-work entry point.**
 
-Use it together with current GitHub issues/PRs. Dated baseline documents and merged worker handoffs are evidence/history, not the source of current branch assignments.
+Use it together with `docs/THREAD-LEDGER.md`, current GitHub issues/PRs, and the latest relevant records under `docs/test-runs/`. Dated baseline documents and merged worker handoffs are evidence/history, not current branch assignments.
 
 Before implementation work, read:
 
 1. `AGENTS.md`
 2. `AGREED-GOALS.md`
-3. `docs/ACTIVE-REDMOD-ROADMAP.md`
-4. `docs/BIOLOGY-REDMOD-MIGRATION.md`
-5. `docs/PARALLEL-AGENT-WORKFLOW.md`
-6. `docs/INTEGRATION-ORCHESTRATOR.md`
-7. `docs/LOCAL-OPERATOR-COMMANDS.md` before asking the user to run local commands
-8. the latest relevant file under `docs/test-runs/`
-9. current open GitHub issues/PRs
+3. `docs/THREAD-LEDGER.md`
+4. `docs/ACTIVE-REDMOD-ROADMAP.md`
+5. `docs/BIOLOGY-REDMOD-MIGRATION.md`
+6. `docs/PARALLEL-AGENT-WORKFLOW.md`
+7. `docs/INTEGRATION-ORCHESTRATOR.md`
+8. `docs/LOCAL-OPERATOR-COMMANDS.md` before asking the user to run local commands
+9. the latest relevant file under `docs/test-runs/`
+10. current open GitHub issues/PRs
 
-## Where the project is now
+## Current parent / worker state
 
-The original three REDmod migration lanes have already been integrated. Do **not** restart work on their merged branches merely because older docs mention them.
+The active parent is **P01.2**. `docs/THREAD-LEDGER.md` is authoritative for conversation/lane state.
 
-The first integrated REDmod-first attended artifact was built from:
+The original REDmod foundation, Biology shell/runtime, presentation, player-uninstall, activation-grammar, post-uninstall REDmod recovery, and self-contained settings implementations are all already represented on canonical `main`.
 
-`8cf045664b5e4d8b4b014edfc98bf2f8eb270ba5`
+Current implementation lane:
 
-Artifact:
+- **W11.1 / issue #64 / `agent/pre-w10-framework-transition-cleanup`** — safely retire legacy pre-W10 Mod Settings / ArchiveXL / RED4ext residue from the preserved installed Biology state before the next combined attended candidate. This lane must be evidence-first and fail closed; it must preserve redscript and unrelated/shared mod state.
 
-`biology-integrated-20260915-061136-8cf045664b5e.zip`
+Do not reactivate an older merged branch merely because its acceptance issue remains open. The open acceptance issues below are parent-attended gates unless a new failure creates a fresh worker goal.
 
-SHA-256:
+## Current integrated feature state
 
-`42BACC73173EB95D84F3278593CD06DDAF665AA714F4C692DB03D553B91557CC`
+W09.1 / PR #62 is merged:
 
-Cyberpunk version: `2.31`
+- `tools/Deploy-BiologyRedmod.ps1` now creates only a missing `<game>/r6/cache/modded` directory immediately before official REDmod deployment;
+- it never clears shared cache contents or synthesizes generated REDmod output;
+- issue #59 remains open until the repaired official REDmod 2.31 path is directly attended-passed.
 
-The package built and exact-compiled successfully. Official REDmod later recognized `Biology` and completed a real five-stage deployment after the deploy helper was repaired to reject false-positive root handling.
+W10.1 / PR #63 is merged:
 
-The attended in-game run then exposed the current work below.
+- REDlauncher/REDmod is the sole public whole-mod activation boundary;
+- the only normal in-game preference is the save-backed E3 HUD/nameplates Boolean edited through Biology-owned UI;
+- Mod Settings, ArchiveXL, and RED4ext are removed from production release/build/install architecture;
+- redscript is the only retained bundled generic runtime dependency;
+- source/CI do not constitute live persistence or launcher-OFF acceptance.
 
-## Active follow-up lanes
+The integrated Biology shell/runtime/presentation/uninstaller repairs from the earlier attended follow-ups are also on main. Issues #39, #40, #41, and #44 stay open only for their remaining attended acceptance.
 
-### #39 — Biology UI shell / native drill-down behavior
+## Installed-game caveat before the next candidate
 
-Branch:
+Do **not** assume the user's current Cyberpunk installation already reflects the W09+W10 package.
 
-`agent/biology-ui-attended-followup`
+The current game still reflects the pre-W10 candidate/dependency footprint used for the failed Stage-3 REDmod deploy and launcher-OFF observation. That old candidate bundled Mod Settings / ArchiveXL / RED4ext, and its player uninstaller intentionally preserved generic/shared dependencies.
 
-Owns:
+Simply overlaying the new W10 package could therefore leave retired framework files on disk and falsely reproduce the old ArchiveXL warning or blank Mod Settings menu gap.
 
-- reuse of the native Cyberware anatomy/detail interaction grammar instead of a parallel overlay;
-- proper Biology drill-down Back/Cancel behavior;
-- hiding overview-only labels during detail mode;
-- readable/discoverable `BIOLOGY | CYBERWARE` selector;
-- blocking Biology/Cyberware mode switching while either side is drilled down;
-- preventing Biology body/skeleton visuals from leaking into Cyberware;
-- contextual Biology actions/items only through authoritative inventory/treatment paths.
+P01.2 routed that transition problem to W11.1 / issue #64. A full Cyberpunk reinstall is not the default response; the transition must first determine whether exact receipt/hash/baseline evidence permits a narrower safe retirement path.
 
-Does **not** own the missing body runtime authority itself; that is #41.
+## Open attended acceptance
 
-### #40 — E3 first-person HUD and ambient NPC nameplates
+### #59 — repaired REDmod post-uninstall deploy
 
-Branch:
+Parent must directly prove the W09-repaired official REDmod 2.31 deployment completes all stages on the exact integrated candidate.
 
-`agent/presentation-attended-followup`
+### #44 — launcher OFF / hard uninstall contract
 
-Owns:
+Parent must prove:
 
-- making E3 ON visibly transform the ordinary first-person HUD, not merely add one red widget;
-- quest/objective presentation, minimap/compass framing, weapon/ammo, interactions/prompts, crosshair/focus and other materially important HUD areas identified by the preserved Project E3 reference inventory;
-- ambient ordinary-look/focus NPC identity/nameplates;
-- police/combatant nameplate completion beyond the current narrow red strip;
-- scan-acquired information enriching native-authority nameplates where appropriate;
-- preserving the modern scanner/quickhack UI;
-- durable mapping from Project E3 reference responsibilities to current 2.31 native seams and Biology-owned implementation.
+- REDlauncher ON -> Biology active;
+- REDlauncher OFF -> Biology inactive/native behavior;
+- no legacy Mod Settings blank row;
+- no Biology-caused ArchiveXL/RED4ext/Mod Settings warning/footprint in the new package;
+- hard uninstall remains safe and reinstall-after-uninstall remains reliable.
 
-Project E3 is reference/provenance only and must not execute or ship as a Biology dependency.
+### #39 — Biology shell/navigation
 
-### #41 — body runtime authority missing in live Biology session
+Parent must prove the native body-shell interaction contract: clean overview/detail/back behavior, overview-only mode switching, and no Biology visual leakage into Cyberware.
 
-Branch:
+### #41 — body runtime authority
 
-`agent/body-runtime-attended-followup`
+Parent must prove the authoritative body runtime exists in a live valid session, no fake healthy fallback appears, and persistence/session behavior remains authoritative.
 
-Owns the attended live failure:
+### #40 — E3 presentation
 
-`[ BIOLOGY ERROR ] BODY RUNTIME SYSTEM MISSING`
+Parent must prove E3 ON is visibly unmistakable in ordinary gameplay, civilian/police ambient nameplates work, the Biology-owned preference persists, E3 OFF removes only E3-specific presentation, and the modern scanner/quickhack interface remains native.
 
-It must determine whether the authority is unregistered, uninitialized, unavailable in the current GameInstance/menu context, transiently unavailable, disabled by a gate, omitted from the package route, or otherwise broken.
-
-No UI lane may hide this failure or manufacture fake healthy state.
-
-### #44 — player disable / hard uninstall architecture
-
-Branch:
-
-`agent/player-uninstall-vanilla-toggle`
-
-Draft PR: `#45`
-
-Owns the release requirement that normal players should not need to reinstall Cyberpunk to remove Biology.
-
-Target states:
-
-1. REDlauncher `Enable mods` ON → Biology active.
-2. REDlauncher `Enable mods` OFF → Biology behavior inactive / convenient vanilla-play mode.
-3. `Uninstall Biology.exe` → safe hard removal of manifest-proven Biology-owned files without PowerShell, Git, Vortex or deleting saves.
-
-Changed/shared files must be retained and reported instead of guessed about.
-
-## Parent integration/orchestration thread
-
-One long-lived parent thread coordinates worker PRs and attended evidence. It should not become a fourth broad feature lane.
-
-The parent owns:
-
-- canonical-main awareness;
-- PR/CI/scope review and merge order;
-- one integrated release-shaped test candidate;
-- durable test records under `docs/test-runs/`;
-- finding routing back to the correct worker/new follow-up/integration issue;
-- standardized local-test handoffs.
-
-Copy/paste parent startup packet:
-
-- `docs/handoffs/PARENT-INTEGRATION.md`
-
-## Current integration cycle
+## Next integration cycle
 
 ```text
-current follow-up workers
-        -> PR / CI / overlap review
-        -> parent-selected merge order
-        -> canonical main
-        -> one release-shaped Biology candidate
-        -> attended local test
-        -> durable test record
-        -> route remaining findings
+W11 transition lane
+        -> PR / CI / parent review
+        -> merge if safe
+        -> controlled retirement of proven pre-W10 residue
+        -> exact canonical-main compile/build
+        -> one release-shaped Biology artifact
+        -> official W09-repaired REDmod deploy
+        -> attended launcher ON/OFF + Biology UI/runtime + E3 persistence/presentation + scanner checks
+        -> durable docs/test-runs record
+        -> route any new failure to a fresh lane when materially new
 ```
 
-Do not layer multiple worker branches into the user's game installation for convenience.
-
-## Current attended facts to preserve
-
-The latest attended run established all of the following:
-
-- official REDmod package recognition/deployment works when invoked with the corrected explicit-root helper;
-- the Biology outer destination renders and the anatomy screen can be entered;
-- the live body screen currently reports `BODY RUNTIME SYSTEM MISSING`;
-- Biology drill-down leaves overview labels behind and lacks a usable Back path;
-- switching from a Biology drill-down directly into Cyberware can leave the Biology body presentation stuck;
-- native Cyberware itself demonstrates the preferred design: while drilled down, cross-mode switching is unavailable until the user backs out;
-- the native Cyberware detail shell includes a focused region, top A/D body-part strip, item/content region and normal back-stack behavior that Biology should reuse;
-- with E3 ON, a random civilian ordinary look/focus currently shows no E3 nameplate;
-- with E3 ON, police currently show only a narrow red strip rather than the intended complete identity treatment;
-- the ordinary quest/objective/minimap/weapon/prompt HUD still reads overwhelmingly modern/retail with E3 ON;
-- the modern scanner/quickhack UI remains intact and must stay native/current.
-
-Those are direct attended facts. Source tests may prevent regressions but cannot convert them into live acceptance.
+Do not ask the user to install/play worker branches by default. The parent coordinates one coherent canonical artifact.
 
 ## Historical evidence
 
-The original pre-REDmod clean-room evidence remains intentionally available in:
+The original pre-REDmod clean-room evidence remains in:
 
 - `docs/PRE-REDMOD-LIVE-BASELINE-2026-09-15.md`
 
-The integrated REDmod milestone/deployment record lives under:
+Exact attended REDmod/deploy evidence lives under:
 
 - `docs/test-runs/`
 
-Historical records may contain old branch names, old paths, old player-facing labels or superseded expectations because they document what actually happened at that time. Do not copy those details back into active instructions without revalidating them.
+Historical records may contain old branch names, old paths, old player-facing labels, or superseded expectations because they document what happened at that time. Do not copy those details back into active instructions without revalidating them.
