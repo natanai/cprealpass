@@ -8,88 +8,58 @@ Before implementation work, read:
 
 1. `AGENTS.md`
 2. `AGREED-GOALS.md`
-3. `docs/THREAD-LEDGER.md`
-4. `docs/ACTIVE-REDMOD-ROADMAP.md`
-5. `docs/BIOLOGY-REDMOD-MIGRATION.md`
-6. `docs/PARALLEL-AGENT-WORKFLOW.md`
-7. `docs/INTEGRATION-ORCHESTRATOR.md`
-8. `docs/LOCAL-OPERATOR-COMMANDS.md` before asking the user to run local commands
-9. the latest relevant file under `docs/test-runs/`
-10. current open GitHub issues/PRs
+3. `docs/AGENT-OPERATING-PATTERNS.md`
+4. `docs/THREAD-LEDGER.md`
+5. `docs/ACTIVE-REDMOD-ROADMAP.md`
+6. `docs/BIOLOGY-REDMOD-MIGRATION.md`
+7. `docs/PARALLEL-AGENT-WORKFLOW.md`
+8. `docs/INTEGRATION-ORCHESTRATOR.md`
+9. `docs/LOCAL-OPERATOR-COMMANDS.md` before asking the user to run local commands
+10. the latest relevant file under `docs/test-runs/`
+11. current open GitHub issues/PRs
 
 ## Parent integration/orchestration thread
 
-The active parent is **P01.2**. `docs/THREAD-LEDGER.md` is authoritative for conversation/lane state. The parent coordinates merge/test/evidence/routing work and is not a fourth broad feature-development lane.
+The active parent is **P01.2**. `docs/THREAD-LEDGER.md` is authoritative for conversation/assignment state. The parent coordinates merge/test/evidence/routing work and is not a fourth broad feature-development lane.
 
 Durable parent startup packet:
 
 - `docs/handoffs/PARENT-INTEGRATION.md`
 - current replacement packet: `docs/handoffs/PARENT-P01.2.md`
 
-Meaningful attended results remain durable under `docs/test-runs/` and must be tied to the exact canonical main SHA and exact release-shaped artifact.
+Meaningful attended results remain durable under `docs/test-runs/` and must be tied to the exact canonical main SHA and exact release-shaped artifact. Small redistributable operator state needed by later zero-repo commands belongs under `docs/operator-evidence/` after parent ingestion.
 
 ## Current parent / worker state
 
-The original REDmod foundation, Biology shell/runtime, presentation, player-uninstall, activation-grammar, post-uninstall REDmod recovery, self-contained settings, and W11 legacy-framework transition implementation are all represented on canonical `main`.
+Canonical `main` contains the integrated REDmod foundation, Biology shell/runtime/presentation/uninstaller work, W09-W12 release transition work, W13 REDscript startup repair, W14 collision-safe installer/recovery repair, and W15.1 failed-install ZIP validation repair.
 
-There is currently **no active worker implementation lane**. W11.1 / issue #64 / PR #65 is merged and closed. Its attended read-only probe established a SAFE-TO-APPLY plan for the preserved pre-W10 install: 42 exact retired-framework targets, no competing-consumer evidence, and all five redscript paths protected.
+W11.1 / issue #64 / PR #65 remains important provenance: its attended read-only probe established a `SAFE-TO-APPLY` plan for the preserved pre-W10 install with 42 exact retired-framework targets, no competing-consumer evidence, and all five redscript paths protected. That historical proof must not be discarded or misrepresented even though later release work has moved beyond W11.
 
-P01.2 owns the next controlled local transition and combined candidate cycle. Issue #66 separately tracks cross-cutting operator-bootstrap hardening; it is not a reason to reopen W11 or delay its already-proven plan-bound cleanup path.
+The current active worker assignment is recorded in `docs/THREAD-LEDGER.md` and GitHub, not frozen into this roadmap. At this revision it is **W15.2 / issue #74 / PR #75**, implementing managed operator evidence lifecycle on `agent/operator-evidence-lifecycle`. W15.2 is the second sequential assignment in the existing W15 worker conversation; W15.1 is already merged.
 
-Do not reactivate an older merged branch merely because its acceptance issue remains open. The open acceptance issues below are parent-attended gates unless a new failure creates a fresh worker goal.
+P01.2 owns merge, durable evidence ingestion, and any real local recovery/cleanup/candidate execution after the worker returns. Do not reactivate an older merged branch merely because its acceptance issue remains open.
 
-## Accepted REDmod foundation and current integrated feature state
+## Accepted REDmod foundation and integrated feature state
 
-The first integrated REDmod milestone built from `8cf045664b5e4d8b4b014edfc98bf2f8eb270ba5` established that official REDmod recognized Biology and could complete a real five-stage deployment after explicit-root handling was repaired. That artifact later exposed the attended UI/runtime/presentation failures that became issues #39, #40, and #41; those implementations have since been merged and remain awaiting direct attended re-acceptance.
+The first integrated REDmod milestone built from `8cf045664b5e4d8b4b014edfc98bf2f8eb270ba5` established official REDmod recognition/deployment and exposed the attended UI/runtime/presentation findings that became issues #39, #40, and #41. Their implementations are merged and remain parent-attended acceptance gates.
 
-W09.1 / PR #62 is merged:
+The pre-W10 transition provenance remains source `7e61724071b8c95ba5c334ab9e8d11c43381c94e`. W11 retired Mod Settings / ArchiveXL / RED4ext while preserving redscript and shared roots. W09 repaired the missing official REDmod output directory boundary. W10 made settings self-contained. W13 added the standalone cybercmd REDscript startup executor and guarded shared-loader installation. W14 repaired collision-safe create execution and added exact failed-install recovery. W15.1 repaired safe ZIP directory-entry validation.
 
-- `tools/Deploy-BiologyRedmod.ps1` now creates only a missing `<game>/r6/cache/modded` directory immediately before official REDmod deployment;
-- it never clears shared cache contents or synthesizes generated REDmod output;
-- issue #59 remains open until the repaired official REDmod 2.31 path is directly attended-passed.
+The current W15.2 release lane does **not** redesign those systems. It changes how operator evidence survives between attended steps so recovery/cleanup can be exact without relying on a user remembering arbitrary loose files.
 
-W10.1 / PR #63 is merged:
+## Current installed-state caveat
 
-- REDlauncher/REDmod is the sole public whole-mod activation boundary;
-- the only normal in-game preference is the save-backed E3 HUD/nameplates Boolean edited through Biology-owned UI;
-- Mod Settings, ArchiveXL, and RED4ext are removed from production release/build/install architecture;
-- redscript is the only retained bundled generic runtime dependency;
-- source/CI do not constitute live persistence or launcher-OFF acceptance.
+The attended W14/W15 sequence produced a failed first install from exact source `04d4c1584df4b0823e093422b98cf4c5575c7b19`. The candidate ZIP that W14's original recovery path expected was later absent. W15.1 proved recovery correctly failed closed before mutation rather than guessing.
 
-W11.1 / PR #65 is merged:
+W15.2 therefore provides a bounded current-state path that does **not** ask the user to recreate the missing ZIP: repo-backed legacy evidence may authorize removal only of empty, safely attributable Biology-owned roots after proving known ambiguous package files are absent. Any file or other ambiguity fails closed. Future candidate operations capture exact schema-2 payload/hash evidence so an old candidate ZIP is no longer the sole recovery proof source.
 
-- the transition is receipt/hash/baseline/consumer driven and fails closed;
-- the mutator can delete only the exact plan-bound retired Mod Settings / ArchiveXL / RED4ext files after revalidation;
-- redscript is explicitly preserved and reverified;
-- shared roots are never recursively deleted;
-- the successful attended read-only probe found the preserved install SAFE-TO-APPLY with 42 exact retirement candidates and no competing-consumer evidence;
-- actual cleanup execution remains P01.2-owned.
-
-The integrated Biology shell/runtime/presentation/uninstaller repairs from the earlier attended follow-ups are also on main. Issues #39, #40, #41, and #44 stay open only for their remaining attended acceptance.
-
-## Installed-game caveat before the next candidate
-
-Do **not** assume the user's current Cyberpunk installation already reflects the W09+W10 package merely because W11 is merged.
-
-The game still reflects the pre-W10 candidate/dependency footprint until P01.2 executes and verifies the approved W11 transition plan. The old candidate bundled Mod Settings / ArchiveXL / RED4ext, and its player uninstaller intentionally preserved generic/shared dependencies.
-
-The W11 read-only evidence now proves a narrower cleanup is safe for this preserved state. A full Cyberpunk reinstall is therefore not the default next action. P01.2 must use the exact plan-bound transition path rather than blindly overlaying the new package or broadly deleting framework roots.
+A full Cyberpunk reinstall is not the default response to this evidence gap. P01.2 must use the exact repo-backed recovery/cleanup path after W15.2 is reviewed and merged.
 
 ## Open attended acceptance
 
-### #59 — repaired REDmod post-uninstall deploy
-
-Parent must directly prove the W09-repaired official REDmod 2.31 deployment completes all stages on the exact integrated candidate.
-
 ### #44 — launcher OFF / hard uninstall contract
 
-Parent must prove:
-
-- REDlauncher ON -> Biology active;
-- REDlauncher OFF -> Biology inactive/native behavior;
-- no legacy Mod Settings blank row;
-- no Biology-caused ArchiveXL/RED4ext/Mod Settings warning/footprint in the new package;
-- `Uninstall Biology.exe` remains safe and reinstall-after-uninstall remains reliable.
+Parent must ultimately prove REDlauncher ON/OFF behavior, absence of retired framework/provider residue, safe hard uninstall, and reliable reinstall through the current guarded release path.
 
 ### #39 — Biology shell/navigation
 
@@ -101,21 +71,22 @@ Parent must prove the authoritative body runtime exists in a live valid session,
 
 ### #40 — E3 presentation
 
-Parent must prove E3 ON is visibly unmistakable in ordinary gameplay, including the previously missing random civilian ambient nameplate and incomplete police/combatant treatment; the Biology-owned preference persists; E3 OFF removes only E3-specific presentation; and the modern scanner/quickhack interface remains native.
+Parent must prove E3 ON is visibly unmistakable in ordinary gameplay, including civilian ambient nameplates and intended police/combatant treatment; the Biology-owned preference persists; E3 OFF removes only E3-specific presentation; and the modern scanner/quickhack interface remains native.
 
 ## Next integration cycle
 
 ```text
-approved W11 SAFE-TO-APPLY plan
-        -> P01.2 plan-bound cleanup + cleanup evidence
+W15.2 / PR #75 worker return
+        -> P01.2 review + merge if sound
+        -> durable repo-backed operator evidence available by stable evidence ID
+        -> parent-owned bounded recovery of the preserved failed-install state
+        -> repo-confirmed local evidence/artifact cleanup when eligible
         -> exact canonical-main supported-game compile/build
         -> one release-shaped Biology artifact
-        -> install exact artifact
-        -> official W09-repaired REDmod deploy
-        -> durable artifact/deploy evidence
-        -> attended launcher ON/OFF + Biology UI/runtime + E3 persistence/presentation + scanner checks
-        -> durable docs/test-runs record
-        -> close accepted issues or route any materially new failure to a fresh lane
+        -> guarded install + official REDmod deploy
+        -> one attended launcher/runtime/UI/presentation acceptance cycle
+        -> durable docs/test-runs + docs/operator-evidence records
+        -> close accepted issues or route materially new findings
 ```
 
 Do not ask the user to install/play worker branches by default. The parent coordinates one coherent canonical artifact.
@@ -126,7 +97,7 @@ The original pre-REDmod clean-room evidence remains in:
 
 - `docs/PRE-REDMOD-LIVE-BASELINE-2026-09-15.md`
 
-Exact attended REDmod/deploy evidence lives under:
+Exact attended REDmod/deploy/recovery evidence lives under:
 
 - `docs/test-runs/`
 
