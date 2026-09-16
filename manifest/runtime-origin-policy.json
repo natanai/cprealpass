@@ -33,13 +33,15 @@
   "runtimeOwnership": {
     "gameplayAndPresentationRequiredOrigin": "project-original",
     "allowedInfrastructureClass": "generic-framework",
-    "frameworkRule": "A framework may expose APIs, script loading, data loading, UI primitives or input plumbing. It may not supply the body, combat, injury, armor, presentation or progression behavior that defines Biology.",
+    "frameworkRule": "A framework may expose APIs, script loading, data loading, UI primitives or input/startup plumbing. It may not supply the body, combat, injury, armor, presentation or progression behavior that defines Biology.",
     "referenceRule": "Third-party gameplay/presentation mods may be studied and retained as provenance/reference records, but their scripts, archives, tweak payloads and assets may not be required by or packaged into the standalone Biology runtime. The E3 visual target must therefore be recreated in Biology-owned code/assets rather than executed from the source mod."
   },
   "genericInfrastructure": {
     "requiredForCurrentOwnedCandidate": [
-      "redscript"
+      "redscript",
+      "cybercmd"
     ],
+    "redscriptStartupBoundary": "redscript supplies SCC and r6/config/cybercmd/scc.toml; standalone cybercmd executes the existing InvokeScc startup task and regenerates r6/cache/modded/final.redscripts when RED4ext/CET are intentionally absent. cybercmd is plumbing only and never activation/gameplay authority.",
     "removedBySelfContainedSettings": [
       "mod-settings",
       "archivexl",
@@ -83,7 +85,7 @@
     "Development gates are not player preferences and must not become a release configuration menu.",
     "A development candidate advertised as owned-runtime must fail closed if Dark Future, Project E3, Mod Settings, ArchiveXL or RED4ext executing content is present in its production deployment manifest.",
     "A development candidate advertised as owned-runtime must preserve vanilla item/system identity and reject inherited source-mod item renames.",
-    "The current owned candidate may stage only redscript as generic runtime infrastructure; adding another framework requires a concrete current consumer and synchronized contract change.",
+    "The current owned candidate may stage only redscript plus standalone cybercmd as generic runtime infrastructure; cybercmd is limited to executing redscript's startup compilation task. Any additional framework requires a concrete current consumer and synchronized contract change.",
     "Reference recipes may remain in the repository for historical provenance but may not feed the standalone owned-runtime builder.",
     "No source-mod save state may be required to initialize a clean Biology save/runtime."
   ],
