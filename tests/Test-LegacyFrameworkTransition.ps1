@@ -113,15 +113,19 @@ try {
     Assert-True (-not (Test-Path -LiteralPath (Join-Path $f.Game 'red4ext/plugins/mod_settings/mod_settings.dll'))) 'Exact Mod Settings payload was not removed.'
 } finally { Cleanup-Fixture $f }
 
-# Change after planning is fail-closed at the deletion boundary.
+# Change after planning is fail-closed before the first target is removed.
 $f = New-Fixture
 try {
     $p = Plan $f
     $target = Join-Path $f.Game 'red4ext/plugins/mod_settings/mod_settings.dll'; Write-Utf8 $target 'changed-after-plan'
+    $earlierRed4ext = Join-Path $f.Game 'red4ext/RED4ext.dll'
+    $earlierArchiveXl = Join-Path $f.Game 'red4ext/plugins/ArchiveXL/ArchiveXL.dll'
     $threw = $false
     try { Invoke-LegacyRetiredFileRemoval -GameRoot $f.Game -DeletionCandidates @($p.deletionCandidates) -ProtectedDirectories @((Get-Content -Raw -LiteralPath $f.Contract | ConvertFrom-Json).protectedDirectories) } catch { $threw = $true }
     Assert-True $threw 'Executor should reject a file changed after planning.'
     Assert-True (Test-Path -LiteralPath $target -PathType Leaf) 'Changed file should remain after fail-closed rejection.'
+    Assert-True (Test-Path -LiteralPath $earlierRed4ext -PathType Leaf) 'Preflight failure partially removed RED4ext before detecting a later changed target.'
+    Assert-True (Test-Path -LiteralPath $earlierArchiveXl -PathType Leaf) 'Preflight failure partially removed ArchiveXL before detecting a later changed target.'
 } finally { Cleanup-Fixture $f }
 
 $probeSource = Get-Content -Raw -LiteralPath (Join-Path $project 'tools/Bootstrap-LegacyFrameworkTransitionProbe.ps1')
