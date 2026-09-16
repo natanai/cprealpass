@@ -279,7 +279,11 @@ function Invoke-LegacyRetiredFileRemoval {
         [Parameter(Mandatory=$true)][string[]]$ProtectedDirectories
     )
     $game = [IO.Path]::GetFullPath($GameRoot)
-    $parents = [Collections.Generic.List[string]]::new()
+    $validated = [Collections.Generic.List[object]]::new()
+
+    # Complete a second exact-hash preflight for the full deletion set before the
+    # first mutation. A stale/changed late target therefore cannot cause a
+    # partially applied transition merely because earlier targets were valid.
     foreach ($entry in @($DeletionCandidates)) {
         $relative = Assert-LegacyRelativePath ([string]$entry.path)
         $full = Resolve-LegacySafeChildPath $game $relative
@@ -288,8 +292,13 @@ function Invoke-LegacyRetiredFileRemoval {
         if ($expected -notmatch '^[A-F0-9]{64}$') { throw "Invalid planned SHA-256: $relative" }
         $actual = Get-LegacySha256 $full
         if ($actual -ne $expected) { throw "Planned file changed before deletion: $relative" }
-        Remove-Item -LiteralPath $full -Force
-        $parents.Add((Split-Path -Parent $full))
+        $validated.Add([pscustomobject]@{ path=$relative; full=$full })
+    }
+
+    $parents = [Collections.Generic.List[string]]::new()
+    foreach ($target in @($validated.ToArray())) {
+        Remove-Item -LiteralPath $target.full -Force
+        $parents.Add((Split-Path -Parent $target.full))
     }
     Remove-LegacyEmptyParentDirectories -GameRoot $game -StartDirectories @($parents.ToArray()) -ProtectedDirectories $ProtectedDirectories
 }
