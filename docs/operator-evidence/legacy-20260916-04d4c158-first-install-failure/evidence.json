@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "product": "Biology",
+  "evidenceId": "legacy-20260916-04d4c158-first-install-failure",
+  "operation": "post-transition-candidate-failed-install",
+  "createdUtc": "2026-09-16T00:00:00Z",
+  "sourceRevision": "04d4c1584df4b0823e093422b98cf4c5575c7b19",
+  "result": "FAIL-CLOSED",
+  "proofBoundary": "Curated from parent-reviewed W14/W15 handoffs and attended test record. Authorizes only absent-file plus empty Biology-owned-root recovery; it does not reconstruct or assert the missing historical payload manifest.",
+  "game": {
+    "productVersion": "2.31"
+  },
+  "artifact": {
+    "name": "biology-integrated-20260916-144813-04d4c1584df4.zip",
+    "sha256": "76A86A77A3C7AE36306B203C7946B88C5D56E1F7B0689489DA7EAF6D8783C796",
+    "bytes": 1979796,
+    "buildId": "biology-integrated-20260916-144813-04d4c1584df4"
+  },
+  "install": {
+    "failedCandidateReportSha256": "9709493A5D4C36F5960CAE2BF09781F664CEA32EB949A85375E44F2F7E943A1E",
+    "preflightPassed": true,
+    "gameMutationStarted": true,
+    "installedReceiptVerified": false,
+    "redmodDeploymentPassed": false,
+    "failureBoundary": "first-mutating-installer-action"
+  },
+  "recovery": {
+    "mode": "empty-owned-roots-only",
+    "eligible": true,
+    "ownedRoots": [
+      "mods/Biology",
+      "r6/scripts/CyberpunkRealism",
+      "biology"
+    ],
+    "mustBeAbsentFiles": [
+      "BIOLOGY-VERSION.txt",
+      "Install Biology.ps1",
+      "BiologyReleaseInstall.Core.ps1",
+      "INSTALL.txt",
+      "UNINSTALL.txt",
+      "Uninstall Biology.exe",
+      "SHA256SUMS.txt"
+    ]
+  },
+  "cleanup": {
+    "artifactRootName": null,
+    "artifactZipName": null,
+    "packageRootName": null
+  },
+  "handoff": {
+    "bundleName": "repository-curated-legacy-record",
+    "reportSha256": "052FEB8A3C2895B046FB30E46B0FFDB8C16E4B665D299E3008A06A8088BE5FA3"
+  },
+  "sourceRecords": [
+    "docs/handoffs/W14-RELEASE-INSTALLER-CREATE-REPAIR.md",
+    "docs/handoffs/W15-FAILED-INSTALL-RECOVERY-ZIP-VALIDATION.md",
+    "docs/test-runs/2026-09-16-bf20fe1f-failed-install-recovery-evidence-gap.md"
+  ]
+}

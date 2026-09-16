@@ -6,7 +6,37 @@ Biology uses two deliberately different evidence tiers. A green cloud run is not
 
 `Run-CI.ps1` is the authoritative Tier 1 runner. Every listed test must reproduce from a fresh checkout using only tracked project-original source, contracts and fixtures. It must not require the Cyberpunk installation, user saves, generated deployment state, third-party source trees, network acquisition, unattended game launch, background services, watchers, recorders or scheduled jobs.
 
-Tier 1 covers model invariants, contracts, runtime-origin policy, native-seam confinement, package policy and source-level orchestration safety. Passing Tier 1 means the source is internally coherent enough to proceed to local gates; it does not prove native compilation, rendering or gameplay behavior.
+Tier 1 covers current model invariants, contracts, runtime-origin policy, native-seam confinement, package policy, operator workflow safety, and CI-suite hygiene. Passing Tier 1 means the current source is internally coherent enough to proceed to local gates; it does not prove native compilation, rendering or gameplay behavior.
+
+`Test-CiSuiteHygiene.ps1` makes the suite inventory explicit: `Run-CI.ps1` may not contain duplicate entries, every listed test must exist, and every `Test-*.ps1` intentionally excluded from the current cloud suite must be named below with a reason.
+
+## Intentional non-cloud / local-only tests
+
+These files are retained intentionally outside `Run-CI.ps1`; they are not silently orphaned. Some are true local gates, while others are legacy/developer compatibility fixtures retained for provenance rather than current Tier 1 authority.
+
+### Local/native or generated-state gates
+
+- `Test-AttendedBuilder.ps1` — local attended-builder compatibility exercise that depends on local build/test context rather than the pure public-source cloud contract.
+- `Test-BodyAttendedProfile.ps1` — attended/local body-profile helper validation, not a standalone cloud gate.
+- `Test-BodyProfile.ps1` — profile-oriented local/developer check retained outside the canonical cloud suite.
+- `Test-CompileGuard.ps1` — exact-compilation guard tied to installed Cyberpunk compiler/game inputs; cloud CI cannot claim this proof.
+- `Test-Deployment.ps1` — deployment-oriented check requiring installed game/deployment state; official REDmod deployment remains a local/attended gate.
+- `Test-IntegrationBundle.ps1` — legacy integration-bundle roundtrip requires generated bundle receipts plus installed Cyberpunk/RED4ext fixture files; it is not reproducible from a fresh public checkout alone.
+- `Test-ModernScanner.ps1` — parameterized legacy archive/integration check that depends on generated candidate manifests/archive reports; current scanner ownership is enforced by the canonical E3/runtime tests instead.
+
+### Retained legacy/developer compatibility fixtures
+
+- `Test-InjuryAuthority.ps1` — pre-consolidation Dark Future injury handover fixture retained for migration provenance; current Biology injury/body ownership is covered by the canonical injury/body/runtime suite.
+- `Test-NativeProfileMappings.ps1` — developer translation fixture for native record mappings; current cloud authority is the maintained ballistic/combat/native-seam contract suite.
+- `Test-RealpassDelivery.ps1` — superseded pre-Biology RealPass delivery-path regression retained only as historical compatibility evidence.
+- `Test-RealpassE3.ps1` — superseded RealPass-era E3 fixture retained for historical comparison; current E3 authority is `Test-E3OwnedPresentation.ps1` and related package/runtime contracts.
+- `Test-RealpassInteractions.ps1` — superseded RealPass-era interaction fixture retained for historical comparison; current interaction/body contracts are covered by the Biology-owned suite.
+- `Test-RealpassNameplates.ps1` — superseded RealPass-era nameplate fixture retained for historical comparison; current authority is `Test-OwnedNameplates.ps1` plus `Test-E3OwnedPresentation.ps1`.
+- `Test-SleepClamp.ps1` — older focused sleep-clamp developer fixture retained for regression archaeology; current sleep policy is exercised by `Test-SleepFatigue.ps1`, `Test-ClockModel.ps1`, and body interaction tests.
+- `Test-SourcePatch.ps1` — legacy source-patch/deployment developer fixture retained for provenance; it is not part of the current REDmod-first source/package path.
+- `Test-Upgrade.ps1` — legacy managed-deployment upgrade fixture retained for rollback/transition archaeology; current release installation/recovery authority is the W14/W15 release safety and operator-evidence suite.
+
+If another `Test-*.ps1` is intentionally kept outside cloud CI, add it here in the same change that creates/excludes it and state why. If it is reproducible from public source and should be a normal current contract, add it to `Run-CI.ps1` instead.
 
 ## Tier 2 — local compatibility / attended acceptance
 

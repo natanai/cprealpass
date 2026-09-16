@@ -7,6 +7,7 @@ if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'Run-CI.ps1 requires PowerShe
 # Build-BiologyPackage.ps1 rather than a cloud-CI claim.
 $tests = @(
     'Test-PowerShellSyntax.ps1',
+    'Test-CiSuiteHygiene.ps1',
     'Test-ActiveGuidanceHygiene.ps1',
     'Test-ThreadLedger.ps1',
     'Test-BiologyProductDirection.ps1',
@@ -30,6 +31,7 @@ $tests = @(
     'Test-RedscriptStartupRuntime.ps1',
     'Test-BiologyReleaseInstallSafety.ps1',
     'Test-BiologyFailedInstallRecoveryZipSafety.ps1',
+    'Test-OperatorEvidenceLifecycle.ps1',
     'Test-RedmodActivationSentinelContract.ps1',
     'Test-IntegratedBiologyPackage.ps1',
     'Test-PlayerDisableContract.ps1',
