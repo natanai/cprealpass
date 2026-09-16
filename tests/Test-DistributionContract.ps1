@@ -4,7 +4,7 @@ $path = Join-Path $project 'manifest/distribution.json'
 if (-not (Test-Path -LiteralPath $path)) { throw 'Missing manifest/distribution.json' }
 
 $distribution = Get-Content -Raw -LiteralPath $path | ConvertFrom-Json
-if ($distribution.schemaVersion -ne 2 -or $distribution.product -ne 'Biology') { throw 'Unexpected Biology distribution contract.' }
+if ($distribution.schemaVersion -ne 3 -or $distribution.product -ne 'Biology') { throw 'Unexpected Biology distribution contract.' }
 if ($distribution.target.experience -ne 'one-download-normal-launch') { throw 'Release UX target drifted.' }
 if ($distribution.target.preferredInstall -ne 'game-root-shaped-redmod-first-zip') { throw 'Distribution is not REDmod-first.' }
 if ($distribution.target.officialPackageIdentity -ne 'mods/Biology') { throw 'Official Biology REDmod package identity drifted.' }
@@ -12,58 +12,41 @@ if ($distribution.target.canonicalBuilder -ne 'tools/Build-BiologyPackage.ps1') 
 if ($distribution.target.specialLauncherRequiredAfterInstall -ne $false) { throw 'Biology must not require a permanent special launcher.' }
 if ($distribution.target.vanillaPlayTarget -notmatch '(?i)Enable mods OFF') { throw 'Distribution lost launcher-off vanilla-play target.' }
 if ($distribution.target.hardUninstallTarget -notmatch 'Uninstall Biology\.exe') { throw 'Distribution lost self-contained hard-uninstall target.' }
-if ($distribution.releaseGate.publicPlayableArtifactReady -ne $false) { throw 'Public playable artifact must remain gated until direct live/release acceptance.' }
-if ($distribution.releaseGate.candidatePlayableAfterExactCompile -ne $true) { throw 'Integrated exact-compiled candidate is not distinguished from public release acceptance.' }
-if ($distribution.releaseGate.foundationEvidence -notmatch '(?i)REDmod recognition' -or $distribution.releaseGate.foundationEvidence -notmatch '(?i)five-stage') {
-    throw 'Distribution contract forgot the already-proven REDmod foundation evidence.'
-}
-if ($distribution.releaseGate.reason -match '(?i)recognition/deployment.*blocked|Lane B|Lane C') {
-    throw 'Distribution release reason still describes superseded pre-attended blockers/lanes.'
-}
+if ($distribution.releaseGate.publicPlayableArtifactReady -ne $false -or $distribution.releaseGate.candidatePlayableAfterExactCompile -ne $true) { throw 'Distribution release gating drifted.' }
+if ($distribution.releaseGate.foundationEvidence -notmatch '(?i)REDmod recognition' -or $distribution.releaseGate.foundationEvidence -notmatch '(?i)five-stage') { throw 'Distribution contract forgot proven REDmod foundation evidence.' }
 
 $components = @{}
 foreach ($component in @($distribution.components)) {
     if ([string]::IsNullOrWhiteSpace($component.id)) { throw 'Distribution component without id.' }
     if ($components.ContainsKey($component.id)) { throw "Duplicate distribution component: $($component.id)" }
     $components[$component.id] = $component
-    if ([string]::IsNullOrWhiteSpace($component.artifactPolicy) -or [string]::IsNullOrWhiteSpace($component.status)) { throw "Incomplete distribution policy: $($component.id)" }
 }
-foreach ($required in @('biology-project-original','redscript','red4ext','archivexl','mod-settings','tweakxl','codeware','input-loader','darkfuture','project-e3-hud','cyberpunk-game-files')) {
+foreach ($required in @('biology-project-original','redscript','tweakxl','codeware','input-loader','darkfuture','project-e3-hud','cyberpunk-game-files')) {
     if (-not $components.ContainsKey($required)) { throw "Distribution component missing: $required" }
 }
-foreach ($id in @('biology-project-original','redscript')) {
-    if ($components[$id].status -ne 'allowed') { throw "Direct Biology/runtime component is not allowed: $id" }
+foreach ($retired in @('mod-settings','archivexl','red4ext')) {
+    if ($components.ContainsKey($retired)) { throw "Retired settings-stack component still appears as an active distribution component: $retired" }
+    if (@($distribution.removedDependencies) -notcontains $retired) { throw "Retired dependency is not recorded as removed: $retired" }
 }
-foreach ($id in @('red4ext','archivexl','mod-settings')) {
-    if ($components[$id].status -ne 'temporary' -or $components[$id].artifactPolicy -notmatch 'temporarily') { throw "Settings-chain component is not explicitly temporary: $id" }
-}
-if ($components['redscript'].notes -notmatch '(?i)additive|wrapper') { throw 'redscript retention lost its seam-specific rationale.' }
-if ($components['mod-settings'].notes -notmatch '(?i)provider-neutral' -or $components['mod-settings'].notes -match '(?i)Lane C') {
-    throw 'Mod Settings temporary-provider rationale is stale or incomplete.'
-}
-if ($components['red4ext'].notes -notmatch '#44|launcher|REDmod is disabled') { throw 'Supplemental framework activation audit is not reflected in distribution policy.' }
-foreach ($id in @('tweakxl','codeware','input-loader')) {
-    if ($components[$id].status -ne 'not-required') { throw "Unneeded framework appears required by Biology: $id" }
-}
-foreach ($id in @('darkfuture','project-e3-hud','cyberpunk-game-files')) {
-    if ($components[$id].status -ne 'blocked') { throw "Forbidden runtime component is not blocked: $id" }
-}
-if ($components['project-e3-hud'].notes -notmatch '#40' -or $components['project-e3-hud'].notes -match 'PR #33') { throw 'Project E3 distribution note does not reflect the current reference-only presentation follow-up.' }
+foreach ($id in @('biology-project-original','redscript')) { if ($components[$id].status -ne 'allowed') { throw "Direct Biology/runtime component is not allowed: $id" } }
+if ($components['redscript'].notes -notmatch '(?i)additive|wrapper' -or $components['redscript'].notes -notmatch '(?i)preference|ScriptableSystem') { throw 'redscript retention lost its exact settings/runtime consumer rationale.' }
+foreach ($id in @('tweakxl','codeware','input-loader')) { if ($components[$id].status -ne 'not-required') { throw "Unneeded framework appears required: $id" } }
+foreach ($id in @('darkfuture','project-e3-hud','cyberpunk-game-files')) { if ($components[$id].status -ne 'blocked') { throw "Forbidden runtime component is not blocked: $id" } }
 if ($components['cyberpunk-game-files'].artifactPolicy -ne 'never-bundle') { throw 'Game files must never enter a Biology artifact.' }
 
 $forbidden = @($distribution.forbiddenArtifactPatterns)
-foreach ($pattern in @('Cyberpunk2077.exe','final.redscripts','UserSettings.json','*.sav','vendor/**','ReferenceMods/**')) {
+foreach ($pattern in @('Cyberpunk2077.exe','final.redscripts','UserSettings.json','*.sav','vendor/**','ReferenceMods/**','red4ext/plugins/mod_settings/**','red4ext/plugins/ArchiveXL/**','red4ext/RED4ext.dll','bin/x64/winmm.dll')) {
     if ($forbidden -notcontains $pattern) { throw "Forbidden artifact pattern missing: $pattern" }
 }
 $mustPass = @($distribution.releaseGate.mustPass)
-foreach ($gate in @('integrated-exact-redscript-compile-2.31','redmod-recognition-and-deploy','redmod-enable-disable-relaunch-persistence','launcher-off-biology-inactive','self-contained-hard-uninstall','clean-uninstall-reset','redmod-overlap-precedence-probe','native-body-acceptance','native-presentation-acceptance','artifact-hash-and-content-verification')) {
+foreach ($gate in @('integrated-exact-redscript-compile-2.31','redmod-recognition-and-deploy','redmod-enable-disable-relaunch-persistence','launcher-off-biology-inactive','self-contained-e3-preference-persistence','self-contained-hard-uninstall','clean-uninstall-reset','redmod-overlap-precedence-probe','native-body-acceptance','native-presentation-acceptance','artifact-hash-and-content-verification')) {
     if ($mustPass -notcontains $gate) { throw "Release gate missing: $gate" }
 }
 $requirements = $distribution.artifactRequirements -join ' '
-foreach ($requiredText in @('mods/Biology','project-original','redscript','RED4ext','ArchiveXL','Mod Settings','SHA-256','Uninstall Biology.exe')) {
-    if ($requirements -notmatch [regex]::Escape($requiredText)) { throw "Distribution artifact requirements lost required current contract text: $requiredText" }
+foreach ($requiredText in @('mods/Biology','project-original','redscript','ScriptableSystem','Uninstall Biology.exe','SHA-256')) {
+    if ($requirements -notmatch [regex]::Escape($requiredText)) { throw "Distribution artifact requirements lost current contract text: $requiredText" }
 }
-if ($requirements -notmatch '(?i)licenses.*third-party notices') { throw 'Bundled generic dependencies do not require license/notice inclusion.' }
+if ($requirements -notmatch '(?i)Mod Settings.*ArchiveXL.*RED4ext.*not release dependencies') { throw 'Distribution does not state the settings-stack exit.' }
 if ($requirements -notmatch '(?i)not live acceptance') { throw 'Distribution contract conflates source/build success with live acceptance.' }
 
-Write-Host "PASS: Biology distribution contract records the proven REDmod foundation, current temporary dependency chain, launcher-off target, hard-uninstall target, and blocked reference/game payload."
+Write-Host 'PASS: Biology distribution is REDmod-first, redscript-only for generic runtime, self-contained for settings, and explicitly excludes the retired Mod Settings/ArchiveXL/RED4ext stack.'
