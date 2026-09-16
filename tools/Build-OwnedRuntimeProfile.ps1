@@ -16,17 +16,15 @@ if ((Test-Path -LiteralPath $output) -or (Test-Path -LiteralPath $report)) {
     throw 'Build ID already exists; owned runtime profiles are immutable. Use a new BuildId.'
 }
 
-# Generic plumbing only. Mod Settings is present because the accepted public surface
-# contains exactly two Boolean controls: the global RealPass master switch and the
-# presentation-only E3 HUD/nameplate visual preference. ArchiveXL is a declared
-# dependency of the pinned Mod Settings release. None of these components owns
-# RealPass simulation policy.
-$genericIds = @('red4ext','redscript','archivexl','mod-settings')
+# redscript is the only retained generic runtime component. Biology's remaining
+# player preference is save-backed by its own ScriptableSystem and edited from its
+# own body shell, so Mod Settings/ArchiveXL/RED4ext are neither acquired nor staged.
+$genericIds = @('redscript')
 & "$PSScriptRoot\Acquire-Components.ps1" -ComponentIds $genericIds
-if ($LASTEXITCODE -ne 0) { throw 'Generic framework acquisition/verification failed.' }
-& "$PSScriptRoot\Stage-Components.ps1" -Profile 'm1-owned-settings'
-if ($LASTEXITCODE -ne 0) { throw 'Generic framework staging failed.' }
-$genericManifestPath = Resolve-SafeChildPath $project 'manifest/m1-owned-settings.deployment.json'
+if ($LASTEXITCODE -ne 0) { throw 'Retained generic framework acquisition/verification failed.' }
+& "$PSScriptRoot\Stage-Components.ps1" -Profile 'biology-runtime'
+if ($LASTEXITCODE -ne 0) { throw 'Retained generic framework staging failed.' }
+$genericManifestPath = Resolve-SafeChildPath $project 'manifest/biology-runtime.deployment.json'
 $genericManifest = Get-Content -Raw -LiteralPath $genericManifestPath | ConvertFrom-Json
 
 $unexpected = @($genericManifest.files | Where-Object { [string]$_.component -notin $genericIds })
@@ -69,10 +67,10 @@ foreach ($entry in @($genericManifest.files) + @($coreManifest.files)) {
     })
 }
 
-# Source/reference gameplay or presentation hosts remain forbidden. Mod Settings is
-# no longer forbidden because it is now an explicitly accepted generic UI/persistence
-# provider; it must still never own RealPass gameplay policy.
-foreach ($forbidden in @('darkfuture','dark future','project e3','project-e3','input-loader')) {
+# Source/reference gameplay or presentation hosts and the retired settings stack are
+# forbidden from the deployable profile. This fail-closed check makes accidental
+# reintroduction visible even if a future staging profile drifts.
+foreach ($forbidden in @('darkfuture','dark future','project e3','project-e3','input-loader','mod-settings','mod_settings','archivexl','archive xl','red4ext')) {
     $hit = @($files | Where-Object { ([string]$_.component).ToLowerInvariant().Contains($forbidden) -or ([string]$_.destination).ToLowerInvariant().Contains($forbidden) })
     if ($hit.Count -gt 0) { throw "Forbidden runtime content leaked into owned profile: $($hit[0].destination)" }
 }
@@ -92,7 +90,7 @@ Write-JsonFile $manifest $output
 if ($LASTEXITCODE -ne 0) { throw 'Final owned runtime profile failed exact compilation.' }
 
 $record = [ordered]@{
-    schemaVersion = 1
+    schemaVersion = 2
     buildId = $BuildId
     generatedAtUtc = [DateTime]::UtcNow.ToString('o')
     gameVersion = $manifest.gameVersion
@@ -100,11 +98,13 @@ $record = [ordered]@{
     diagnosticsEnabled = [bool]$Diagnostics
     genericComponents = $genericIds
     sourceModsRequired = @()
-    settingsProvider = 'mod-settings'
+    settingsProvider = 'biology-owned-save-state'
+    publicPreferences = @('presentation.e3-first-person-hud-visuals')
+    activationAuthority = 'REDmod launcher sentinel'
     coreBuildId = $coreBuildId
     fileCount = $files.Count
     manifestPath = $outputRelative
-    scope = 'Deployable development profile containing project-original RealPass runtime plus pinned RED4ext/redscript/ArchiveXL/Mod Settings plumbing. Mod Settings provides the global RealPass master switch and presentation-only E3 visual preference; no subsystem or balance controls. No Dark Future, Project E3 or Input Loader runtime content. Does not deploy or launch the game.'
+    scope = 'Deployable Biology runtime containing project-original REDscript plus pinned redscript only. The E3 presentation preference is persisted by Biology save state and edited in Biology-owned UI. No Mod Settings, ArchiveXL, RED4ext, Dark Future, Project E3 or Input Loader runtime content. Does not deploy or launch the game.'
 }
 Write-JsonFile $record $report
 Write-Host "PASS: deployable owned runtime profile $BuildId compiled with $($files.Count) files. Nothing was deployed or launched."
