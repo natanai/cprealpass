@@ -37,90 +37,83 @@ public final func CRBiologyDetailSurfaceActive() -> Bool {
 private final func CRBiologyNativeDetailReady() -> Bool {
   // SpawnMinigrids is asynchronous. Stock Cyberware does not finish its native
   // category layout until all ten minigrids exist and InitializeEquipmentMinigrids
-  // has run from the tenth OnMinigridSpawned callback. Entering Biology detail before
-  // that boundary is what allowed a first-open click to inherit an uninitialized /
-  // stale anatomy target.
+  // has run from the tenth OnMinigridSpawned callback.
   return ArraySize(this.m_equipmentMinigrids) >= 10
     && IsDefined(this.m_animationController)
     && IsDefined(this.m_inventoryView)
     && IsDefined(this.m_selector);
 }
 
-@addMethod(RipperDocGameController)
-private final func CRNormalizeBiologyNativeSelectionForEntry() -> Void {
-  // Treat every Biology overview -> detail transition as a fresh native selection.
-  // The selected Biology area remains crBiologySelectedArea; these are only stock
-  // Cyberware shell markers that can otherwise survive a first-instance/previous
-  // animation state and cause DollHover/DollSelect to reuse the wrong focus target.
-  this.m_hoverArea = gamedataEquipmentArea.Invalid;
-  this.m_dollHoverArea = gamedataEquipmentArea.Invalid;
-  this.m_dollSelected = false;
-  if IsDefined(this.m_animationController) {
-    this.m_animationController.SetOutside();
-  }
-}
-
-// Gate the existing Biology select event on the same asynchronous native-shell
-// readiness that stock Cyberware receives before its complete category layout exists.
-// The wrapped handler remains the single selected-system propagation path.
-@wrapMethod(RipperDocGameController)
-protected cb func OnCRBiologyAreaSelectEvent(evt: ref<CRBiologyAreaSelectEvent>) -> Bool {
-  if this.crBiologyShellMode && !this.CRBiologyNativeDetailReady() {
-    return false;
-  }
-
-  if this.crBiologyShellMode && !this.CRBodyShellInDetail() {
-    this.CRNormalizeBiologyNativeSelectionForEntry();
-  }
-
-  let result: Bool = wrappedMethod(evt);
-  if !result || !this.CRBiologyInDetail() {
-    return result;
-  }
-
-  // Native Cyberware uses DisplayInventory(true) as part of the actual detail-depth
-  // transition. Biology previously copied only its booleans, leaving the native
-  // content controller opacity at the overview/hidden state. Reuse the transition,
-  // then suppress only Cyberware's item-list chrome.
-  this.DisplayInventory(true);
-  if IsDefined(this.m_inventoryView) {
-    this.m_inventoryView.CRSetBiologyDetailSurface(true);
-  }
-  this.AnimateMinigrids();
-
-  // The selected-system identity was already committed by the wrapped Biology path.
-  // Refresh after the native surface is open so supplied authoritative metrics/actions
-  // bind into a visible native content region on the very first Biology session.
-  this.CRRefreshBiologyDetail();
-  this.CRRefreshBiologyActions();
-  this.CRSyncBiologyContentVisibility();
-  return true;
-}
-
-// Biology Back already resets its own selected-system state and then calls the native
-// DollHover(Invalid) zoom-out path. Detect that exact native boundary while the
-// Biology detail surface is active and complete the content-depth inverse there. This
-// avoids a second Back stack and is independent of wrapper ordering around OnBack.
+// DollHover is a native Cyberware seam already used by the existing Biology path.
+// When Biology has just committed a selected area, force the native hover/animation
+// markers back to an overview baseline before stock DollHover evaluates its early-
+// return conditions. This makes the chosen crBiologySelectedArea the focus target on
+// the first Biology session as well as after repeated Back/reopen cycles.
+//
+// Biology Back clears crBiologySelectedArea and then calls DollHover(Invalid). Detect
+// that existing native boundary to close the reused content surface; no second Back
+// stack or Biology-only navigation convention is introduced.
 @wrapMethod(RipperDocGameController)
 private func DollHover(area: gamedataEquipmentArea) -> Void {
-  let closeBiologyDetail: Bool = this.crBiologyShellMode
+  let inventoryView: wref<RipperdocInventoryController> = this.m_inventoryView;
+  let enteringBiologyDetail: Bool = this.crBiologyShellMode
+    && NotEquals(this.crBiologySelectedArea, gamedataEquipmentArea.Invalid)
+    && Equals(area, this.crBiologySelectedArea)
+    && Equals(this.m_filterMode, RipperdocModes.Item)
+    && (!IsDefined(inventoryView) || !inventoryView.CRBiologyDetailSurfaceActive());
+  let closingBiologyDetail: Bool = this.crBiologyShellMode
     && Equals(area, gamedataEquipmentArea.Invalid)
-    && IsDefined(this.m_inventoryView)
-    && this.m_inventoryView.CRBiologyDetailSurfaceActive();
+    && Equals(this.crBiologySelectedArea, gamedataEquipmentArea.Invalid)
+    && IsDefined(inventoryView)
+    && inventoryView.CRBiologyDetailSurfaceActive();
+
+  if enteringBiologyDetail {
+    this.m_hoverArea = gamedataEquipmentArea.Invalid;
+    this.m_dollHoverArea = gamedataEquipmentArea.Invalid;
+    this.m_dollSelected = false;
+    if IsDefined(this.m_animationController) {
+      this.m_animationController.SetOutside();
+    }
+  }
 
   wrappedMethod(area);
 
-  if closeBiologyDetail {
-    this.m_inventoryView.CRSetBiologyDetailSurface(false);
+  if closingBiologyDetail {
+    inventoryView.CRSetBiologyDetailSurface(false);
     this.DisplayInventory(false);
     this.CRSyncBiologyNodeInteractivity(this.crBiologyShellMode && this.CRBiologyNativeDetailReady());
     this.CRSyncBiologyContentVisibility();
   }
 }
 
-// Keep the first-open Biology labels non-actionable until stock Cyberware has really
-// completed its asynchronous minigrid initialization. The select-event guard above
-// remains authoritative even if wrapper ordering briefly exposes an early label.
+// Stock Cyberware opens its content/detail controller through DisplayInventory(true)
+// immediately after DollSelect(true). Biology previously copied only the native depth
+// booleans, which left RipperdocInventoryController hidden. Reuse the same transition
+// here after the stock selection animation accepts Biology's already-committed area,
+// then suppress only Cyberware's item-list chrome. The existing Biology method that
+// called DollSelect continues immediately afterward and performs the selected-system
+// detail/action binding against crBiologySelectedArea.
+@wrapMethod(RipperDocGameController)
+private func DollSelect(select: Bool) -> Void {
+  wrappedMethod(select);
+
+  if !select
+    || !this.crBiologyShellMode
+    || Equals(this.crBiologySelectedArea, gamedataEquipmentArea.Invalid)
+    || !Equals(this.m_filterMode, RipperdocModes.Item) {
+    return;
+  }
+
+  this.DisplayInventory(true);
+  if IsDefined(this.m_inventoryView) {
+    this.m_inventoryView.CRSetBiologyDetailSurface(true);
+  }
+  this.AnimateMinigrids();
+}
+
+// Keep first-open Biology labels non-actionable until stock Cyberware has completed
+// its asynchronous minigrid initialization. Native OnMinigridSpawned remains the
+// lifecycle authority; this wrapper only synchronizes Biology label interactivity.
 @wrapMethod(RipperDocGameController)
 protected cb func OnMinigridSpawned(widget: ref<inkWidget>, userData: ref<IScriptable>) -> Bool {
   let result: Bool = wrappedMethod(widget, userData);
