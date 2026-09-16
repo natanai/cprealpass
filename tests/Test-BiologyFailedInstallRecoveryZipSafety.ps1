@@ -51,11 +51,11 @@ function Assert-ZipRejected([string]$Base,[string]$Name,[string]$Entry,[string]$
 # cloud-test action.
 $tokens = $null
 $parseErrors = $null
-$ast = [Management.Automation.Language.Parser]::ParseFile($bootstrapPath,[ref]$tokens,[ref]$parseErrors)
+$ast = [System.Management.Automation.Language.Parser]::ParseFile($bootstrapPath,[ref]$tokens,[ref]$parseErrors)
 Assert-True (@($parseErrors).Count -eq 0) ('Recovery bootstrap failed to parse: ' + ((@($parseErrors) | ForEach-Object Message) -join '; '))
 $validatorAst = $ast.Find({
     param($node)
-    $node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Assert-SafeArtifactZip'
+    $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Assert-SafeArtifactZip'
 },$true)
 Assert-True ($null -ne $validatorAst) 'Could not find Assert-SafeArtifactZip in the recovery bootstrap.'
 Invoke-Expression $validatorAst.Extent.Text
@@ -110,7 +110,7 @@ try {
     Assert-ZipRejected $temp 'drive-qualified' 'C:/drive.txt' 'rooted artifact entry'
     Assert-ZipRejected $temp 'alternate-stream' 'safe/name:stream.txt' 'rooted artifact entry'
     Assert-ZipRejected $temp 'double-separator' 'safe//file.txt' 'path segment'
-    Assert-ZipRejected $temp 'double-directory-terminator' 'safe// ' 'path segment'
+    Assert-ZipRejected $temp 'double-directory-terminator' 'safe//' 'path segment'
     Assert-ZipRejected $temp 'illegal-character' 'safe/bad?.txt' 'path segment'
     Assert-ZipRejected $temp 'trailing-dot' 'safe/trailing.' 'path segment'
     Assert-ZipRejected $temp 'trailing-space' 'safe/trailing ' 'path segment'
