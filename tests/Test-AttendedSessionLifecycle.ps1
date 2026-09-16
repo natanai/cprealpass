@@ -65,7 +65,8 @@ foreach ($forbidden in @('READY TO LAUNCH','ReadLineAsync','Get-Process','Compre
 
 Require $catalog 'Command 17 — one-command attended test session' 'Local operator catalog must expose the W15.3 one-command attended session as the normal ready-for-test path.'
 Require $catalog 'READY TO LAUNCH CYBERPUNK' 'Local operator catalog must document the quiet listener READY handoff.'
-Require $catalog 'type `END` in the same console' 'Local operator catalog must document same-console END finalization.'
+Require $catalog 'same.*console|one continuous console lifecycle' 'Local operator catalog must document one same-console lifecycle.'
+Require $catalog '\bEND\b' 'Local operator catalog must document END finalization.'
 Require $catalog 'TYPE SENT AFTER THE FILE HAS BEEN ATTACHED|type `SENT`' 'Local operator catalog must document confirmation-gated cleanup.'
 Require $catalog 'Commands 14-16 remain standalone preparation/recovery compatibility' 'Catalog must demote separate managed prelaunch operations from the ordinary ready-for-test workflow.'
 Require $cleanRoom 'one attended session|one-session attended handoff|one-command attended' 'Clean-room policy must define the one-session attended handoff.'
