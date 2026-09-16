@@ -1,75 +1,69 @@
 # Biology configuration architecture
 
-Status: **canonical public-settings contract; provider/launcher-off integration still under #44 acceptance**  
+Status: **canonical self-contained settings contract; attended persistence/launcher-off acceptance remains parent-owned**  
 Last updated: 2026-09-15
 
 ## Goal
 
-Biology is one authored physical simulation. Its normal player-facing preference surface is intentionally tiny: **at most two editable Boolean settings**.
+Biology is one authored physical simulation. Its normal in-game preference surface now contains exactly **one editable Boolean**:
 
-The semantic controls are:
-
-- **Enable Biology** — the one global master semantic boundary for the complete overhaul when a reliable live switch is retained. It is not permission to expose body/injury/combat/armor/etc. independently.
 - **E3-inspired HUD + nameplates** — presentation-only. While Biology is active, this controls the Biology-owned red/minimal E3-inspired first-person HUD and NPC-nameplate layer. It does not change body state, injury, combat, armor, pain, treatment, recovery, the Biology-wide actor-healthbar policy, or the modern scanner/quickhack interface.
 
-Internal development gates may still isolate authorities for compilation/calibration/diagnosis. They are not player preferences.
+There is no second persisted **Enable Biology** preference. REDlauncher/REDmod is the public whole-product ON/OFF boundary. Internal development gates may still isolate authorities for compilation/calibration/diagnosis; they are not player preferences.
 
-## REDlauncher disable is the ordinary vanilla-play target
+## REDlauncher is the whole-mod activation boundary
 
-The player release now distinguishes three states:
+The player release distinguishes three states:
 
-1. **REDlauncher Enable mods ON** -> Biology package/runtime active.
+1. **REDlauncher Enable mods ON** -> the Biology REDmod activation marker is present and Biology may run.
 2. **REDlauncher Enable mods OFF** -> target Biology-inactive vanilla-play behavior without uninstalling the package.
 3. **Uninstall Biology.exe** -> hard removal of safely proven Biology-owned files.
 
-Issue #44 owns direct acceptance of the launcher-off and hard-uninstall contract across REDmod plus any supplemental script/framework route.
-
-The launcher-level disable boundary is separate from the in-game/global `Enable Biology` semantic key. If a reliable live master switch remains useful, it may coexist as one whole-mod control. If maintaining it would require disproportionate invasive infrastructure, the product remains all-or-nothing and the official launcher/install boundary may carry whole-mod activation instead. Do **not** replace one global boundary with per-subsystem switches.
+`CRRealpassSettings.IsEnabled(game)` is retained as the provider-neutral runtime accessor, but it now resolves only from `CRRealpassSettings.IsLauncherActivated()`. No save-persistent Boolean can override an absent launcher marker.
 
 Disabling Biology is not permission to erase/refill persistent Biology body state or delete saves.
 
-## Provider is not product architecture
+## Biology-owned persistence and editor
 
-The settings provider is **not locked to Mod Settings**.
+The external settings-provider stack has been removed from production architecture.
 
-Current source still contains a provider-neutral Biology semantic API with a Mod Settings adapter as temporary UI/persistence plumbing. Mod Settings, ArchiveXL, and RED4ext have no permanent entitlement to survive merely because older builds used them.
+`CRRealpassSettings` remains a `ScriptableSystem` and owns one persistent field:
 
-Preferred dependency direction:
+```text
+public persistent let e3FirstPersonHudVisuals: Bool = true;
+```
 
-- keep the two semantic controls stable;
-- use a Biology-owned surface if it removes the temporary settings stack without increasing fragility;
-- or deliberately move whole-mod activation to the official launcher/install boundary where that is more robust;
-- remove Mod Settings/ArchiveXL/RED4ext when their last accepted consumer disappears.
+That field is stored through Cyberpunk's save lifecycle. Biology does not create a parallel INI/config authority for the preference.
 
-Do not preserve a framework stack merely to host two booleans.
+The player edits the Boolean from a small Biology-owned control mounted on the existing Biology/Cyberware body screen (`RipperDocGameController`). Biology does **not** register a row in the pause-menu Mod Settings surface or depend on a third-party settings screen.
 
-## Current attended evidence — integrated REDmod artifact
+This intentionally avoids invasive ownership of Cyberpunk's native settings screen. The existing Biology body screen is already a first-party Biology interaction surface and requires only a narrow Ink control to edit the one remaining preference.
 
-Historical pre-REDmod settings evidence remains in `PRE-REDMOD-LIVE-BASELINE-2026-09-15.md`. It is not the current implementation status.
+## Dependency exit
 
-The current attended presentation evidence came from the integrated artifact built from:
+Issue #61 removes the former settings stack from Biology production release/build/install architecture:
 
-`8cf045664b5e4d8b4b014edfc98bf2f8eb270ba5`
+- Mod Settings — removed; no production source adapter/provider registration remains;
+- ArchiveXL — removed; its only Biology role was transitive support for Mod Settings;
+- RED4ext — removed; its only Biology role was transitive support for the retired settings stack and Biology owns no RED4ext plugin.
 
-Artifact:
+redscript remains for current Biology-owned additive/wrapper runtime, ScriptableSystem persistence, Ink UI, and native hook seams. Its full elimination is a separate future architecture question and is not hidden inside settings work.
 
-`biology-integrated-20260915-061136-8cf045664b5e.zip`
+## Blank pause-menu gap
 
-SHA-256:
+The previous blank/inert pause-menu space was associated with a Mod Settings provider surface that remained installed/registered while launcher mods were unavailable or blocked.
 
-`42BACC73173EB95D84F3278593CD06DDAF665AA714F4C692DB03D553B91557CC`
+The new Biology package contains no Mod Settings runtime, no Biology `ModSettings.runtimeProperty` declarations, no module-existence provider registration, and no Biology pause-menu settings registration. Therefore Biology no longer creates or owns a provider row that can become an empty clickable placeholder when REDlauncher mods are OFF.
 
-With **E3-inspired HUD + nameplates ON**:
+Attended launcher-OFF validation remains required to prove that an exact integrated artifact no longer produces the observed gap or framework-security warning on the supported install.
 
-- ordinary first-person gameplay still read overwhelmingly as the modern retail HUD;
-- quest objectives and other ordinary HUD composition had not yet received the intended red/minimal E3-inspired treatment;
-- direct look/focus at a random civilian showed no ambient E3-style nameplate;
-- police showed only a narrow red strip rather than the complete intended ambient identity treatment;
-- the modern scanner/quickhack interface remained intact, which is positive preserve evidence.
+## Current attended evidence
 
-With the E3 presentation preference OFF, the narrow police red treatment was absent. This is evidence that the preference gated at least part of the presentation path, but it is **not** acceptance of the full E3 mode.
+Historical pre-REDmod settings evidence remains in `PRE-REDMOD-LIVE-BASELINE-2026-09-15.md`; it is not the current implementation status.
 
-Issue #40 / PR #46 owns the broader Biology-owned E3 follow-up. Source/CI/exact compile cannot substitute for matched attended E3 ON/OFF screenshots.
+The previous integrated artifact built from `8cf045664b5e4d8b4b014edfc98bf2f8eb270ba5` established that the E3 preference gated at least part of the presentation path, but it also exposed the now-retired framework/menu residue during launcher-OFF testing. That artifact pre-dates the self-contained settings migration and must not be treated as acceptance of this replacement persistence/UI path.
+
+Issue #40 remains responsible for the broader E3 presentation implementation. P01.1 remains responsible for attended launcher-OFF and save/reload persistence acceptance of the exact integrated W10 architecture.
 
 ## Release behavior
 
@@ -92,28 +86,21 @@ Two players on the same Biology version with Biology active therefore receive th
 
 The E3 preference may only yield Biology's E3-specific visual skin/nameplate treatment. It must not turn off physical simulation or re-enable actor HP bars.
 
-## Public preference identifiers during migration
-
-Internal/compatibility keys may retain historical names until a safe migration is worthwhile. New player-facing labels use **Biology**.
-
-### `biology.enabled` / legacy compatibility key `realpass.enabled`
-
-- type: Boolean;
-- default: `true` when retained as a live runtime preference;
-- authority: global master only;
-- never exposes internal authorities individually;
-- may require a session/save reload when attach-time systems cannot safely change authority in place;
-- must not be confused with REDlauncher `Enable mods`, which is the ordinary package-level vanilla-play target.
+## Public preference identifier
 
 ### `presentation.e3-first-person-hud-visuals`
 
 - type: Boolean;
 - default: `true`;
+- persistence: Biology-owned `ScriptableSystem` field in the Cyberpunk save;
+- editor: Biology-owned control on the Biology/Cyberware body screen;
 - presentation-only;
 - meaningful only while Biology is active;
 - gates the Biology-owned E3-inspired HUD/nameplate layer;
 - does not alter the Biology-wide healthbar policy;
 - does not replace or restyle the modern scanner into Project E3's old scanner.
+
+`biology.enabled` and legacy `realpass.enabled` are not public settings. Whole-mod activation belongs to REDlauncher/REDmod.
 
 Pain/disorientation, injury effects, and other authored body feedback are not separate player settings.
 
@@ -121,6 +108,7 @@ Pain/disorientation, injury effects, and other authored body feedback are not se
 
 The normal preference surface must not expose:
 
+- a second whole-mod in-game enable switch;
 - separate body/injury/combat/armor/cyberware-physiology enable switches;
 - damage multipliers;
 - hunger/hydration rates;
@@ -150,21 +138,19 @@ Project E3 is design/controller archaeology only. The product target is Biology-
 - native modern scanner/quickhack retained;
 - no Project E3 scripts/archive/tweaks/settings/save state required or shipped.
 
-`config/realpass-e3.json` preserves the local reference inventory/hashes; the actual third-party `ReferenceMods/` payload remains outside Git.
-
 ## Acceptance criteria
 
 Configuration is accepted only when:
 
 1. player-facing identity is **Biology**;
-2. no more than the whole-mod semantic boundary and E3 presentation preference are exposed as editable public settings;
+2. the only normal in-game public preference is the E3 presentation Boolean;
 3. no subsystem/balance/diagnostic/feature-ledger controls appear;
-4. the Biology activation boundary remains all-or-nothing;
-5. REDlauncher Enable mods OFF is directly proven to yield Biology-inactive vanilla-play behavior before that path is advertised as accepted;
-6. E3 ON/OFF changes only Biology's E3-specific HUD/nameplate treatment;
-7. ordinary E3 ON gameplay is visibly/recognizably E3-inspired in attended screenshots;
-8. civilian/police ambient nameplates work through native identity/visibility authority as designed;
+4. REDlauncher/REDmod is the sole whole-mod public activation boundary;
+5. the E3 preference is read/written through Biology's save-backed ScriptableSystem rather than a third-party provider;
+6. Biology registers no external pause-menu/provider row;
+7. REDlauncher Enable mods OFF is directly proven to yield Biology-inactive vanilla-play behavior before that path is advertised as accepted;
+8. E3 ON/OFF changes only Biology's E3-specific HUD/nameplate treatment and persists across save/reload;
 9. the modern scanner/quickhack interface remains native and usable;
 10. traditional actor HP presentation stays suppressed while Biology is active regardless of E3 preference;
 11. Project E3 runtime remains absent;
-12. any surviving settings framework has a current concrete consumer and is removable when that consumer disappears.
+12. Mod Settings, ArchiveXL, and RED4ext remain absent from production package/build/install contracts unless a future independently accepted consumer is documented first.
