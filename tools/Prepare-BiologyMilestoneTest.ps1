@@ -87,10 +87,23 @@ if ([string]::IsNullOrWhiteSpace([string]$zip) -or -not (Test-Path -LiteralPath 
 $zip = (Resolve-Path -LiteralPath $zip).Path
 $zipHash = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToUpperInvariant()
 $zipBytes = (Get-Item -LiteralPath $zip).Length
+$packageRoot = Join-Path (Split-Path -Parent $zip) (([IO.Path]::GetFileNameWithoutExtension($zip)) + '-root')
+if (-not (Test-Path -LiteralPath $packageRoot -PathType Container)) { throw 'Build completed but the release-shaped package root could not be identified.' }
+
+Write-Host ''
+Write-Host '=== COLLISION-SAFE INSTALL PREFLIGHT ===' -ForegroundColor Cyan
+$installScript = Join-Path $candidateRepo 'tools\Install-BiologyRelease.ps1'
+$preflightOutput = @(& pwsh $installScript -PackageRoot $packageRoot -GameRoot $game -WhatIf)
+$preflightCode = $LASTEXITCODE
+$preflightOutput | ForEach-Object { Write-Host $_ }
+if ($preflightCode -ne 0) { throw 'Biology release install preflight failed before mutation. Existing non-identical shared global.ini/version.dll are never overwritten.' }
 
 Write-Host ''
 Write-Host '=== INSTALL EXACT GENERATED PACKAGE ===' -ForegroundColor Cyan
-Expand-Archive -LiteralPath $zip -DestinationPath $game -Force
+$installOutput = @(& pwsh $installScript -PackageRoot $packageRoot -GameRoot $game)
+$installCode = $LASTEXITCODE
+$installOutput | ForEach-Object { Write-Host $_ }
+if ($installCode -ne 0 -or ($installOutput -join "`n") -notmatch 'PASS: Biology release install verified') { throw 'Collision-safe Biology release installer failed or did not return its positive verification marker.' }
 if (-not (Test-Path -LiteralPath (Join-Path $game 'mods\Biology\info.json') -PathType Leaf)) { throw 'Biology REDmod identity is missing after package install.' }
 if (-not (Test-Path -LiteralPath (Join-Path $game 'biology\build-manifest.json') -PathType Leaf)) { throw 'Biology build manifest is missing after package install.' }
 if (-not (Test-Path -LiteralPath (Join-Path $game 'BIOLOGY-VERSION.txt') -PathType Leaf)) { throw 'Biology version metadata is missing after package install.' }
@@ -114,6 +127,8 @@ $evidence = [ordered]@{
     artifact = $zip
     artifactSha256 = $zipHash
     artifactBytes = $zipBytes
+    collisionSafeInstall = 'PASS'
+    sharedCybercmdLoaderPolicy = 'global.ini/version.dll preserve-if-identical-or-fail-before-mutation; only cybercmd.asi replaceable'
     redmodDeploy = 'PASS'
     readyToLaunch = $false
     note = 'Return this evidence to the parent integration thread before launching the attended test.'
@@ -134,6 +149,8 @@ Write-Host "CANDIDATE_REPO=$candidateRepo"
 Write-Host "ZIP=$zip"
 Write-Host "ZIP_SHA256=$zipHash"
 Write-Host "ZIP_BYTES=$zipBytes"
+Write-Host 'COLLISION_SAFE_INSTALL=PASS'
+Write-Host 'SHARED_CYBERCMD_LOADER_POLICY=global.ini/version.dll preserve-if-identical-or-fail-before-mutation; only cybercmd.asi replaceable'
 Write-Host 'REDMOD_DEPLOY=PASS'
 Write-Host "EVIDENCE_FILE=$evidencePath"
 Write-Host 'STOP_BEFORE_GAME_LAUNCH=YES' -ForegroundColor Yellow
