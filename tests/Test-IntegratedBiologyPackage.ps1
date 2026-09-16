@@ -37,14 +37,16 @@ Check ($builder.Contains('$compileReport.passed -ne $true') -and $builder.Contai
 Check ($builder -match '\$gameVersion\s+-ne\s+''2\.31''') 'Integrated builder does not pin supported game version.'
 Check ($builder.Contains("'mods/Biology/info.json'")) 'Integrated builder does not include official Biology REDmod metadata.'
 Check ($builder.Contains('mods/Biology/tweaks/base/gameplay/static_data/database/items/weapons/parts/biology_activation.tweak')) 'Integrated builder does not package launcher activation marker.'
-Check ($builder -match '\$expectedRetained\s*=\s*@\(''redscript''\)') 'Integrated builder retained dependency set is not exactly redscript.'
+Check ($builder -match '\$expectedRetained\s*=\s*@\(''redscript'',''cybercmd''\)') 'Integrated builder retained dependency set is not exactly redscript plus cybercmd.'
+Check ($builder -match "'cybercmd'\s*=\s*'REDSCRIPT-STARTUP'") 'Integrated builder does not constrain cybercmd to REDscript startup execution.'
+foreach ($requiredShared in @('bin/x64/global.ini','bin/x64/plugins/cybercmd.asi','bin/x64/version.dll')) { Check ($builder.Contains($requiredShared)) "Integrated builder does not enforce required standalone cybercmd payload: $requiredShared" }
 foreach ($retired in @('mod-settings','mod_settings','archivexl','red4ext')) { Check ($builder.ToLowerInvariant().Contains($retired)) "Integrated builder does not explicitly fail closed against retired component: $retired" }
 foreach ($blocked in @('tweakxl','codeware','input-loader','darkfuture','project-e3')) { Check ($builder.ToLowerInvariant().Contains($blocked)) "Integrated builder does not explicitly reject/exclude $blocked." }
 Check ($builder.Contains('biology/build-manifest.json') -and $builder.Contains('biology/provenance.json') -and $builder.Contains('BIOLOGY-VERSION.txt') -and $builder.Contains('SHA256SUMS.txt')) 'Integrated ownership/provenance metadata is incomplete.'
 Check ($builder.Contains('Build-BiologyUninstaller.ps1') -and $builder.Contains('Uninstall Biology.exe')) 'Integrated package does not build/embed player uninstaller.'
 Check ($builder.Contains("preferencePolicy = 'stored-in-save-never-target'")) 'Package ownership receipt does not preserve save-backed preference state.'
 Check ($builder.Contains("removedDependencies = @('mod-settings','archivexl','red4ext'")) 'Package provenance does not record settings-stack removal.'
-Check (-not $builder.Contains('$expectedRetained = @(''redscript'',''red4ext''')) 'Retired dependency set remains expected by the playable builder.'
+Check (-not $builder.Contains('$expectedRetained = @(''redscript'',''red4ext''')) 'Retired RED4ext remains expected by the playable builder.'
 
 Check ($deploy -match 'tools\\redmod\\bin\\redMod\.exe') 'Deploy helper does not use official REDmod executable.'
 Check ($deploy -match 'ProcessStartInfo|ArgumentList') 'Deploy helper does not control native argument boundaries.'
@@ -53,6 +55,7 @@ Check ($deploy -match 'No root specified' -and $deploy -match 'No mods found' -a
 $dep = @{}
 foreach ($entry in @($deps.dependencies)) { $dep[$entry.id] = $entry }
 Check ($dep['redscript'].status -eq 'required-current-runtime' -and $dep['redscript'].bundledByBiology -eq $true) 'redscript is not recorded as direct retained runtime dependency.'
+Check ($dep['cybercmd'].status -eq 'required-current-runtime' -and $dep['cybercmd'].route -eq 'REDSCRIPT-STARTUP' -and $dep['cybercmd'].bundledByBiology -eq $true) 'cybercmd is not recorded as the narrow REDscript startup runner.'
 foreach ($retired in @('mod-settings','archivexl','red4ext')) { Check (-not $dep.ContainsKey($retired)) "$retired remains an active dependency." }
 $removed = @($deps.removedDependencies | ForEach-Object { $_.id })
 foreach ($retired in @('mod-settings','archivexl','red4ext')) { Check ($removed -contains $retired) "$retired removal is not documented in dependency graph." }
@@ -66,7 +69,9 @@ Check (-not ($settings -match '(?i)ModSettings|mod_settings|runtimeProperty|Modu
 Check ($preferenceUi.Contains('RipperDocGameController') -and $preferenceUi.Contains('ToggleE3FirstPersonHudVisuals')) 'Biology-owned E3 editor is missing.'
 
 Check ($install.schemaVersion -eq 3) 'REDmod install contract is not current self-contained settings schema.'
-Check (@($install.supplementalRuntime.retainedGenericComponents).Count -eq 1 -and $install.supplementalRuntime.retainedGenericComponents[0] -eq 'redscript') 'Install contract retained generic set is not exactly redscript.'
+$retained = @($install.supplementalRuntime.retainedGenericComponents)
+Check ($retained.Count -eq 2 -and $retained -contains 'redscript' -and $retained -contains 'cybercmd') 'Install contract retained generic set is not exactly redscript plus cybercmd.'
+Check ($install.supplementalRuntime.startupCompileContract -match '(?i)InvokeScc' -and $install.supplementalRuntime.startupCompileContract -match 'final\.redscripts') 'Install contract lost configured REDscript output regeneration boundary.'
 foreach ($retired in @('mod-settings','archivexl','red4ext')) { Check (@($install.supplementalRuntime.removedGenericComponents) -contains $retired) "Install contract does not record removed component: $retired" }
 Check ($install.preferences.externalSettingsProvider -eq $false -and $install.preferences.pauseMenuRegistration -eq $false) 'Install contract still permits provider/pause-menu registration.'
 Check (@($install.preferences.publicControls).Count -eq 1 -and $install.preferences.publicControls[0] -eq 'presentation.e3-first-person-hud-visuals') 'Install contract public preference count drifted.'
@@ -75,6 +80,6 @@ Check ($install.ownerManifest.path -eq 'biology/build-manifest.json' -and $insta
 Check ($install.playerUninstaller.binary -eq 'Uninstall Biology.exe') 'Install contract lost player uninstaller.'
 Check ($install.launcherActivation.signal -eq 'Items.BiologyLauncherActivationMarker.stackable') 'Install contract lost launcher activation signal.'
 
-Check ($doc -match 'Current generic dependencies') 'Integrated documentation no longer records current dependency disposition.'
+Check ($doc -match 'Current generic dependencies' -and $doc -match '(?i)cybercmd.*InvokeScc') 'Integrated documentation no longer records current startup dependency disposition.'
 
-Write-Host "PASS: $script:checks integrated Biology package checks; release runtime is redscript-only, settings are Biology-owned/save-backed, and retired provider DLLs are fail-closed from the artifact."
+Write-Host "PASS: $script:checks integrated Biology package checks; runtime plumbing is redscript plus cybercmd startup execution, settings remain Biology-owned/save-backed, and retired provider DLLs are fail-closed from the artifact."
