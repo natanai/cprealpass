@@ -33,8 +33,8 @@ function Write-RecoveryReceipt([string]$PackageRoot,$Manifest) {
 $temp = Join-Path ([IO.Path]::GetTempPath()) ('biology-install-safety-' + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Force -Path $temp | Out-Null
 try {
-    # W14 create executor: an ordinary absent Biology-owned payload must use the
-    # explicit create primitive and arrive with the exact planned hash.
+    # Absent ordinary payload: planner says create, executor creates exact bytes,
+    # and no exception-driven replace fallback or temporary residue is required.
     $createPackage = Join-Path $temp 'create-package'
     $createGame = Join-Path $temp 'create-game'
     New-Item -ItemType Directory -Force -Path $createPackage,$createGame | Out-Null
@@ -49,8 +49,8 @@ try {
     Assert-True ((Get-BiologyReleaseExistingHash $createdPath) -eq $createSource.sha256) 'Create executor did not install the absent ordinary file with the exact hash.'
     Assert-NoInstallTemps $createGame 'Create executor left temporary install residue'
 
-    # Protected standalone loader/config paths are safe creates when absent, then
-    # become preserves when byte-identical on a repeated plan.
+    # Protected shared loader/config is safe to create only when absent and must
+    # become preserve on a byte-identical repeated plan.
     $protectedPackage = Join-Path $temp 'protected-package'
     $protectedGame = Join-Path $temp 'protected-game'
     New-Item -ItemType Directory -Force -Path $protectedPackage,$protectedGame | Out-Null
@@ -70,7 +70,7 @@ try {
     Invoke-BiologyReleaseInstallPlan -Plan $protectedPreservePlan
     Assert-NoInstallTemps $protectedGame 'Protected create/preserve path left temporary install residue'
 
-    # A non-identical pre-existing shared loader/config must stop the complete plan
+    # A non-identical protected shared loader/config must stop the complete plan
     # before any install write can begin.
     $collisionPackage = Join-Path $temp 'collision-package'
     $collisionGame = Join-Path $temp 'collision-game'
@@ -109,8 +109,8 @@ try {
     Assert-True ((Get-BiologyReleaseSha256 $matchingGlobal.path) -eq $matchingGlobal.sha256) 'Matching shared global.ini was changed during failed planning.'
     Assert-True ((Get-BiologyReleaseSha256 $foreignVersion.path) -eq $foreignVersion.sha256) 'version.dll changed despite preflight failure.'
 
-    # Matching shared loader/config is preserved while cybercmd.asi is the only
-    # standalone cybercmd path permitted to execute a replace.
+    # Matching protected paths stay untouched while cybercmd.asi is the only
+    # standalone cybercmd file allowed to execute a non-identical replace.
     Remove-Item -LiteralPath $foreignVersion.path -Force
     $matchingVersion = Write-TestFile $collisionGame 'bin/x64/version.dll' 'biology-loader'
     $foreignCybercmd = Write-TestFile $collisionGame 'bin/x64/plugins/cybercmd.asi' 'old-cybercmd'
@@ -127,7 +127,7 @@ try {
     Assert-True ((Get-BiologyReleaseExistingHash $matchingVersion.path) -eq $collisionVersion.sha256) 'Preserved version.dll changed during cybercmd.asi replacement.'
     Assert-NoInstallTemps $collisionGame 'Replace executor left install or backup temporary residue'
 
-    # Destination identity changes after planning must fail before an overwrite.
+    # Destination identity changes after planning must fail before overwrite.
     $racePackage = Join-Path $temp 'race-package'
     $raceGame = Join-Path $temp 'race-game'
     New-Item -ItemType Directory -Force -Path $racePackage,$raceGame | Out-Null
@@ -144,9 +144,9 @@ try {
     Assert-True ((Get-BiologyReleaseSha256 $racedDestination.path) -eq $racedDestination.sha256) 'Destination appearing after plan was overwritten.'
     Assert-NoInstallTemps $raceGame 'Destination-change failure left install temporary residue'
 
-    # Failed-install recovery is exact-artifact-bound: exact Biology-owned residue
-    # is removable, shared dependencies are preserved even when non-identical,
-    # and Biology-owned directories are removed only once empty.
+    # Failed-install recovery is exact-artifact-bound. Exact Biology-owned residue
+    # is removable; generic/shared redscript/cybercmd is always preserve-shared,
+    # even when its live hash differs from the failed artifact.
     $recoveryPackage = Join-Path $temp 'recovery-package'
     $recoveryGame = Join-Path $temp 'recovery-game'
     New-Item -ItemType Directory -Force -Path $recoveryPackage,$recoveryGame | Out-Null
@@ -171,8 +171,8 @@ try {
     Assert-True (-not (Test-Path -LiteralPath (Resolve-BiologyReleaseChild $recoveryGame 'biology'))) 'Recovery left the Biology metadata-owned directory.'
     Assert-True ((Get-BiologyReleaseSha256 $foreignShared.path) -eq $foreignShared.sha256) 'Recovery changed or removed a shared dependency.'
 
-    # Changed Biology-owned content and foreign files inside Biology-owned roots
-    # are ambiguity: planning must fail before deleting any exact file.
+    # Changed Biology-owned content and foreign content inside an owned root are
+    # ambiguous: complete recovery planning must fail before any deletion.
     $changedGame = Join-Path $temp 'changed-recovery-game'
     New-Item -ItemType Directory -Force -Path $changedGame | Out-Null
     $changedOwned = Write-TestFile $changedGame 'mods/Biology/info.json' 'changed-by-someone'
@@ -197,7 +197,7 @@ try {
     Assert-True ((Get-BiologyReleaseSha256 $exactOwned.path) -eq $exactOwned.sha256) 'Exact Biology-owned content was removed despite foreign-content plan failure.'
     Assert-True ((Get-BiologyReleaseSha256 $foreignInside.path) -eq $foreignInside.sha256) 'Foreign content was mutated despite recovery plan failure.'
 
-    # Recovery also rechecks identity immediately before each deletion.
+    # Recovery rechecks exact identity immediately before each deletion.
     $changeAfterPlanGame = Join-Path $temp 'change-after-recovery-plan-game'
     New-Item -ItemType Directory -Force -Path $changeAfterPlanGame | Out-Null
     Write-TestFile $changeAfterPlanGame 'mods/Biology/info.json' '{"name":"Biology"}' | Out-Null
@@ -211,26 +211,33 @@ try {
     Assert-True $threw 'Recovery did not fail when an exact destination changed after planning.'
     Assert-True ((Get-BiologyReleaseSha256 $changedAfterPlan.path) -eq $changedAfterPlan.sha256) 'Recovery deleted content that changed after planning.'
 
-    # Parent release-shaped candidate tooling must call the guarded installer and
-    # must no longer force-expand a release ZIP directly into the game root.
+    # Parent release-shaped candidate tooling must use the guarded installer and
+    # must not force-expand release ZIPs directly into the game root.
     foreach ($relativeTool in @('tools/Bootstrap-BiologyPostTransitionCandidate.ps1','tools/Prepare-BiologyMilestoneTest.ps1')) {
         $text = Get-Content -Raw -LiteralPath (Join-Path $root $relativeTool)
         Assert-True ($text -match 'Install-BiologyRelease\.ps1') "$relativeTool does not use the collision-safe release installer."
         Assert-True ($text -notmatch 'Expand-Archive\s+-LiteralPath\s+\$(artifactZip|zip)\s+-DestinationPath\s+\$(GameRoot|game)\s+-Force') "$relativeTool still force-expands the release ZIP into the game root."
     }
 
+    # The ownership receipt stays last and uses the same explicit action model.
     $installer = Get-Content -Raw -LiteralPath (Join-Path $root 'tools\Install-BiologyRelease.ps1')
     $payloadInvoke = $installer.IndexOf('Invoke-BiologyReleaseInstallPlan -Plan $plan',[StringComparison]::Ordinal)
     $receiptPublish = $installer.IndexOf('Copy-BiologyReleaseVerified -Source $manifestPath',[StringComparison]::Ordinal)
     Assert-True ($payloadInvoke -ge 0 -and $receiptPublish -gt $payloadInvoke) 'Ownership receipt is not published strictly after payload execution.'
     Assert-True ($installer -match '-Action \$manifestAction -ExpectedPriorHash \$manifestPriorHash') 'Ownership receipt does not use explicit create/replace action semantics.'
 
+    # Recovery bootstrap must remain exact-evidence-bound, worktree-aware,
+    # failure-durable, and incapable of deployment/game launch.
     $recoveryBootstrap = Get-Content -Raw -LiteralPath (Join-Path $root 'tools\Bootstrap-BiologyFailedInstallRecovery.ps1')
-    foreach ($required in @('ExpectedFailedCandidateReportSha256','ExpectedArtifactSha256','ProcessStartInfo','ArgumentList.Add','PLAN STATUS: SAFE-TO-APPLY','preserve-shared','ATTACH THIS FILE TO CHATGPT:','rev-parse'',''--show-toplevel','remote'',''get-url'',''origin','cat-file'',''-e','Offline exact-head fallback: ACCEPTED')) {
+    foreach ($required in @('ExpectedFailedCandidateReportSha256','ExpectedArtifactSha256','ProcessStartInfo','ArgumentList.Add','PLAN STATUS: SAFE-TO-APPLY','ATTACH THIS FILE TO CHATGPT:','rev-parse'',''--show-toplevel','remote'',''get-url'',''origin','cat-file'',''-e','Offline exact-head fallback: ACCEPTED')) {
         Assert-True ($recoveryBootstrap -match [regex]::Escape($required)) "Failed-install recovery bootstrap is missing required bounded-evidence/bootstrap contract text: $required"
     }
     Assert-True ($recoveryBootstrap -notmatch 'Deploy-BiologyRedmod\.ps1') 'Failed-install recovery must not redeploy REDmod.'
     Assert-True ($recoveryBootstrap -notmatch '(?i)Start-Process[^\r\n]*Cyberpunk') 'Failed-install recovery must never launch Cyberpunk.'
+
+    $recoveryCore = Get-Content -Raw -LiteralPath (Join-Path $root 'tools\BiologyFailedInstallRecovery.Core.ps1')
+    Assert-True ($recoveryCore -match "action='preserve-shared'") 'Recovery core does not encode shared dependencies as preserve-shared.'
+    Assert-True ($recoveryCore -notmatch 'Remove-Item[^\r\n]*Plan\.shared') 'Recovery core must not delete shared dependency plan entries.'
 
     $builder = Get-Content -Raw -LiteralPath (Join-Path $root 'tools\Build-BiologyPackage.ps1')
     Assert-True ($builder -match "'Install Biology\.ps1'") 'Player package does not include the collision-safe installer entry point.'
