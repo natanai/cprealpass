@@ -71,41 +71,56 @@ function Invoke-GitSafe([string[]]$Arguments,[switch]$Echo) {
     Invoke-NativeSafe -FilePath 'git' -Arguments $Arguments -Echo:$Echo
 }
 
+function Record-Process([string]$Label,$Result) {
+    Add-Evidence ("--- $Label ---")
+    Add-Evidence ('exit=' + $Result.ExitCode)
+    Add-Evidence 'stdout:'
+    Add-Evidence $Result.StdOut.TrimEnd()
+    Add-Evidence 'stderr:'
+    Add-Evidence $Result.StdErr.TrimEnd()
+}
+
 function Get-CprealpassSeed {
     foreach ($directory in @(Get-ChildItem -LiteralPath $GamesRoot -Directory -ErrorAction SilentlyContinue)) {
-        # A normal clone has .git/config. Worktrees use a .git pointer file; those are
-        # deliberately not selected as the reusable seed because their common repo may
-        # have been removed. If only worktrees remain, create a fresh signed seed clone.
-        $configPath = Join-Path $directory.FullName '.git\config'
-        if (-not (Test-Path -LiteralPath $configPath -PathType Leaf)) { continue }
-
-        try {
-            $config = Get-Content -Raw -LiteralPath $configPath -ErrorAction Stop
-        } catch {
-            Add-Evidence "Skipping unreadable Git config candidate: $($directory.FullName)"
-            continue
-        }
-
-        $urls = [regex]::Matches($config, '(?im)^\s*url\s*=\s*(?<url>.+?)\s*$')
-        $matchesRepo = $false
-        foreach ($urlMatch in $urls) {
-            $normalized = $urlMatch.Groups['url'].Value.Trim().TrimEnd('/')
-            if ($normalized -match $repoPattern) {
-                $matchesRepo = $true
-                break
-            }
-        }
-        if (-not $matchesRepo) { continue }
-
-        $check = Invoke-GitSafe -Arguments @('-C',$directory.FullName,'rev-parse','--show-toplevel')
-        if ($check.ExitCode -eq 0) {
-            return $directory.FullName
-        }
-
-        Add-Evidence "Skipping unusable cprealpass seed candidate: $($directory.FullName)"
-        foreach ($line in $check.Output) { Add-Evidence ("  git: " + [string]$line) }
+        $top = Invoke-GitSafe -Arguments @('-C',$directory.FullName,'rev-parse','--show-toplevel')
+        if ($top.ExitCode -ne 0) { continue }
+        $origin = Invoke-GitSafe -Arguments @('-C',$directory.FullName,'remote','get-url','origin')
+        if ($origin.ExitCode -ne 0) { continue }
+        $originUrl = $origin.StdOut.Trim()
+        if ($originUrl -notmatch $repoPattern) { continue }
+        Add-Evidence ('Seed candidate accepted by Git origin: ' + $directory.FullName)
+        Add-Evidence ('Seed top-level: ' + $top.StdOut.Trim())
+        Add-Evidence ('Seed origin: ' + $originUrl)
+        return $directory.FullName
     }
     return $null
+}
+
+function Resolve-PinnedHead([string]$Seed) {
+    $remoteRef = "refs/remotes/origin/$Branch"
+    $fetch = Invoke-GitSafe -Arguments @('-C',$Seed,'fetch','origin',("+refs/heads/{0}:{1}" -f $Branch,$remoteRef))
+    Record-Process 'git fetch' $fetch
+    if ($fetch.ExitCode -eq 0) {
+        $resolve = Invoke-GitSafe -Arguments @('-C',$Seed,'rev-parse','--verify',$remoteRef)
+        Record-Process 'git rev-parse fetched remote branch' $resolve
+        if ($resolve.ExitCode -ne 0) { throw 'Could not resolve fetched branch head.' }
+        $head = $resolve.StdOut.Trim()
+        Add-Evidence ('Fetched head: ' + $head)
+        if ($head -ne $ExpectedHead) { throw "Branch head moved. Expected $ExpectedHead but fetched $head. Refusing to audit a different revision." }
+        return $head
+    }
+
+    Add-Evidence 'Fetch failed; evaluating fail-closed cached-origin exact-head fallback.'
+    $cached = Invoke-GitSafe -Arguments @('-C',$Seed,'rev-parse','--verify',$remoteRef)
+    Record-Process 'git rev-parse cached remote branch' $cached
+    if ($cached.ExitCode -ne 0) { throw "Could not fetch $Branch and no cached origin branch ref is available." }
+    $cachedHead = $cached.StdOut.Trim()
+    if ($cachedHead -ne $ExpectedHead) { throw "Could not fetch $Branch and cached origin head '$cachedHead' does not equal expected '$ExpectedHead'." }
+    $object = Invoke-GitSafe -Arguments @('-C',$Seed,'cat-file','-e',("{0}^{{commit}}" -f $ExpectedHead))
+    Record-Process 'git cat-file expected commit' $object
+    if ($object.ExitCode -ne 0) { throw "Cached origin ref matches expected head but commit object $ExpectedHead is unavailable." }
+    Add-Evidence ('Offline exact-head fallback: ACCEPTED; cached origin/' + $Branch + ' and commit object both equal the expected frozen head.')
+    return $cachedHead
 }
 
 if (-not (Test-Path -LiteralPath $GamesRoot -PathType Container)) {
@@ -141,32 +156,21 @@ try {
         Add-Evidence "No usable cprealpass seed checkout found. Cloning seed: $seedRepo"
         Write-Host "No usable cprealpass seed checkout found. Cloning: $seedRepo" -ForegroundColor Cyan
         $clone = Invoke-GitSafe -Arguments @('clone',$repoUrl,$seedRepo) -Echo
+        Record-Process 'git clone' $clone
         if ($clone.ExitCode -ne 0) { throw "Could not clone natanai/cprealpass (git exit $($clone.ExitCode))." }
     } else {
         Add-Evidence "Existing cprealpass seed found: $seedRepo"
         Write-Host "Using existing cprealpass seed: $seedRepo"
     }
 
-    Add-Evidence "Fetching branch: $Branch"
-    $fetch = Invoke-GitSafe -Arguments @('-C',$seedRepo,'fetch','origin',("+refs/heads/{0}:refs/remotes/origin/{0}" -f $Branch)) -Echo
-    if ($fetch.ExitCode -ne 0) { throw "Could not fetch $Branch (git exit $($fetch.ExitCode))." }
-
-    $resolve = Invoke-GitSafe -Arguments @('-C',$seedRepo,'rev-parse',("refs/remotes/origin/{0}" -f $Branch))
-    if ($resolve.ExitCode -ne 0) {
-        foreach ($line in $resolve.Output) { Add-Evidence ("git: " + [string]$line) }
-        throw 'Could not resolve fetched branch head.'
-    }
-    $fetchedHead = $resolve.StdOut.Trim()
-    Add-Evidence "Fetched head: $fetchedHead"
-    if ($fetchedHead -ne $ExpectedHead) {
-        throw "Branch head moved. Expected $ExpectedHead but fetched $fetchedHead. Refusing to audit a different revision."
-    }
+    $fetchedHead = Resolve-PinnedHead $seedRepo
 
     $auditRoot = Join-Path $GamesRoot ('cprealpass-presentation-audit-' + $signature)
     if (Test-Path -LiteralPath $auditRoot) { throw "Unique audit path unexpectedly exists: $auditRoot" }
 
     Add-Evidence "Creating disposable audit checkout: $auditRoot"
     $worktree = Invoke-GitSafe -Arguments @('-C',$seedRepo,'worktree','add','--detach',$auditRoot,$ExpectedHead) -Echo
+    Record-Process 'git worktree add' $worktree
     if ($worktree.ExitCode -ne 0) { throw "Could not create disposable audit checkout (git exit $($worktree.ExitCode))." }
 
     Write-Host ''
