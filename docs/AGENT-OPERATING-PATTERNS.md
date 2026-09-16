@@ -146,12 +146,40 @@ Conversation reuse is a preference, not a reason to overload one worker forever.
 
 If yes, reuse the conversation and increment its decimal assignment number. If no, open the next `W##.1` worker conversation with a self-contained handoff.
 
-## 13. Canonical references
+## 13. `READY FOR PC TEST` means one command plus one live attended session
+
+When the parent says a build is **ready for PC testing**, the user-facing interaction is not a chain of pre-launch probes and post-launch probes.
+
+The canonical flow is:
+
+```text
+ONE COMMAND
+-> exact candidate preparation / bounded preflight internally
+-> quiet listener reports READY TO LAUNCH
+-> user launches Cyberpunk normally
+-> user performs attended checks
+-> user exits Cyberpunk
+-> user types END into the same PowerShell window
+-> listener finalizes before/after evidence
+-> one evidence handoff
+-> user confirms it was sent
+-> tool performs exact bounded cleanup
+-> SESSION ENDED CLEANLY
+```
+
+Any baseline needed to interpret the launch belongs inside that same session. If Cyberpunk fails to launch, the listener should already have captured the process/log/output evidence needed to classify the failure as far as current tooling allows. Do not respond to a normal launch failure by making the owner run a second diagnostic chain that should have been part of the attended session.
+
+A separate local diagnostic may still be requested while **investigating a build that is not yet ready**. Language must distinguish that from an attended handoff.
+
+The full mandatory contract is `docs/ATTENDED-TEST-SESSION.md`. Future attended-session tooling must implement one reusable lifecycle engine rather than feature-specific pre/post command chains.
+
+## 14. Canonical references
 
 Future agents should read these together:
 
 - `AGENTS.md` — project-wide agent gatekeeping and architecture rules;
 - `docs/AGENT-OPERATING-PATTERNS.md` — owner-specific workflow conventions in this file;
+- `docs/ATTENDED-TEST-SESSION.md` — mandatory one-command quiet-listener attended PC test contract;
 - `docs/THREAD-LEDGER.md` — current conversation/assignment registry;
 - `docs/PARALLEL-AGENT-WORKFLOW.md` — branch/handoff/merge workflow;
 - `docs/INTEGRATION-ORCHESTRATOR.md` — parent responsibilities;
