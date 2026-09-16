@@ -2,11 +2,11 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 function ConvertTo-LegacyRelativePath([string]$Root, [string]$Path) {
-    ([IO.Path]::GetRelativePath([IO.Path]::GetFullPath($Root), [IO.Path]::GetFullPath($Path))).Replace('\\','/')
+    ([IO.Path]::GetRelativePath([IO.Path]::GetFullPath($Root), [IO.Path]::GetFullPath($Path))).Replace('\','/')
 }
 
 function Assert-LegacyRelativePath([string]$RelativePath) {
-    $relative = $RelativePath.Replace('\\','/').TrimStart('/')
+    $relative = $RelativePath.Replace('\','/').TrimStart('/')
     if ([string]::IsNullOrWhiteSpace($relative) -or [IO.Path]::IsPathRooted($relative) -or $relative.Contains(':')) {
         throw "Expected ordinary relative path: $RelativePath"
     }
@@ -42,7 +42,7 @@ function Get-LegacySha256([string]$Path) {
 }
 
 function Test-LegacyWildcard([string]$RelativePath,[string[]]$Patterns) {
-    $relative = $RelativePath.Replace('\\','/')
+    $relative = $RelativePath.Replace('\','/')
     foreach ($pattern in @($Patterns)) {
         if ($relative -like $pattern.Replace('**','*')) { return $true }
     }
@@ -124,7 +124,7 @@ function Get-LegacyFrameworkTransitionPlan {
 
     $baselineByPath = @{}
     foreach ($row in $baseline) {
-        $key = ([string]$row.Path).Replace('\\','/').TrimStart('/').ToLowerInvariant()
+        $key = ([string]$row.Path).Replace('\','/').TrimStart('/').ToLowerInvariant()
         if (-not [string]::IsNullOrWhiteSpace($key)) { $baselineByPath[$key] = $row }
     }
 
@@ -208,7 +208,7 @@ function Get-LegacyFrameworkTransitionPlan {
             $relative = ConvertTo-LegacyRelativePath $game $file.FullName
             $key = $relative.ToLowerInvariant()
             if ($baselineByPath.ContainsKey($key) -or $receiptByPath.ContainsKey($key)) { continue }
-            if (-not [string]::IsNullOrWhiteSpace($preferencePath) -and $key -eq $preferencePath.Replace('\\','/').TrimStart('/').ToLowerInvariant()) { continue }
+            if (-not [string]::IsNullOrWhiteSpace($preferencePath) -and $key -eq $preferencePath.Replace('\','/').TrimStart('/').ToLowerInvariant()) { continue }
             if (Test-LegacyWildcard $relative @($contract.ignoredUnreceiptedPatterns)) {
                 $warnings.Add("Ignoring known generated/non-consumer framework residue while preserving it: $relative")
                 continue
