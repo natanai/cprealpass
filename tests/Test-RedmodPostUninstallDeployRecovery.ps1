@@ -43,7 +43,7 @@ foreach ($forbidden in @(
 
 # Repository artifacts must never bundle prebuilt REDmod cache output.
 $bundled = @(Get-ChildItem -LiteralPath $project -Recurse -File -ErrorAction Stop | Where-Object {
-    $relative = [IO.Path]::GetRelativePath($project,$_.FullName).Replace('\\','/')
+    $relative = [IO.Path]::GetRelativePath($project,$_.FullName).Replace([IO.Path]::DirectorySeparatorChar,[char]'/')
     $relative -match '(?i)(^|/)r6/cache/modded/' -or
     $relative -match '(?i)(^|/)tweakdb_ep1\.bin$' -or
     $relative -match '(?i)(^|/)mods\.json$'
