@@ -142,6 +142,14 @@ foreach ($component in @($dependencyComponents | Sort-Object)) {
     Add-FileRecord $relative ('upstream:' + $component) ('license-notice:' + $component) $routeByComponent[$component] 'generic-dependency-shared'
 }
 
+# The release carries its collision-safe player installer. Parent attended
+# candidate tooling invokes the same repository source directly against the exact
+# package root, so parent and player installation semantics cannot diverge.
+$installerSource = Join-Path $project 'tools\Install-BiologyRelease.ps1'
+$installerCoreSource = Join-Path $project 'tools\BiologyReleaseInstall.Core.ps1'
+Copy-IntoPackage $installerSource 'Install Biology.ps1' (Get-Sha256 $installerSource) 'Biology' 'biology-player-installer' 'REDMOD-NATIVE' 'biology-owned'
+Copy-IntoPackage $installerCoreSource 'BiologyReleaseInstall.Core.ps1' (Get-Sha256 $installerCoreSource) 'Biology' 'biology-player-installer' 'REDMOD-NATIVE' 'biology-owned'
+
 $installText = @'
 Biology — REDmod-first player candidate
 
@@ -150,10 +158,15 @@ Cyberpunk 2077 2.31
 
 INSTALL
 1. Close Cyberpunk 2077.
-2. Extract/copy the CONTENTS of this package into the Cyberpunk 2077 game root.
-3. Verify mods\Biology\info.json is present.
-4. Use the supported REDlauncher/store REDmod flow with Enable mods ON.
-5. Launch normally through Steam.
+2. Extract this package to a temporary/staging folder OUTSIDE the Cyberpunk 2077 game root. DO NOT extract/copy the package directly into the Cyberpunk 2077 game root.
+3. From that extracted package folder, run "Install Biology.ps1" and provide your Cyberpunk 2077 game root when prompted/required by PowerShell, for example:
+   powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\Install Biology.ps1" -GameRoot "C:\Games\Steam\steamapps\common\Cyberpunk 2077"
+4. The installer verifies every inventoried package hash before writing. Existing byte-identical bin\x64\global.ini and bin\x64\version.dll are preserved; a non-identical existing copy fails closed before mutation. Only bin\x64\plugins\cybercmd.asi may be replaced by the standalone cybercmd path.
+5. Verify mods\Biology\info.json is present.
+6. Use the supported REDlauncher/store REDmod flow with Enable mods ON.
+7. Launch normally through Steam.
+
+Do not bypass the Biology installer with a blind ZIP merge. standalone cybercmd's shared ASI-loader/config files may already belong to another mod, so direct overwrite is not a supported Biology installation/update path.
 
 PLAYER ENABLE/DISABLE CONTRACT
 - REDlauncher Enable mods ON: Biology's REDmod activation record is active and Biology runs.
@@ -282,6 +295,12 @@ $manifest = [ordered]@{
         preferencePolicy = 'stored-in-save-never-target'
         redmodRefresh = 'official-redmod-deploy-explicit-root'
     }
+    install = [ordered]@{
+        playerScript = 'Install Biology.ps1'
+        coreScript = 'BiologyReleaseInstall.Core.ps1'
+        sharedLoaderPolicy = 'bin/x64/global.ini and bin/x64/version.dll: create when absent, preserve when byte-identical, fail closed before mutation when non-identical; bin/x64/plugins/cybercmd.asi is the only cybercmd path that may be replaced'
+        directZipMergeSupported = $false
+    }
     metadataHashRule = 'SHA256SUMS.txt hashes every finalized payload file except itself and biology/build-manifest.json. The schema-2 owner receipt inventories and hashes every removable/preserved payload file, and the uninstaller re-hashes the receipt during execution.'
 }
 Write-JsonFile $manifest (Join-Path $biologyDir 'build-manifest.json')
@@ -294,6 +313,10 @@ foreach ($entry in @($manifest.files)) {
 }
 $binaryEntry = @($manifest.files | Where-Object path -eq 'Uninstall Biology.exe')
 if ($binaryEntry.Count -ne 1 -or $binaryEntry[0].replacePolicy -ne 'biology-owned') { throw 'Player uninstaller is not exact-hash Biology-owned payload.' }
+foreach ($installerPath in @('Install Biology.ps1','BiologyReleaseInstall.Core.ps1')) {
+    $installerEntry = @($manifest.files | Where-Object path -eq $installerPath)
+    if ($installerEntry.Count -ne 1 -or $installerEntry[0].component -ne 'biology-player-installer' -or $installerEntry[0].replacePolicy -ne 'biology-owned') { throw "Player collision-safe installer payload is not exact-hash Biology-owned: $installerPath" }
+}
 $markerEntry = @($manifest.files | Where-Object path -eq $activationRelative)
 if ($markerEntry.Count -ne 1 -or $markerEntry[0].replacePolicy -ne 'biology-owned') { throw 'REDmod launcher activation marker is missing from exact ownership.' }
 foreach ($requiredShared in @('bin/x64/global.ini','bin/x64/plugins/cybercmd.asi','bin/x64/version.dll')) {
@@ -313,7 +336,7 @@ Compress-Archive -Path (Join-Path $packageRoot '*') -DestinationPath $zipPath -C
 if (-not (Test-Path -LiteralPath $zipPath -PathType Leaf) -or (Get-Item -LiteralPath $zipPath).Length -le 0) { throw 'Integrated Biology package ZIP was not created.' }
 
 Write-Host ''
-Write-Host 'PASS: playable integrated Biology REDmod-first package built with self-contained preference authority, REDscript startup compilation plumbing, launcher activation contract, and player uninstaller. Nothing was deployed or launched.' -ForegroundColor Green
+Write-Host 'PASS: playable integrated Biology REDmod-first package built with collision-safe player install, self-contained preference authority, REDscript startup compilation plumbing, launcher activation contract, and player uninstaller. Nothing was deployed or launched.' -ForegroundColor Green
 Write-Host "Package root: $packageRoot"
 Write-Host "ZIP:          $zipPath"
 Write-Host "Game version: $gameVersion"
