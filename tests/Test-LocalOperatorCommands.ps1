@@ -136,7 +136,7 @@ Require $presentationBootstrap 'Cyberpunk product version:' 'Presentation bootst
 Require $presentationBootstrap 'Cyberpunk executable SHA-256:' 'Presentation bootstrap must fingerprint inspected game executable.'
 Reject $presentationBootstrap 'C:\\Games\\CyberpunkRealism' 'Presentation bootstrap reintroduced the retired fixed repo path.'
 
-Require $activationBootstrap 'No usable cprealpass seed checkout found\. Cloning seed' 'Activation bootstrap must support zero-local-repository acquisition.'
+Require $activationBootstrap 'No usable cprealpass seed checkout found\.Cloning seed|No usable cprealpass seed checkout found\. Cloning seed' 'Activation bootstrap must support zero-local-repository acquisition.'
 Require $activationBootstrap 'cprealpass-redmod-activation-probe-' 'Activation bootstrap must use a uniquely signed disposable audit checkout.'
 Require $activationBootstrap 'Probe-RedmodActivationSentinel\.ps1' 'Activation bootstrap must invoke the repository-owned activation sentinel probe.'
 
@@ -193,7 +193,7 @@ Require $audit 'Return that \.txt file' 'Compatibility audit must instruct user 
 Require $audit 'FAIL: Biology native-contract audit did not complete' 'Compatibility audit report must preserve failure outcome.'
 Require $audit 'PASS: Biology native-contract audit completed' 'Compatibility audit text evidence must preserve success outcome.'
 Require $audit 'textEvidenceReport' 'Compatibility JSON metadata must point to text evidence report.'
-Reject $audit "\[string\]\`\$RepoRoot = 'C:\\Games\\CyberpunkRealism'" 'Compatibility audit reintroduced retired fixed repo default.'
+Reject $audit '\[string\]\$RepoRoot = ''C:\\Games\\CyberpunkRealism''' 'Compatibility audit reintroduced retired fixed repo default.'
 
 Require $removalVerifier 'mods\\Biology|mods/Biology' 'Removal verifier must inspect Biology REDmod namespace.'
 Require $removalVerifier 'r6\\scripts\\CyberpunkRealism|r6/scripts/CyberpunkRealism' 'Removal verifier must inspect Biology REDscript namespace.'
