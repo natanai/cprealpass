@@ -9,7 +9,7 @@ $rootFull = [IO.Path]::GetFullPath($Root)
 if (-not (Test-Path -LiteralPath $rootFull -PathType Container)) { throw "Artifact root not found: $rootFull" }
 $distributionFull = Resolve-SafeChildPath $project $DistributionPath
 $distribution = Get-Content -Raw -LiteralPath $distributionFull | ConvertFrom-Json
-if ($distribution.schemaVersion -notin @(1,2)) { throw 'Unexpected distribution contract.' }
+if ($distribution.schemaVersion -notin @(1,2,3)) { throw 'Unexpected distribution contract.' }
 
 function Normalize-Relative([string]$full) {
     $relative = [IO.Path]::GetRelativePath($rootFull, $full).Replace('\','/')
