@@ -16,19 +16,19 @@ $profiles = Get-Content -Raw -LiteralPath $profilesPath | ConvertFrom-Json
 $script:checks = 0
 function Check($condition,[string]$message) { if (-not $condition) { throw $message }; $script:checks++ }
 
-# Both active owned-runtime profiles are now deliberately redscript-only. The E3
-# preference persists in Biology save state and no longer requires a settings stack.
+# Both active owned-runtime profiles deliberately pair redscript SCC/configuration
+# with standalone cybercmd startup execution. No settings framework stack returns.
 Check ($acquire.Contains('[string[]]$ComponentIds')) 'Component acquisition has no selective owned-runtime path.'
 Check ($acquire.Contains('Add-ComponentWithDependencies')) 'Selective acquisition does not close dependency requirements.'
 Check ($acquire.Contains('$selected.ContainsKey')) 'Selective acquisition does not deduplicate dependency traversal.'
 foreach ($profileName in @('m1-base','biology-runtime')) {
     $entry = @($profiles.profiles.$profileName)
-    Check ($entry.Count -eq 1 -and $entry[0] -eq 'redscript') "Owned profile is not redscript-only: $profileName"
+    Check ($entry.Count -eq 2 -and $entry -contains 'redscript' -and $entry -contains 'cybercmd') "Owned profile is not the exact redscript + cybercmd pair: $profileName"
 }
 Check (-not ($profiles.profiles.PSObject.Properties.Name -contains 'm1-owned-settings')) 'Retired four-framework settings profile still exists.'
 
 foreach ($needle in @(
-    "`$genericIds = @('redscript')",
+    "`$genericIds = @('redscript','cybercmd')",
     'Acquire-Components.ps1',
     'Stage-Components.ps1',
     "-Profile 'biology-runtime'",
@@ -50,6 +50,7 @@ foreach ($forbidden in @('darkfuture','project e3','input-loader','mod-settings'
 foreach ($retired in @('mod-settings','archivexl','red4ext')) {
     Check ($acquire.ToLowerInvariant().Contains($retired)) "Component acquisition no longer explicitly blocks retired production dependency: $retired"
 }
+Check ($acquire.Contains("@('redscript','cybercmd')")) 'Default production acquisition does not fetch the complete redscript startup pair.'
 foreach ($danger in @('Deploy.ps1','Upgrade.ps1','Start-Process','Register-ScheduledTask','New-Service')) {
     Check (-not $builder.Contains($danger)) "Owned profile builder gained live/unattended side effect: $danger"
 }
@@ -95,4 +96,4 @@ foreach ($text in @($session,$installer,$remover)) {
     }
 }
 
-Write-Host "PASS: $script:checks fast owned runtime build/install orchestration checks with redscript-only generic plumbing and Biology-owned save-backed settings."
+Write-Host "PASS: $script:checks fast owned runtime build/install orchestration checks with redscript + cybercmd startup plumbing and Biology-owned save-backed settings."
