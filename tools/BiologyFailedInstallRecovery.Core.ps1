@@ -15,6 +15,13 @@ function Get-BiologyRecoveryRelative([string]$GameRoot,[string]$FullPath) {
     return [IO.Path]::GetRelativePath([IO.Path]::GetFullPath($GameRoot),[IO.Path]::GetFullPath($FullPath)).Replace('\','/')
 }
 
+function Get-BiologyRecoveryParent([string]$RelativePath) {
+    $native = $RelativePath.Replace('/',[IO.Path]::DirectorySeparatorChar).Replace('\',[IO.Path]::DirectorySeparatorChar)
+    $parent = [IO.Path]::GetDirectoryName($native)
+    if ([string]::IsNullOrWhiteSpace($parent)) { return $null }
+    return $parent.Replace('\','/').Trim('/')
+}
+
 function New-BiologyFailedInstallRecoveryPlan([string]$PackageRoot,[string]$GameRoot,$Manifest) {
     $PackageRoot = [IO.Path]::GetFullPath($PackageRoot)
     $GameRoot = [IO.Path]::GetFullPath($GameRoot)
@@ -26,7 +33,7 @@ function New-BiologyFailedInstallRecoveryPlan([string]$PackageRoot,[string]$Game
     $ownedFiles = @{}
     $sharedFiles = @{}
     $knownOwnedDirectories = @{}
-    foreach ($root in $ownedRoots) { $knownOwnedDirectories[$root.ToLowerInvariant()] = $true }
+    foreach ($root in $ownedRoots) { $knownOwnedDirectories[$root.ToLowerInvariant()] = $root }
 
     foreach ($file in @($Manifest.files)) {
         $relative = ([string]$file.path).Replace('\','/').TrimStart('/')
@@ -41,34 +48,36 @@ function New-BiologyFailedInstallRecoveryPlan([string]$PackageRoot,[string]$Game
             $key = $relative.ToLowerInvariant()
             if ($ownedFiles.ContainsKey($key)) { throw "Duplicate Biology-owned recovery path: $relative" }
             $ownedFiles[$key] = [pscustomobject]@{ relativePath=$relative; expectedSha256=$expected; receiptFile=$false }
-            $parent = Split-Path -Parent $relative
-            while (-not [string]::IsNullOrWhiteSpace($parent) -and $parent -ne '.') {
-                $parentRelative = $parent.Replace('\','/').Trim('/')
-                if ($ownedRoots | Where-Object { Test-BiologyRecoveryPathUnder $parentRelative $_ }) {
-                    $knownOwnedDirectories[$parentRelative.ToLowerInvariant()] = $true
+
+            $parent = Get-BiologyRecoveryParent $relative
+            while ($parent) {
+                $isOwnedDirectory = $false
+                foreach ($root in $ownedRoots) {
+                    if (Test-BiologyRecoveryPathUnder $parent $root) { $isOwnedDirectory = $true; break }
                 }
-                $next = Split-Path -Parent $parent
-                if ($next -eq $parent) { break }
-                $parent = $next
+                if (-not $isOwnedDirectory) { break }
+                $knownOwnedDirectories[$parent.ToLowerInvariant()] = $parent
+                $parent = Get-BiologyRecoveryParent $parent
             }
         } elseif ([string]$file.replacePolicy -eq 'generic-dependency-shared') {
-            $sharedFiles[$relative.ToLowerInvariant()] = $expected
+            $key = $relative.ToLowerInvariant()
+            if ($sharedFiles.ContainsKey($key)) { throw "Duplicate shared recovery path: $relative" }
+            $sharedFiles[$key] = [pscustomobject]@{ relativePath=$relative; expectedSha256=$expected }
         } else {
             throw "Unexpected replacePolicy in failed-install recovery artifact: $relative / $($file.replacePolicy)"
         }
     }
 
     # The ownership receipt cannot list/hash itself. For this exact failed
-    # artifact it is still recoverable only when byte-identical to the retained
-    # artifact's receipt.
+    # artifact it is recoverable only when byte-identical to the retained ZIP.
     $receiptRelative = 'biology/build-manifest.json'
     $receiptSource = Resolve-BiologyReleaseChild $PackageRoot $receiptRelative
     if (-not (Test-Path -LiteralPath $receiptSource -PathType Leaf)) { throw 'Failed-install recovery artifact ownership receipt is missing.' }
     $receiptHash = Get-BiologyReleaseSha256 $receiptSource
     $ownedFiles[$receiptRelative.ToLowerInvariant()] = [pscustomobject]@{ relativePath=$receiptRelative; expectedSha256=$receiptHash; receiptFile=$true }
-    $knownOwnedDirectories['biology'] = $true
+    $knownOwnedDirectories['biology'] = 'biology'
 
-    # Inspect the complete Biology-owned roots before allowing deletion. Any
+    # Inspect the complete Biology-owned roots before allowing any deletion. Any
     # unrecognized file/directory is ambiguous foreign state and stops recovery.
     foreach ($rootRelative in $ownedRoots) {
         $rootFull = Resolve-BiologyReleaseChild $GameRoot $rootRelative
@@ -115,23 +124,20 @@ function New-BiologyFailedInstallRecoveryPlan([string]$PackageRoot,[string]$Game
     }
 
     $sharedPlan = [Collections.Generic.List[object]]::new()
-    foreach ($key in @($sharedFiles.Keys | Sort-Object)) {
-        $relative = @($Manifest.files | Where-Object { ([string]$_.path).Replace('\','/').TrimStart('/').Equals($key,[StringComparison]::OrdinalIgnoreCase) })[0].path
-        $relative = ([string]$relative).Replace('\','/').TrimStart('/')
-        $destination = Resolve-BiologyReleaseChild $GameRoot $relative
+    foreach ($shared in @($sharedFiles.Values | Sort-Object relativePath)) {
+        $destination = Resolve-BiologyReleaseChild $GameRoot ([string]$shared.relativePath)
         $current = Get-BiologyReleaseExistingHash $destination
         $sharedPlan.Add([pscustomobject]@{
-            relativePath = $relative
+            relativePath = [string]$shared.relativePath
             destination = $destination
-            packageSha256 = [string]$sharedFiles[$key]
+            packageSha256 = [string]$shared.expectedSha256
             observedSha256 = $current
             action = 'preserve-shared'
         })
     }
 
     $directoryPlan = [Collections.Generic.List[object]]::new()
-    foreach ($key in @($knownOwnedDirectories.Keys | Sort-Object { ($_ -split '/').Count } -Descending)) {
-        $relative = $key
+    foreach ($relative in @($knownOwnedDirectories.Values | Sort-Object { ($_ -split '/').Count } -Descending)) {
         $destination = Resolve-BiologyReleaseChild $GameRoot $relative
         if (Test-Path -LiteralPath $destination) {
             $directoryPlan.Add([pscustomobject]@{ relativePath=$relative; destination=$destination; action='remove-if-empty' })
@@ -139,6 +145,7 @@ function New-BiologyFailedInstallRecoveryPlan([string]$PackageRoot,[string]$Game
     }
 
     return [pscustomobject]@{
+        gameRoot = $GameRoot
         files = @($filePlan)
         shared = @($sharedPlan)
         directories = @($directoryPlan)
@@ -165,10 +172,14 @@ function Invoke-BiologyFailedInstallRecoveryPlan($Plan) {
         if (Test-Path -LiteralPath ([string]$item.destination)) { throw "Recovery could not remove exact Biology-owned file: $($item.relativePath)" }
     }
 
-    # Never mutate generic/shared redscript or cybercmd payload. Their state is
-    # deliberately excluded from ownership recovery even if it matches the ZIP.
+    # Never mutate generic/shared redscript or cybercmd payload. Verify afterward
+    # that recovery itself did not change their observed state.
     foreach ($item in @($Plan.shared)) {
         if ([string]$item.action -ne 'preserve-shared') { throw "Unexpected shared recovery action: $($item.relativePath)" }
+        $current = Get-BiologyReleaseExistingHash ([string]$item.destination)
+        if ($current -ne $item.observedSha256) {
+            throw "Shared dependency changed while failed-install recovery ran: $($item.relativePath)"
+        }
     }
 
     foreach ($directory in @($Plan.directories)) {
@@ -181,7 +192,15 @@ function Invoke-BiologyFailedInstallRecoveryPlan($Plan) {
         }
     }
 
+    foreach ($file in @($Plan.files)) {
+        if (Test-Path -LiteralPath ([string]$file.destination)) {
+            throw "Biology-owned failed-install residue remains after recovery: $($file.relativePath)"
+        }
+    }
     foreach ($rootRelative in @($Plan.ownedRoots)) {
-        $rootPath = Resolve-BiologyReleaseChild ([IO.Path]::GetFullPath((Split-Path -Parent (Resolve-BiologyReleaseChild (Split-Path -Parent (Resolve-BiologyReleaseChild ([IO.Path]::GetTempPath()) 'x')) 'x'))) $rootRelative
+        $rootPath = Resolve-BiologyReleaseChild ([string]$Plan.gameRoot) ([string]$rootRelative)
+        if (Test-Path -LiteralPath $rootPath) {
+            throw "Biology-owned directory remains after failed-install recovery: $rootRelative"
+        }
     }
 }
