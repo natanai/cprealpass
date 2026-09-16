@@ -30,11 +30,11 @@ Meaningful attended results remain durable under `docs/test-runs/` and must be t
 
 ## Current parent / worker state
 
-The original REDmod foundation, Biology shell/runtime, presentation, player-uninstall, activation-grammar, post-uninstall REDmod recovery, and self-contained settings implementations are all already represented on canonical `main`.
+The original REDmod foundation, Biology shell/runtime, presentation, player-uninstall, activation-grammar, post-uninstall REDmod recovery, self-contained settings, and W11 legacy-framework transition implementation are all represented on canonical `main`.
 
-Current implementation lane:
+There is currently **no active worker implementation lane**. W11.1 / issue #64 / PR #65 is merged and closed. Its attended read-only probe established a SAFE-TO-APPLY plan for the preserved pre-W10 install: 42 exact retired-framework targets, no competing-consumer evidence, and all five redscript paths protected.
 
-- **W11.1 / issue #64 / `agent/pre-w10-framework-transition-cleanup`** — safely retire legacy pre-W10 Mod Settings / ArchiveXL / RED4ext residue from the preserved installed Biology state before the next combined attended candidate. This lane must be evidence-first and fail closed; it must preserve redscript and unrelated/shared mod state.
+P01.2 owns the next controlled local transition and combined candidate cycle. Issue #66 separately tracks cross-cutting operator-bootstrap hardening; it is not a reason to reopen W11 or delay its already-proven plan-bound cleanup path.
 
 Do not reactivate an older merged branch merely because its acceptance issue remains open. The open acceptance issues below are parent-attended gates unless a new failure creates a fresh worker goal.
 
@@ -56,17 +56,24 @@ W10.1 / PR #63 is merged:
 - redscript is the only retained bundled generic runtime dependency;
 - source/CI do not constitute live persistence or launcher-OFF acceptance.
 
+W11.1 / PR #65 is merged:
+
+- the transition is receipt/hash/baseline/consumer driven and fails closed;
+- the mutator can delete only the exact plan-bound retired Mod Settings / ArchiveXL / RED4ext files after revalidation;
+- redscript is explicitly preserved and reverified;
+- shared roots are never recursively deleted;
+- the successful attended read-only probe found the preserved install SAFE-TO-APPLY with 42 exact retirement candidates and no competing-consumer evidence;
+- actual cleanup execution remains P01.2-owned.
+
 The integrated Biology shell/runtime/presentation/uninstaller repairs from the earlier attended follow-ups are also on main. Issues #39, #40, #41, and #44 stay open only for their remaining attended acceptance.
 
 ## Installed-game caveat before the next candidate
 
-Do **not** assume the user's current Cyberpunk installation already reflects the W09+W10 package.
+Do **not** assume the user's current Cyberpunk installation already reflects the W09+W10 package merely because W11 is merged.
 
-The current game still reflects the pre-W10 candidate/dependency footprint used for the failed Stage-3 REDmod deploy and launcher-OFF observation. That old candidate bundled Mod Settings / ArchiveXL / RED4ext, and its player uninstaller intentionally preserved generic/shared dependencies.
+The game still reflects the pre-W10 candidate/dependency footprint until P01.2 executes and verifies the approved W11 transition plan. The old candidate bundled Mod Settings / ArchiveXL / RED4ext, and its player uninstaller intentionally preserved generic/shared dependencies.
 
-Simply overlaying the new W10 package could therefore leave retired framework files on disk and falsely reproduce the old ArchiveXL warning or blank Mod Settings menu gap.
-
-P01.2 routed that transition problem to W11.1 / issue #64. A full Cyberpunk reinstall is not the default response; the transition must first determine whether exact receipt/hash/baseline evidence permits a narrower safe retirement path.
+The W11 read-only evidence now proves a narrower cleanup is safe for this preserved state. A full Cyberpunk reinstall is therefore not the default next action. P01.2 must use the exact plan-bound transition path rather than blindly overlaying the new package or broadly deleting framework roots.
 
 ## Open attended acceptance
 
@@ -99,16 +106,16 @@ Parent must prove E3 ON is visibly unmistakable in ordinary gameplay, including 
 ## Next integration cycle
 
 ```text
-W11 transition lane
-        -> PR / CI / parent review
-        -> merge if safe
-        -> controlled retirement of proven pre-W10 residue
-        -> exact canonical-main compile/build
+approved W11 SAFE-TO-APPLY plan
+        -> P01.2 plan-bound cleanup + cleanup evidence
+        -> exact canonical-main supported-game compile/build
         -> one release-shaped Biology artifact
+        -> install exact artifact
         -> official W09-repaired REDmod deploy
+        -> durable artifact/deploy evidence
         -> attended launcher ON/OFF + Biology UI/runtime + E3 persistence/presentation + scanner checks
         -> durable docs/test-runs record
-        -> route any new failure to a fresh lane when materially new
+        -> close accepted issues or route any materially new failure to a fresh lane
 ```
 
 Do not ask the user to install/play worker branches by default. The parent coordinates one coherent canonical artifact.
