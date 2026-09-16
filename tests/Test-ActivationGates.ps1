@@ -29,7 +29,7 @@ RequireDisabledPolicy $combat 'CRCombatRuntimePolicy' 'BuildEnabled'
 if (-not $combat.Contains('CRCombatRuntimePolicy.BuildEnabled() && CRRealpassSettings.IsEnabled(GetGameInstance())')) {
     throw 'Combat runtime enable path does not combine the staged build gate with the Biology launcher boundary.'
 }
-if ($surface -notmatch 'public static func IsEnabled\(game: GameInstance\) -> Bool\s*\{\s*return CRRealpassSettings\.IsLauncherActivated\(\);') {
+if ($surface -notmatch '(?s)public static func IsEnabled\(game: GameInstance\) -> Bool\s*\{.*?return CRRealpassSettings\.IsLauncherActivated\(\);.*?\}') {
     throw 'Biology whole-mod activation is not solely authorized by the REDmod-owned launcher marker.'
 }
 if ($surface -match '(?m)public\s+(?:persistent\s+)?let\s+enabled\s*:\s*Bool') {
