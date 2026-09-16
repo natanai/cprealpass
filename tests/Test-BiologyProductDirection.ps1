@@ -28,7 +28,7 @@ Require $agents '^# Biology agent instructions' 'AGENTS.md must identify Biology
 Require $agents 'PARALLEL WORK GATE' 'AGENTS.md must make parallel work a prominent gate.'
 Require $agents '2–3 agents concurrently|2-3 agents concurrently' 'AGENTS.md must acknowledge concurrent worker capacity.'
 Require $agents 'copy/paste-ready handoff' 'Agents must proactively provide handoffs for safe parallel work.'
-Require $agents 'own branch' 'Parallel lanes must use separate branches.'
+Require $agents 'own branch' 'Parallel assignments must use separate branches.'
 Require $agents 'official REDmod' 'AGENTS.md must make official REDmod the preferred route where robust.'
 Require $agents 'mods/Biology' 'AGENTS.md must expose the preferred self-contained package identity.'
 
@@ -55,11 +55,13 @@ Require $migration 'Uninstall Biology\.exe' 'Migration architecture must include
 Require $operator 'Command 9 — ask the installed official REDmod tool what it can do' 'Operator catalog must provide a direct official REDmod probe.'
 Require $operator 'community.*fallback|community/modder route is necessary' 'Operator catalog must treat community practice as fallback evidence.'
 
-Require $parallel 'Core rule' 'Parallel workflow must define proactive splitting.'
-Require $parallel 'When not to split' 'Parallel workflow must define unsafe parallelism.'
+# Validate durable parallel-work semantics, not exact heading text.
+Require $parallel 'Core parallelism rule|Core rule' 'Parallel workflow must define proactive parallel splitting.'
+Require $parallel 'identify separable work|identify separable lanes' 'Parallel workflow must tell agents to identify independent work.'
+Require $parallel 'Do not split two implementations|Do not parallelize.*same core file|must continuously edit the same core file' 'Parallel workflow must define unsafe parallelism.'
 Require $parallel 'Required handoff packet' 'Parallel workflow must define handoff contents.'
-Require $parallel 'one release-shaped build|one attended combined test' 'Parallel workers must converge before ordinary player-facing testing.'
-Require $parallel 'Current work lookup rule' 'Parallel workflow must direct agents to live roadmap/issues instead of hard-coded branches.'
+Require $parallel 'one release-shaped build|one attended combined test|one release-shaped candidate' 'Parallel workers must converge before ordinary player-facing testing.'
+Require $parallel 'Current work lookup rule' 'Parallel workflow must direct agents to live ledger/roadmap/issues instead of hard-coded branches.'
 
 Require $roadmap '#39' 'Active roadmap must expose Biology UI attended follow-up.'
 Require $roadmap '#40' 'Active roadmap must expose E3 presentation attended follow-up.'
@@ -89,4 +91,4 @@ foreach ($oldBranch in @('agent/redmod-foundation','agent/biology-ui-runtime','a
     Reject $activeDocs ([regex]::Escape($oldBranch)) "Current product/workflow docs still advertise merged branch: $oldBranch"
 }
 
-Write-Host 'PASS: Biology identity, official-source-first REDmod investigation, self-contained settings, current attended follow-ups, uninstallability and branch-agnostic parallel workflow are canonical.'
+Write-Host 'PASS: Biology identity, official-source-first REDmod investigation, self-contained settings, attended acceptance, uninstallability and branch-agnostic parallel workflow are canonical.'
