@@ -34,7 +34,8 @@ foreach ($needle in @('Trauma Kit','UseTraumaKit')) {
 }
 
 $requiredInfrastructure = @($policy.genericInfrastructure.requiredForCurrentOwnedCandidate)
-Check ($requiredInfrastructure.Count -eq 1 -and $requiredInfrastructure[0] -eq 'redscript') 'Current owned candidate generic infrastructure must be exactly redscript.'
+Check ($requiredInfrastructure.Count -eq 2 -and $requiredInfrastructure -contains 'redscript' -and $requiredInfrastructure -contains 'cybercmd') 'Current owned candidate generic infrastructure must be exactly redscript plus cybercmd.'
+Check ($policy.genericInfrastructure.redscriptStartupBoundary -match '(?i)InvokeScc' -and $policy.genericInfrastructure.redscriptStartupBoundary -match 'final\.redscripts' -and $policy.genericInfrastructure.redscriptStartupBoundary -match '(?i)never activation') 'Runtime-origin policy does not constrain cybercmd to the REDscript startup compilation boundary.'
 $removedInfrastructure = @($policy.genericInfrastructure.removedBySelfContainedSettings)
 foreach ($component in @('mod-settings','archivexl','red4ext')) {
     Check ($removedInfrastructure -contains $component) "Settings-stack removal missing from runtime-origin policy: $component"
@@ -76,4 +77,4 @@ if ($violations.Count -gt 0) {
     throw "Production candidate source violates owned-runtime policy:`n - $($violations -join "`n - ")"
 }
 
-Write-Host "PASS: $script:checks owned-runtime policy checks; release is locked, vanilla-first, the single save-backed E3 preference is Biology-owned, and redscript is the only retained generic runtime dependency."
+Write-Host "PASS: $script:checks owned-runtime policy checks; release is locked, vanilla-first, the save-backed E3 preference is Biology-owned, and generic runtime is limited to redscript plus cybercmd startup plumbing."
