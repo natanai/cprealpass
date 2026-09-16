@@ -140,11 +140,27 @@ function Assert-SafeArtifactZip([string]$Path) {
     $archive = [IO.Compression.ZipFile]::OpenRead($Path)
     try {
         foreach ($entry in @($archive.Entries)) {
-            $relative = $entry.FullName.Replace('\','/').TrimStart('/')
-            if ([string]::IsNullOrWhiteSpace($relative)) { continue }
-            if ([IO.Path]::IsPathRooted($entry.FullName) -or $entry.FullName.Contains(':')) { throw "Unsafe rooted artifact entry: $($entry.FullName)" }
+            $original = [string]$entry.FullName
+            $normalized = $original.Replace('\','/')
+            if ([IO.Path]::IsPathRooted($original) -or $normalized.StartsWith('/') -or $original.Contains(':')) {
+                throw "Unsafe rooted artifact entry: $($entry.FullName)"
+            }
+            if ([string]::IsNullOrWhiteSpace($normalized)) { continue }
+
+            # ZIP directory entries conventionally end in '/'. Remove exactly
+            # that one structural terminator before validating path segments;
+            # doubled separators still produce an empty segment and fail closed.
+            $relative = $normalized
+            if ($relative.EndsWith('/',[StringComparison]::Ordinal)) {
+                $relative = $relative.Substring(0,$relative.Length - 1)
+            }
+            if ([string]::IsNullOrWhiteSpace($relative)) {
+                throw "Unsafe artifact ZIP path segment: $($entry.FullName)"
+            }
+
             foreach ($part in @($relative -split '/')) {
-                if ($part -in @('','..','.') -or $part -match '[<>"|?*]' -or $part -match '[ .]$') {
+                $reservedDevice = $part -match '(?i)^(?:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\..*)?$'
+                if ($part -in @('','..','.') -or $part -match '[<>"|?*]' -or $part -match '[ .]$' -or $reservedDevice) {
                     throw "Unsafe artifact ZIP path segment: $($entry.FullName)"
                 }
             }
