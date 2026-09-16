@@ -1,6 +1,6 @@
 # W13.1 — installed Biology runtime activation / no-effect follow-up
 
-Status: **ACTIVE worker handoff**  
+Status: **REPAIR COMPLETE — RETURNED TO P01.2 FOR ATTENDED VALIDATION**  
 Parent: **P01.2**  
 Issue: **#68**  
 Branch: `agent/installed-runtime-activation-followup`
@@ -202,3 +202,32 @@ Before returning to P01.2:
 - CI result;
 - whether a parent-attended read-only probe is needed before merge;
 - after merge, the smallest parent retest needed to prove Biology is materially active again.
+
+## W13.1 completion / return to P01.2
+
+Startup worker head independently resolved at assignment:
+
+`6361bbe2448a9d06566d6ca9d859f0bb196f4118`
+
+The attended read-only W13 probe against installed canonical candidate `68b50ed9e3c629ca252326918dbbb68b9bc35494` established the first broken boundary as **BOUNDARY 2 — REDSCRIPT STARTUP / CONFIGURED COMPILE OUTPUT**:
+
+- the Biology ownership receipt was exact: 75/75 files verified, 0 missing, 0 mismatched;
+- all 62 current Biology REDscript source files were installed;
+- REDmod reported Biology enabled and deployed;
+- installed `r6/config/cybercmd/scc.toml` configured `InvokeScc` and directed gameplay to `r6/cache/modded/final.redscripts`;
+- that compiled blob was stale relative to the installed candidate;
+- neither `bin/x64/plugins/cybercmd.asi` nor RED4ext was installed to execute the configured startup compile task.
+
+The narrow repair is to bundle standalone cybercmd `0.0.13` only as redscript startup plumbing. The official `cybercmd-standalone.zip` is pinned at SHA-256 `87E235026D0693D7974A908E65F8C93F6503652FB781F0647B115572BBDD6103` and contributes exactly:
+
+- `bin/x64/global.ini`
+- `bin/x64/plugins/cybercmd.asi`
+- `bin/x64/version.dll`
+
+The production runtime profile now retains exactly `redscript` + `cybercmd`. redscript remains the SCC/compiler/configuration provider; cybercmd exists solely to execute redscript's already-shipped `scc.toml` startup task. Generated `final.redscripts` remains forbidden from Biology artifacts. Mod Settings, ArchiveXL and RED4ext remain retired, and the REDmod-owned `Items.BiologyLauncherActivationMarker.stackable` sentinel remains the sole whole-mod activation authority.
+
+Regression coverage includes `tests/Test-RedscriptStartupRuntime.ps1`, specifically preventing recurrence of the observed failure where `scc.toml` ships without a compatible startup executor. Relevant package, settings, runtime-origin, install, distribution, launcher-disable, artifact-policy and uninstaller contracts were updated only where they encoded the disproven `redscript-only` plumbing assumption.
+
+Cloud-safe validation on repair head `02f33bf436e3611c5bb4941eaf045000de07aaea` passed all W13/runtime/package checks, including PowerShell syntax for 155 repository scripts and 42 uninstaller planner/executor safety checks. The overall workflow remains red only because of the inherited parent bookkeeping assertion in `Test-ActiveRoadmap.ps1`: `Thread ledger must explicitly record the current no-worker state.` That failure predates W13 and is not owned by this lane.
+
+PR #69 remains draft and unmerged. Static/source/package work is exhausted. The smallest parent-owned attended validation is to build/install the exact release-shaped W13 repair candidate and prove, on supported launch, that `r6/cache/modded/final.redscripts` is regenerated at or after the installed candidate payload before evaluating downstream Biology UI/body/presentation behavior. W13 does not ask the user to install/play the worker branch and does not automate game launch.
