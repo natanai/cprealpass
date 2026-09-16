@@ -48,6 +48,27 @@ function Has-BadRootSignal([string]$text) {
 
 Write-Host "Deploying installed REDmods with explicit root: $game"
 
+# Attended W09 evidence on REDmod 2.31 proved that, after a successful no-mod
+# refresh followed by reinstall, r6/cache may still exist while the shared
+# r6/cache/modded output root is absent. REDmod then reaches TweakDB compilation
+# but fails to move tweakdb_ep1.bin into that missing parent (Win32 0x3).
+#
+# Prepare only the official shared output directory immediately at the deploy
+# boundary. This is intentionally idempotent: existing contents from Biology or
+# any other REDmods are preserved, and no generated cache file or mods.json is
+# created, copied, replaced, or deleted here.
+$moddedRoot = Resolve-SafeChildPath $game 'r6\cache\modded'
+if (Test-Path -LiteralPath $moddedRoot -PathType Leaf) {
+    throw "REDmod output root is blocked by a file: $moddedRoot"
+}
+if (-not (Test-Path -LiteralPath $moddedRoot -PathType Container)) {
+    New-Item -ItemType Directory -Path $moddedRoot -Force | Out-Null
+    Write-Host "Prepared missing REDmod output directory: $moddedRoot" -ForegroundColor DarkGray
+}
+if (-not (Test-Path -LiteralPath $moddedRoot -PathType Container)) {
+    throw "Could not prepare REDmod output directory: $moddedRoot"
+}
+
 # Current 2.31 accepts the conventional split form used by current community
 # tooling. ProcessStartInfo.ArgumentList guarantees the game path remains one
 # argument even though it contains spaces.
