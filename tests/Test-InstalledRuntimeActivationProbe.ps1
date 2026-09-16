@@ -20,7 +20,7 @@ function Assert-Parses([string]$Path) {
     $errors = $null
     [void][Management.Automation.Language.Parser]::ParseFile($Path,[ref]$tokens,[ref]$errors)
     if (@($errors).Count -gt 0) {
-        throw ("PowerShell parse failure in $Path: " + (@($errors | ForEach-Object Message) -join ' | '))
+        throw ("PowerShell parse failure in ${Path}: " + (@($errors | ForEach-Object Message) -join ' | '))
     }
 }
 
