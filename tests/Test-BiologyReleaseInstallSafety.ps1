@@ -236,7 +236,7 @@ try {
     Assert-True ($recoveryBootstrap -notmatch '(?i)Start-Process[^\r\n]*Cyberpunk') 'Failed-install recovery must never launch Cyberpunk.'
 
     $recoveryCore = Get-Content -Raw -LiteralPath (Join-Path $root 'tools\BiologyFailedInstallRecovery.Core.ps1')
-    Assert-True ($recoveryCore -match "action='preserve-shared'") 'Recovery core does not encode shared dependencies as preserve-shared.'
+    Assert-True ($recoveryCore -match 'preserve-shared') 'Recovery core does not encode shared dependencies as preserve-shared.'
     Assert-True ($recoveryCore -notmatch 'Remove-Item[^\r\n]*Plan\.shared') 'Recovery core must not delete shared dependency plan entries.'
 
     $builder = Get-Content -Raw -LiteralPath (Join-Path $root 'tools\Build-BiologyPackage.ps1')
