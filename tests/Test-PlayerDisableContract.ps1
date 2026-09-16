@@ -42,7 +42,7 @@ if ($install.playerUninstaller.preferences -notmatch '(?i)stored in saves|saves.
 if ($install.playerUninstaller.genericDependencies -notmatch '(?i)redscript') { throw 'Install contract lost exact surviving generic dependency policy.' }
 if (@($install.neverRecursivelyOwnedRoots) -notcontains 'mods' -or @($install.neverRecursivelyOwnedRoots) -notcontains 'r6') { throw 'Install contract no longer protects shared roots from recursive ownership.' }
 if ($package.redmod.launcherActivationMarker -ne 'Items.BiologyLauncherActivationMarker.stackable') { throw 'REDmod package contract and runtime activation signal disagree.' }
-if ($doc -notmatch 'Launcher-OFF runtime audit' -or $doc -notmatch 'may still load' -or $doc -notmatch 'MILESTONE CLEAN-ROOM') { throw 'Player disable/uninstall documentation lost audit or attended-test boundaries.' }
+if ($doc -notmatch 'Launcher-OFF runtime audit' -or $doc -notmatch 'may still load' -or $doc -notmatch 'Attended checks still required' -or $doc -notmatch 'P01\.1 owns attended') { throw 'Player disable/uninstall documentation lost runtime audit or parent-owned attended acceptance boundary.' }
 if ($operatorDoc -notmatch 'Verify-BiologyRemoval\.ps1' -or $operatorDoc -notmatch 'double-click.*Uninstall Biology\.exe') { throw 'Canonical local-operator catalog does not expose player hard-uninstall verification.' }
 
 Write-Host "PASS: REDlauncher/REDmod is Biology's sole whole-mod activation boundary; E3 state is presentation-only and the packaged runtime retains only redscript."
