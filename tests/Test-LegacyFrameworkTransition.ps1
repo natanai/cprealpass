@@ -43,7 +43,7 @@ function Cleanup-Fixture($f) { if (Test-Path -LiteralPath $f.Root) { Remove-Item
 $f = New-Fixture
 try {
     $p = Plan $f
-    Assert-True $p.safeToApply 'Exact-hash fixture should be safe to apply.'
+    Assert-True $p.safeToApply ('Exact-hash fixture should be safe to apply. Blockers: ' + (@($p.blockers) -join ' | '))
     Assert-True (@($p.deletionCandidates).Count -eq 3) 'Expected exactly three retired dependency files in deletion set.'
     Assert-True (@($p.deletionCandidates | Where-Object component -eq 'redscript').Count -eq 0) 'redscript entered deletion set.'
     Assert-True (@($p.preservedRedscript).Count -eq 1) 'redscript preservation set missing.'
