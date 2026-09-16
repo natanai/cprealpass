@@ -24,20 +24,24 @@ if ($uninstaller.requiresPowerShell -ne $false -or $uninstaller.requiresReposito
 if ($uninstaller.gameMustBeClosed -ne $true -or $uninstaller.deleteChangedFileByDefault -ne $false) { throw 'Uninstaller safety gate drifted.' }
 if ($uninstaller.preserveSaves -ne $true -or $uninstaller.preferencesLiveInSaves -ne $true) { throw 'Uninstaller must preserve saves and acknowledge save-backed preferences.' }
 if ($uninstaller.removeOnlyEmptyOwnedDirectories -ne $true -or $uninstaller.refreshRedmodStateAfterRemoval -ne $true) { throw 'Uninstaller cleanup/REDmod refresh contract drifted.' }
+$preserved = @($uninstaller.preserveGenericDependencies)
+if ($preserved.Count -ne 2 -or $preserved -notcontains 'redscript' -or $preserved -notcontains 'cybercmd') { throw 'Uninstaller contract does not preserve the exact shared redscript + cybercmd pair.' }
 
 if ($contract.stateAndSaves.saveDataIsNeverInArtifact -ne $true -or $contract.stateAndSaves.saveDataIsNeverDeletedByUninstaller -ne $true) { throw 'Save safety rule drifted.' }
 if ($contract.stateAndSaves.destructiveStateResetByToggle -ne $false) { throw 'Activation toggle must not destructively reset saved state.' }
 if ($contract.stateAndSaves.e3PreferencePersistence -notmatch '(?i)ScriptableSystem.*save|save.*ScriptableSystem') { throw 'Install contract does not record replacement E3 persistence authority.' }
 
 $preflight = @($contract.preflight)
-foreach ($required in @('game-must-be-closed-for-installer-or-uninstaller-writes','supported-game-version-must-match-release-metadata','artifact-sha256-and-file-manifest-must-verify','unknown-collision-must-fail-closed-for-assisted-updates','changed-owned-file-must-not-be-auto-deleted','blocked-component-must-not-be-present','retired-settings-stack-must-not-be-present')) { if ($preflight -notcontains $required) { throw "Install/uninstall preflight safety gate missing: $required" } }
+foreach ($required in @('game-must-be-closed-for-installer-or-uninstaller-writes','supported-game-version-must-match-release-metadata','artifact-sha256-and-file-manifest-must-verify','redscript-startup-task-runner-must-be-present-in-release','unknown-collision-must-fail-closed-for-assisted-updates','changed-owned-file-must-not-be-auto-deleted','blocked-component-must-not-be-present','retired-settings-stack-must-not-be-present')) { if ($preflight -notcontains $required) { throw "Install/uninstall preflight safety gate missing: $required" } }
 
 $roots = @($contract.runtimeRoots)
-if ($roots -notcontains 'mods/Biology') { throw 'Official Biology REDmod root missing from runtime roots.' }
+foreach ($required in @('mods/Biology','r6/scripts','engine/tools','r6/config/cybercmd','bin/x64')) { if ($roots -notcontains $required) { throw "Required runtime root missing: $required" } }
 foreach ($forbidden in @('saves','staging','vendor','ReferenceMods','reports','snapshots','red4ext/plugins/mod_settings','red4ext/plugins/ArchiveXL')) { if ($roots -contains $forbidden) { throw "Development/retired root exposed as runtime root: $forbidden" } }
 foreach ($shared in @('archive','bin','engine','mods','r6','red4ext')) { if (@($contract.sharedRootsNeverRecursivelyOwned) -notcontains $shared) { throw "Shared-root delete protection missing: $shared" } }
 
-if (($contract.notes -join ' ') -notmatch '(?i)redscript.*only retained generic') { throw 'Install contract does not identify redscript as the sole retained generic dependency.' }
-if (($contract.notes -join ' ') -notmatch '(?i)reinstall.*exceptional|exceptional.*reinstall') { throw 'Install contract must reject full Steam reinstall as ordinary Biology uninstall.' }
+$notes = $contract.notes -join ' '
+if ($notes -notmatch '(?i)redscript.*cybercmd.*only retained generic') { throw 'Install contract does not identify redscript plus cybercmd as the complete retained generic dependency set.' }
+if ($notes -notmatch '(?i)cybercmd.*startup compilation task') { throw 'Install contract does not constrain cybercmd to REDscript startup execution.' }
+if ($notes -notmatch '(?i)reinstall.*exceptional|exceptional.*reinstall') { throw 'Install contract must reject full Steam reinstall as ordinary Biology uninstall.' }
 
-Write-Host 'PASS: Biology install contract is REDmod-first, save-safe, settings-self-contained, and retains only redscript as generic runtime plumbing.'
+Write-Host 'PASS: Biology install contract is REDmod-first, save-safe, settings-self-contained, and retains only redscript plus cybercmd as generic runtime/startup plumbing.'
