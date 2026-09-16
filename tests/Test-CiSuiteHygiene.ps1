@@ -27,7 +27,9 @@ $excluded = @($allTests | Where-Object { -not $listedSet.ContainsKey($_.ToLowerI
 $readme = Get-Content -Raw -LiteralPath $readmePath
 $section = [regex]::Match($readme,'(?ms)^## Intentional non-cloud / local-only tests\s*(?<body>.*?)(?=^## |\z)')
 Assert-True $section.Success 'tests/README.md must contain an "Intentional non-cloud / local-only tests" section.'
-$documented = @([regex]::Matches($section.Groups['body'].Value,'`(?<name>Test-[^`]+\.ps1)`') | ForEach-Object { $_.Groups['name'].Value } | Sort-Object -Unique)
+# Only the explicit exclusion bullets are inventory entries. Explanatory prose and
+# cross-references may name cloud tests without reclassifying them as local-only.
+$documented = @([regex]::Matches($section.Groups['body'].Value,'(?m)^-\s+`(?<name>Test-[^`]+\.ps1)`\s+—') | ForEach-Object { $_.Groups['name'].Value } | Sort-Object -Unique)
 
 $missingDocs = @($excluded | Where-Object { $_ -notin $documented })
 if ($missingDocs.Count -gt 0) {
