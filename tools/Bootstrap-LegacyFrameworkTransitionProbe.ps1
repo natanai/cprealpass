@@ -45,14 +45,43 @@ function Record-Process([string]$Label,$Result) {
 }
 function Find-Seed {
     foreach ($directory in @(Get-ChildItem -LiteralPath $GamesRoot -Directory -ErrorAction SilentlyContinue)) {
-        $config = Join-Path $directory.FullName '.git\config'
-        if (-not (Test-Path -LiteralPath $config -PathType Leaf)) { continue }
-        try { $text = Get-Content -Raw -LiteralPath $config } catch { continue }
-        if ($text -notmatch $repoPattern) { continue }
-        $check = Invoke-NativeSafe 'git' @('-C',$directory.FullName,'rev-parse','--show-toplevel')
-        if ($check.ExitCode -eq 0) { return $directory.FullName }
+        $top = Invoke-NativeSafe 'git' @('-C',$directory.FullName,'rev-parse','--show-toplevel')
+        if ($top.ExitCode -ne 0) { continue }
+        $origin = Invoke-NativeSafe 'git' @('-C',$directory.FullName,'remote','get-url','origin')
+        if ($origin.ExitCode -ne 0) { continue }
+        $originUrl = $origin.StdOut.Trim()
+        if ($originUrl -notmatch $repoPattern) { continue }
+        Add-Evidence ('Seed candidate accepted by Git origin: ' + $directory.FullName)
+        Add-Evidence ('Seed origin: ' + $originUrl)
+        return $directory.FullName
     }
     return $null
+}
+function Resolve-PinnedHead([string]$Seed) {
+    $remoteRef = "refs/remotes/origin/$Branch"
+    $fetch = Invoke-NativeSafe 'git' @('-C',$Seed,'fetch','origin',("+refs/heads/{0}:{1}" -f $Branch,$remoteRef))
+    Record-Process 'git fetch' $fetch
+    if ($fetch.ExitCode -eq 0) {
+        $resolve = Invoke-NativeSafe 'git' @('-C',$Seed,'rev-parse','--verify',$remoteRef)
+        Record-Process 'git rev-parse fetched remote branch' $resolve
+        if ($resolve.ExitCode -ne 0) { throw 'Could not resolve fetched branch head.' }
+        $head = $resolve.StdOut.Trim()
+        Add-Evidence ('Fetched head: ' + $head)
+        if ($head -ne $ExpectedHead) { throw "Branch head moved. Expected $ExpectedHead but fetched $head." }
+        return $head
+    }
+
+    Add-Evidence 'Fetch failed; evaluating fail-closed cached-origin exact-head fallback.'
+    $cached = Invoke-NativeSafe 'git' @('-C',$Seed,'rev-parse','--verify',$remoteRef)
+    Record-Process 'git rev-parse cached remote branch' $cached
+    if ($cached.ExitCode -ne 0) { throw "Could not fetch $Branch and no cached origin branch ref is available." }
+    $cachedHead = $cached.StdOut.Trim()
+    if ($cachedHead -ne $ExpectedHead) { throw "Could not fetch $Branch and cached origin head '$cachedHead' does not equal expected '$ExpectedHead'." }
+    $object = Invoke-NativeSafe 'git' @('-C',$Seed,'cat-file','-e',("{0}^{{commit}}" -f $ExpectedHead))
+    Record-Process 'git cat-file expected commit' $object
+    if ($object.ExitCode -ne 0) { throw "Cached origin ref matches expected head but commit object $ExpectedHead is unavailable." }
+    Add-Evidence ('Offline exact-head fallback: ACCEPTED; cached origin/' + $Branch + ' and commit object both equal the expected frozen head.')
+    return $cachedHead
 }
 
 @(
@@ -75,15 +104,11 @@ try {
         $seedRepo = Join-Path $GamesRoot ('cprealpass-repo-' + $signature)
         $clone = Invoke-NativeSafe 'git' @('clone',$repoUrl,$seedRepo); Record-Process 'git clone' $clone
         if ($clone.ExitCode -ne 0) { throw "Could not clone natanai/cprealpass (git exit $($clone.ExitCode))." }
+        Add-Evidence ('Seed checkout: ' + $seedRepo)
     } else { Add-Evidence ('Seed checkout: ' + $seedRepo) }
 
-    $fetch = Invoke-NativeSafe 'git' @('-C',$seedRepo,'fetch','origin',("+refs/heads/{0}:refs/remotes/origin/{0}" -f $Branch)); Record-Process 'git fetch' $fetch
-    if ($fetch.ExitCode -ne 0) { throw "Could not fetch $Branch (git exit $($fetch.ExitCode))." }
-    $resolve = Invoke-NativeSafe 'git' @('-C',$seedRepo,'rev-parse',("refs/remotes/origin/{0}" -f $Branch)); Record-Process 'git rev-parse' $resolve
-    if ($resolve.ExitCode -ne 0) { throw 'Could not resolve fetched branch head.' }
-    $fetchedHead = $resolve.StdOut.Trim()
-    Add-Evidence ('Fetched head: ' + $fetchedHead)
-    if ($fetchedHead -ne $ExpectedHead) { throw "Branch head moved. Expected $ExpectedHead but fetched $fetchedHead." }
+    $resolvedHead = Resolve-PinnedHead $seedRepo
+    Add-Evidence ('Resolved pinned head: ' + $resolvedHead)
 
     $worktree = Join-Path $GamesRoot ('cprealpass-w11-probe-' + $signature)
     $add = Invoke-NativeSafe 'git' @('-C',$seedRepo,'worktree','add','--detach',$worktree,$ExpectedHead); Record-Process 'git worktree add' $add
