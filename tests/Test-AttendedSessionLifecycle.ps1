@@ -40,6 +40,12 @@ Require $session 'Remove-BiologyManagedArtifactRoot' 'Session cleanup must reuse
 Require $session 'installedCandidatePreserved=\$true' 'Session evidence must explicitly preserve the installed Biology candidate.'
 Require $session "'cat-file','-e'" 'Session exact-source acquisition must preserve cached-origin exact-head fail-closed fallback.'
 Require $session "'remote','get-url','origin'" 'Session exact-source acquisition must validate repository identity by Git origin.'
+Require $session 'PREPARATION-FAILED-BEFORE-READY' 'Pre-launch preparation failure must finalize through the same managed evidence path.'
+Require $session 'BOOTSTRAP/SOURCE ACQUISITION FAILED BEFORE READY' 'Bootstrap/source failure must still emit one fail-closed evidence bundle.'
+Require $session '-not \$cleanupAllowed -or -not \$finalized' 'Cleanup must be impossible before evidence finalization and owner confirmation.'
+Require $session 'session-owner\.json' 'Cleanup must bind the staging root to an exact session ownership marker.'
+Require $session 'ReparsePoint' 'Session-owned cleanup must fail closed on reparse-point roots.'
+Require $session 'Managed preparation handoff unexpectedly remained' 'Final cleanup must not silently carry a second intermediate handoff bundle.'
 Reject $session '(?i)Start-Process[^\r\n]*Cyberpunk|&\s*[^\r\n]*Cyberpunk2077\.exe' 'Session engine must never launch Cyberpunk for the owner.'
 Require $core 'redscript_rCURRENT\.log' 'Session evidence must capture current REDscript log state.'
 Require $core 'scriptsBlobPath' 'Session evidence must capture the configured REDscript output path.'
@@ -77,13 +83,13 @@ try {
     Write-FixtureFile $game 'tools\redmod\bin\redMod.exe' 'fixture-redmod' | Out-Null
     $receipt = [ordered]@{schemaVersion=2;product='Biology';sourceRevision=('1'*40);buildId='fixture-build';gameVersion='2.31';files=@() } | ConvertTo-Json -Depth 8
     Write-FixtureFile $game 'biology\build-manifest.json' $receipt | Out-Null
-    Write-FixtureFile $game 'mods\Biology\info.json' '{"name":"Biology"}' | Out-Null
+    Write-FixtureFile $game 'mods\Biology\info.json' '{"name":"Biology"}'.Replace('\"','"') | Out-Null
     Write-FixtureFile $game 'engine\config\base\scripts.ini' '[Scripts]' | Out-Null
-    Write-FixtureFile $game 'r6\config\cybercmd\scc.toml' 'scriptsBlobPath = "{game_dir}\\r6\\cache\\modded\\scripts.bin"' | Out-Null
+    Write-FixtureFile $game 'r6\config\cybercmd\scc.toml' 'scriptsBlobPath = "{game_dir}\r6\cache\modded\scripts.bin"'.Replace('\"','"') | Out-Null
     Write-FixtureFile $game 'r6\cache\modded\scripts.bin' 'compiled-v1' | Out-Null
     Write-FixtureFile $game 'r6\cache\modded\scripts.bin.ts' 'timestamp-v1' | Out-Null
     $logPath = Write-FixtureFile $game 'r6\logs\redscript_rCURRENT.log' "baseline`r`n"
-    $modsPath = Write-FixtureFile $game 'r6\cache\modded\mods.json' '{"mods":["Biology"]}'
+    $modsPath = Write-FixtureFile $game 'r6\cache\modded\mods.json' '{"mods":["Biology"]}'.Replace('\"','"')
     Write-FixtureFile $game 'r6\cache\modded\tweakdb.bin' 'tweakdb-v1' | Out-Null
     Write-FixtureFile $game 'bin\x64\plugins\cybercmd.asi' 'runner' | Out-Null
 
@@ -91,7 +97,7 @@ try {
     Assert-True ([string]$before.installedReceipt.sourceRevision -eq ('1'*40)) 'Snapshot did not retain exact installed source revision.'
     Assert-True ($null -ne $before.configuredRedscriptOutput) 'Snapshot did not resolve configured REDscript output.'
     Add-Content -LiteralPath $logPath -Value 'startup failure signal fixture' -Encoding utf8
-    [IO.File]::WriteAllText($modsPath,'{"mods":["Biology"],"session":2}',[Text.UTF8Encoding]::new($false))
+    [IO.File]::WriteAllText($modsPath,'{"mods":["Biology"],"session":2}'.Replace('\"','"'),[Text.UTF8Encoding]::new($false))
     $after = Get-BiologyAttendedSnapshot $game
     $comparison = Compare-BiologyAttendedSnapshots $before $after
     Assert-True (@($comparison.changedFiles | Where-Object name -eq 'redscriptCurrentLog').Count -eq 1) 'Before/after comparison missed changed REDscript log.'
