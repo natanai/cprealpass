@@ -57,11 +57,11 @@ foreach ($entry in @($bodyHooks,$combat,$outfits,$biology,$health)) { Check ($en
 Check ($health.Contains('PlayerHealthReplacementAccepted') -and $health.Contains('return true;')) 'Attended player-health suppression acceptance is not recorded in runtime source.'
 
 $runtimeProfile = @($profiles.profiles.'biology-runtime')
-Check ($runtimeProfile.Count -eq 1 -and $runtimeProfile[0] -eq 'redscript') 'Production runtime staging profile is not redscript-only.'
+Check ($runtimeProfile.Count -eq 2 -and $runtimeProfile -contains 'redscript' -and $runtimeProfile -contains 'cybercmd') 'Production runtime staging profile is not the exact redscript + cybercmd startup pair.'
 foreach ($component in @('red4ext','archivexl','mod-settings','darkfuture','project-e3-hud','input-loader')) {
     Check ($runtimeProfile -notcontains $component) "Production runtime profile contains retired/forbidden component: $component"
 }
-Check ($profileBuilder.Contains("`$genericIds = @('redscript')")) 'Owned runtime builder is not constrained to redscript.'
+Check ($profileBuilder.Contains("`$genericIds = @('redscript','cybercmd')")) 'Owned runtime builder is not constrained to redscript plus the standalone startup task runner.'
 Check ($profileBuilder.Contains("-Profile 'biology-runtime'")) 'Owned runtime builder does not stage the self-contained Biology profile.'
 Check ($profileBuilder.Contains("settingsProvider = 'biology-owned-save-state'")) 'Owned runtime report does not identify Biology-owned save persistence.'
 
@@ -71,4 +71,4 @@ Check ($contract.releaseProfile.traditionalActorHealthBarsFinalTarget -eq $false
 Check ($contract.releaseProfile.e3InspiredFirstPersonHud -eq $true -and $contract.releaseProfile.e3InspiredNpcNameplates -eq $true) 'E3-inspired authored presentation target is not locked on.'
 Check ($contract.releaseProfile.nativeModernScanner -eq $true) 'Native modern scanner target is not locked on.'
 
-Write-Host "PASS: $script:checks Biology settings/runtime checks; REDlauncher owns activation, one save-persistent E3 preference is Biology-owned, and the production generic runtime is redscript-only."
+Write-Host "PASS: $script:checks Biology settings/runtime checks; REDlauncher owns activation, one save-persistent E3 preference is Biology-owned, and generic runtime plumbing is limited to redscript plus cybercmd startup execution."
