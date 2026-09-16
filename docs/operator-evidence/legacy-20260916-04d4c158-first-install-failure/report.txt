@@ -1,0 +1,14 @@
+BIOLOGY OPERATOR EVIDENCE — CURATED LEGACY FAILED-INSTALL RECORD
+Evidence ID: legacy-20260916-04d4c158-first-install-failure
+Source: parent-reviewed W14/W15 handoffs and docs/test-runs/2026-09-16-bf20fe1f-failed-install-recovery-evidence-gap.md
+Cyberpunk version: 2.31
+Attempted source revision: 04d4c1584df4b0823e093422b98cf4c5575c7b19
+Failed candidate ZIP: biology-integrated-20260916-144813-04d4c1584df4.zip
+Historical candidate ZIP SHA-256: 76A86A77A3C7AE36306B203C7946B88C5D56E1F7B0689489DA7EAF6D8783C796
+Historical candidate ZIP bytes: 1979796
+Build ID: biology-integrated-20260916-144813-04d4c1584df4
+Failed candidate report SHA-256: 9709493A5D4C36F5960CAE2BF09781F664CEA32EB949A85375E44F2F7E943A1E
+Collision-safe install preflight: PASS
+Failure boundary: first mutating installer action failed before installed receipt verification and before REDmod deployment.
+Later W15 recovery attempt: FAIL-CLOSED before mutation because the historical candidate ZIP was no longer present.
+Legacy recovery authority: EMPTY-OWNED-ROOTS-ONLY. No payload file may be deleted from this curated record because the exact old payload manifest is not available here.
