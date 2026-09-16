@@ -170,7 +170,7 @@ This is ownership/hash conservative and finishes with the strict baseline compar
 
 ## Command 7 — verify Biology-specific residue after player hard uninstall
 
-Player-facing hard removal is `Uninstall Biology.exe` from the game root with Cyberpunk closed. Development verification is read-only:
+With Cyberpunk closed, **double-click `Uninstall Biology.exe`** in the game root for the player-facing hard removal. Development verification is read-only:
 
 ```powershell
 pwsh ./tools/Verify-BiologyRemoval.ps1 `
@@ -197,7 +197,7 @@ pwsh ./tools/Probe-OfficialRedmod.ps1 `
   -GameRoot 'C:\Games\Steam\steamapps\common\Cyberpunk 2077'
 ```
 
-This is read-only official-tool evidence, not runtime acceptance.
+This is read-only official-tool evidence, not runtime acceptance. Community/modder practice is **fallback evidence**, not proof that the community/modder route is necessary.
 
 ---
 
