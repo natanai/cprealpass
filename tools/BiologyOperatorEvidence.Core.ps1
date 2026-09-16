@@ -265,18 +265,27 @@ function Remove-BiologyManagedArtifactRoot([string]$GamesRoot,$Evidence) {
 
     if ([string]$Evidence.recovery.mode -ne 'exact-payload-manifest') { throw 'Managed artifact cleanup requires exact payload manifest evidence.' }
     $expectedFiles = @{}
+    $expectedRelativePaths = @{}
     $zipName = [string]$Evidence.cleanup.artifactZipName
     $packageRootName = [string]$Evidence.cleanup.packageRootName
     if ([string]::IsNullOrWhiteSpace($zipName) -or $zipName -match '[\\/]' -or [string]::IsNullOrWhiteSpace($packageRootName) -or $packageRootName -match '[\\/]') { throw 'Managed artifact cleanup metadata is incomplete.' }
-    $expectedFiles[$zipName.ToLowerInvariant()] = ([string]$Evidence.artifact.sha256).ToUpperInvariant()
+    $zipKey = $zipName.ToLowerInvariant()
+    $expectedFiles[$zipKey] = ([string]$Evidence.artifact.sha256).ToUpperInvariant()
+    $expectedRelativePaths[$zipKey] = $zipName
     foreach ($file in @($Evidence.payloadManifest.files)) {
         $relative = Assert-BiologyOperatorRelativePath ([string]$file.path)
-        $expectedFiles[(($packageRootName + '/' + $relative).ToLowerInvariant())] = ([string]$file.sha256).ToUpperInvariant()
+        $artifactRelative = $packageRootName + '/' + $relative
+        $key = $artifactRelative.ToLowerInvariant()
+        $expectedFiles[$key] = ([string]$file.sha256).ToUpperInvariant()
+        $expectedRelativePaths[$key] = $artifactRelative
     }
-    $expectedFiles[(($packageRootName + '/biology/build-manifest.json').ToLowerInvariant())] = ([string]$Evidence.recovery.receiptSha256).ToUpperInvariant()
+    $receiptRelative = $packageRootName + '/biology/build-manifest.json'
+    $receiptKey = $receiptRelative.ToLowerInvariant()
+    $expectedFiles[$receiptKey] = ([string]$Evidence.recovery.receiptSha256).ToUpperInvariant()
+    $expectedRelativePaths[$receiptKey] = $receiptRelative
 
     $allowedDirectories = @{}
-    foreach ($relative in @($expectedFiles.Keys)) {
+    foreach ($relative in @($expectedRelativePaths.Values)) {
         $parent = Get-BiologyRecoveryParent $relative
         while ($parent) { $allowedDirectories[$parent.ToLowerInvariant()] = $true; $parent = Get-BiologyRecoveryParent $parent }
     }
@@ -289,6 +298,13 @@ function Remove-BiologyManagedArtifactRoot([string]$GamesRoot,$Evidence) {
         } else {
             if (-not $expectedFiles.ContainsKey($key)) { throw "Managed artifact cleanup found foreign file: $relative" }
             if ((Get-BiologyOperatorSha256 $entry.FullName) -ne $expectedFiles[$key]) { throw "Managed artifact cleanup found changed file: $relative" }
+        }
+    }
+    foreach ($key in @($expectedFiles.Keys)) {
+        $relative = [string]$expectedRelativePaths[$key]
+        $expectedPath = Resolve-BiologyReleaseChild $artifactRoot $relative
+        if (-not (Test-Path -LiteralPath $expectedPath -PathType Leaf)) {
+            throw "Managed artifact cleanup is missing expected file: $relative"
         }
     }
     Remove-Item -LiteralPath $artifactRoot -Recurse -Force
