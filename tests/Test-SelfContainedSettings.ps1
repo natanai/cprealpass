@@ -46,10 +46,13 @@ foreach ($retired in @('mod-settings','archivexl','red4ext')) {
     if ($removedDeps -notcontains $retired) { throw "Retired dependency is not recorded as removed: $retired" }
     if (@($install.supplementalRuntime.retainedGenericComponents) -contains $retired) { throw "Retired dependency remains in install contract: $retired" }
 }
-if (@($install.supplementalRuntime.retainedGenericComponents).Count -ne 1 -or $install.supplementalRuntime.retainedGenericComponents[0] -ne 'redscript') { throw 'Surviving generic dependency inventory is not exactly redscript.' }
-if (@($profiles.profiles.'biology-runtime').Count -ne 1 -or $profiles.profiles.'biology-runtime'[0] -ne 'redscript') { throw 'Production staging profile is not exactly redscript.' }
-if ($runtimeBuilder -notmatch '\$genericIds\s*=\s*@\(''redscript''\)') { throw 'Production dependency acquisition is not constrained to redscript.' }
-if ($builder -notmatch '\$expectedRetained\s*=\s*@\(''redscript''\)') { throw 'Package builder is not constrained to redscript.' }
+$retained = @($install.supplementalRuntime.retainedGenericComponents)
+if ($retained.Count -ne 2 -or $retained -notcontains 'redscript' -or $retained -notcontains 'cybercmd') { throw 'Surviving generic dependency inventory is not exactly redscript plus cybercmd.' }
+$runtimeProfile = @($profiles.profiles.'biology-runtime')
+if ($runtimeProfile.Count -ne 2 -or $runtimeProfile -notcontains 'redscript' -or $runtimeProfile -notcontains 'cybercmd') { throw 'Production staging profile is not exactly redscript plus cybercmd.' }
+if ($runtimeBuilder -notmatch '\$genericIds\s*=\s*@\(''redscript'',''cybercmd''\)') { throw 'Production dependency acquisition is not constrained to redscript plus cybercmd.' }
+if ($builder -notmatch '\$expectedRetained\s*=\s*@\(''redscript'',''cybercmd''\)') { throw 'Package builder is not constrained to redscript plus cybercmd.' }
+if ($builder -notmatch "'cybercmd'\s*=\s*'REDSCRIPT-STARTUP'") { throw 'Package builder does not isolate cybercmd to the startup compilation route.' }
 foreach ($retired in @('mod-settings','mod_settings','archivexl','red4ext')) {
     if ($builder.ToLowerInvariant() -notmatch [regex]::Escape($retired)) { throw "Package builder does not fail closed against retired dependency: $retired" }
 }
@@ -57,4 +60,4 @@ foreach ($retired in @('mod-settings','mod_settings','archivexl','red4ext')) {
 if ($install.preferences.externalSettingsProvider -ne $false -or $install.preferences.pauseMenuRegistration -ne $false) { throw 'Stale external settings provider/menu registration is still permitted.' }
 if ($settingsSource -match '(?i)Project E3|Dark Future' -or $uiSource -match '(?i)Project E3|Dark Future') { throw 'Reference-mod runtime returned through settings implementation.' }
 
-Write-Host 'PASS: Biology settings are self-contained, one-control, save-backed, launcher-separated, provider-row-free, and the release dependency set is redscript-only.'
+Write-Host 'PASS: Biology settings are self-contained, one-control, save-backed, launcher-separated, provider-row-free, and generic runtime is limited to redscript plus cybercmd startup plumbing.'
