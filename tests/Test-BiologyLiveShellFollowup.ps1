@@ -8,6 +8,7 @@ function Text([string]$name) { return Get-Content -Raw -LiteralPath (Join-Path $
 
 $followup = Text 'BiologyLiveShellFollowupNative.reds'
 $shell = Text 'BiologyCyberwareShell.reds'
+$sync = Text 'BiologyModeSyncNative.reds'
 $detail = Text 'BiologySessionPresentation.reds'
 
 # Stock Ripperdoc category layout is asynchronous. W02.2 tracks the actual native
@@ -18,6 +19,11 @@ Check ($followup.Contains('IsDefined(this.m_animationController)') -and $followu
 Check ($followup.Contains('protected cb func OnMinigridSpawned(widget: ref<inkWidget>, userData: ref<IScriptable>) -> Bool')) 'Native asynchronous minigrid completion seam is not wrapped.'
 Check ($followup.Contains('let result: Bool = wrappedMethod(widget, userData);')) 'Native OnMinigridSpawned behavior was replaced instead of wrapped.'
 Check ($followup.Contains('this.CRSyncBiologyNodeInteractivity(this.CRBiologyNativeDetailReady());')) 'Biology node interactivity is not synchronized to native shell readiness.'
+
+# The pre-existing native synchronization wrapper must enforce the same readiness
+# predicate. This makes first-open gating independent of REDscript wrapper order.
+Check ($sync.Contains('this.crBiologyShellMode') -and $sync.Contains('&& this.CRBiologyNativeDetailReady()') -and $sync.Contains('CRBiologyDetailPresentation.Supported(minigrid.CRBiologyArea())')) 'Spawned Biology nodes can become interactive before the W02.2 native shell readiness boundary.'
+Check ($sync.Contains('this.CRSyncBiologyNodeInteractivity(this.crBiologyShellMode && this.CRBiologyNativeDetailReady());')) 'Existing Biology initialization does not honor W02.2 first-open readiness.'
 
 # The existing Biology event/method path remains the one selected-system authority.
 # W02.2 touches native DollHover/DollSelect only after that path has committed the area.
