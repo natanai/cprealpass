@@ -15,8 +15,9 @@ $detail = Text 'BiologySessionPresentation.reds'
 # exist. This prevents the attended fixed/wrong shoulder target before initialization.
 Check ($followup.Contains('ArraySize(this.m_equipmentMinigrids) >= 10')) 'First-open Biology detail is not gated on complete native minigrid initialization.'
 Check ($followup.Contains('IsDefined(this.m_animationController)') -and $followup.Contains('IsDefined(this.m_inventoryView)') -and $followup.Contains('IsDefined(this.m_selector)')) 'Native detail readiness does not require the stock animation/content/selector controllers.'
-Check ($followup.Contains('private final func CREnterBiologyDetail(area: gamedataEquipmentArea) -> Bool')) 'W02.2 does not wrap the existing Biology overview -> detail transition.'
+Check ($followup.Contains('protected cb func OnCRBiologyAreaSelectEvent(evt: ref<CRBiologyAreaSelectEvent>) -> Bool')) 'W02.2 does not wrap the Biology selected-area event.'
 Check ($followup.Contains('if this.crBiologyShellMode && !this.CRBiologyNativeDetailReady()')) 'Biology detail can still enter before the native shell is ready.'
+Check ($followup.Contains('let result: Bool = wrappedMethod(evt);')) 'Existing Biology selected-area propagation was replaced instead of wrapped.'
 
 # A selected Biology area remains the source of truth. W02.2 only resets stale native
 # Cyberware shell markers before the existing transition commits that same area.
@@ -43,9 +44,10 @@ Check ($displayIndex -ge 0 -and $refreshIndex -gt $displayIndex) 'Selected-syste
 Check ($detail.Contains('public static func Detail(game: GameInstance, area: gamedataEquipmentArea)')) 'Authoritative session detail projection is missing.'
 Check ($detail.Contains('result.valid = true;')) 'Session detail contract never marks supplied authoritative detail valid.'
 
-# Back is the inverse native transition: restore Cyberware content chrome, hide the
-# native detail surface, and re-enable Biology nodes only after native readiness.
-Check ($followup.Contains('public final func CRHandleBiologyBack() -> Bool')) 'W02.2 does not complete the Biology detail -> overview Back transition.'
+# Back is completed at the same native DollHover(Invalid) boundary the existing
+# Biology Back path already uses. No second Back stack is introduced.
+Check ($followup.Contains('private func DollHover(area: gamedataEquipmentArea) -> Void')) 'W02.2 does not wrap the native doll hover/reset boundary.'
+Check ($followup.Contains('this.m_inventoryView.CRBiologyDetailSurfaceActive();')) 'Back cleanup is not scoped to an active Biology detail surface.'
 Check ($followup.Contains('this.m_inventoryView.CRSetBiologyDetailSurface(false);')) 'Back does not restore native Cyberware content chrome.'
 Check ($followup.Contains('this.DisplayInventory(false);')) 'Back does not close the native Ripperdoc detail/content surface.'
 Check ($followup.Contains('this.CRSyncBiologyNodeInteractivity(this.crBiologyShellMode && this.CRBiologyNativeDetailReady());')) 'Back does not restore Biology interactivity deterministically.'
