@@ -46,13 +46,14 @@ if ($plan.Count -eq 0) { throw 'Biology release ownership receipt contains no in
 $manifestDestination = Resolve-BiologyReleaseChild $GameRoot 'biology/build-manifest.json'
 $manifestSourceHash = Get-BiologyReleaseSha256 $manifestPath
 $manifestPriorHash = Get-BiologyReleaseExistingHash $manifestDestination
+$manifestAction = if ($manifestPriorHash -eq $manifestSourceHash) { 'preserve' } elseif ($null -eq $manifestPriorHash) { 'create' } else { 'replace' }
 
 if ($WhatIf) {
     $plan | Select-Object relativePath,component,action,protectedSharedLoader,cybercmdReplaceable
     [pscustomobject]@{
         relativePath = 'biology/build-manifest.json'
         component = 'biology-package-metadata'
-        action = $(if ($manifestPriorHash -eq $manifestSourceHash) { 'preserve' } elseif ($null -eq $manifestPriorHash) { 'create' } else { 'replace' })
+        action = $manifestAction
         protectedSharedLoader = $false
         cybercmdReplaceable = $false
     }
@@ -67,8 +68,8 @@ Invoke-BiologyReleaseInstallPlan -Plan $plan
 if ((Get-BiologyReleaseExistingHash $manifestDestination) -ne $manifestPriorHash) {
     throw 'Installed Biology ownership receipt changed after preflight.'
 }
-if ($manifestPriorHash -ne $manifestSourceHash) {
-    Copy-BiologyReleaseVerified $manifestPath $manifestDestination $manifestSourceHash
+if ($manifestAction -ne 'preserve') {
+    Copy-BiologyReleaseVerified -Source $manifestPath -Destination $manifestDestination -ExpectedHash $manifestSourceHash -Action $manifestAction -ExpectedPriorHash $manifestPriorHash
 }
 if ((Get-BiologyReleaseExistingHash $manifestDestination) -ne $manifestSourceHash) {
     throw 'Installed Biology ownership receipt failed post-copy verification.'

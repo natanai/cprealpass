@@ -40,19 +40,60 @@ function Get-BiologyReleaseExistingHash([string]$Path) {
     return Get-BiologyReleaseSha256 $Path
 }
 
-function Copy-BiologyReleaseVerified([string]$Source,[string]$Destination,[string]$ExpectedHash) {
+function Copy-BiologyReleaseVerified(
+    [string]$Source,
+    [string]$Destination,
+    [string]$ExpectedHash,
+    [ValidateSet('create','replace')]
+    [string]$Action,
+    [AllowNull()]
+    [object]$ExpectedPriorHash
+) {
     if ((Get-BiologyReleaseSha256 $Source) -ne $ExpectedHash) { throw "Package source changed before copy: $Source" }
+
+    if ($Action -eq 'create' -and $null -ne $ExpectedPriorHash) {
+        throw "Create action unexpectedly has a pre-existing destination identity: $Destination"
+    }
+    if ($Action -eq 'replace' -and $null -eq $ExpectedPriorHash) {
+        throw "Replace action is missing its preflight destination identity: $Destination"
+    }
+    if ($null -ne $ExpectedPriorHash) { $ExpectedPriorHash = ([string]$ExpectedPriorHash).ToUpperInvariant() }
+
     New-Item -ItemType Directory -Force -Path (Split-Path -Parent $Destination) | Out-Null
     $temporary = $Destination + '.biology-install-' + [guid]::NewGuid().ToString('N') + '.tmp'
+    $backup = $null
     try {
         Copy-Item -LiteralPath $Source -Destination $temporary
         if ((Get-BiologyReleaseSha256 $temporary) -ne $ExpectedHash) { throw "Temporary install copy failed SHA-256 verification: $Destination" }
-        [IO.File]::Replace($temporary,$Destination,$null,$true)
-    } catch [IO.FileNotFoundException] {
-        if (Test-Path -LiteralPath $Destination) { throw }
-        Move-Item -LiteralPath $temporary -Destination $Destination
+
+        # Re-check immediately before the write. The plan action, not a guessed
+        # exception type, selects create versus replace semantics.
+        $current = Get-BiologyReleaseExistingHash $Destination
+        if ($current -ne $ExpectedPriorHash) {
+            throw "Install destination changed after preflight immediately before write: $Destination"
+        }
+
+        if ($Action -eq 'create') {
+            # File.Move without overwrite is the normal create primitive. If a
+            # path appears after the immediate recheck, the move fails closed.
+            [IO.File]::Move($temporary,$Destination)
+        } else {
+            # File.Replace requires an existing destination. Supply a real backup
+            # path rather than using a null/empty backup argument, then discard
+            # that verified preflight copy after the atomic replacement succeeds.
+            $backup = $Destination + '.biology-install-backup-' + [guid]::NewGuid().ToString('N') + '.tmp'
+            [IO.File]::Replace($temporary,$Destination,$backup,$true)
+            if ((Get-BiologyReleaseExistingHash $backup) -ne $ExpectedPriorHash) {
+                throw "Replaced destination identity changed during atomic write: $Destination"
+            }
+        }
+
+        if ((Get-BiologyReleaseExistingHash $Destination) -ne $ExpectedHash) {
+            throw "Post-install SHA-256 verification failed: $Destination"
+        }
     } finally {
         if (Test-Path -LiteralPath $temporary) { Remove-Item -LiteralPath $temporary -Force }
+        if ($backup -and (Test-Path -LiteralPath $backup)) { Remove-Item -LiteralPath $backup -Force }
     }
 }
 
@@ -116,13 +157,16 @@ function Invoke-BiologyReleaseInstallPlan([object[]]$Plan) {
             throw "Install destination changed after preflight: $($item.relativePath)"
         }
         if ([string]$item.action -eq 'preserve') { continue }
+        if ([string]$item.action -notin @('create','replace')) {
+            throw "Unexpected Biology release install action: $($item.action) / $($item.relativePath)"
+        }
         if ([bool]$item.protectedSharedLoader -and [string]$item.action -eq 'replace') {
             throw "Protected shared loader/config reached an impossible replace action: $($item.relativePath)"
         }
         if ([string]$item.component -eq 'cybercmd' -and [string]$item.action -eq 'replace' -and -not [bool]$item.cybercmdReplaceable) {
             throw "Only cybercmd.asi may be replaced by the standalone cybercmd install path: $($item.relativePath)"
         }
-        Copy-BiologyReleaseVerified ([string]$item.source) ([string]$item.destination) ([string]$item.deployedSha256)
+        Copy-BiologyReleaseVerified -Source ([string]$item.source) -Destination ([string]$item.destination) -ExpectedHash ([string]$item.deployedSha256) -Action ([string]$item.action) -ExpectedPriorHash $item.priorSha256
         if ((Get-BiologyReleaseExistingHash ([string]$item.destination)) -ne [string]$item.deployedSha256) {
             throw "Post-install SHA-256 verification failed: $($item.relativePath)"
         }
