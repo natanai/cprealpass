@@ -10,10 +10,14 @@ $settings = Get-Content -Raw -LiteralPath (Join-Path $project 'src/redscript/Cyb
 $preferenceUi = Get-Content -Raw -LiteralPath (Join-Path $project 'src/redscript/CyberpunkRealism/BiologyPreferencesNative.reds')
 $builderPath = Join-Path $project 'tools/Build-BiologyPackage.ps1'
 $deployPath = Join-Path $project 'tools/Deploy-BiologyRedmod.ps1'
+$installerPath = Join-Path $project 'tools/Install-BiologyRelease.ps1'
+$installerCorePath = Join-Path $project 'tools/BiologyReleaseInstall.Core.ps1'
 $docPath = Join-Path $project 'docs/REDMOD-INTEGRATED-ASSEMBLY.md'
-foreach ($path in @($builderPath,$deployPath,$docPath)) { if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Missing integrated package asset: $path" } }
+foreach ($path in @($builderPath,$deployPath,$installerPath,$installerCorePath,$docPath)) { if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Missing integrated package asset: $path" } }
 $builder = Get-Content -Raw -LiteralPath $builderPath
 $deploy = Get-Content -Raw -LiteralPath $deployPath
+$installer = Get-Content -Raw -LiteralPath $installerPath
+$installerCore = Get-Content -Raw -LiteralPath $installerCorePath
 $doc = Get-Content -Raw -LiteralPath $docPath
 
 $script:checks = 0
@@ -44,9 +48,18 @@ foreach ($retired in @('mod-settings','mod_settings','archivexl','red4ext')) { C
 foreach ($blocked in @('tweakxl','codeware','input-loader','darkfuture','project-e3')) { Check ($builder.ToLowerInvariant().Contains($blocked)) "Integrated builder does not explicitly reject/exclude $blocked." }
 Check ($builder.Contains('biology/build-manifest.json') -and $builder.Contains('biology/provenance.json') -and $builder.Contains('BIOLOGY-VERSION.txt') -and $builder.Contains('SHA256SUMS.txt')) 'Integrated ownership/provenance metadata is incomplete.'
 Check ($builder.Contains('Build-BiologyUninstaller.ps1') -and $builder.Contains('Uninstall Biology.exe')) 'Integrated package does not build/embed player uninstaller.'
+Check ($builder.Contains("'Install Biology.ps1'") -and $builder.Contains("'BiologyReleaseInstall.Core.ps1'")) 'Integrated package does not embed the collision-safe player installer.'
+Check ($builder -match 'DO NOT extract/copy the package directly into the Cyberpunk 2077 game root') 'Integrated package still supports blind ZIP merge into the game root.'
 Check ($builder.Contains("preferencePolicy = 'stored-in-save-never-target'")) 'Package ownership receipt does not preserve save-backed preference state.'
 Check ($builder.Contains("removedDependencies = @('mod-settings','archivexl','red4ext'")) 'Package provenance does not record settings-stack removal.'
 Check (-not $builder.Contains('$expectedRetained = @(''redscript'',''red4ext''')) 'Retired RED4ext remains expected by the playable builder.'
+
+Check ($installer -match 'New-BiologyReleaseInstallPlan') 'Player installer does not preflight the complete release plan.'
+Check ($installer -match 'Invoke-BiologyReleaseInstallPlan') 'Player installer does not apply the verified release plan.'
+Check ($installerCore -match "'bin/x64/global\.ini'" -and $installerCore -match "'bin/x64/version\.dll'") 'Installer core lost protected shared standalone-cybercmd paths.'
+Check ($installerCore -match "'bin/x64/plugins/cybercmd\.asi'") 'Installer core lost the only replaceable standalone-cybercmd path.'
+Check ($installerCore -match 'will not overwrite an existing non-identical file') 'Installer core does not fail closed on non-identical shared loader/config.'
+Check ($installerCore -match 'Only bin/x64/plugins/cybercmd\.asi may be replaced') 'Installer core does not constrain replacement to cybercmd.asi.'
 
 Check ($deploy -match 'tools\\redmod\\bin\\redMod\.exe') 'Deploy helper does not use official REDmod executable.'
 Check ($deploy -match 'ProcessStartInfo|ArgumentList') 'Deploy helper does not control native argument boundaries.'
@@ -77,9 +90,12 @@ Check ($install.preferences.externalSettingsProvider -eq $false -and $install.pr
 Check (@($install.preferences.publicControls).Count -eq 1 -and $install.preferences.publicControls[0] -eq 'presentation.e3-first-person-hud-visuals') 'Install contract public preference count drifted.'
 Check ($install.launcherActivation.publicMasterPreference -eq $false) 'Install contract still exposes redundant in-game master preference.'
 Check ($install.ownerManifest.path -eq 'biology/build-manifest.json' -and $install.ownerManifest.schemaVersion -eq 2) 'Install contract lost exact owner manifest.'
+Check ($install.playerInstaller.entryScript -eq 'Install Biology.ps1' -and $install.playerInstaller.directZipMergeSupported -eq $false) 'REDmod install contract does not require collision-safe player installation.'
+Check ($install.playerInstaller.sharedStandaloneCybercmdPolicy.'bin/x64/global.ini' -match 'fail-before-mutation' -and $install.playerInstaller.sharedStandaloneCybercmdPolicy.'bin/x64/version.dll' -match 'fail-before-mutation') 'REDmod install contract lost protected shared-loader collision behavior.'
+Check ($install.playerInstaller.sharedStandaloneCybercmdPolicy.'bin/x64/plugins/cybercmd.asi' -eq 'create-preserve-or-replace') 'REDmod install contract lost cybercmd.asi replacement allowance.'
 Check ($install.playerUninstaller.binary -eq 'Uninstall Biology.exe') 'Install contract lost player uninstaller.'
 Check ($install.launcherActivation.signal -eq 'Items.BiologyLauncherActivationMarker.stackable') 'Install contract lost launcher activation signal.'
 
 Check ($doc -match 'Current generic dependencies' -and $doc -match '(?i)cybercmd.*InvokeScc') 'Integrated documentation no longer records current startup dependency disposition.'
 
-Write-Host "PASS: $script:checks integrated Biology package checks; runtime plumbing is redscript plus cybercmd startup execution, settings remain Biology-owned/save-backed, and retired provider DLLs are fail-closed from the artifact."
+Write-Host "PASS: $script:checks integrated Biology package checks; runtime plumbing is redscript plus cybercmd startup execution, shared standalone-cybercmd loader/config is collision-safe at install, settings remain Biology-owned/save-backed, and retired provider DLLs are fail-closed from the artifact."
