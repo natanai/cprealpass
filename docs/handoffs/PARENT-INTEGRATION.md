@@ -1,5 +1,7 @@
 # Parent integration/orchestration thread handoff
 
+> **CURRENT REPLACEMENT HANDOFF:** the active parent successor is **P01.2**. Read `PARENT-P01.2.md` immediately after `../THREAD-LEDGER.md` before doing any current orchestration. That file contains the exact W09/W10 integration state, current installed-game caveat, and next attended-test sequence. This generic packet remains the standing parent-role contract.
+
 Use this packet to start or replace the long-lived parent thread for Biology.
 
 Before creating/replacing the parent conversation, read and update `../THREAD-LEDGER.md`. The parent conversation must have an official `P##.#` thread ID and the predecessor must be marked correctly if it became too long.
@@ -14,6 +16,7 @@ Your official parent-thread ID comes from docs/THREAD-LEDGER.md. Read that file 
 Start by reading:
 - AGENTS.md
 - docs/THREAD-LEDGER.md
+- docs/handoffs/PARENT-P01.2.md when that file is identified as the active replacement handoff
 - ROADMAP.md
 - AGREED-GOALS.md
 - docs/INTEGRATION-ORCHESTRATOR.md
