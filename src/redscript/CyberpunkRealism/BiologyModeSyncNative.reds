@@ -183,10 +183,15 @@ private final func CRSyncSpawnedBiologyNode(widget: ref<inkWidget>) -> Void {
   }
 
   // Stock SpawnMinigrids is asynchronous. Apply the already-selected shell mode at
-  // the actual native creation boundary so overview nodes remain deterministic.
+  // the actual native creation boundary so overview nodes remain deterministic. W02.2
+  // additionally keeps labels non-actionable until the complete ten-grid shell and
+  // required native controllers are ready, independent of wrapper composition order.
   minigrid.CRSetBiologyMode(this.crBiologyShellMode);
   minigrid.CRSetBiologyLabelInteractive(
-    this.crBiologyShellMode && !this.CRBodyShellInDetail() && CRBiologyDetailPresentation.Supported(minigrid.CRBiologyArea())
+    this.crBiologyShellMode
+      && this.CRBiologyNativeDetailReady()
+      && !this.CRBodyShellInDetail()
+      && CRBiologyDetailPresentation.Supported(minigrid.CRBiologyArea())
   );
 }
 
@@ -239,9 +244,10 @@ protected cb func OnInitialize() -> Bool {
 
   // The old action panel was rooted independently on the fullscreen. Move the same
   // authoritative item/treatment controls into Cyberware's native content anchor and
-  // let selected Biology areas decide when they are relevant.
+  // let selected Biology areas decide when they are relevant. W02.2 keeps first-open
+  // labels gated until the asynchronous native shell has fully initialized.
   this.CRMountBiologyActionsInNativeContent();
-  this.CRSyncBiologyNodeInteractivity(this.crBiologyShellMode);
+  this.CRSyncBiologyNodeInteractivity(this.crBiologyShellMode && this.CRBiologyNativeDetailReady());
   this.CRRefreshBiologyActions();
   this.CRConstrainBiologyActionsToSelectedArea();
   this.CRSyncBiologyModeSwitcher();
