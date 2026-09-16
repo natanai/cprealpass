@@ -16,20 +16,27 @@ if ((Test-Path -LiteralPath $output) -or (Test-Path -LiteralPath $report)) {
     throw 'Build ID already exists; owned runtime profiles are immutable. Use a new BuildId.'
 }
 
-# redscript is the only retained generic runtime component. Biology's remaining
-# player preference is save-backed by its own ScriptableSystem and edited from its
-# own body shell, so Mod Settings/ArchiveXL/RED4ext are neither acquired nor staged.
-$genericIds = @('redscript')
+# Biology's generic runtime is intentionally narrow: redscript supplies SCC plus
+# the REDscript configuration, and standalone cybercmd supplies the startup task
+# runner needed to execute scc.toml/InvokeScc without restoring RED4ext/CET.
+# Biology's remaining player preference is save-backed by its own ScriptableSystem
+# and edited from its own body shell, so Mod Settings/ArchiveXL/RED4ext remain retired.
+$genericIds = @('redscript','cybercmd')
 & "$PSScriptRoot\Acquire-Components.ps1" -ComponentIds $genericIds
-if ($LASTEXITCODE -ne 0) { throw 'Retained generic framework acquisition/verification failed.' }
+if ($LASTEXITCODE -ne 0) { throw 'Retained generic runtime acquisition/verification failed.' }
 & "$PSScriptRoot\Stage-Components.ps1" -Profile 'biology-runtime'
-if ($LASTEXITCODE -ne 0) { throw 'Retained generic framework staging failed.' }
+if ($LASTEXITCODE -ne 0) { throw 'Retained generic runtime staging failed.' }
 $genericManifestPath = Resolve-SafeChildPath $project 'manifest/biology-runtime.deployment.json'
 $genericManifest = Get-Content -Raw -LiteralPath $genericManifestPath | ConvertFrom-Json
 
 $unexpected = @($genericManifest.files | Where-Object { [string]$_.component -notin $genericIds })
 if ($unexpected.Count -gt 0) {
     throw "Owned runtime base contains an unexpected component: $($unexpected[0].component)"
+}
+foreach ($requiredId in $genericIds) {
+    if (@($genericManifest.files | Where-Object { [string]$_.component -eq $requiredId }).Count -eq 0) {
+        throw "Owned runtime base is missing required generic component: $requiredId"
+    }
 }
 
 # Build-OwnedAcceptance starts from repository-owned REDscript, opens canonical
@@ -86,6 +93,8 @@ $manifest = [ordered]@{
 Write-JsonFile $manifest $output
 
 # Compile the exact final deployable manifest, not merely the source-only precursor.
+# Compile-Profile reads source files and the installed 2.31 base; it does not need
+# to execute cybercmd itself. Live startup acceptance remains a separate gate.
 & "$PSScriptRoot\Compile-Profile.ps1" -ManifestPath $outputRelative -GameRoot $game
 if ($LASTEXITCODE -ne 0) { throw 'Final owned runtime profile failed exact compilation.' }
 
@@ -104,7 +113,7 @@ $record = [ordered]@{
     coreBuildId = $coreBuildId
     fileCount = $files.Count
     manifestPath = $outputRelative
-    scope = 'Deployable Biology runtime containing project-original REDscript plus pinned redscript only. The E3 presentation preference is persisted by Biology save state and edited in Biology-owned UI. No Mod Settings, ArchiveXL, RED4ext, Dark Future, Project E3 or Input Loader runtime content. Does not deploy or launch the game.'
+    scope = 'Deployable Biology runtime containing project-original REDscript plus pinned redscript SCC plumbing and standalone cybercmd startup task runner. The E3 presentation preference is persisted by Biology save state and edited in Biology-owned UI. No Mod Settings, ArchiveXL, RED4ext, Dark Future, Project E3 or Input Loader runtime content. Does not deploy or launch the game.'
 }
 Write-JsonFile $record $report
 Write-Host "PASS: deployable owned runtime profile $BuildId compiled with $($files.Count) files. Nothing was deployed or launched."
