@@ -1,210 +1,112 @@
 # Biology integrated REDmod-first assembly
 
-Status: **DEPLOYMENT FOUNDATION ACCEPTED; broader live acceptance ongoing**  
+Status: **DEPLOYMENT FOUNDATION ACCEPTED; W10 self-contained settings source complete; broader live acceptance ongoing**  
 Target game: Cyberpunk 2077 `2.31`  
 Canonical builder: `tools/Build-BiologyPackage.ps1`
 
 ## Purpose
 
-This document describes the current integrated package architecture and the direct evidence already obtained. It is no longer a pre-deployment handoff for the original three migration lanes.
-
-Historical provenance remains in Git history and the exact attended record under `docs/test-runs/`.
+This document describes the current integrated package architecture and direct evidence already obtained. Historical attended evidence from the earlier multi-framework artifact remains useful, but it must not be confused with the W10 dependency-reduced candidate.
 
 ## What has been proven
 
-The exact integrated candidate built from:
+The earlier exact integrated candidate built from `8cf045664b5e4d8b4b014edfc98bf2f8eb270ba5` proved exact compilation, installation, official REDmod recognition of `Biology`, and real five-stage REDmod deployment on Cyberpunk 2077 2.31.
 
-`8cf045664b5e4d8b4b014edfc98bf2f8eb270ba5`
+That artifact also later showed launcher-OFF residue from the then-retained settings stack: an ArchiveXL DLL security warning and a blank/inert Mod Settings pause-menu space. W10 removes that stack from the next production candidate rather than treating the observation as acceptable final behavior.
 
-produced:
-
-`biology-integrated-20260915-061136-8cf045664b5e.zip`
-
-SHA-256:
-
-`42BACC73173EB95D84F3278593CD06DDAF665AA714F4C692DB03D553B91557CC`
-
-On a clean Cyberpunk 2077 2.31 installation:
-
-- exact compilation passed;
-- the release-shaped package installed successfully;
-- official REDmod recognized `Biology`;
-- REDmod reported `Found mod "Biology"`;
-- all five deploy stages executed;
-- `r6/cache/modded/mods.json` was written;
-- `Commandlet deploy has succeeded` was observed;
-- the corrected Biology deploy helper returned PASS only after validating real deployment evidence.
-
-The earlier false-positive deploy attempt is also important evidence: REDmod can return exit code 0 while ignoring the intended root and finding no mods. Therefore raw exit code alone is never accepted as deploy proof.
-
-See `docs/test-runs/2026-09-15-8cf04566-redmod-deploy-preflight.md`.
+See `docs/test-runs/2026-09-15-8cf04566-redmod-deploy-preflight.md` plus issue #61 / parent evidence for the launcher-OFF follow-up.
 
 ## Canonical package shape
 
-Biology is **REDmod-first, not REDmod-only**:
+Biology is REDmod-first, not REDmod-only:
 
-- `mods/Biology` is the official first-party REDmod identity;
-- current Biology-owned additive/wrapper REDscript remains under `r6/scripts/CyberpunkRealism` because those seams are classified `REDSCRIPT-BETTER`;
-- generic framework files outside `mods/Biology` are included only while a current accepted consumer requires them;
+- `mods/Biology` is the official first-party REDmod identity and whole-mod activation marker owner;
+- Biology-owned additive/wrapper REDscript remains under `r6/scripts/CyberpunkRealism` where classified `REDSCRIPT-BETTER`;
+- **redscript is now the only retained generic runtime dependency**;
+- Mod Settings, ArchiveXL, and RED4ext are removed from the production package path;
 - every installed file is individually owned/hashed/attributed;
 - shared roots are never recursively Biology-owned;
 - no Dark Future or Project E3 runtime content ships.
 
-The canonical build command from an active pristine candidate checkout is:
+The canonical build command remains:
 
 ```powershell
 pwsh ./tools/Build-BiologyPackage.ps1 `
   -GameRoot 'C:\Games\Steam\steamapps\common\Cyberpunk 2077'
 ```
 
-For normal milestone preparation, prefer the higher-level canonical operator flow in `LOCAL-OPERATOR-COMMANDS.md` rather than manually chaining build/install/deploy steps.
-
-Artifact naming:
-
-```text
-biology-integrated-<UTC timestamp>-<12-char source SHA>.zip
-```
-
-Important package metadata includes:
-
-```text
-mods/Biology/info.json
-biology/build-manifest.json
-biology/provenance.json
-BIOLOGY-VERSION.txt
-SHA256SUMS.txt
-INSTALL.txt
-UNINSTALL.txt
-LICENSES/<retained dependency>.txt
-```
+For attended preparation, prefer the higher-level canonical operator flow in `LOCAL-OPERATOR-COMMANDS.md`.
 
 ## Exact compilation remains a hard artifact gate
 
-`Build-BiologyPackage.ps1` constructs the complete accepted Biology runtime, stages current activation gates in build-owned copies, and exact-compiles against the installed supported Cyberpunk 2077 2.31 `final.redscripts` before emitting a playable ZIP.
+`Build-BiologyPackage.ps1` constructs the complete accepted Biology runtime and exact-compiles against the installed supported Cyberpunk 2077 2.31 `final.redscripts` before emitting a playable ZIP.
 
-That proves source/language compatibility with the supported bundle. It does not by itself prove:
-
-- body runtime lifecycle;
-- UI rendering/navigation;
-- save/reload behavior;
-- E3 presentation;
-- launcher-off Biology inactivity;
-- uninstaller safety;
-- quest/gameplay acceptance.
-
-Those remain direct/attended gates.
+That proves source/language compatibility. It does not by itself prove UI rendering, ScriptableSystem save lifecycle, E3 preference interaction/persistence, launcher-off Biology inactivity, hard-uninstall runtime cleanliness, or gameplay/quest acceptance.
 
 ## Current generic dependencies
 
-The integrated candidate currently retains:
-
 | Component | Status | Current reason | Direction |
 | --- | --- | --- | --- |
-| official REDmod | required platform | package/deploy/enable authority | retain; game-provided |
-| redscript `0.5.31` | direct required runtime | Biology-owned additive/wrapper seams | retain while this remains the narrower robust route |
-| Mod Settings `0.2.21` | temporary | current accessible/persistent provider for provider-neutral Biology/E3 preferences | remove/rethink when an accepted smaller provider/boundary replaces it |
-| ArchiveXL `1.27.3` | temporary transitive | dependency of current Mod Settings adapter | remove with Mod Settings unless another direct consumer appears |
-| RED4ext `1.30.0` | temporary transitive | plumbing for ArchiveXL/Mod Settings | remove with that chain unless another direct consumer appears |
+| official REDmod | required platform | package/deploy/enable authority and launcher activation marker | retain; game-provided |
+| redscript `0.5.31` | direct required runtime | Biology-owned additive/wrapper runtime/UI/native seams plus save-backed ScriptableSystem preference state | retain while these accepted seams remain |
+| Mod Settings `0.2.21` | **removed** | no current consumer; replaced by Biology-owned save persistence/UI | absent from production artifact |
+| ArchiveXL `1.27.3` | **removed** | former transitive Mod Settings dependency; no direct Biology consumer | absent from production artifact |
+| RED4ext `1.30.0` | **removed** | former transitive settings-stack plumbing; no Biology plugin | absent from production artifact |
 
-Not required by the current candidate:
+Also not required: TweakXL, Codeware, Input Loader, Dark Future runtime, Project E3 runtime.
 
-- TweakXL;
-- Codeware;
-- Input Loader;
-- Dark Future runtime;
-- Project E3 runtime.
+`tools/Build-OwnedRuntimeProfile.ps1` acquires/stages only redscript. `Build-BiologyPackage.ps1` expects exactly redscript and fails closed if a retired or blocked component enters the artifact.
 
-Issue #44 additionally owns proving that supplemental files outside the REDmod package do not keep Biology behavior active when REDlauncher `Enable mods` is OFF.
+## Self-contained settings
 
-## Project E3 reference boundary
+The remaining public preference is `presentation.e3-first-person-hud-visuals`.
 
-Project E3 remains a local-only presentation reference. `config/realpass-e3.json` preserves the reference inventory/version/hashes; actual third-party `ReferenceMods/` payload is gitignored and never shipped.
+- persistence: `CRRealpassSettings.e3FirstPersonHudVisuals`, a persistent Biology `ScriptableSystem` Bool stored through the Cyberpunk save lifecycle;
+- editor: Biology-owned Ink control on the existing Biology/Cyberware body screen;
+- whole-mod activation: REDlauncher/REDmod sentinel only;
+- external settings provider: none;
+- pause-menu provider registration: none.
 
-Issue #40 uses the reference for design/controller archaeology while implementing Biology-owned presentation.
+There is no saved `Enable Biology` Boolean. This prevents a saved preference from competing with launcher OFF and avoids preserving a framework stack solely to host two booleans.
 
-## Ownership and hard uninstall target
+## Ownership and hard uninstall
 
-`biology/build-manifest.json` is the exact installed-file ownership record. Ordinary payload entries include:
+`biology/build-manifest.json` is the exact installed-file ownership record. Ordinary payload entries include relative path, SHA-256, owner, component, route, and replacement policy.
 
-- relative path;
-- SHA-256;
-- owner;
-- component;
-- route;
-- replacement policy.
+The uninstaller contract records `savePolicy = never-target` and `preferencePolicy = stored-in-save-never-target`. Because preferences are save-backed, `Uninstall Biology.exe` does not edit any third-party settings file or expose a provider-specific preference-removal checkbox.
 
-First-party directory roots are narrow. Shared roots such as `bin`, `archive`, `engine`, `mods`, `r6`, and `red4ext` may never be deleted recursively.
-
-The target player release now includes a self-contained `Uninstall Biology.exe` that consumes the ownership/version contract, preserves saves, preserves settings by default, refuses changed/ambiguous file deletion, removes only now-empty owned directories, and refreshes REDmod state. Issue #44 owns implementation/acceptance.
-
-A full Steam reinstall is not the normal Biology uninstall path.
+The one retained generic dependency, redscript, remains shared/preserved by normal player uninstall. Shared roots such as `bin`, `archive`, `engine`, `mods`, `r6`, and `red4ext` may never be deleted recursively; mentioning `red4ext` here is a deletion-safety boundary, not a Biology dependency.
 
 ## Deterministic REDmod deployment
 
-The supported tool is:
+The supported game-provided REDmod tool remains the deployment authority. Use `tools/Deploy-BiologyRedmod.ps1` for deterministic developer/probe deployment rather than reconstructing raw command quoting.
 
-```text
-tools/redmod/bin/redMod.exe
-file version 2.3.1.0
-product version 2.31
-```
-
-Do **not** reconstruct raw REDmod command quoting from this document or old chat history.
-
-For deterministic developer/probe deployment, use:
-
-```powershell
-pwsh ./tools/Deploy-BiologyRedmod.ps1 `
-  -GameRoot 'C:\Games\Steam\steamapps\common\Cyberpunk 2077'
-```
-
-The helper owns argument construction and fails closed if REDmod reports root fallback, invalid root, or an empty mod set even when the process exits 0.
-
-Normal players use the supported REDlauncher/Steam mod-enable path.
+W09.1 / issue #59 owns the separate post-uninstall REDmod output-cache recovery problem. W10 does not modify that deployment-state recovery architecture.
 
 ## Current direct-game gates
 
-Already accepted:
+Already accepted from earlier integrated evidence:
 
 - official REDmod executable/version/module contract;
 - Biology REDmod recognition;
 - real five-stage Biology deployment.
 
-Still open:
+Still requiring parent/direct acceptance for the new W10 architecture:
 
-- launcher enable/disable and launcher-OFF Biology-inactive behavior;
-- normal relaunch persistence;
+- exact compile of the combined integrated candidate against supported 2.31;
+- REDlauncher ON/OFF and launcher-OFF Biology-inactive behavior with only redscript supplemental runtime remaining;
+- no Biology-owned blank/dead settings row or settings-stack DLL warning;
+- E3 preference body-shell interaction and save/reload persistence;
+- OFF -> ON preservation of E3 preference/state;
 - self-contained hard uninstall and residue verification;
+- issue #59 post-uninstall REDmod output recovery through W09.1;
 - safe REDmod overlap/precedence fixture;
-- live body runtime authority (#41);
-- Biology native shell/drill-down/back behavior (#39);
-- E3 ordinary HUD/ambient nameplate behavior (#40);
-- broader combat/body/save/quest/performance acceptance.
-
-## Legacy builders
-
-`Build-BiologyPackage.ps1` is the canonical player-candidate route and has now met the old foundation's exact-build/install/deploy proof threshold.
-
-Older RealPass-era model/clean-room builders may remain temporarily only when a current test/recovery consumer still requires them. They must be clearly labeled legacy/development and must not appear in active player/operator instructions as equivalent canonical routes.
-
-A later cleanup may remove them once no active test/recovery contract depends on them; do not keep them indefinitely merely because they were once the working path.
+- live body runtime, Biology shell, E3 presentation, and broader gameplay acceptance.
 
 ## Testing mode
 
-The **first** REDmod structural milestone already used milestone clean-room preparation. Future test mode follows `CLEAN-ROOM-TESTING.md` based on the change being tested:
-
-- use iteration when the previous Biology install can be safely accounted for under current ownership/reset policy;
-- use milestone clean-room for structural/package/framework/game-patch changes, unexplained residue, or deliberate release-level confidence.
-
-Do not force a Steam reinstall merely because this document historically described the first structural migration.
+Because W10 removes packaged frameworks and changes persistence/UI ownership, the parent should treat integrated attended acceptance as a structural dependency milestone under `CLEAN-ROOM-TESTING.md`. W10 itself does not ask the user to install or play the worker branch.
 
 ## Source of current work
 
-Current branch ownership and acceptance criteria live in:
-
-- root `ROADMAP.md`;
-- `ACTIVE-REDMOD-ROADMAP.md`;
-- current GitHub issues/PRs;
-- the latest relevant `docs/test-runs/` record.
-
-Do not revive the original migration lane names from this document's Git history.
+Current branch ownership and acceptance criteria live in root `ROADMAP.md`, `ACTIVE-REDMOD-ROADMAP.md`, current GitHub issues/PRs, `THREAD-LEDGER.md`, and the latest relevant `docs/test-runs/` record.
