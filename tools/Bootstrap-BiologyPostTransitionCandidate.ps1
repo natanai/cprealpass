@@ -291,13 +291,23 @@ try {
     }
 
     Add-Evidence ''
+    Add-Evidence '=== COLLISION-SAFE INSTALL PREFLIGHT ==='
+    $installScript = Join-Path $worktree 'tools\Install-BiologyRelease.ps1'
+    $installPreflight = Invoke-NativeSafe 'pwsh' @('-NoLogo','-NoProfile','-File',$installScript,'-PackageRoot',$roots[0].FullName,'-GameRoot',$GameRoot,'-WhatIf')
+    Record-Process 'Install-BiologyRelease.ps1 -WhatIf' $installPreflight
+    if ($installPreflight.ExitCode -ne 0) { throw 'Biology release install preflight failed before game mutation. Shared global.ini/version.dll collisions are never overwritten.' }
+    Add-Evidence 'Collision-safe install preflight: PASS. Existing non-identical bin/x64/global.ini or bin/x64/version.dll would have failed closed before mutation; only cybercmd.asi is replaceable.'
+
+    Add-Evidence ''
     Add-Evidence '=== INSTALL EXACT RETAINED ARTIFACT ==='
     $gameMutationStarted = $true
-    Expand-Archive -LiteralPath $artifactZip -DestinationPath $GameRoot -Force
-    Add-Evidence 'Exact retained ZIP expanded into supported game root.'
+    $install = Invoke-NativeSafe 'pwsh' @('-NoLogo','-NoProfile','-File',$installScript,'-PackageRoot',$roots[0].FullName,'-GameRoot',$GameRoot)
+    Record-Process 'Install-BiologyRelease.ps1' $install
+    if ($install.ExitCode -ne 0 -or $install.StdOut -notmatch 'PASS: Biology release install verified') { throw 'Collision-safe Biology release installer did not return its positive verification marker.' }
+    Add-Evidence 'Exact retained package root installed through collision-safe Biology installer; blind Expand-Archive -Force into the game root is not used.'
 
     $installedManifestPath = Join-Path $GameRoot 'biology\build-manifest.json'
-    if (-not (Test-Path -LiteralPath $installedManifestPath -PathType Leaf)) { throw 'Installed Biology build manifest is missing after artifact expansion.' }
+    if (-not (Test-Path -LiteralPath $installedManifestPath -PathType Leaf)) { throw 'Installed Biology build manifest is missing after artifact installation.' }
     $installedManifest = Get-Content -Raw -LiteralPath $installedManifestPath | ConvertFrom-Json
     if ([string]$installedManifest.sourceRevision -ne $MainSha) { throw "Installed receipt source revision mismatch. Expected $MainSha; found $($installedManifest.sourceRevision)." }
     $installedReceiptVerified = $true
@@ -318,6 +328,7 @@ try {
     Add-Evidence ('Artifact ZIP: ' + $artifactZip)
     Add-Evidence ('Artifact SHA-256: ' + $artifactHash)
     Add-Evidence ('Artifact bytes: ' + $artifactBytes)
+    Add-Evidence 'Collision-safe release install: PASS'
     Add-Evidence 'REDmod deployment: PASS'
     Add-Evidence 'STOP_BEFORE_GAME_LAUNCH=YES'
     Add-Evidence 'KEEP UNTIL ATTENDED TEST: the retained artifact ZIP and this candidate-prep report.'
