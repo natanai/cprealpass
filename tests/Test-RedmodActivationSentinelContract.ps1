@@ -30,7 +30,7 @@ if ($marker -match '(?i)TweakXL|ArchiveXL|Codeware') { throw 'Activation authori
 if ($settings -notmatch 'TweakDBInterface\.GetBool\(t"Items\.BiologyLauncherActivationMarker\.stackable",\s*false\)') {
     throw 'REDscript launcher accessor no longer reads the exact marker with a false missing-value default.'
 }
-if ($settings -notmatch 'public static func IsEnabled\(game: GameInstance\) -> Bool\s*\{\s*return CRRealpassSettings\.IsLauncherActivated\(\);') {
+if ($settings -notmatch '(?s)public static func IsEnabled\(game: GameInstance\) -> Bool\s*\{.*?return CRRealpassSettings\.IsLauncherActivated\(\);.*?\}') {
     throw 'REDlauncher/REDmod is no longer the sole Biology whole-mod activation authority.'
 }
 if ($settings -match '(?m)public\s+(?:persistent\s+)?let\s+enabled\s*:\s*Bool') {
