@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "product": "Biology",
   "supportedGameVersion": "2.31",
   "policy": "vanilla -> official REDmod -> Biology-owned narrow scripting -> generic extension only when necessary",
@@ -12,11 +12,12 @@
       "consumerFeatures": [
         "mods/Biology package identity",
         "official deploy/enable/load authority",
+        "Biology launcher activation sentinel",
         "future Biology-owned archives/tweaks/audio/whole-file script routes when appropriate"
       ],
       "bundledByBiology": false,
       "plannedAction": "retain",
-      "rationale": "Official package/deployment authority for the REDmod-first release. Recognition and five-stage deployment of Biology have been proven on Cyberpunk 2077 2.31; the game-provided REDmod tool must never be redistributed by Biology."
+      "rationale": "Official package/deployment and whole-product activation authority for the REDmod-first release."
     },
     {
       "id": "redscript",
@@ -28,49 +29,13 @@
         "Biology body UI/runtime and lifecycle hooks",
         "Biology-owned HUD/nameplate presentation hooks",
         "native hook seams listed in manifest/native-seams.json",
-        "provider-neutral settings ScriptableSystem"
+        "save-persistent Biology E3 presentation preference ScriptableSystem",
+        "Biology-owned E3 preference editor in the shared body shell"
       ],
       "bundledByBiology": true,
-      "plannedAction": "retain while accepted additive/wrapper seams remain; reassess only if a demonstrably narrower official route replaces every consumer",
-      "rationale": "Biology uses additive/wrapper annotations. Replacing the same narrow hooks with whole vanilla REDmod .script files would increase copied upstream implementation, conflict surface and patch fragility.",
+      "plannedAction": "retain while accepted additive/wrapper seams remain; reassess only in a dedicated follow-up if a demonstrably narrower official route replaces every consumer",
+      "rationale": "Biology currently uses additive/wrapper annotations and project-owned ScriptableSystem/UI code. Replacing those narrow hooks with whole vanilla REDmod .script files would copy broader upstream implementation and increase conflict/patch surface.",
       "licenseProvenance": "manifest/components.json:redscript"
-    },
-    {
-      "id": "mod-settings",
-      "kind": "generic-framework",
-      "status": "temporary-retained-blocker",
-      "route": "REMOVE/RETHINK",
-      "consumerFeatures": [
-        "current accessible UI/persistence adapter for Enable Biology",
-        "current accessible UI/persistence adapter for E3-inspired HUD + nameplates"
-      ],
-      "bundledByBiology": true,
-      "plannedAction": "remove when a Biology-owned provider or deliberate launcher/install boundary provides the same accepted player semantics without greater fragility",
-      "rationale": "The setting meaning is Biology-owned/provider-neutral. Mod Settings remains only as the current accessible persistent adapter, not as product architecture.",
-      "licenseProvenance": "manifest/components.json:mod-settings",
-      "currentOwnerIssue": "#44 for whole-mod launcher-off activation interactions; presentation preference behavior also participates in #40 attended acceptance"
-    },
-    {
-      "id": "archivexl",
-      "kind": "generic-framework",
-      "status": "temporary-transitive",
-      "route": "REMOVE/RETHINK",
-      "consumerFeatures": ["transitive dependency of the temporary Mod Settings adapter"],
-      "bundledByBiology": true,
-      "plannedAction": "remove together with Mod Settings unless another accepted Biology feature later proves a direct ArchiveXL requirement",
-      "rationale": "No project-original Biology resource/runtime source currently consumes ArchiveXL directly.",
-      "licenseProvenance": "manifest/components.json:archivexl"
-    },
-    {
-      "id": "red4ext",
-      "kind": "generic-native-extension",
-      "status": "temporary-transitive",
-      "route": "REMOVE/RETHINK",
-      "consumerFeatures": ["transitive native plumbing for ArchiveXL/Mod Settings"],
-      "bundledByBiology": true,
-      "plannedAction": "remove when the Mod Settings/ArchiveXL chain leaves unless a concrete Biology-owned native extension proves a separate need",
-      "rationale": "Biology owns no RED4ext DLL/plugin. Issue #44 must also verify this supplemental route does not keep Biology behavior active when REDmod is disabled.",
-      "licenseProvenance": "manifest/components.json:red4ext"
     },
     {
       "id": "tweakxl",
@@ -80,7 +45,7 @@
       "consumerFeatures": [],
       "bundledByBiology": false,
       "plannedAction": "do not bundle",
-      "rationale": "No current Biology production source/data path requires TweakXL; REDmod-native tweak source is preferred for future tweak content when robust.",
+      "rationale": "No current Biology production source/data path requires TweakXL; REDmod-native tweak source is preferred for tweak content when robust.",
       "licenseProvenance": "manifest/components.json:tweakxl"
     },
     {
@@ -139,10 +104,28 @@
       "rationale": "Biology may not redistribute CDPR executables, archives, scripts, saves, generated stock caches, or final.redscripts."
     }
   ],
+  "removedDependencies": [
+    {
+      "id": "mod-settings",
+      "removedByIssue": 61,
+      "reason": "Replaced by Biology-owned save persistence and Biology-owned E3 preference UI; no production consumer remains."
+    },
+    {
+      "id": "archivexl",
+      "removedByIssue": 61,
+      "reason": "Its only Biology role was transitive support for Mod Settings; no direct Biology consumer exists."
+    },
+    {
+      "id": "red4ext",
+      "removedByIssue": 61,
+      "reason": "Its only Biology role was transitive support for the retired ArchiveXL/Mod Settings chain; Biology owns no RED4ext plugin."
+    }
+  ],
   "rules": [
     "A dependency without at least one concrete current Biology consumer is not retained.",
-    "Retained in the integrated candidate does not mean permanent architecture: Mod Settings, ArchiveXL and RED4ext remain REMOVE/RETHINK routes with current feature/activation ownership rather than obsolete lane ownership.",
     "The only directly feature-justified supplemental runtime framework in the current source is redscript.",
+    "The E3 presentation preference is Biology-owned save state and does not justify a settings framework stack.",
+    "Whole-mod public activation belongs to the REDmod launcher sentinel rather than a second persisted preference.",
     "A future worker requesting a new dependency must identify the exact feature, why vanilla/REDmod/current redscript cannot satisfy it, and the package/install consequence before this graph changes.",
     "Bundled third-party components require pinned version/hash/license/provenance and exact per-file ownership.",
     "No source gameplay/presentation mod may execute or be bundled."
