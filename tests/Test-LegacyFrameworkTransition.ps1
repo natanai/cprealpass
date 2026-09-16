@@ -136,4 +136,16 @@ Assert-True ($probeSource -match 'READ-ONLY') 'Probe bootstrap does not state re
 Assert-True ($cleanupSource -match 'ExpectedPlanSha256') 'Cleanup bootstrap does not pin approved plan hash.'
 Assert-True ($cleanupSource -match 'MUTATING') 'Cleanup bootstrap does not explicitly identify mutation.'
 
-Write-Host 'PASS: W11 legacy framework transition is exact-hash, baseline-aware, consumer-safe, redscript-preserving, plan-bound, and fail-closed.'
+# Bootstrap repository discovery must accept ordinary clones and linked worktrees by asking Git for origin identity,
+# rather than assuming every usable checkout has a physical .git\config file. Offline continuation is permitted only
+# when the cached origin branch and local commit object both equal the exact frozen head.
+foreach ($source in @($probeSource,$cleanupSource)) {
+    Assert-True ($source -match "'remote','get-url','origin'") 'W11 bootstrap does not validate seed repository identity through Git origin.'
+    Assert-True ($source -match "'rev-parse','--show-toplevel'") 'W11 bootstrap does not validate candidate checkout through Git.'
+    Assert-True ($source -notmatch [regex]::Escape('.git\config')) 'W11 bootstrap still assumes a physical .git\config and can miss linked worktrees.'
+    Assert-True ($source -match 'cached remote branch') 'W11 bootstrap lacks explicit cached-origin branch verification after fetch failure.'
+    Assert-True ($source -match "'cat-file','-e'") 'W11 bootstrap does not prove the expected commit object exists before offline fallback.'
+    Assert-True ($source -match 'Offline exact-head fallback: ACCEPTED') 'W11 bootstrap does not report the exact-head offline fallback decision.'
+}
+
+Write-Host 'PASS: W11 legacy framework transition is exact-hash, baseline-aware, consumer-safe, redscript-preserving, plan-bound, worktree-aware, offline-exact-head-capable, and fail-closed.'
