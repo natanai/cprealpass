@@ -4,23 +4,23 @@ $project = Get-ProjectRoot
 $scanner = Join-Path $project 'tools/Test-ArtifactPolicy.ps1'
 $work = Join-Path $project ('staging/artifact-policy-tests-' + [guid]::NewGuid().ToString('N'))
 $safe = Join-Path $work 'safe'
-$settings = Join-Path $work 'settings-runtime'
+$runtime = Join-Path $work 'runtime-components'
 $bad = Join-Path $work 'bad'
 $blocked = Join-Path $work 'blocked'
 $unneeded = Join-Path $work 'unneeded'
 New-Item -ItemType Directory -Force -Path (Join-Path $safe 'r6/scripts/CyberpunkRealism') | Out-Null
-New-Item -ItemType Directory -Force -Path (Join-Path $settings 'biology/provenance') | Out-Null
+New-Item -ItemType Directory -Force -Path (Join-Path $runtime 'biology/provenance') | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $bad 'vendor/red4ext') | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $blocked 'biology/provenance') | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $unneeded 'biology/provenance') | Out-Null
 [IO.File]::WriteAllText((Join-Path $safe 'r6/scripts/CyberpunkRealism/BodyModel.reds'),'safe runtime fixture')
-[IO.File]::WriteAllText((Join-Path $settings 'biology/provenance/components.json'),'{"components":[{"id":"biology-project-original"},{"id":"redscript"},{"id":"red4ext"},{"id":"archivexl"},{"id":"mod-settings"}]}')
+[IO.File]::WriteAllText((Join-Path $runtime 'biology/provenance/components.json'),'{"components":[{"id":"biology-project-original"},{"id":"redscript"},{"id":"cybercmd"}]}')
 [IO.File]::WriteAllText((Join-Path $bad 'vendor/red4ext/forbidden.dll'),'forbidden fixture')
 [IO.File]::WriteAllText((Join-Path $blocked 'biology/provenance/components.json'),'{"components":[{"id":"project-e3-hud"}]}')
 [IO.File]::WriteAllText((Join-Path $unneeded 'biology/provenance/components.json'),'{"components":[{"id":"codeware"}]}')
 
 & $scanner -Root $safe
-& $scanner -Root $settings
+& $scanner -Root $runtime
 
 $rejectedForbidden = $false
 try { & $scanner -Root $bad } catch { $rejectedForbidden = $_.Exception.Message -match 'forbidden-path' }
@@ -41,4 +41,4 @@ $rejectedGame = $false
 try { & $scanner -Root $game } catch { $rejectedGame = $_.Exception.Message -match 'Cyberpunk2077.exe' }
 if (-not $rejectedGame) { throw 'Game executable fixture was not rejected.' }
 
-Write-Host 'PASS: artifact policy accepts clean Biology plus the constrained redscript/RED4ext/ArchiveXL/Mod Settings component set, and fails closed on forbidden paths, blocked components, unneeded frameworks, and game files.'
+Write-Host 'PASS: artifact policy accepts clean Biology plus active redscript/cybercmd component declarations, and fails closed on forbidden paths, blocked components, unneeded frameworks, and game files.'

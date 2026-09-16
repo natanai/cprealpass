@@ -16,14 +16,15 @@
   "releaseGate": {
     "publicPlayableArtifactReady": false,
     "candidatePlayableAfterExactCompile": true,
-    "foundationEvidence": "The first integrated Cyberpunk 2077 2.31 milestone proved exact compile, package assembly, clean installation, official REDmod recognition of Biology, and real five-stage REDmod deployment.",
-    "reason": "The launcher activation, self-contained settings migration, and hard-uninstall implementations are represented in source, but public release remains gated on combined exact build and attended launcher ON/OFF, E3 preference persistence, hard-uninstall, body-runtime, Biology-shell, E3-presentation, overlap/precedence, broader gameplay/save/quest/performance acceptance, and final release audit.",
+    "foundationEvidence": "The first integrated Cyberpunk 2077 2.31 milestone proved exact compile, package assembly, clean installation, official REDmod recognition of Biology, and real five-stage REDmod deployment. W13 then proved the post-RED4ext package omitted the task runner needed to regenerate redscript's configured output blob, so standalone cybercmd is now retained as narrow startup plumbing.",
+    "reason": "Public release remains gated on combined exact build and attended proof that cybercmd regenerates the current final.redscripts, plus launcher ON/OFF, E3 preference persistence, hard-uninstall, body-runtime, Biology-shell, E3-presentation, overlap/precedence, broader gameplay/save/quest/performance acceptance, and final release audit.",
     "mustPass": [
       "runtime-module-contract",
       "scope-audit",
       "dependency-license-and-notice-audit",
       "no-blocked-or-unrequired-runtime-in-artifact",
       "integrated-exact-redscript-compile-2.31",
+      "redscript-startup-output-regeneration",
       "redmod-recognition-and-deploy",
       "redmod-enable-disable-relaunch-persistence",
       "launcher-off-biology-inactive",
@@ -56,7 +57,15 @@
       "licenseClass": "MIT",
       "artifactPolicy": "bundle-pinned-runtime-with-license",
       "status": "allowed",
-      "notes": "Directly required by accepted Biology-owned additive/wrapper runtime seams, save-persistent ScriptableSystem state, and Biology-owned Ink presentation/preferences. It may still load while launcher mods are OFF, so it is never activation authority; player uninstall preserves this generic/shared dependency."
+      "notes": "Directly required by accepted Biology-owned additive/wrapper runtime seams, save-persistent ScriptableSystem state, and Biology-owned Ink presentation/preferences. It supplies SCC and scc.toml but is not activation authority; player uninstall preserves this generic/shared dependency."
+    },
+    {
+      "id": "cybercmd",
+      "source": "manifest/components.json",
+      "licenseClass": "MIT",
+      "artifactPolicy": "bundle-pinned-runtime-with-license",
+      "status": "allowed",
+      "notes": "Standalone startup task runner required solely to execute redscript's scc.toml InvokeScc task and regenerate r6/cache/modded/final.redscripts when RED4ext/CET are absent. It is not Biology activation authority and is preserved as generic/shared plumbing on uninstall."
     },
     {
       "id": "tweakxl",
@@ -135,11 +144,11 @@
   "artifactRequirements": [
     "Game-root-relative paths only for runtime payload.",
     "The official first-party REDmod identity is mods/Biology and it owns the inert launcher activation marker.",
-    "The integrated artifact contains Biology project-original runtime plus pinned redscript only; Mod Settings, ArchiveXL and RED4ext are not release dependencies.",
+    "The integrated artifact contains Biology project-original runtime plus pinned redscript SCC/config and standalone cybercmd startup-task plumbing; Mod Settings, ArchiveXL and RED4ext are not release dependencies.",
     "The E3 presentation preference is persisted in Biology's ScriptableSystem save state and edited through Biology-owned UI; Biology registers no external settings-provider menu row.",
-    "Every installed file is represented by exact owner/component/route/uninstall-policy/SHA-256 metadata; shared framework roots are never recursively Biology-owned.",
+    "Every installed file is represented by exact owner/component/route/uninstall-policy/SHA-256 metadata; shared framework/loader roots are never recursively Biology-owned.",
     "One hashed Uninstall Biology.exe is built into the same release artifact and consumes the matching schema-2 ownership receipt.",
-    "Player uninstall preserves the remaining generic/shared redscript dependency and saves; Biology preference state remains inside saves because saves are never targeted.",
+    "Player uninstall preserves retained generic/shared redscript and cybercmd dependencies and saves; Biology preference state remains inside saves because saves are never targeted.",
     "INSTALL.txt documents the launcher ON/OFF contract, supported REDmod/Steam activation, normal launch target, and remaining attended gates.",
     "BIOLOGY-VERSION.txt, provenance, owner manifest and SHA-256 checksums identify the exact candidate.",
     "Required license notice for every bundled generic dependency is included without development-only files.",

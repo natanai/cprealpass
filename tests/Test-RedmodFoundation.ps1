@@ -47,7 +47,7 @@ foreach ($dep in @($dependencies.dependencies)) {
     if ([string]::IsNullOrWhiteSpace([string]$dep.id) -or $depById.ContainsKey([string]$dep.id)) { throw "Invalid/duplicate dependency id: $($dep.id)" }
     $depById[[string]$dep.id] = $dep
 }
-foreach ($id in @('redmod','redscript','tweakxl','codeware','input-loader','darkfuture','project-e3-hud','cyberpunk-game-files')) {
+foreach ($id in @('redmod','redscript','cybercmd','tweakxl','codeware','input-loader','darkfuture','project-e3-hud','cyberpunk-game-files')) {
     if (-not $depById.ContainsKey($id)) { throw "Dependency graph missing: $id" }
 }
 foreach ($retired in @('mod-settings','archivexl','red4ext')) {
@@ -61,6 +61,8 @@ foreach ($retired in @('mod-settings','archivexl','red4ext')) {
 if ($depById['redmod'].status -ne 'required-platform' -or $depById['redmod'].bundledByBiology -ne $false) { throw 'Official REDmod platform authority drifted.' }
 if ($depById['redscript'].status -ne 'required-current-runtime' -or $depById['redscript'].route -ne 'REDSCRIPT-BETTER' -or $depById['redscript'].bundledByBiology -ne $true) { throw 'redscript direct runtime rationale drifted.' }
 if ((@($depById['redscript'].consumerFeatures) -join ' ') -notmatch '(?i)ScriptableSystem|preference') { throw 'redscript dependency inventory lost its self-contained settings consumer.' }
+if ($depById['cybercmd'].status -ne 'required-current-runtime' -or $depById['cybercmd'].route -ne 'REDSCRIPT-STARTUP' -or $depById['cybercmd'].bundledByBiology -ne $true) { throw 'cybercmd startup-runner rationale drifted.' }
+if ((@($depById['cybercmd'].consumerFeatures) -join ' ') -notmatch '(?i)InvokeScc' -or (@($depById['cybercmd'].consumerFeatures) -join ' ') -notmatch 'final\.redscripts') { throw 'cybercmd dependency inventory lost its exact REDscript startup consumer.' }
 foreach ($id in @('tweakxl','codeware','input-loader')) {
     if ($depById[$id].status -ne 'not-required' -or $depById[$id].bundledByBiology -ne $false) { throw "Unneeded framework appears required: $id" }
 }
@@ -92,7 +94,9 @@ if ($install.redmodCli.biologyRecognitionProven -ne $true -or $install.redmodCli
 if ($install.playerFlow.disable -notmatch '(?i)Enable mods OFF' -or $install.playerFlow.uninstall -notmatch 'Uninstall Biology\.exe') { throw 'Current launcher-off/hard-uninstall targets are missing.' }
 if ($install.launcherActivation.publicMasterPreference -ne $false) { throw 'Install contract reintroduced redundant in-game whole-mod activation.' }
 if ($install.preferences.externalSettingsProvider -ne $false -or $install.preferences.pauseMenuRegistration -ne $false) { throw 'Install contract still permits the retired settings provider/menu row.' }
-if (@($install.supplementalRuntime.retainedGenericComponents).Count -ne 1 -or $install.supplementalRuntime.retainedGenericComponents[0] -ne 'redscript') { throw 'Install contract generic runtime is not redscript-only.' }
+$retained = @($install.supplementalRuntime.retainedGenericComponents)
+if ($retained.Count -ne 2 -or $retained -notcontains 'redscript' -or $retained -notcontains 'cybercmd') { throw 'Install contract generic runtime is not the exact redscript + cybercmd startup pair.' }
+if ($install.supplementalRuntime.startupCompileContract -notmatch '(?i)InvokeScc' -or $install.supplementalRuntime.startupCompileContract -notmatch 'final\.redscripts') { throw 'Install contract lost the W13 REDscript startup compile boundary.' }
 foreach ($retired in @('mod-settings','archivexl','red4ext')) {
     if (@($install.supplementalRuntime.removedGenericComponents) -notcontains $retired) { throw "Install contract does not record retired component: $retired" }
 }
@@ -102,11 +106,11 @@ foreach ($root in @('bin','archive','engine','mods','r6','red4ext')) {
 if ($install.cleanRoom.firstIntegratedRedmodMilestoneCompleted -ne $true -or $install.cleanRoom.fullSteamReinstallIsNormalUninstall -ne $false) { throw 'Clean-room state is stale.' }
 if (@($install.remainingDirectGameGates) -contains 'Biology REDmod recognition/deployment') { throw 'Already-accepted recognition/deployment remains listed as open.' }
 
-if ($assembly -notmatch 'DEPLOYMENT FOUNDATION ACCEPTED' -or $assembly -notmatch 'Uninstall Biology\.exe' -or $assembly -notmatch '(?i)redscript.*only retained generic') { throw 'Integrated assembly doc does not reflect current deployment/uninstall/dependency state.' }
+if ($assembly -notmatch 'DEPLOYMENT FOUNDATION ACCEPTED' -or $assembly -notmatch 'Uninstall Biology\.exe' -or $assembly -notmatch '(?i)redscript\s*\+\s*cybercmd.*complete retained generic') { throw 'Integrated assembly doc does not reflect current deployment/uninstall/dependency state.' }
 if ($assembly -match '(?i)original three migration lanes.*current|Lane C.*blocker') { throw 'Integrated assembly doc revived merged-lane ownership.' }
 
 foreach ($retired in @('tools/Build-CleanRoomTestPackage.ps1','tools/Finalize-PlayerPackage.ps1','tools/Reset-RealPassIteration.ps1')) {
     if (Test-Path -LiteralPath (Join-Path $project $retired)) { throw "Superseded RealPass attended tooling still exists: $retired" }
 }
 
-Write-Host 'PASS: Biology REDmod foundation reflects proven recognition/deployment, self-contained settings, redscript-only generic runtime, current disable/uninstall targets, and only genuinely open direct-game gates.'
+Write-Host 'PASS: Biology REDmod foundation reflects proven recognition/deployment, self-contained settings, the redscript + cybercmd startup runtime pair, current disable/uninstall targets, and only genuinely open direct-game gates.'

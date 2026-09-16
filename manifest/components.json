@@ -70,9 +70,45 @@
       "redistributionPermission": "MIT permits redistribution subject to retained notices; bundled third-party notices must also be audited before public packaging.",
       "attribution": "jac3km4/redscript",
       "saveRisk": "Combined body-alpha general gameplay smoke passed; individual save/reload, quest and long-run acceptance remain unconfirmed.",
-      "updateNotes": "Successful base-profile user report and matching initialization/compilation/shutdown logs.  Combined body-alpha general gameplay smoke reported successful; matching load/compile/import/shutdown logs and all 150 payload hashes verified. See reports/BODY-ALPHA1-RUNTIME.md; long-run and itemized acceptance gates remain pending.",
+      "updateNotes": "Successful base-profile user report and matching initialization/compilation/shutdown logs. Combined body-alpha general gameplay smoke reported successful; matching load/compile/import/shutdown logs and all 150 payload hashes verified. W13 proved that this archive alone installs SCC/config but does not execute scc.toml after RED4ext retirement, so Biology production profiles pair it with standalone cybercmd.",
       "testStatus": "tested",
       "researchedAtUtc": "2026-09-11T02:47:56.8230138Z"
+    },
+    {
+      "id": "cybercmd",
+      "name": "cybercmd standalone",
+      "author": "jac3km4",
+      "sourceUrl": "https://github.com/jac3km4/cybercmd/releases/tag/v0.0.13",
+      "pinnedVersion": "0.0.13",
+      "installedVersion": "0.0.13",
+      "upstreamVersion": "0.0.13",
+      "gameVersion": "2.31",
+      "compatibilityEvidence": "W13 installed-runtime probe: exact Biology candidate had stale r6/cache/modded/final.redscripts while scc.toml requested InvokeScc and neither cybercmd nor RED4ext task runner was installed.",
+      "phantomLibertyRequired": false,
+      "dependencies": [],
+      "optionalDependencies": [],
+      "conflicts": [],
+      "configurationFiles": [
+        "bin/x64/global.ini"
+      ],
+      "deployment": [
+        "bin/x64/global.ini",
+        "bin/x64/plugins/cybercmd.asi",
+        "bin/x64/version.dll"
+      ],
+      "installMethod": "Official standalone archive, SHA-256 verification, isolated staging, manifest-owned deployment",
+      "archivePath": "vendor/cybercmd/cybercmd-standalone-v0.0.13.zip",
+      "assetUrl": "https://github.com/jac3km4/cybercmd/releases/download/v0.0.13/cybercmd-standalone.zip",
+      "archiveSha256": "87E235026D0693D7974A908E65F8C93F6503652FB781F0647B115572BBDD6103",
+      "license": "MIT",
+      "licenseUrl": "https://raw.githubusercontent.com/jac3km4/cybercmd/v0.0.13/LICENSE",
+      "modificationPermission": "MIT permits modification subject to retained notices.",
+      "redistributionPermission": "MIT permits redistribution subject to retained notices.",
+      "attribution": "jac3km4/cybercmd",
+      "saveRisk": "Startup task-runner plumbing only; attended Biology runtime acceptance remains required after packaging.",
+      "updateNotes": "W13 fingerprinted the official v0.0.13 standalone release asset at 776565 bytes with SHA-256 87E235026D0693D7974A908E65F8C93F6503652FB781F0647B115572BBDD6103. Archive contains bin/x64/global.ini, bin/x64/plugins/cybercmd.asi and bin/x64/version.dll. Retained solely to execute redscript's scc.toml InvokeScc startup task without restoring RED4ext/CET.",
+      "testStatus": "researched",
+      "researchedAtUtc": "2026-09-16T05:10:38Z"
     },
     {
       "id": "archivexl",
@@ -133,7 +169,7 @@
       "redistributionPermission": "MIT permits redistribution subject to retained notices; bundled third-party notices must also be audited before public packaging.",
       "attribution": "psiberx/cp2077-archive-xl",
       "saveRisk": "Combined body-alpha general gameplay smoke passed; individual save/reload, quest and long-run acceptance remain unconfirmed.",
-      "updateNotes": "Installed and file-verified in body alpha; combined script compilation passed.  Combined body-alpha general gameplay smoke reported successful; matching load/compile/import/shutdown logs and all 150 payload hashes verified. See reports/BODY-ALPHA1-RUNTIME.md; long-run and itemized acceptance gates remain pending.",
+      "updateNotes": "Installed and file-verified in body alpha; combined script compilation passed. Combined body-alpha general gameplay smoke reported successful; matching load/compile/import/shutdown logs and all 150 payload hashes verified. See reports/BODY-ALPHA1-RUNTIME.md; long-run and itemized acceptance gates remain pending.",
       "testStatus": "tested",
       "researchedAtUtc": "2026-09-11T02:47:57.1641393Z"
     },
@@ -173,7 +209,7 @@
       "redistributionPermission": "MIT permits redistribution subject to retained notices; bundled third-party notices must also be audited before public packaging.",
       "attribution": "psiberx/cp2077-tweak-xl",
       "saveRisk": "Combined body-alpha general gameplay smoke passed; individual save/reload, quest and long-run acceptance remain unconfirmed.",
-      "updateNotes": "Installed and file-verified in body alpha; combined script compilation passed.  Combined body-alpha general gameplay smoke reported successful; matching load/compile/import/shutdown logs and all 150 payload hashes verified. See reports/BODY-ALPHA1-RUNTIME.md; long-run and itemized acceptance gates remain pending.",
+      "updateNotes": "Installed and file-verified in body alpha; combined script compilation passed. Combined body-alpha general gameplay smoke reported successful; matching load/compile/import/shutdown logs and all 150 payload hashes verified. See reports/BODY-ALPHA1-RUNTIME.md; long-run and itemized acceptance gates remain pending.",
       "testStatus": "tested",
       "researchedAtUtc": "2026-09-11T02:47:57.482208Z"
     },
@@ -216,7 +252,7 @@
       "redistributionPermission": "MIT permits redistribution subject to retained notices; bundled third-party notices must also be audited before public packaging.",
       "attribution": "psiberx/cp2077-codeware",
       "saveRisk": "Combined body-alpha general gameplay smoke passed; individual save/reload, quest and long-run acceptance remain unconfirmed.",
-      "updateNotes": "Installed and file-verified in body alpha; combined script compilation passed.  Combined body-alpha general gameplay smoke reported successful; matching load/compile/import/shutdown logs and all 150 payload hashes verified. See reports/BODY-ALPHA1-RUNTIME.md; long-run and itemized acceptance gates remain pending.",
+      "updateNotes": "Installed and file-verified in body alpha; combined script compilation passed. Combined body-alpha general gameplay smoke reported successful; matching load/compile/import/shutdown logs and all 150 payload hashes verified. See reports/BODY-ALPHA1-RUNTIME.md; long-run and itemized acceptance gates remain pending.",
       "testStatus": "tested",
       "researchedAtUtc": "2026-09-11T02:47:57.8011971Z"
     },
@@ -258,7 +294,7 @@
       "redistributionPermission": "MIT permits redistribution subject to retained notices; bundled third-party notices must also be audited before public packaging.",
       "attribution": "jackhumbert/mod_settings",
       "saveRisk": "Combined body-alpha general gameplay smoke passed; individual save/reload, quest and long-run acceptance remain unconfirmed.",
-      "updateNotes": "Installed and file-verified in body alpha; combined script compilation passed.  Combined body-alpha general gameplay smoke reported successful; matching load/compile/import/shutdown logs and all 150 payload hashes verified. See reports/BODY-ALPHA1-RUNTIME.md; long-run and itemized acceptance gates remain pending.",
+      "updateNotes": "Installed and file-verified in body alpha; combined script compilation passed. Combined body-alpha general gameplay smoke reported successful; matching load/compile/import/shutdown logs and all 150 payload hashes verified. See reports/BODY-ALPHA1-RUNTIME.md; long-run and itemized acceptance gates remain pending.",
       "testStatus": "tested",
       "researchedAtUtc": "2026-09-11T02:47:58.1221959Z"
     },
@@ -436,7 +472,7 @@
       "redistributionPermission": "No public package produced; review all bundled asset provenance before distribution.",
       "attribution": "DarkFortuneTeller / Dark Future",
       "saveRisk": "Persistent systems. Before removal disable in Mod Settings, save, exit, then remove. Pre-build save backup required.",
-      "updateNotes": "Installed and file-verified in body alpha; combined script compilation passed.  Combined body-alpha general gameplay smoke reported successful; matching load/compile/import/shutdown logs and all 150 payload hashes verified. See reports/BODY-ALPHA1-RUNTIME.md; long-run and itemized acceptance gates remain pending.",
+      "updateNotes": "Installed and file-verified in body alpha; combined script compilation passed. Combined body-alpha general gameplay smoke reported successful; matching load/compile/import/shutdown logs and all 150 payload hashes verified. See reports/BODY-ALPHA1-RUNTIME.md; long-run and itemized acceptance gates remain pending.",
       "testStatus": "tested",
       "researchedAtUtc": "2026-09-11T03:05:56.8568915Z"
     }
