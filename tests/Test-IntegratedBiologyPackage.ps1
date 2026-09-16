@@ -44,7 +44,7 @@ Check ($builder.Contains('biology/build-manifest.json') -and $builder.Contains('
 Check ($builder.Contains('Build-BiologyUninstaller.ps1') -and $builder.Contains('Uninstall Biology.exe')) 'Integrated package does not build/embed player uninstaller.'
 Check ($builder.Contains("preferencePolicy = 'stored-in-save-never-target'")) 'Package ownership receipt does not preserve save-backed preference state.'
 Check ($builder.Contains("removedDependencies = @('mod-settings','archivexl','red4ext'")) 'Package provenance does not record settings-stack removal.'
-Check (-not $builder.Contains("$expectedRetained = @('redscript','red4ext'")) 'Retired dependency set remains expected by the playable builder.'
+Check (-not $builder.Contains('$expectedRetained = @(''redscript'',''red4ext''')) 'Retired dependency set remains expected by the playable builder.'
 
 Check ($deploy -match 'tools\\redmod\\bin\\redMod\.exe') 'Deploy helper does not use official REDmod executable.'
 Check ($deploy -match 'ProcessStartInfo|ArgumentList') 'Deploy helper does not control native argument boundaries.'
