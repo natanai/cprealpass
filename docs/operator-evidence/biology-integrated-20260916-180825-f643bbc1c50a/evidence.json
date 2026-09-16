@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "product": "Biology",
+  "evidenceId": "biology-integrated-20260916-180825-f643bbc1c50a",
+  "operation": "post-transition-candidate-preparation",
+  "createdUtc": "2026-09-16T18:09:07.8644385Z",
+  "sourceRevision": "f643bbc1c50a69d223c2cf54e9fc7f68215e33fd",
+  "result": "PASS",
+  "proofBoundary": "Exact candidate preparation evidence. Embedded schema-2 payload manifest and receipt hash authenticate later failed-install recovery without retaining the historical ZIP as proof.",
+  "game": {
+    "productVersion": "2.31",
+    "executableSha256": "A7DE82945C03E041FC7339FCF9066224D98DB2F5D80FEA50F7947BB350A60991",
+    "redmodProductVersion": "2.31",
+    "redmodSha256": "144DF5A984669528CD957B40BB2126FE83B73D66BD0E041CA614C80F74E76A7F"
+  },
+  "artifact": {
+    "name": "biology-integrated-20260916-180825-f643bbc1c50a.zip",
+    "sha256": "F1000D2B8CAD3BB3889CAA77F86DA82BBDCC33DC4B53518623F2C6C77FB7322B",
+    "bytes": 1980350,
+    "buildId": "biology-integrated-20260916-180825-f643bbc1c50a"
+  },
+  "install": {
+    "transitionEvidenceNormalizedSha256": "F6822A5B7DB8CC95AAFA3551CC8057CDDA7A32DC781B07892828E0341DEED6FC",
+    "transitionEvidenceFileSha256": "ABA0E1F5215614310C86F08665E2960324771855FA60ED65914838E27FD3011F",
+    "preflightPassed": true,
+    "gameMutationStarted": true,
+    "installedReceiptVerified": true,
+    "redmodDeploymentPassed": true
+  },
+  "recovery": {
+    "mode": "exact-payload-manifest",
+    "eligible": false,
+    "receiptSha256": "8D1386556A4545792F9BF98ADE3AD9B158EE087DC5051C09D5AD934B31482923"
+  },
+  "cleanup": {
+    "artifactRootName": "Biology-Candidate-Artifacts-f643bbc1-20260916-130823-c76266ae",
+    "artifactZipName": "biology-integrated-20260916-180825-f643bbc1c50a.zip",
+    "packageRootName": "biology-integrated-20260916-180825-f643bbc1c50a-root"
+  },
+  "handoff": {
+    "bundleName": "Biology-Operator-Evidence-biology-integrated-20260916-180825-f643bbc1c50a.zip",
+    "reportSha256": "AC9D526CCE8A00587F0C2CFBA77357699FF93631DAC5F43347729007045CE26E"
+  },
+  "payloadManifest": {
+    "schemaVersion": 2,
+    "product": "Biology",
+    "sourceRevision": "f643bbc1c50a69d223c2cf54e9fc7f68215e33fd",
+    "buildId": "biology-integrated-20260916-180825-f643bbc1c50a",
+    "files": []
+  }
+}
