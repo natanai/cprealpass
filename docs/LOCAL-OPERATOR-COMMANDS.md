@@ -309,6 +309,40 @@ It publishes derived metadata only, never proprietary Cyberpunk payload.
 
 ---
 
+## Command 11 — branch-pinned read-only pre-W10 framework transition probe
+
+Use this only for issue #64 / W11 when the preserved installed game may still contain the exact pre-W10 Biology dependency stack. The owning worker supplies the branch and exact 40-character head. `Bootstrap-LegacyFrameworkTransitionProbe.ps1` treats the installed game as **read-only**, fingerprints the supported install, validates the exact schema-2 Biology receipt, compares retired framework paths against receipt hashes and the tracked vanilla baseline, scans bounded mod/framework surfaces for another possible consumer, explicitly protects redscript and the old Mod Settings preference file, and writes one attachable `.txt` report plus a hashed JSON cleanup plan.
+
+The bootstrap is repository-owned and self-bootstrapping. It must be invoked from an already available exact checkout or through an owning-agent-provided one-line bootstrap; do not reconstruct its internals in chat. Its required parameters are:
+
+```text
+-Branch <worker branch>
+-ExpectedHead <exact 40-character worker head>
+-GameRoot C:\Games\Steam\steamapps\common\Cyberpunk 2077
+```
+
+A report decision of `SAFE-TO-APPLY` is permission only for the separately reviewed W11 transition operation. It is not gameplay, deployment, or W10 acceptance. A `BLOCKED` result means no retired framework file may be removed automatically from that installation.
+
+---
+
+## Command 12 — parent-authorized exact W11 framework retirement
+
+This is the mutating half of Command 11 and must **not** be substituted for the read-only probe. P01.2 may authorize it only after reviewing a `SAFE-TO-APPLY` report. `Bootstrap-LegacyFrameworkTransitionCleanup.ps1` requires the same exact branch/head plus the exact JSON plan path and SHA-256 emitted by Command 11. It re-runs the complete safety decision immediately before mutation, requires all evidence hashes and the exact deletion set to remain unchanged, re-hashes each target immediately before deletion, removes exact retired package files only, and re-verifies protected redscript afterward.
+
+Required parameters are:
+
+```text
+-Branch <reviewed branch>
+-ExpectedHead <exact 40-character reviewed head>
+-PlanPath <persistent JSON plan from Command 11>
+-ExpectedPlanSha256 <exact plan SHA-256 from Command 11>
+-GameRoot C:\Games\Steam\steamapps\common\Cyberpunk 2077
+```
+
+The cleanup never recursively owns `red4ext`, `r6`, `bin`, `archive`, `mods`, `LICENSES`, or another shared root; it never targets redscript or the legacy Mod Settings preference file. Failure is fail-closed and must be returned through the generated `.txt` report rather than followed by ad-hoc deletion commands.
+
+---
+
 ## Rules for agents asking the user to run PowerShell
 
 1. **Look here first.** If a catalog command covers the task, use it rather than reconstructing its internals in chat.

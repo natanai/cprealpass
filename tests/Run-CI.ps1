@@ -30,6 +30,7 @@ $tests = @(
     'Test-PlayerDisableContract.ps1',
     'Test-PlayerUninstaller.ps1',
     'Test-BiologyRemovalVerifier.ps1',
+    'Test-LegacyFrameworkTransition.ps1',
     'Test-BiologyShell.ps1',
     'Test-BiologyNativeDrilldown.ps1',
     'Test-BiologyRuntimeLifecycle.ps1',
@@ -86,35 +87,16 @@ foreach ($name in $tests) {
     $exitCode = $LASTEXITCODE
     $testElapsed = [DateTime]::UtcNow - $testStarted
     $passed = $exitCode -eq 0
-    $results.Add([pscustomobject]@{
-        test = $name
-        passed = $passed
-        exitCode = $exitCode
-        seconds = [Math]::Round($testElapsed.TotalSeconds,3)
-    })
-    if (-not $passed) {
-        $failed += $name
-        Write-Error "FAILED: $name (exit $exitCode)" -ErrorAction Continue
-    }
+    $results.Add([pscustomobject]@{ test=$name; passed=$passed; exitCode=$exitCode; seconds=[Math]::Round($testElapsed.TotalSeconds,3) })
+    if (-not $passed) { $failed += $name; Write-Error "FAILED: $name (exit $exitCode)" -ErrorAction Continue }
 }
 
 $elapsed = [DateTime]::UtcNow - $started
 $reportRoot = Join-Path $project 'reports'
 New-Item -ItemType Directory -Force -Path $reportRoot | Out-Null
 $summaryPath = Join-Path $reportRoot 'ci-suite-summary.json'
-$summary = [ordered]@{
-    schemaVersion = 1
-    generatedUtc = [DateTime]::UtcNow.ToString('o')
-    passed = $failed.Count -eq 0
-    totalTests = $tests.Count
-    failedTests = @($failed)
-    elapsedSeconds = [Math]::Round($elapsed.TotalSeconds,3)
-    results = @($results.ToArray())
-}
+$summary = [ordered]@{ schemaVersion=1; generatedUtc=[DateTime]::UtcNow.ToString('o'); passed=$failed.Count -eq 0; totalTests=$tests.Count; failedTests=@($failed); elapsedSeconds=[Math]::Round($elapsed.TotalSeconds,3); results=@($results.ToArray()) }
 $summary | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $summaryPath -Encoding utf8
 Write-Host "CI suite summary: $summaryPath"
-
-if ($failed.Count -gt 0) {
-    throw "CI failed: $($failed -join ', ')"
-}
+if ($failed.Count -gt 0) { throw "CI failed: $($failed -join ', ')" }
 Write-Host "`nPASS: $($tests.Count) cloud-safe owned-path Biology checks in $([Math]::Round($elapsed.TotalSeconds,1)) seconds."

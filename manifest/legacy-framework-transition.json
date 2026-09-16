@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "transitionId": "pre-w10-framework-retirement",
+  "installedSourceRevision": "7e61724071b8c95ba5c334ab9e8d11c43381c94e",
+  "targetGameVersion": "2.31",
+  "retiredComponents": [
+    "mod-settings",
+    "archivexl",
+    "red4ext"
+  ],
+  "retainedComponents": [
+    "redscript"
+  ],
+  "expectedInstalledRetainedDependencies": [
+    "redscript",
+    "mod-settings",
+    "archivexl",
+    "red4ext"
+  ],
+  "currentRuntimeProfile": "biology-runtime",
+  "consumerScanRoots": [
+    "mods",
+    "red4ext",
+    "archive/pc/mod",
+    "r6/scripts",
+    "r6/tweaks",
+    "r6/config",
+    "bin/x64/plugins"
+  ],
+  "ignoredUnreceiptedPatterns": [
+    "red4ext/logs/**",
+    "red4ext/config.ini"
+  ],
+  "protectedDirectories": [
+    "bin",
+    "bin/x64",
+    "archive",
+    "archive/pc",
+    "archive/pc/mod",
+    "engine",
+    "r6",
+    "r6/config",
+    "r6/config/redsUserHints",
+    "r6/scripts",
+    "r6/tweaks",
+    "red4ext",
+    "red4ext/plugins",
+    "mods",
+    "LICENSES",
+    "biology"
+  ],
+  "policy": {
+    "receiptRequired": true,
+    "exactHashRequiredBeforeDelete": true,
+    "vanillaOverlapBlocksDelete": true,
+    "consumerEvidenceBlocksEntireCleanup": true,
+    "missingRetiredFileDisposition": "already-absent",
+    "changedRetiredFileDisposition": "block",
+    "preferenceFileDisposition": "preserve-never-delete",
+    "redscriptDisposition": "preserve-never-delete",
+    "recursiveSharedRootDelete": false,
+    "planHashRequiredForApply": true
+  }
+}
