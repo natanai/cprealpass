@@ -29,23 +29,6 @@ jobs:
           Write-Host "Ref: $env:GITHUB_REF"
           pwsh --version
 
-      - name: W13 fingerprint official cybercmd standalone asset
-        shell: pwsh
-        run: |
-          $url = 'https://github.com/jac3km4/cybercmd/releases/download/v0.0.13/cybercmd-standalone.zip'
-          $archive = Join-Path $env:RUNNER_TEMP 'cybercmd-standalone-v0.0.13.zip'
-          Invoke-WebRequest -Uri $url -OutFile $archive
-          $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $archive).Hash.ToUpperInvariant()
-          Write-Host "W13_CYBERCMD_STANDALONE_SHA256=$hash"
-          Write-Host "W13_CYBERCMD_STANDALONE_BYTES=$((Get-Item -LiteralPath $archive).Length)"
-          Add-Type -AssemblyName System.IO.Compression.FileSystem
-          $zip = [IO.Compression.ZipFile]::OpenRead($archive)
-          try {
-            foreach ($entry in @($zip.Entries | Sort-Object FullName)) {
-              Write-Host ("W13_CYBERCMD_ENTRY=" + $entry.FullName + "|" + $entry.Length)
-            }
-          } finally { $zip.Dispose() }
-
       - name: Run cloud-safe Biology checks
         shell: pwsh
         run: ./tests/Run-CI.ps1
