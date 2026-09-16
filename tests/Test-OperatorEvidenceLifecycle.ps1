@@ -172,7 +172,8 @@ try {
     Assert-True $threw 'Changed local handoff report matched durable repository evidence.'
 
     # Managed candidate artifact cleanup is hash/inventory bounded. Exact known
-    # content is removed; one foreign file prevents any recursive deletion.
+    # content is removed; foreign, changed, or incomplete content prevents any
+    # recursive deletion.
     function New-CleanupFixture([string]$GamesRoot,[string]$RootName) {
         $artifactRoot = Join-Path $GamesRoot $RootName
         $packageRootName = 'fixture-root'
@@ -220,6 +221,22 @@ try {
     Assert-True $threw 'Managed artifact cleanup accepted foreign content.'
     Assert-True (Test-Path -LiteralPath $foreignCleanup.root -PathType Container) 'Managed artifact cleanup deleted a root containing foreign content.'
 
+    $incompleteCleanupName = 'Biology-Candidate-Artifacts-incomplete-fixture'
+    $incompleteCleanup = New-CleanupFixture $cleanupGames $incompleteCleanupName
+    $incompleteCleanupEvidence = New-ExactEvidence $sourceRevision $manifestEntries $receiptFixture.sha256 $false
+    $incompleteCleanupEvidence.artifact.sha256 = Get-BiologyOperatorSha256 $incompleteCleanup.zip
+    $incompleteCleanupEvidence.artifact.bytes = (Get-Item -LiteralPath $incompleteCleanup.zip).Length
+    $incompleteCleanupEvidence.cleanup.artifactRootName = $incompleteCleanupName
+    $incompleteCleanupEvidence.cleanup.artifactZipName = 'fixture.zip'
+    $incompleteCleanupEvidence.cleanup.packageRootName = $incompleteCleanup.packageRootName
+    $missingArtifactFile = Resolve-BiologyReleaseChild (Join-Path $incompleteCleanup.root $incompleteCleanup.packageRootName) 'mods/Biology/info.json'
+    Remove-Item -LiteralPath $missingArtifactFile -Force
+    $threw=$false
+    try { Remove-BiologyManagedArtifactRoot -GamesRoot $cleanupGames -Evidence $incompleteCleanupEvidence | Out-Null } catch { $threw=$true; Assert-True ($_.Exception.Message -match 'missing expected file') 'Incomplete managed artifact content failed for an unexpected reason.' }
+    Assert-True $threw 'Managed artifact cleanup accepted a partially missing managed artifact inventory.'
+    Assert-True (Test-Path -LiteralPath $incompleteCleanup.root -PathType Container) 'Managed artifact cleanup deleted an incomplete artifact root.'
+    Assert-True (Test-Path -LiteralPath $incompleteCleanup.zip -PathType Leaf) 'Managed artifact cleanup mutated an incomplete artifact root before refusing it.'
+
     # Zero-local-repo and no-launch contracts are visible in each operator
     # bootstrap. Recovery never deploys REDmod; cleanup never targets the game.
     foreach ($relative in @(
@@ -238,7 +255,7 @@ try {
     Assert-True ($cleanupBootstrap -match 'Test-BiologyOperatorEvidenceBundleAgainstRepository') 'Cleanup does not require durable repository evidence match before deletion.'
     Assert-True ($cleanupBootstrap -match 'Remove-BiologyManagedArtifactRoot') 'Cleanup does not use the hash/inventory-bounded artifact-root remover.'
 
-    Write-Host 'PASS: managed operator evidence is repo-backed and schema/hash validated; exact failed-install recovery no longer requires the old ZIP; the legacy current state is empty-root-only; shared dependencies stay preserved; and local cleanup is durable-evidence + exact-inventory bounded.'
+    Write-Host 'PASS: managed operator evidence is repo-backed and schema/hash validated; exact failed-install recovery no longer requires the old ZIP; the legacy current state is empty-root-only; shared dependencies stay preserved; and local cleanup is durable-evidence + complete-inventory bounded.'
 } finally {
     if (Test-Path -LiteralPath $temp) { Remove-Item -LiteralPath $temp -Recurse -Force }
 }
