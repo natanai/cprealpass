@@ -13,8 +13,16 @@ foreach ($component in $all) {
     $byId[[string]$component.id] = $component
 }
 
+# The catalog retains historical/pinned evidence for older experiments, but these
+# components are no longer legal Biology acquisition targets after issue #61.
+# Keeping the retirement gate here prevents an old profile/tool invocation from
+# silently downloading the settings DLL stack back into staging.
+$retired = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+foreach ($id in @('mod-settings','archivexl','red4ext')) { [void]$retired.Add($id) }
+
 $selected = @{}
 function Add-ComponentWithDependencies([string]$id) {
+    if ($retired.Contains($id)) { throw "Component '$id' is retired from Biology production acquisition (issue #61)." }
     if ($selected.ContainsKey($id)) { return }
     if (-not $byId.ContainsKey($id)) { throw "Unknown component id: $id" }
     $component = $byId[$id]
@@ -22,15 +30,15 @@ function Add-ComponentWithDependencies([string]$id) {
     $selected[$id] = $component
 }
 
-if (@($ComponentIds).Count -gt 0) {
-    foreach ($id in @($ComponentIds)) {
-        if ([string]::IsNullOrWhiteSpace($id)) { throw 'ComponentIds cannot contain an empty id.' }
-        Add-ComponentWithDependencies $id
-    }
-    $components = @($all | Where-Object { $selected.ContainsKey([string]$_.id) })
-} else {
-    $components = $all
+# No-argument acquisition now means the current production generic runtime set,
+# not every historical catalog entry. The canonical package builder also passes
+# redscript explicitly, so both paths fail closed to the same dependency inventory.
+if (@($ComponentIds).Count -eq 0) { $ComponentIds = @('redscript') }
+foreach ($id in @($ComponentIds)) {
+    if ([string]::IsNullOrWhiteSpace($id)) { throw 'ComponentIds cannot contain an empty id.' }
+    Add-ComponentWithDependencies $id
 }
+$components = @($all | Where-Object { $selected.ContainsKey([string]$_.id) })
 
 foreach ($component in $components) {
     $archive = Resolve-SafeChildPath $project $component.archivePath
