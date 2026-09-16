@@ -24,6 +24,21 @@ $package = Join-Path $temp 'package'
 $game = Join-Path $temp 'game'
 New-Item -ItemType Directory -Force -Path $package,$game | Out-Null
 try {
+    # Focused executor fixture for W14: planning an absent ordinary file as create
+    # must be followed by a successful verified write, not exception-driven replace.
+    $createPackage = Join-Path $temp 'create-package'
+    $createGame = Join-Path $temp 'create-game'
+    New-Item -ItemType Directory -Force -Path $createPackage,$createGame | Out-Null
+    $createSource = Write-TestFile $createPackage 'mods/Biology/create-fixture.txt' 'create-fixture'
+    $createManifest = New-TestManifest @(
+        (New-Entry 'mods/Biology/create-fixture.txt' $createSource.sha256 'biology-redmod-identity' 'biology-owned')
+    )
+    $createPlan = @(New-BiologyReleaseInstallPlan -PackageRoot $createPackage -GameRoot $createGame -Manifest $createManifest)
+    Assert-True ($createPlan.Count -eq 1 -and $createPlan[0].action -eq 'create') 'Absent ordinary file was not planned as create.'
+    Invoke-BiologyReleaseInstallPlan -Plan $createPlan
+    $createdPath = Resolve-BiologyReleaseChild $createGame 'mods/Biology/create-fixture.txt'
+    Assert-True ((Get-BiologyReleaseExistingHash $createdPath) -eq $createSource.sha256) 'Create executor did not install the absent ordinary file with the exact hash.'
+
     $packageGlobal = Write-TestFile $package 'bin/x64/global.ini' "biology-global`n"
     $packageVersion = Write-TestFile $package 'bin/x64/version.dll' 'biology-loader'
     $packageCybercmd = Write-TestFile $package 'bin/x64/plugins/cybercmd.asi' 'biology-cybercmd'
@@ -87,7 +102,7 @@ try {
     Assert-True ($builder -match "'BiologyReleaseInstall\.Core\.ps1'") 'Player package does not include the collision-safe installer core.'
     Assert-True ($builder -match 'DO NOT extract/copy the package directly into the Cyberpunk 2077 game root') 'Player install instructions do not reject blind game-root merge.'
 
-    Write-Host 'PASS: Biology release install planning preserves matching shared global.ini/version.dll, fails closed on non-identical shared loader/config before mutation, allows only cybercmd.asi replacement, and routes parent/player candidate installation through the guarded installer.'
+    Write-Host 'PASS: Biology release install executor creates absent payloads with exact hashes; planning preserves matching shared global.ini/version.dll, fails closed on non-identical shared loader/config before mutation, allows only cybercmd.asi replacement, and routes parent/player candidate installation through the guarded installer.'
 } finally {
     if (Test-Path -LiteralPath $temp) { Remove-Item -LiteralPath $temp -Recurse -Force }
 }
