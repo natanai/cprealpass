@@ -26,6 +26,7 @@ Parent routing base was:
 - `tools/Install-BiologyRelease.ps1`
 - `tools/Bootstrap-BiologyPostTransitionCandidate.ps1`
 - `tools/Prepare-BiologyMilestoneTest.ps1`
+- `tools/Verify-BiologyRemoval.ps1`
 - `tests/Test-BiologyReleaseInstallSafety.ps1`
 - issue #70 and the latest comments on issue #68
 
@@ -63,7 +64,7 @@ The outer bootstrap correctly stopped and reported:
 - `Installed receipt exact revision verified: False`
 - `REDmod deployment passed: False`
 
-Do not infer that the installed game is clean or complete. Parent will not improvise cleanup. W14 owns only the source repair; parent owns the next exact rebuild/install and attended validation.
+Do not infer that the installed game is clean or complete. Parent will not improvise cleanup. W14 owns the source repair and a narrowly bounded failed-install recovery path; parent owns execution against the real game and the next exact rebuild/install/attended validation.
 
 ## Likely boundary — verify, do not assume
 
@@ -86,6 +87,8 @@ Make the collision-safe release installer correctly and safely execute all plann
 - permitted `replace` — atomically replace only paths allowed by policy, especially `bin/x64/plugins/cybercmd.asi`;
 - protected shared collision — continue to fail before mutation for non-identical `bin/x64/global.ini` or `bin/x64/version.dll`.
 
+Also provide a repository-owned, evidence-producing recovery operation for the **specific parent-observed failed install state** so P01.2 does not need to invent deletion commands. It must inspect first and remove only residue that can be proven to have been created by this failed Biology install attempt (for example empty Biology-owned directories or exact-hash package files if fixtures prove that case). It must fail closed on ambiguous/foreign/changed content and must not touch shared redscript/cybercmd files merely because they are present.
+
 ## Required safety properties
 
 1. Full release hash validation and collision planning still complete before game-file writes begin.
@@ -98,6 +101,8 @@ Make the collision-safe release installer correctly and safely execute all plann
 8. Non-identical `global.ini` / `version.dll` remain fail-closed before mutation.
 9. Only `cybercmd.asi` remains replaceable within standalone cybercmd.
 10. Parent/player candidate paths continue using the guarded installer rather than blind ZIP merge.
+11. Failed-install recovery is separately explicit, read/plan-first, exact-hash/empty-dir bounded, and produces a durable `.txt` report on PASS or FAIL.
+12. Recovery must assume zero local repo state when parent invokes it later; use the repository's bootstrap/operator conventions rather than a persistent checkout path.
 
 ## Regression coverage
 
@@ -112,6 +117,8 @@ At minimum prove:
 - permitted differing `cybercmd.asi` => successful replace with exact hash;
 - simulated destination change between plan and execution => fail closed;
 - ownership receipt publication remains last/verified through the release installer path;
+- failure does not leave untracked temporary files;
+- failed-install recovery removes only proven Biology-created residue and refuses changed/foreign/shared content;
 - no blind `Expand-Archive -Force` regression.
 
 If the attended error has a different independently reproduced root cause, fix that cause while preserving the same safety requirements and document the evidence.
@@ -126,10 +133,11 @@ Do **not** broaden into:
 - physiology/combat/scanner changes;
 - REDmod activation sentinel redesign;
 - dependency strategy redesign;
-- uninstaller redesign;
-- installed-game cleanup or mutation.
+- general uninstaller redesign.
 
-Do not ask the user to install/play the worker branch. Do not ask for a Cyberpunk reinstall. Do not merge your own PR.
+The narrow failed-install recovery required above is part of W14 because the parent must safely recover from the exact failed installer state before another candidate can be installed.
+
+Do not mutate the user's installed game from the worker lane. Do not ask the user to install/play the worker branch. Do not ask for a Cyberpunk reinstall. Do not merge your own PR.
 
 ## Return to parent
 
@@ -139,8 +147,9 @@ Open a PR to `main` and return:
 - exact final worker head;
 - independently reproduced root cause;
 - repair summary;
+- failed-install recovery entrypoint and its proof boundary;
 - focused regression results;
 - full CI status, distinguishing unrelated inherited failures if any;
 - PR number and mergeability.
 
-Parent P01.2 will review/merge, then rebuild from the new exact canonical `main`, re-enter the collision-safe candidate route, and only after successful install/deploy resume W13's before/after-launch `final.redscripts` acceptance.
+Parent P01.2 will review/merge, run the recovery operation against the exact failed state, then rebuild from the new exact canonical `main`, re-enter the collision-safe candidate route, and only after successful install/deploy resume W13's before/after-launch `final.redscripts` acceptance.
