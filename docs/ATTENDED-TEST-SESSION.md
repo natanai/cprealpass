@@ -10,16 +10,30 @@ This document defines what it means when the parent tells the project owner that
 `READY FOR PC TEST` has one operational meaning:
 
 ```text
-ONE COMMAND -> QUIET LISTENER READY -> OWNER LAUNCHES GAME -> OWNER TESTS -> OWNER CLOSES GAME -> TYPE END IN SAME WINDOW -> ONE EVIDENCE HANDOFF -> CONFIRMED CLEANUP
+ONE COMMAND OR ONE .CMD LAUNCHER
+-> QUIET LISTENER READY
+-> OWNER LAUNCHES GAME
+-> OWNER TESTS
+-> OWNER CLOSES GAME
+-> TYPE END IN SAME WINDOW
+-> ONE EVIDENCE HANDOFF
+-> CONFIRMED CLEANUP
 ```
 
 The owner must not be asked to execute a chain of separate preparatory PowerShell probes before first launch merely to establish baselines that the attended-session tool itself can collect.
 
-## 1. One user command starts the entire attended session
+For the owner-facing surface, a small generated or repository-owned `.cmd` launcher is explicitly acceptable and often preferable when it reduces copy/paste complexity. The `.cmd` is only a thin launcher: the repository-owned PowerShell attended-session engine remains the single source of truth for preparation, listening, evidence, and cleanup.
 
-When the parent says a candidate is ready for PC testing, the parent supplies **one copy/paste command**.
+## 1. One user action starts the entire attended session
 
-That one command must be zero-local-repo-safe and exact-revision-pinned. It may internally:
+When the parent says a candidate is ready for PC testing, the parent supplies **one thing to run**:
+
+- one copy/paste command; or
+- one `.cmd` launcher.
+
+A `.cmd` launcher may download/resolve the exact pinned repository bootstrap and invoke it with the correct arguments, then remain attached to the same console session. It must not duplicate the attended-session logic in batch syntax.
+
+That one user action must be zero-local-repo-safe and exact-revision-pinned. It may internally:
 
 - discover or acquire exact canonical source;
 - create disposable repo/worktree state;
@@ -34,9 +48,9 @@ Those are internal phases of one operator session, not separate commands for the
 
 If internal preparation cannot safely reach the launch-ready state, the session must stop before telling the owner to launch and must already contain enough diagnostics to explain the failure.
 
-## 2. The PowerShell window remains open as a quiet listener
+## 2. The console remains open as a quiet listener
 
-After successful preparation the command remains running in the same PowerShell window and prints a clear state such as:
+After successful preparation the command remains running in the same console window and prints a clear state such as:
 
 ```text
 READY TO LAUNCH CYBERPUNK
@@ -66,11 +80,11 @@ The listener does **not** need to launch Cyberpunk itself unless a future explic
 
 The normal flow is:
 
-1. one command reaches `READY TO LAUNCH CYBERPUNK`;
+1. one command or `.cmd` reaches `READY TO LAUNCH CYBERPUNK`;
 2. owner launches through the supported player path (normally REDlauncher/Steam with the requested mods state);
 3. owner performs the attended in-game checklist;
 4. owner exits Cyberpunk normally;
-5. owner returns to the same PowerShell window.
+5. owner returns to the same console window.
 
 If Cyberpunk fails to launch, crashes during startup, or exits before reaching usable gameplay, the listener must preserve the relevant startup/process/log evidence automatically. The owner should not have to run a separate diagnostic probe just to discover what failed.
 
@@ -82,7 +96,7 @@ After the game is closed, the owner types:
 END
 ```
 
-into the **same PowerShell window**.
+into the **same console window**.
 
 `END` tells the listener to:
 
@@ -177,7 +191,7 @@ That is different from a PC test handoff.
 Language matters:
 
 - `I need one diagnostic from your installation before I can make a candidate ready` = investigation, not ready-to-test.
-- `This is ready for you to test` = one-command attended session under this document.
+- `This is ready for you to test` = one-command or one-`.cmd` attended session under this document.
 
 Do not blur those states.
 
@@ -202,6 +216,8 @@ confirmed cleanup
 ```
 
 There must be one source of truth for common session lifecycle behavior.
+
+The preferred owner-facing launcher may be `.cmd`, but it must delegate immediately to the canonical PowerShell session engine and remain trivial enough that lifecycle behavior is not split across two implementations.
 
 ## 11. Relationship to older documentation
 
