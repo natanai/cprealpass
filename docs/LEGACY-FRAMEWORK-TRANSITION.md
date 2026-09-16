@@ -43,9 +43,20 @@ redscript is explicitly outside the deletion set. The probe inventories receipt-
 The read-only probe and the mutating cleanup are separate actions.
 
 1. `Probe-LegacyFrameworkTransition.ps1` produces a text report plus a JSON plan containing the exact candidate deletion set and all evidence hashes.
-2. `Remove-LegacyFrameworkTransition.ps1` requires that plan and its SHA-256, recomputes the full safety decision immediately before deletion, requires the evidence hashes and deletion set to be unchanged, re-hashes each file again immediately before removal, and then deletes only those exact files.
+2. `Remove-LegacyFrameworkTransition.ps1` requires that plan and its SHA-256, recomputes the full safety decision immediately before deletion, requires the evidence hashes and deletion set to be unchanged, re-hashes the complete deletion set before the first mutation, and then deletes only those exact files.
 
 The mutator removes only now-empty descendant directories reached from deleted files. Shared/protected roots such as `red4ext`, `red4ext/plugins`, `r6`, `bin/x64`, `archive`, `mods`, `LICENSES`, and `biology` are never recursively deleted.
+
+## Bootstrap identity and network-failure rule
+
+The W11 bootstraps inspect immediate child directories under `C:\Games` by asking Git itself for the checkout root and `origin` URL. They therefore accept both ordinary seed clones and existing Git worktrees with a `.git` pointer file; they do not infer repository identity from the presence of `.git\config` alone.
+
+The bootstrap always attempts to fetch the requested worker branch first. If that fetch fails because GitHub is unreachable, it may continue **only** when an already-discovered `natanai/cprealpass` checkout has both:
+
+- a cached `refs/remotes/origin/<requested-branch>` that resolves exactly to the supplied 40-character `ExpectedHead`; and
+- the corresponding commit object locally available and verified by Git.
+
+Any missing cached ref, different cached head, missing commit object, or unverified origin remains fail-closed. The report records the failed fetch and the exact cached-ref fallback evidence. This fallback changes only source-checkout acquisition; it does not weaken any installed-game ownership, hash, baseline, consumer, plan, or redscript safety gate.
 
 ## Evidence boundary
 
