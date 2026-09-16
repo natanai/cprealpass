@@ -17,9 +17,18 @@ Before implementation work, read:
 9. the latest relevant file under `docs/test-runs/`
 10. current open GitHub issues/PRs
 
-## Current parent / worker state
+## Parent integration/orchestration thread
 
-The active parent is **P01.2**. `docs/THREAD-LEDGER.md` is authoritative for conversation/lane state.
+The active parent is **P01.2**. `docs/THREAD-LEDGER.md` is authoritative for conversation/lane state. The parent coordinates merge/test/evidence/routing work and is not a fourth broad feature-development lane.
+
+Durable parent startup packet:
+
+- `docs/handoffs/PARENT-INTEGRATION.md`
+- current replacement packet: `docs/handoffs/PARENT-P01.2.md`
+
+Meaningful attended results remain durable under `docs/test-runs/` and must be tied to the exact canonical main SHA and exact release-shaped artifact.
+
+## Current parent / worker state
 
 The original REDmod foundation, Biology shell/runtime, presentation, player-uninstall, activation-grammar, post-uninstall REDmod recovery, and self-contained settings implementations are all already represented on canonical `main`.
 
@@ -29,7 +38,9 @@ Current implementation lane:
 
 Do not reactivate an older merged branch merely because its acceptance issue remains open. The open acceptance issues below are parent-attended gates unless a new failure creates a fresh worker goal.
 
-## Current integrated feature state
+## Accepted REDmod foundation and current integrated feature state
+
+The first integrated REDmod milestone built from `8cf045664b5e4d8b4b014edfc98bf2f8eb270ba5` established that official REDmod recognized Biology and could complete a real five-stage deployment after explicit-root handling was repaired. That artifact later exposed the attended UI/runtime/presentation failures that became issues #39, #40, and #41; those implementations have since been merged and remain awaiting direct attended re-acceptance.
 
 W09.1 / PR #62 is merged:
 
@@ -71,19 +82,19 @@ Parent must prove:
 - REDlauncher OFF -> Biology inactive/native behavior;
 - no legacy Mod Settings blank row;
 - no Biology-caused ArchiveXL/RED4ext/Mod Settings warning/footprint in the new package;
-- hard uninstall remains safe and reinstall-after-uninstall remains reliable.
+- `Uninstall Biology.exe` remains safe and reinstall-after-uninstall remains reliable.
 
 ### #39 — Biology shell/navigation
 
-Parent must prove the native body-shell interaction contract: clean overview/detail/back behavior, overview-only mode switching, and no Biology visual leakage into Cyberware.
+Parent must prove the native body-shell interaction contract: clean overview/detail/Back behavior, overview-only mode switching, and no Biology visual leakage into Cyberware.
 
 ### #41 — body runtime authority
 
-Parent must prove the authoritative body runtime exists in a live valid session, no fake healthy fallback appears, and persistence/session behavior remains authoritative.
+Parent must prove the authoritative body runtime exists in a live valid session, the former `BODY RUNTIME SYSTEM MISSING` failure does not recur, no fake healthy fallback appears, and persistence/session behavior remains authoritative.
 
 ### #40 — E3 presentation
 
-Parent must prove E3 ON is visibly unmistakable in ordinary gameplay, civilian/police ambient nameplates work, the Biology-owned preference persists, E3 OFF removes only E3-specific presentation, and the modern scanner/quickhack interface remains native.
+Parent must prove E3 ON is visibly unmistakable in ordinary gameplay, including the previously missing random civilian ambient nameplate and incomplete police/combatant treatment; the Biology-owned preference persists; E3 OFF removes only E3-specific presentation; and the modern scanner/quickhack interface remains native.
 
 ## Next integration cycle
 
