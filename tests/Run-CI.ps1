@@ -79,6 +79,8 @@ $tests = @(
 )
 
 $project = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+$reportRoot = Join-Path $project 'reports'
+New-Item -ItemType Directory -Force -Path $reportRoot | Out-Null
 $failed = @()
 $results = [Collections.Generic.List[object]]::new()
 $started = [DateTime]::UtcNow
@@ -87,8 +89,17 @@ foreach ($name in $tests) {
     if (-not (Test-Path -LiteralPath $path)) { throw "Missing CI test: $name" }
     Write-Host "`n=== CI: $name ==="
     $testStarted = [DateTime]::UtcNow
-    & pwsh -NoLogo -NoProfile -NonInteractive -File $path
-    $exitCode = $LASTEXITCODE
+    if ($name -eq 'Test-BiologyReleaseInstallSafety.ps1') {
+        $captured = (& pwsh -NoLogo -NoProfile -NonInteractive -File $path 2>&1 | Out-String)
+        $exitCode = $LASTEXITCODE
+        Write-Host $captured
+        if ($exitCode -ne 0) {
+            [ordered]@{ test=$name; exitCode=$exitCode; output=$captured } | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $reportRoot 'w14-release-install-safety-failure.json') -Encoding utf8
+        }
+    } else {
+        & pwsh -NoLogo -NoProfile -NonInteractive -File $path
+        $exitCode = $LASTEXITCODE
+    }
     $testElapsed = [DateTime]::UtcNow - $testStarted
     $passed = $exitCode -eq 0
     $results.Add([pscustomobject]@{ test=$name; passed=$passed; exitCode=$exitCode; seconds=[Math]::Round($testElapsed.TotalSeconds,3) })
@@ -96,8 +107,6 @@ foreach ($name in $tests) {
 }
 
 $elapsed = [DateTime]::UtcNow - $started
-$reportRoot = Join-Path $project 'reports'
-New-Item -ItemType Directory -Force -Path $reportRoot | Out-Null
 $summaryPath = Join-Path $reportRoot 'ci-suite-summary.json'
 $summary = [ordered]@{ schemaVersion=1; generatedUtc=[DateTime]::UtcNow.ToString('o'); passed=$failed.Count -eq 0; totalTests=$tests.Count; failedTests=@($failed); elapsedSeconds=[Math]::Round($elapsed.TotalSeconds,3); results=@($results.ToArray()) }
 $summary | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $summaryPath -Encoding utf8
