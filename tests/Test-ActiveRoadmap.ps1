@@ -24,9 +24,10 @@ $handoffIndex = Read 'docs/handoffs/README.md'
 
 Require $root 'CURRENT ROADMAP' 'Root ROADMAP.md must remain the obvious active-work entry point.'
 Require $root 'P01\.2' 'Root roadmap must identify the active parent generation.'
-Require $root 'W11\.1' 'Root roadmap must expose the current transition worker lane.'
-Require $root '#64' 'Root roadmap must expose the legacy-framework transition issue.'
-Require $root 'agent/pre-w10-framework-transition-cleanup' 'Root roadmap must name the current W11 transition branch.'
+Require $root 'W11\.1' 'Root roadmap must preserve the completed W11 transition provenance.'
+Require $root '#64' 'Root roadmap must preserve the legacy-framework transition issue.'
+Require $root 'PR #65' 'Root roadmap must record the merged W11 pull request.'
+Require $root 'no active worker implementation lane' 'Root roadmap must accurately represent the current no-worker state after W11 merge.'
 Require $root '#39' 'Root roadmap must preserve Biology UI attended acceptance.'
 Require $root '#40' 'Root roadmap must preserve presentation attended acceptance.'
 Require $root '#41' 'Root roadmap must preserve body-runtime attended acceptance.'
@@ -34,18 +35,26 @@ Require $root '#44' 'Root roadmap must preserve player disable/uninstall attende
 Require $root '#59' 'Root roadmap must preserve W09 REDmod attended acceptance.'
 Require $root '8cf045664b5e4d8b4b014edfc98bf2f8eb270ba5' 'Root roadmap must preserve provenance for the first integrated attended findings.'
 Require $root '7e61724071b8c95ba5c334ab9e8d11c43381c94e|pre-W10 candidate' 'Root roadmap must preserve the current installed-state transition provenance.'
+Require $root 'SAFE-TO-APPLY' 'Root roadmap must record the attended W11 transition decision.'
 
-Require $roadmap 'W11\.1' 'Active follow-up ledger must expose the current W11 transition lane.'
-Require $roadmap '#64' 'Active follow-up ledger must expose issue #64.'
+Require $roadmap 'W11\.1|W11 / PR #65' 'Active follow-up ledger must preserve the completed W11 transition provenance.'
+Require $roadmap '#64' 'Active follow-up ledger must preserve issue #64.'
+Require $roadmap 'no active worker implementation lane' 'Active follow-up ledger must not leave W11 falsely active after merge.'
+Require $roadmap 'SAFE-TO-APPLY' 'Active follow-up ledger must record the successful W11 read-only decision.'
 Require $roadmap 'Mod Settings.*ArchiveXL.*RED4ext|Mod Settings / ArchiveXL / RED4ext' 'Active follow-up ledger must describe the retired pre-W10 dependency footprint.'
-Require $roadmap 'redscript.*remain|redscript must remain' 'Active follow-up ledger must protect the retained redscript dependency.'
+Require $roadmap 'redscript.*preserv|redscript.*remain|redscript must remain' 'Active follow-up ledger must protect the retained redscript dependency.'
 Require $roadmap 'BODY RUNTIME SYSTEM MISSING' 'Active follow-up ledger must retain the observed body-runtime failure.'
 Require $roadmap 'overview.*detail.*Back|Back/Cancel' 'Active follow-up ledger must retain Biology drill-down back-navigation acceptance.'
 Require $roadmap 'civilian' 'Active follow-up ledger must retain the civilian ambient-nameplate acceptance requirement.'
 Require $roadmap 'modern scanner/quickhack' 'Active follow-up ledger must retain the scanner preserve requirement.'
 Require $roadmap 'hard uninstall|Uninstall Biology\.exe' 'Active follow-up ledger must retain the player hard-uninstall target.'
-Require $ledger 'W11\.1' 'Thread ledger must identify W11.1 as the current transition worker.'
-Require $ledger 'ACTIVE.*IN-PROGRESS' 'Thread ledger must record an active in-progress worker state.'
+
+Require $ledger 'W11\.1' 'Thread ledger must preserve W11.1.'
+$w11Row = [regex]::Match($ledger, '(?m)^\| \*\*W11\.1\*\*.*$').Value
+if ([string]::IsNullOrWhiteSpace($w11Row)) { throw 'W11.1 ledger row is missing.' }
+Require $w11Row '\*\*USABLE\*\*' 'W11.1 thread must become USABLE after merge rather than remain ACTIVE.'
+Require $w11Row '\*\*MERGED\*\*' 'W11.1 lane must be recorded MERGED.'
+Require $ledger 'No worker lane is currently active' 'Thread ledger must explicitly record the current no-worker state.'
 
 # Historical attended evidence remains immutable evidence even though it is not current guidance.
 Require $baseline 'ec8ba06451c3cbacabfad24f1479e1537147d0c9' 'Pre-REDmod baseline must stay tied to the exact historical tested revision.'
@@ -61,7 +70,8 @@ foreach ($oldBranch in @(
     'agent/biology-ui-attended-followup',
     'agent/presentation-attended-followup',
     'agent/body-runtime-attended-followup',
-    'agent/player-uninstall-vanilla-toggle'
+    'agent/player-uninstall-vanilla-toggle',
+    'agent/pre-w10-framework-transition-cleanup'
 )) {
     Reject $activeGuidance ([regex]::Escape($oldBranch)) "Active guidance still presents merged branch as current: $oldBranch"
 }
@@ -80,4 +90,4 @@ Require $parallel 'Current code work still belongs.*current GitHub issues/PRs|do
 Require $parallel 'THREAD-LEDGER\.md' 'Parallel policy must expose the canonical conversation registry.'
 Require $handoffIndex 'issue-specific and temporary' 'Handoff index must explain that merged worker packets are retired rather than canonical forever.'
 
-Write-Host 'PASS: active guidance identifies P01.2/W11 transition work, preserves attended acceptance, and does not resurrect merged worker branches.'
+Write-Host 'PASS: active guidance records W11 merged, preserves the parent transition gate and attended acceptance, and does not resurrect merged worker branches.'
