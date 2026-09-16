@@ -21,19 +21,14 @@ function Assert-LegacyRelativePath([string]$RelativePath) {
 function Resolve-LegacySafeChildPath([string]$Root, [string]$RelativePath) {
     $relative = Assert-LegacyRelativePath $RelativePath
     $rootFull = [IO.Path]::GetFullPath($Root).TrimEnd([IO.Path]::DirectorySeparatorChar,[IO.Path]::AltDirectorySeparatorChar)
-    $platformRelative = $relative.Replace('/',[IO.Path]::DirectorySeparatorChar)
-    $candidate = [IO.Path]::GetFullPath((Join-Path $rootFull $platformRelative))
+    $candidate = [IO.Path]::GetFullPath((Join-Path $rootFull $relative.Replace('/',[IO.Path]::DirectorySeparatorChar)))
     $prefix = $rootFull + [IO.Path]::DirectorySeparatorChar
-    if (-not $candidate.StartsWith($prefix,[StringComparison]::OrdinalIgnoreCase)) {
-        throw "Path escapes root: $RelativePath"
-    }
+    if (-not $candidate.StartsWith($prefix,[StringComparison]::OrdinalIgnoreCase)) { throw "Path escapes root: $RelativePath" }
     $probe = $candidate
     while (-not [string]::IsNullOrWhiteSpace($probe)) {
         if (Test-Path -LiteralPath $probe) {
             $item = Get-Item -Force -LiteralPath $probe
-            if ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) {
-                throw "Reparse points are not supported in transition ownership paths: $probe"
-            }
+            if ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw "Reparse points are not supported in transition ownership paths: $probe" }
         }
         $parent = Split-Path -Parent $probe
         if ($parent -eq $probe) { break }
@@ -49,8 +44,7 @@ function Get-LegacySha256([string]$Path) {
 function Test-LegacyWildcard([string]$RelativePath,[string[]]$Patterns) {
     $relative = $RelativePath.Replace('\\','/')
     foreach ($pattern in @($Patterns)) {
-        $wildcard = $pattern.Replace('**','*')
-        if ($relative -like $wildcard) { return $true }
+        if ($relative -like $pattern.Replace('**','*')) { return $true }
     }
     return $false
 }
@@ -93,9 +87,7 @@ function Get-LegacyFrameworkTransitionPlan {
     $redscriptFiles = [Collections.Generic.List[object]]::new()
     $consumerEvidence = [Collections.Generic.List[string]]::new()
 
-    if ($contract.schemaVersion -ne 1 -or [string]::IsNullOrWhiteSpace([string]$contract.transitionId)) {
-        throw 'Unsupported legacy-framework transition contract.'
-    }
+    if ($contract.schemaVersion -ne 1 -or [string]::IsNullOrWhiteSpace([string]$contract.transitionId)) { throw 'Unsupported legacy-framework transition contract.' }
     if ($manifest.schemaVersion -ne 2 -or $manifest.product -ne 'Biology' -or $manifest.playableRuntimeIncluded -ne $true) {
         $blockers.Add('Installed biology/build-manifest.json is not a supported playable schema-2 Biology receipt.')
     }
@@ -111,11 +103,10 @@ function Get-LegacyFrameworkTransitionPlan {
 
     $retiredIds = @($contract.retiredComponents | ForEach-Object { ([string]$_).ToLowerInvariant() })
     $retainedIds = @($contract.retainedComponents | ForEach-Object { ([string]$_).ToLowerInvariant() })
-    $installedDependencyIds = @($manifest.retainedDependencies | ForEach-Object { ([string]$_.id).ToLowerInvariant() })
     foreach ($id in @($contract.expectedInstalledRetainedDependencies)) {
-        if (([string]$id).ToLowerInvariant() -notin $installedDependencyIds) {
-            $blockers.Add("Installed receipt is missing expected pre-W10 retained dependency '$id'.")
-        }
+        $owner = 'upstream:' + ([string]$id).ToLowerInvariant()
+        $owned = @($manifest.files | Where-Object { ([string]$_.owner).ToLowerInvariant() -eq $owner })
+        if ($owned.Count -eq 0) { $blockers.Add("Installed receipt is missing exact file ownership for expected pre-W10 dependency '$id'.") }
     }
 
     $removed = @($distribution.removedDependencies | ForEach-Object { ([string]$_).ToLowerInvariant() })
@@ -128,9 +119,7 @@ function Get-LegacyFrameworkTransitionPlan {
         $blockers.Add("Current production runtime profile '$runtimeProfileName' is missing.")
     } else {
         $runtimeIds = @($runtimeProfileProperty.Value | ForEach-Object { ([string]$_).ToLowerInvariant() })
-        if ($runtimeIds.Count -ne 1 -or $runtimeIds[0] -ne 'redscript') {
-            $blockers.Add("Current production runtime profile '$runtimeProfileName' is not redscript-only.")
-        }
+        if ($runtimeIds.Count -ne 1 -or $runtimeIds[0] -ne 'redscript') { $blockers.Add("Current production runtime profile '$runtimeProfileName' is not redscript-only.") }
     }
 
     $baselineByPath = @{}
@@ -159,13 +148,8 @@ function Get-LegacyFrameworkTransitionPlan {
             $expected = ([string]$entry.sha256).ToUpperInvariant()
             $state = 'Unknown'
             $actual = $null
-            $full = $null
-            if ([string]$entry.replacePolicy -ne 'generic-dependency-shared') {
-                $blockers.Add("Retired dependency receipt entry has unexpected policy: $relative / $($entry.replacePolicy)")
-            }
-            if ($baselineByPath.ContainsKey($relative.ToLowerInvariant())) {
-                $blockers.Add("Tracked vanilla baseline contains retired dependency path; automatic deletion is forbidden: $relative")
-            }
+            if ([string]$entry.replacePolicy -ne 'generic-dependency-shared') { $blockers.Add("Retired dependency receipt entry has unexpected policy: $relative / $($entry.replacePolicy)") }
+            if ($baselineByPath.ContainsKey($relative.ToLowerInvariant())) { $blockers.Add("Tracked vanilla baseline contains retired dependency path; automatic deletion is forbidden: $relative") }
             try {
                 $full = Resolve-LegacySafeChildPath $game $relative
                 if (Test-Path -LiteralPath $full -PathType Container) {
@@ -175,9 +159,8 @@ function Get-LegacyFrameworkTransitionPlan {
                     $state = 'AlreadyAbsent'
                 } else {
                     $actual = Get-LegacySha256 $full
-                    if ($actual -eq $expected) {
-                        $state = 'ExactMatch'
-                    } else {
+                    if ($actual -eq $expected) { $state = 'ExactMatch' }
+                    else {
                         $state = 'Changed'
                         $blockers.Add("Retired dependency file changed from the installed receipt: $relative")
                     }
@@ -186,13 +169,7 @@ function Get-LegacyFrameworkTransitionPlan {
                 $state = 'UnsafePath'
                 $blockers.Add($_.Exception.Message)
             }
-            $retiredFiles.Add([pscustomobject][ordered]@{
-                path = $relative
-                component = $id
-                expectedSha256 = $expected
-                actualSha256 = $actual
-                state = $state
-            })
+            $retiredFiles.Add([pscustomobject][ordered]@{ path=$relative; component=$id; expectedSha256=$expected; actualSha256=$actual; state=$state })
         }
     }
 
@@ -203,16 +180,13 @@ function Get-LegacyFrameworkTransitionPlan {
             $relative = Assert-LegacyRelativePath ([string]$entry.path)
             $full = Resolve-LegacySafeChildPath $game $relative
             $state = if (Test-Path -LiteralPath $full -PathType Leaf) { 'Present' } elseif (Test-Path -LiteralPath $full) { 'WrongPathType' } else { 'Absent' }
+            if ($state -eq 'WrongPathType') { $blockers.Add("Protected retained dependency path has wrong path type: $relative") }
             $redscriptFiles.Add([pscustomobject][ordered]@{ path=$relative; component=$id; state=$state })
         }
     }
 
-    $preferencePath = $null
-    $preferenceSection = $null
-    if ($null -ne $manifest.uninstall) {
-        $preferencePath = [string]$manifest.uninstall.preferencePath
-        $preferenceSection = [string]$manifest.uninstall.preferenceSection
-    }
+    $preferencePath = [string]$manifest.uninstall.preferencePath
+    $preferenceSection = [string]$manifest.uninstall.preferenceSection
     if (-not [string]::IsNullOrWhiteSpace($preferencePath)) {
         try {
             $preferenceRelative = Assert-LegacyRelativePath $preferencePath
@@ -220,11 +194,8 @@ function Get-LegacyFrameworkTransitionPlan {
             if (Test-Path -LiteralPath $preferenceFull -PathType Leaf) {
                 $sections = @(Get-LegacyIniSections $preferenceFull)
                 $foreignSections = @($sections | Where-Object { $_ -ne $preferenceSection })
-                if ($foreignSections.Count -gt 0) {
-                    $consumerEvidence.Add("Legacy Mod Settings preference file contains non-Biology section(s): $($foreignSections -join ', ')")
-                } else {
-                    $warnings.Add("Legacy Mod Settings preference file is present and will be preserved: $preferenceRelative")
-                }
+                if ($foreignSections.Count -gt 0) { $consumerEvidence.Add("Legacy Mod Settings preference file contains non-Biology section(s): $($foreignSections -join ', ')") }
+                else { $warnings.Add("Legacy Mod Settings preference file is present and will be preserved: $preferenceRelative") }
             }
         } catch { $blockers.Add($_.Exception.Message) }
     }
@@ -245,9 +216,7 @@ function Get-LegacyFrameworkTransitionPlan {
             $consumerEvidence.Add($relative)
         }
     }
-    foreach ($evidence in @($consumerEvidence | Sort-Object -Unique)) {
-        $blockers.Add("Unreceipted non-vanilla mod/framework payload may indicate another consumer: $evidence")
-    }
+    foreach ($evidence in @($consumerEvidence | Sort-Object -Unique)) { $blockers.Add("Unreceipted non-vanilla mod/framework payload may indicate another consumer: $evidence") }
 
     $deletionCandidates = @($retiredFiles.ToArray() | Where-Object state -eq 'ExactMatch' | Sort-Object path)
     $alreadyAbsent = @($retiredFiles.ToArray() | Where-Object state -eq 'AlreadyAbsent' | Sort-Object path)
@@ -300,4 +269,27 @@ function Remove-LegacyEmptyParentDirectories {
             $dir = $parent
         }
     }
+}
+
+function Invoke-LegacyRetiredFileRemoval {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)][string]$GameRoot,
+        [Parameter(Mandatory=$true)][object[]]$DeletionCandidates,
+        [Parameter(Mandatory=$true)][string[]]$ProtectedDirectories
+    )
+    $game = [IO.Path]::GetFullPath($GameRoot)
+    $parents = [Collections.Generic.List[string]]::new()
+    foreach ($entry in @($DeletionCandidates)) {
+        $relative = Assert-LegacyRelativePath ([string]$entry.path)
+        $full = Resolve-LegacySafeChildPath $game $relative
+        if (-not (Test-Path -LiteralPath $full -PathType Leaf)) { throw "Planned file disappeared before deletion: $relative" }
+        $expected = ([string]$entry.expectedSha256).ToUpperInvariant()
+        if ($expected -notmatch '^[A-F0-9]{64}$') { throw "Invalid planned SHA-256: $relative" }
+        $actual = Get-LegacySha256 $full
+        if ($actual -ne $expected) { throw "Planned file changed before deletion: $relative" }
+        Remove-Item -LiteralPath $full -Force
+        $parents.Add((Split-Path -Parent $full))
+    }
+    Remove-LegacyEmptyParentDirectories -GameRoot $game -StartDirectories @($parents.ToArray()) -ProtectedDirectories $ProtectedDirectories
 }

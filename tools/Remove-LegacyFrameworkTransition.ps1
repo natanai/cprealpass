@@ -28,9 +28,7 @@ $profilesPath = Join-Path $project 'manifest\profiles.json'
 $contract = Get-Content -Raw -LiteralPath $contractPath | ConvertFrom-Json
 
 function Add-Report([string]$Text) { Add-Content -LiteralPath $ReportPath -Value $Text -Encoding utf8 }
-function Get-CandidateSignature($Entries) {
-    (@($Entries | Sort-Object path | ForEach-Object { ([string]$_.path) + '|' + ([string]$_.expectedSha256).ToUpperInvariant() }) -join "`n")
-}
+function Get-CandidateSignature($Entries) { (@($Entries | Sort-Object path | ForEach-Object { ([string]$_.path) + '|' + ([string]$_.expectedSha256).ToUpperInvariant() }) -join "`n") }
 
 @(
     'BIOLOGY W11.1 LEGACY FRAMEWORK TRANSITION CLEANUP',
@@ -58,9 +56,7 @@ try {
     foreach ($name in @('receiptSha256','baselineSha256','transitionContractSha256','currentDistributionSha256','currentProfilesSha256')) {
         if ([string]$fresh.$name -ne [string]$priorPlan.$name) { throw "Transition evidence changed since planning: $name" }
     }
-    if ((Get-CandidateSignature $fresh.deletionCandidates) -ne (Get-CandidateSignature $priorPlan.deletionCandidates)) {
-        throw 'Exact deletion set changed since planning.'
-    }
+    if ((Get-CandidateSignature $fresh.deletionCandidates) -ne (Get-CandidateSignature $priorPlan.deletionCandidates)) { throw 'Exact deletion set changed since planning.' }
 
     $redscriptBefore = @{}
     foreach ($entry in @($fresh.preservedRedscript)) {
@@ -73,20 +69,9 @@ try {
     foreach ($entry in @($fresh.alreadyAbsent)) { Add-Report ("ALREADY ABSENT | {0} | {1}" -f $entry.component,$entry.path) }
     Add-Report ''
 
-    $parentCandidates = [Collections.Generic.List[string]]::new()
-    foreach ($entry in @($fresh.deletionCandidates)) {
-        $relative = Assert-LegacyRelativePath ([string]$entry.path)
-        $full = Resolve-LegacySafeChildPath $game $relative
-        if (-not (Test-Path -LiteralPath $full -PathType Leaf)) { throw "Planned file disappeared before deletion: $relative" }
-        $actual = Get-Sha256 $full
-        if ($actual -ne ([string]$entry.expectedSha256).ToUpperInvariant()) { throw "Planned file changed before deletion: $relative" }
-        if ($PSCmdlet.ShouldProcess($full,'Delete exact retired Biology-introduced framework file')) {
-            Remove-Item -LiteralPath $full -Force
-            $parentCandidates.Add((Split-Path -Parent $full))
-        }
+    if ($PSCmdlet.ShouldProcess($game,"Delete $(@($fresh.deletionCandidates).Count) exact retired pre-W10 framework files")) {
+        Invoke-LegacyRetiredFileRemoval -GameRoot $game -DeletionCandidates @($fresh.deletionCandidates) -ProtectedDirectories @($contract.protectedDirectories)
     }
-
-    Remove-LegacyEmptyParentDirectories -GameRoot $game -StartDirectories @($parentCandidates.ToArray()) -ProtectedDirectories @($contract.protectedDirectories)
 
     foreach ($entry in @($fresh.deletionCandidates)) {
         $full = Resolve-LegacySafeChildPath $game ([string]$entry.path)
