@@ -1,7 +1,7 @@
 # Biology local operator command catalog
 
 Status: **canonical user-run command surface**  
-Last updated: 2026-09-15
+Last updated: 2026-09-16
 
 ## Why this exists
 
@@ -14,6 +14,8 @@ C:\Games\Steam\steamapps\common\Cyberpunk 2077
 ```
 
 The operator environment deliberately treats local repository state as disposable. **Never assume any prior local cprealpass clone/worktree still exists across separate user instructions/turns.** Zero local repo is a normal supported condition, not an edge case.
+
+For operator evidence that must survive across turns, the normal contract is now **one managed handoff bundle -> parent ingestion into `docs/operator-evidence/<evidence-id>/` -> repo-confirmed local cleanup**. The user should not maintain a mental list of loose reports/plans/ZIPs to KEEP or delete.
 
 ## Mandatory repository discovery/bootstrap rule
 
@@ -52,13 +54,11 @@ Any missing ref, mismatched SHA, or missing commit object is fail-closed. Succes
 
 A disposable probe/audit/candidate worktree may be removed as soon as that instruction is finished. A later command must independently rediscover or reacquire source. Never point a later mutator at a path merely because an earlier probe printed it.
 
-If a small non-repository state artifact must survive across instructions, the producing command must label it clearly, for example:
+Durable cross-turn operator state should be represented by one managed handoff bundle. The parent/assistant ingests the returned redistributable `evidence.json` + `report.txt` into `docs/operator-evidence/<evidence-id>/`; later commands resolve that stable evidence ID from an exact canonical checkout. The local PC does not need GitHub write credentials.
 
-```text
-KEEP UNTIL <next step>
-```
+Large candidate ZIPs are not normal long-term evidence dependencies. When an exact binary must survive temporarily, the producing tool machine-manages its bounded artifact root and records exact path/hash/inventory in the handoff evidence. Cleanup is performed only by the repo-owned cleanup entrypoint after durable repository evidence is confirmed.
 
-Deleting repository/worktree directories remains safe; deleting a specifically retained plan/report/artifact may not be.
+Older pre-W15 tools may still print historical `KEEP UNTIL ...` wording inside their own evidence. That is compatibility evidence, **not** the normal operator contract going forward; use the managed W15.2 wrappers below instead of asking the user to remember those loose files indefinitely.
 
 ### Bootstrap-loader boundary
 
@@ -70,20 +70,20 @@ The one-line launcher that gets a repository-owned bootstrap is itself part of t
 - Never download an unpinned `main` script and silently treat it as the reviewed revision.
 - A network failure before the repository-owned bootstrap starts cannot be repaired by pretending stale source is current; report that acquisition failure to the owning thread.
 
-The repo-owned bootstrap itself must still be independently zero-local-repo-safe after it starts. Thus a downloaded W12 bootstrap may discover a useful existing worktree, or may make its own uniquely signed seed clone if none exists.
+The repo-owned bootstrap itself must still be independently zero-local-repo-safe after it starts. Thus a downloaded bootstrap may discover a useful existing worktree or may make its own uniquely signed seed clone if none exists.
 
 ## Mandatory evidence-report rule
 
-When an agent asks the user to run a local evidence/audit/probe/candidate-preparation operation, it must generate a **plain-text `.txt` evidence report** for the user to attach back to ChatGPT.
+When an agent asks the user to run a local evidence/audit/probe/candidate-preparation operation, it must generate a **plain-text `.txt` evidence report** for the user to attach back to ChatGPT. Managed lifecycle operations additionally package that report with its machine-readable record into one `Biology-Operator-Evidence-<evidence-id>.zip` handoff bundle.
 
 - Do not make copy/pasting console output into chat the normal handoff.
 - The report must be useful for **failure and success** outcomes (`FAIL`/`PASS`).
 - Use a unique filename containing timestamp plus random suffix or exact revision/build identity.
-- Print the absolute report path at the end of the operation.
-- Tell the user to attach that file to the owning ChatGPT thread.
-- Machine-readable JSON may still be produced for automation, but it does not replace the user-returned text evidence file.
+- Print the absolute report/bundle path at the end of the operation.
+- Tell the user to attach the one obvious handoff file to the owning ChatGPT thread.
+- Machine-readable JSON may be included for automation; under the managed lifecycle it travels inside the same bundle rather than becoming a second loose file the user must manage.
 
-`tools/Audit-GameContracts.ps1` follows this rule directly and prints an absolute `LOCAL EVIDENCE REPORT:` line. Repository-owned `Bootstrap-*.ps1` evidence entrypoints must obey the failure-durable contract below.
+`tools/Audit-GameContracts.ps1` follows the legacy text-only rule directly and prints an absolute `LOCAL EVIDENCE REPORT:` line. Repository-owned `Bootstrap-*.ps1` evidence entrypoints must obey the failure-durable contract below.
 
 ## Canonical failure-durable probe/bootstrap contract
 
@@ -97,25 +97,25 @@ For user-returned local probes/audits/candidate preparation, the canonical boots
 4. **Fingerprint the authority being inspected.** Record the exact supported game/native/tool identity relevant to the question, such as product/file version and, when useful, SHA-256 of the executable/tool actually inspected.
 5. **Collect bounded evidence.** Capture only the files/symbols/schema excerpts needed for the current question rather than dumping proprietary trees or huge console transcripts.
 6. **State the proof boundary.** Clearly distinguish source/symbol/schema evidence from exact compilation, official REDmod deployment, or live-runtime/attended proof. Source evidence must never be reported as deployment or runtime acceptance.
-7. **Produce one attachable plain-text report.** The same `.txt` file must contain the useful result on both success and failure after the bootstrap has started.
+7. **Produce one obvious attachable handoff.** Text-only legacy probes may return one `.txt`; managed lifecycle operations return one ZIP containing exactly `evidence.json` and `report.txt`.
 8. **Preserve child-process diagnostics before throwing.** For every child process whose output matters, capture **stdout, stderr, exit code, and actual exception/error text** into that report. On nonzero exit, throw only after those diagnostics have been persisted.
 9. **Record bootstrap context.** The report must include requested branch/head when applicable, fetched head, disposable checkout/worktree path, and game/native/tool identity.
-10. **Always expose one attachment handoff.** Success and failure paths must both end by printing exactly one obvious:
+10. **Always expose one attachment handoff.** Success and failure paths must print one obvious attachment path, such as:
 
 ```text
 ATTACH THIS FILE TO CHATGPT:
-<absolute path to report.txt>
+<absolute path to report.txt or Biology-Operator-Evidence-....zip>
 ```
 
 For external/native child processes, the preferred PowerShell implementation uses `System.Diagnostics.ProcessStartInfo` with `UseShellExecute = false`, `RedirectStandardOutput = true`, `RedirectStandardError = true`, and `ArgumentList` for safe argument boundaries. Read stdout/stderr, wait for exit, persist both streams plus the exit code, and only then evaluate success/failure. **Text written to native stderr is evidence, not a PowerShell failure classification by itself; the process exit code is authoritative.** The outer `catch` must add the exception type and message to the report, and the attachment handoff belongs in a `finally`-equivalent path.
 
-`tools/Bootstrap-RedmodActivationSentinelProbe.ps1`, `tools/Bootstrap-PresentationAudit.ps1`, the W11 transition bootstraps, and `tools/Bootstrap-BiologyPostTransitionCandidate.ps1` are current examples. Their inner work may fail, but their returned `.txt` must explain why.
+`tools/Bootstrap-RedmodActivationSentinelProbe.ps1`, `tools/Bootstrap-PresentationAudit.ps1`, the W11 transition bootstraps, and the managed W15.2 entrypoints are current examples.
 
 ---
 
 ## Command 0 — bootstrap a disposable milestone workspace when no repo exists locally
 
-This is the ordinary **MILESTONE CLEAN-ROOM** path after a genuinely fresh uninstall/residual-directory deletion/reinstall. It is not the special post-W11 transition path; use Command 13 for that.
+This is the ordinary **MILESTONE CLEAN-ROOM** path after a genuinely fresh uninstall/residual-directory deletion/reinstall. It is not the special post-W11 transition path; use the managed post-transition command below for that.
 
 The parent supplies the exact canonical `main` SHA. The acquisition logic is bounded to immediate `C:\Games` children, is worktree-aware, and must use the exact-head rule above. Once an exact detached operator checkout is materialized, run:
 
@@ -191,7 +191,7 @@ pwsh ./tools/Build-BiologyPackage.ps1 `
 
 The builder exact-compiles the merged Biology runtime against the supported game before emitting a game-root-shaped ZIP. The current package contains the REDmod activation marker, schema-2 ownership receipt, and `Uninstall Biology.exe`. It does not install, deploy, or launch the game.
 
-For normal milestone preparation prefer Command 0. For the already-accounted W11 transition state use Command 13.
+For normal milestone preparation prefer Command 0. For the accounted W11 transition state use Command 14.
 
 ---
 
@@ -215,7 +215,7 @@ pwsh ./tools/Reset-BiologyIteration.ps1 `
   -GameRoot 'C:\Games\Steam\steamapps\common\Cyberpunk 2077'
 ```
 
-This developer reset follows exact-hash/fail-closed ownership semantics and then performs the strict full vanilla comparison. It is not a substitute for Command 13’s explicitly accounted W11 transition state.
+This developer reset follows exact-hash/fail-closed ownership semantics and then performs the strict full vanilla comparison.
 
 ---
 
@@ -251,7 +251,7 @@ LOCAL EVIDENCE REPORT: C:\...\reports\local-game-contract-audit-....txt
 
 Attach that `.txt` file to the owning ChatGPT thread. This is investigation evidence, not attended runtime acceptance.
 
-For branch-specific presentation audits use `tools/Bootstrap-PresentationAudit.ps1`; it now accepts usable ordinary clones or linked worktrees by Git identity, applies the exact-head cached-origin fallback when network fetch fails, creates a signed detached audit checkout, fingerprints game identity, captures child output, and prints `ATTACH THIS FILE TO CHATGPT:`.
+For branch-specific presentation audits use `tools/Bootstrap-PresentationAudit.ps1`; it accepts usable ordinary clones or linked worktrees by Git identity, applies exact-head cached-origin fallback when network fetch fails, creates a signed detached audit checkout, fingerprints game identity, captures child output, and prints `ATTACH THIS FILE TO CHATGPT:`.
 
 ---
 
@@ -311,17 +311,9 @@ The cleanup never recursively owns shared roots and never targets redscript or t
 
 ---
 
-## Command 13 — post-W11 transition canonical candidate preparation
+## Command 13 — legacy post-W11 candidate preparation compatibility entrypoint
 
-This is the P01.2 path after the exact W11 framework-retirement operation has already completed and the old Biology package has already been hard-uninstalled. It exists specifically so the parent does **not** improvise another large interactive PowerShell candidate-preparation block.
-
-Repository-owned entrypoint:
-
-```text
-tools/Bootstrap-BiologyPostTransitionCandidate.ps1
-```
-
-The parent must supply:
+`tools/Bootstrap-BiologyPostTransitionCandidate.ps1` remains supported as the inner/legacy compatibility implementation because existing W12 evidence and tests depend on its exact report semantics. It accepts:
 
 ```text
 -MainSha <exact 40-character canonical main SHA>
@@ -330,83 +322,111 @@ The parent must supply:
 -GameRoot C:\Games\Steam\steamapps\common\Cyberpunk 2077
 ```
 
-### Supported invocation when the exact script already exists locally
+It remains zero-local-repo-safe, worktree-aware, exact-head/offline-safe, classifies the state as **NOT a vanilla-baseline proof**, builds through `Build-BiologyPackage.ps1`, installs/deploys the release-shaped candidate, records `Biology-Post-Transition-Candidate-Prep-...` evidence, retains `Biology-Candidate-Artifacts-...` state, and prints `STOP_BEFORE_GAME_LAUNCH=YES`.
 
-If an exact checkout at the reviewed `MainSha` is already available, use its local script directly:
+Its historical report may contain `KEEP UNTIL ATTENDED TEST`. Do not use that wording as a new human-memory contract. For new parent operations invoke Command 14, which wraps this implementation and returns one managed evidence ZIP.
+
+---
+
+## Command 14 — managed post-W11 candidate preparation
+
+Repository-owned entrypoint:
+
+```text
+tools/Bootstrap-BiologyManagedPostTransitionCandidate.ps1
+```
+
+Normal steady-state invocation resolves the reviewed W11 transition record by repository evidence ID:
 
 ```powershell
-pwsh '<exact-checkout>\tools\Bootstrap-BiologyPostTransitionCandidate.ps1' `
-  -MainSha '<40-character canonical main SHA>' `
-  -TransitionCleanupReportPath '<absolute reviewed W11 cleanup report.txt>' `
-  -ExpectedTransitionCleanupReportSha256 '<64-character SHA-256>' `
+pwsh '<exact-main-checkout>\tools\Bootstrap-BiologyManagedPostTransitionCandidate.ps1' `
+  -MainSha '<exact 40-character canonical main SHA>' `
+  -TransitionEvidenceId '<repo-backed transition evidence id>' `
   -GameRoot 'C:\Games\Steam\steamapps\common\Cyberpunk 2077'
 ```
 
-### Exact-revision network loader when no exact local script exists
+A temporary migration parameter set also accepts the old local W11 cleanup report path/hash so the parent can ingest that one pre-lifecycle record without asking the user to recreate it.
 
-When no exact local script exists, the parent may provide this exact-revision loader. Substitute only the three reviewed values. The raw download is deliberately pinned to the same canonical SHA supplied to the bootstrap; it is a network fallback at the **bootstrap-loader boundary**, not a substitute for the bootstrap’s own local-first repository discovery.
+The managed wrapper independently supports zero local repo state, resolves exact canonical `main`, runs the legacy inner candidate preparation, captures its failure-durable report, and when a release artifact exists records:
 
-```powershell
-$MainSha = '<40-character canonical main SHA>'
-$CleanupReport = '<absolute reviewed W11 cleanup report.txt>'
-$CleanupReportSha256 = '<64-character SHA-256>'
-$Signature = "$(Get-Date -Format 'yyyyMMdd-HHmmss')-$([guid]::NewGuid().ToString('N').Substring(0,8))"
-$Bootstrap = "C:\Games\Biology-W12-Bootstrap-$Signature.ps1"
-$Uri = "https://raw.githubusercontent.com/natanai/cprealpass/$MainSha/tools/Bootstrap-BiologyPostTransitionCandidate.ps1"
-Invoke-WebRequest -UseBasicParsing -Uri $Uri -OutFile $Bootstrap
-if (-not (Test-Path -LiteralPath $Bootstrap -PathType Leaf)) { throw 'Exact-revision Biology bootstrap download failed.' }
-pwsh $Bootstrap `
-  -MainSha $MainSha `
-  -TransitionCleanupReportPath $CleanupReport `
-  -ExpectedTransitionCleanupReportSha256 $CleanupReportSha256 `
-  -GameRoot 'C:\Games\Steam\steamapps\common\Cyberpunk 2077'
-```
+- exact canonical source revision;
+- candidate ZIP name/hash/bytes/build ID;
+- schema-2 payload manifest with every path/hash/replace policy;
+- exact ownership receipt hash;
+- whether game mutation started;
+- whether installed receipt verification/deploy passed;
+- exact managed artifact root/inventory needed for later cleanup;
+- recovery eligibility and proof boundary.
 
-If the exact-revision download itself fails, stop and report the loader/network failure; do not substitute an unpinned `main` script. Once the repository-owned script starts, it provides the canonical failure-durable attachment report.
-
-### What Command 13 proves and does
-
-The bootstrap independently:
-
-- verifies the parent-supplied cleanup report hash and requires an inner W11 `RESULT: PASS`;
-- carries forward the exact W11 retired path set and confirms those paths remain absent;
-- confirms the deliberately retained shared redscript deployment paths are still present;
-- reruns `Verify-BiologyRemoval.ps1` before install;
-- classifies this as an **accounted W11 transition state, NOT a vanilla-baseline/fresh-reinstall proof**;
-- performs bounded local-first cprealpass discovery accepting ordinary clones or linked worktrees;
-- supports zero-local-repo acquisition with a uniquely signed seed clone;
-- fetches `origin/main` first and uses the exact cached-origin + commit-object fallback only if fetch fails;
-- creates an exact clean detached source worktree at `MainSha`;
-- exact-compiles and builds through `Build-BiologyPackage.ps1`;
-- retains the final ZIP outside disposable repository state under `C:\Games\Biology-Candidate-Artifacts-<short-sha>-<signature>\`;
-- records ZIP SHA-256 and byte size;
-- installs that exact ZIP and verifies installed `biology/build-manifest.json` has `sourceRevision == MainSha`;
-- deploys through `Deploy-BiologyRedmod.ps1` while preserving stdout/stderr/exit diagnostics;
-- attempts to remove the disposable worktree and any seed clone it created solely for the run;
-- never launches Cyberpunk.
-
-Its attachment report filename contract is:
+It emits **one user handoff surface**:
 
 ```text
-C:\Games\Biology-Post-Transition-Candidate-Prep-<short-sha>-<timestamp>-<random8>.txt
+C:\Games\Biology-Operator-Evidence-<evidence-id>.zip
 ```
 
-The retained artifact directory contract is:
+The ZIP contains exactly `evidence.json` and `report.txt`. Return that ZIP to P01.2. Parent/assistant commits the redistributable members under `docs/operator-evidence/<evidence-id>/`. The local PC never pushes evidence to GitHub.
+
+---
+
+## Command 15 — repository-evidence-backed failed-install recovery
+
+Repository-owned entrypoint:
 
 ```text
-C:\Games\Biology-Candidate-Artifacts-<short-sha>-<timestamp>-<random8>\
+tools/Bootstrap-BiologyManagedFailedInstallRecovery.ps1
 ```
 
-A successful report includes:
+The parent supplies exact canonical `main`, stable `EvidenceId`, and the game root. The bootstrap starts from zero local repo state if necessary, fetches/verifies exact `main`, loads `docs/operator-evidence/<evidence-id>/evidence.json`, validates schema/identity/hash fields, and performs a complete read/plan phase before any mutation.
+
+For normal exact-payload evidence, recovery no longer requires the historical candidate ZIP. It derives removable Biology-owned files from the embedded schema-2 payload inventory and receipt hash. Files are removed only when the installed hash exactly matches durable evidence; changed/foreign content, unknown directories, reparse points, and ambiguous state fail closed. Generic redscript/cybercmd entries are always `preserve-shared`.
+
+For the one pre-lifecycle failed attempt from source `04d4c1584df4b0823e093422b98cf4c5575c7b19`, the checked-in legacy record authorizes only `empty-owned-roots-only` recovery. It may remove the known Biology-owned roots only when they are literally empty and known package files are absent. It never guesses missing historical payload hashes; any ambiguous file causes a fail-closed result.
+
+This command does not launch Cyberpunk and does not deploy REDmod.
+
+---
+
+## Command 16 — repo-confirmed local operator evidence cleanup
+
+Repository-owned entrypoint:
 
 ```text
-RESULT: PASS
-STOP_BEFORE_GAME_LAUNCH=YES
-KEEP UNTIL ATTENDED TEST: the retained artifact ZIP and this candidate-prep report.
-MAY DELETE IMMEDIATELY: cprealpass repo/worktree source state
+tools/Bootstrap-BiologyOperatorEvidenceCleanup.ps1
 ```
 
-If failure occurs after installation mutation begins, the report says so explicitly and the parent must review it; do not improvise cleanup in chat.
+Inputs:
+
+```text
+-MainSha <exact canonical main containing the ingested evidence>
+-EvidenceId <stable repo-backed evidence id>
+-HandoffBundlePath <local Biology-Operator-Evidence-<id>.zip>
+```
+
+The cleanup bootstrap independently reacquires exact canonical source, loads the repository evidence record, and requires the local ZIP's `evidence.json` and `report.txt` to match the durable repository copies byte-for-byte after canonical newline normalization. It then validates any machine-managed candidate artifact root against the exact recorded inventory.
+
+Cleanup fails closed on:
+
+- evidence/report mismatch;
+- wrong evidence ID;
+- changed or foreign artifact files/directories;
+- any reparse point;
+- artifact-root path ambiguity;
+- **any missing expected artifact file**.
+
+Only after every expected artifact file is present and exact does it recursively remove that one recorded managed artifact root and the one matching handoff ZIP. No other `C:\Games` content is targeted. If durable evidence is not yet on the exact repository revision, cleanup refuses deletion.
+
+---
+
+## Parent evidence ingestion rule
+
+When the user returns a managed evidence ZIP, P01.2 should inspect it, preserve meaningful attended failure/success conclusions under `docs/test-runs/` as appropriate, and commit the redistributable handoff members as:
+
+```text
+docs/operator-evidence/<evidence-id>/evidence.json
+docs/operator-evidence/<evidence-id>/report.txt
+```
+
+Do not commit the candidate ZIP, proprietary game files, or unnecessary third-party binaries. Later commands address this evidence by `EvidenceId` plus exact canonical source, not by an old `C:\Games` path.
 
 ---
 
@@ -416,7 +436,7 @@ If failure occurs after installation mutation begins, the report says so explici
 2. **Never assume a permanent repo path.** Repo-dependent operations must use bounded worktree-aware local-first discovery or an exact-revision bootstrap-loader fallback.
 3. Do not use or recreate `C:\Games\CyberpunkRealism`; that path convention is retired.
 4. Branch-specific/local-audit work should use a fresh uniquely signed worktree/checkout, not silently mutate an arbitrary existing repo.
-5. **Every user-returned evidence operation must create a `.txt` report file** and print its absolute path; ask the user to attach it rather than paste a transcript.
+5. Every user-returned evidence operation must create one obvious handoff file; managed lifecycle operations should return one `Biology-Operator-Evidence-*.zip` rather than a loose KEEP/delete list.
 6. Evidence reports must preserve clear PASS/FAIL outcomes and actual child diagnostics. Native stderr by itself is not failure; child exit code and explicit acceptance conditions decide success.
 7. Branch-specific probe bootstraps must pin the requested branch and exact head and apply the fail-closed cached-origin rule after fetch failure.
 8. For foundational runtime/package questions, probe the installed game/CDPR/REDmod toolchain before assuming a community route is necessary.
@@ -426,6 +446,9 @@ If failure occurs after installation mutation begins, the report says so explici
 12. After a freshly uninstalled/residual-directory-deleted/reinstalled game, let the user choose whether the additional exhaustive hash check is worth the time. Default is **No**.
 13. Iteration cleanup on a reused install remains stricter: `Reset-BiologyIteration.ps1` must prove return to tracked baseline before layering another package.
 14. After player hard-uninstall, prefer `Verify-BiologyRemoval.ps1`; do not invent destructive cleanup or misclassify intentionally preserved generic dependencies as Biology residue.
-15. If a command fails, return its evidence report to the owning agent; do not improvise destructive cleanup commands.
-16. A successful probe’s disposable checkout is not persistent state. A later operation must bootstrap independently.
-17. If an operation becomes recurring, codify it here and in `tools/` with CI coverage before treating it as standard.
+15. If a command fails, return its managed evidence/report to the owning agent; do not improvise destructive cleanup commands.
+16. A successful probe's disposable checkout is not persistent state. A later operation must bootstrap independently.
+17. Parent/assistant, not the local PC, ingests durable evidence into GitHub.
+18. Do not ask the user to remember arbitrary report/plan/ZIP paths across turns when equivalent repo-backed evidence exists.
+19. Do not ask the user to recreate a missing historical candidate ZIP when exact text/hash evidence or a bounded read-only residue proof can safely establish the needed boundary.
+20. If an operation becomes recurring, codify it here and in `tools/` with CI coverage before treating it as standard.
