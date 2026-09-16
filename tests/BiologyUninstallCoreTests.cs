@@ -23,8 +23,7 @@ internal static class BiologyUninstallCoreTests
             TestDuplicateAndIdentityFailures(Path.Combine(root, "identity"));
             TestMalformedManifestFailures(Path.Combine(root, "malformed"));
             TestBiologyOwnedAllowlist(Path.Combine(root, "allowlist"));
-            TestPreferencesPreservedByDefault(Path.Combine(root, "preferences-default"));
-            TestPreferenceOptInIsSurgical(Path.Combine(root, "preferences-optin"));
+            TestSaveBackedPreferencePolicy(Path.Combine(root, "save-policy"));
             TestRedmodRefreshEvaluation();
             Console.WriteLine("PASS: " + checks + " Biology uninstall planner/executor safety checks.");
         }
@@ -59,6 +58,7 @@ internal static class BiologyUninstallCoreTests
         Check(!Directory.Exists(Path.Combine(root, "r6", "scripts", "CyberpunkRealism")), "empty Biology-owned script directory was not removed");
         Check(Directory.Exists(Path.Combine(root, "r6", "scripts")), "shared r6/scripts directory was removed");
         Check(result.ReceiptDeleted && !File.Exists(manifestPath), "clean uninstall did not remove the validated ownership receipt");
+        Check(result.Notes.Exists(x => x.IndexOf("save-backed Biology preference", StringComparison.OrdinalIgnoreCase) >= 0), "uninstaller did not report save-backed preference preservation");
     }
 
     private static void TestChangedBiologyIsPreserved(string root)
@@ -201,31 +201,20 @@ internal static class BiologyUninstallCoreTests
         ExpectFailure(delegate { BiologyUninstallPlanner.Build(genericRoot, wrongManifest); }, "generic dependency without upstream ownership accepted");
     }
 
-    private static void TestPreferencesPreservedByDefault(string root)
+    private static void TestSaveBackedPreferencePolicy(string root)
     {
         PrepareGameRoot(root);
         string owned = WriteFile(root, "mods/Biology/info.json", "owned");
-        string ini = WriteFile(root, "red4ext/plugins/mod_settings/user.ini",
-            "[CyberpunkRealism.Settings.CRRealpassSettings]\r\nenabled = false\r\ne3FirstPersonHudVisuals = false\r\n\r\n[Other.Mod]\r\nvalue = keep\r\n");
-        string expected = File.ReadAllText(ini);
         string manifestPath = WriteManifest(root, new[] { Entry("mods/Biology/info.json", owned, "Biology", "id", BiologyUninstallPlanner.BiologyOwnedPolicy) }, "Biology");
         BiologyUninstallPlan plan = BiologyUninstallPlanner.Build(root, manifestPath);
-        BiologyUninstallExecutor.Execute(plan, new BiologyExecutionOptions { SkipRedmodRefresh = true, RemovePreferences = false });
-        Check(File.Exists(ini) && File.ReadAllText(ini) == expected, "default uninstall modified Biology/user preferences");
-    }
+        Check(plan.Manifest.uninstall.savePolicy == "never-target", "ownership receipt lost save safety policy");
+        Check(plan.Manifest.uninstall.preferencePolicy == "stored-in-save-never-target", "ownership receipt lost save-backed preference policy");
 
-    private static void TestPreferenceOptInIsSurgical(string root)
-    {
-        PrepareGameRoot(root);
-        string ini = WriteFile(root, "red4ext/plugins/mod_settings/user.ini",
-            "[Other.Mod.Settings]\r\nfoo = 1\r\n\r\n[CyberpunkRealism.Settings.CRRealpassSettings]\r\nenabled = true\r\ne3FirstPersonHudVisuals = false\r\n\r\n[Another.Section]\r\nbar = keep\r\n");
-        string before = File.ReadAllText(ini);
-        Check(before.Contains("CyberpunkRealism.Settings.CRRealpassSettings"), "preference fixture missing Biology section");
-        bool removed = BiologyPreferenceCleaner.RemoveSection(ini, "CyberpunkRealism.Settings.CRRealpassSettings");
-        string after = File.ReadAllText(ini);
-        Check(removed, "preference opt-in did not report section removal");
-        Check(!after.Contains("CyberpunkRealism.Settings.CRRealpassSettings") && !after.Contains("e3FirstPersonHudVisuals"), "Biology preference section survived opt-in removal");
-        Check(after.Contains("[Other.Mod.Settings]") && after.Contains("foo = 1") && after.Contains("[Another.Section]") && after.Contains("bar = keep"), "preference opt-in damaged another mod/section");
+        JavaScriptSerializer serializer = new JavaScriptSerializer();
+        BiologyManifest manifest = serializer.Deserialize<BiologyManifest>(File.ReadAllText(manifestPath));
+        manifest.uninstall.preferencePolicy = "delete-provider-file";
+        File.WriteAllText(manifestPath, serializer.Serialize(manifest), new UTF8Encoding(false));
+        ExpectFailure(delegate { BiologyUninstallPlanner.Build(root, manifestPath); }, "provider-specific preference deletion policy was accepted");
     }
 
     private static void TestRedmodRefreshEvaluation()
@@ -281,14 +270,12 @@ internal static class BiologyUninstallCoreTests
             files = files,
             uninstall = new BiologyUninstallContract
             {
-                schemaVersion = 1,
+                schemaVersion = 2,
                 playerBinary = "Uninstall Biology.exe",
                 biologyOwnedPolicy = "biology-owned",
                 genericDependencyPolicy = "preserve",
-                preferenceDefault = "preserve",
-                preferenceOptIn = "remove-biology-section-only",
-                preferencePath = "red4ext/plugins/mod_settings/user.ini",
-                preferenceSection = "CyberpunkRealism.Settings.CRRealpassSettings",
+                savePolicy = "never-target",
+                preferencePolicy = "stored-in-save-never-target",
                 redmodRefresh = "official-redmod-deploy-explicit-root"
             }
         };
