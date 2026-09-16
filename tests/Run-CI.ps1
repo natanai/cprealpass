@@ -29,6 +29,7 @@ $tests = @(
     'Test-InstalledRuntimeActivationProbe.ps1',
     'Test-RedscriptStartupRuntime.ps1',
     'Test-BiologyReleaseInstallSafety.ps1',
+    'Test-BiologyFailedInstallRecoveryZipSafety.ps1',
     'Test-RedmodActivationSentinelContract.ps1',
     'Test-IntegratedBiologyPackage.ps1',
     'Test-PlayerDisableContract.ps1',
