@@ -48,6 +48,17 @@ function Resolve-SafeGameChild([string]$RelativePath) {
     return $candidate
 }
 
+function Resolve-ConfiguredGamePath([string]$ConfiguredPath) {
+    if ([string]::IsNullOrWhiteSpace($ConfiguredPath)) { throw 'Configured game path is empty.' }
+    $expanded = $ConfiguredPath.Trim().Replace('{game_dir}',$GameRoot).Replace('\\','\')
+    $candidate = [IO.Path]::GetFullPath($expanded)
+    $root = $GameRoot.TrimEnd([IO.Path]::DirectorySeparatorChar,[IO.Path]::AltDirectorySeparatorChar)
+    if (-not $candidate.StartsWith($root + [IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)) {
+        throw "Configured path escapes game root: $ConfiguredPath"
+    }
+    return $candidate
+}
+
 function Record-File([string]$Label,[string]$Path) {
     Add-Evidence ("--- $Label ---")
     Add-Evidence ('path=' + $Path)
@@ -124,7 +135,7 @@ Add-Evidence ('Started: ' + [DateTime]::Now.ToString('o'))
 Add-Evidence ('Game root: ' + $GameRoot)
 Add-Evidence ('Expected installed source revision: ' + $ExpectedInstalledSourceRevision)
 Add-Evidence 'Policy: installed Cyberpunk/REDmod tree is READ-ONLY. This probe does not deploy, install, remove, rewrite, or launch the game.'
-Add-Evidence 'Proof boundary: installed payload identity + live REDscript log/output evidence. Static presence is not attended gameplay acceptance.'
+Add-Evidence 'Proof boundary: installed payload identity + configured REDscript output/task-runner evidence. Logs are secondary context. Static presence is not attended gameplay acceptance.'
 
 try {
     if (-not (Test-Path -LiteralPath $GameRoot -PathType Container)) { throw "Cyberpunk game directory does not exist: $GameRoot" }
@@ -226,11 +237,46 @@ try {
         Add-Evidence 'BOUNDARY 1 — ARTIFACT / INSTALL PLACEMENT: BROKEN'
     }
 
-    Add-BoundedText 'Installed redscript loader config (scripts.ini)' (Resolve-SafeGameChild 'engine/config/base/scripts.ini') 32768
-    Add-BoundedText 'Installed cybercmd redscript config (scc.toml)' (Resolve-SafeGameChild 'r6/config/cybercmd/scc.toml') 32768
+    $scriptsIni = Resolve-SafeGameChild 'engine/config/base/scripts.ini'
+    $sccConfigPath = Resolve-SafeGameChild 'r6/config/cybercmd/scc.toml'
+    Add-BoundedText 'Installed redscript loader config (scripts.ini)' $scriptsIni 32768
+    Add-BoundedText 'Installed cybercmd redscript config (scc.toml)' $sccConfigPath 32768
+
+    $sccText = if (Test-Path -LiteralPath $sccConfigPath -PathType Leaf) { Get-Content -Raw -LiteralPath $sccConfigPath } else { '' }
+    $blobMatch = [regex]::Match($sccText,'(?m)^\s*scriptsBlobPath\s*=\s*"(?<path>[^"]+)"\s*$')
+    $invokeSccConfigured = $sccText -match '(?m)^\s*command\s*=\s*"InvokeScc"\s*$'
+    Add-Evidence ('scc.toml InvokeScc task configured: ' + ($(if ($invokeSccConfigured) { 'YES' } else { 'NO' })))
+
+    $configuredBlobPath = $null
+    $blobItem = $null
+    $blobFresh = $false
+    if ($blobMatch.Success) {
+        $configuredBlobRaw = $blobMatch.Groups['path'].Value
+        $configuredBlobPath = Resolve-ConfiguredGamePath $configuredBlobRaw
+        Add-Evidence ('scc.toml scriptsBlobPath raw: ' + $configuredBlobRaw)
+        Add-Evidence ('scc.toml scriptsBlobPath resolved: ' + $configuredBlobPath)
+        $blobItem = Record-File 'Configured REDscript output blob from scc.toml' $configuredBlobPath
+        if ($null -ne $blobItem) {
+            $blobFresh = $latestPayloadWriteUtc -eq [DateTime]::MinValue -or $blobItem.LastWriteTimeUtc -ge $latestPayloadWriteUtc
+            Add-Evidence ('Configured REDscript output at-or-after latest verified payload timestamp: ' + ($(if ($blobFresh) { 'YES' } else { 'NO' })))
+        } else {
+            Add-Evidence 'Configured REDscript output at-or-after latest verified payload timestamp: NO (blob missing)'
+        }
+        [void](Record-File 'Configured REDscript timestamp companion' ($configuredBlobPath + '.ts'))
+    } else {
+        Add-Evidence 'scc.toml scriptsBlobPath parsed: NO'
+    }
+
+    $cybercmdAsi = Record-File 'cybercmd task-runner plugin' (Resolve-SafeGameChild 'bin/x64/plugins/cybercmd.asi')
+    [void](Record-File 'cybercmd standalone ASI loader' (Resolve-SafeGameChild 'bin/x64/version.dll'))
+    [void](Record-File 'cybercmd standalone loader config' (Resolve-SafeGameChild 'bin/x64/global.ini'))
+    $red4extDll = Record-File 'RED4ext alternate cybercmd-task provider' (Resolve-SafeGameChild 'red4ext/RED4ext.dll')
+    [void](Record-File 'RED4ext loader shim' (Resolve-SafeGameChild 'bin/x64/winmm.dll'))
+    $taskRunnerPresent = $null -ne $cybercmdAsi -or $null -ne $red4extDll
+    Add-Evidence ('Compatible scc.toml task runner present (cybercmd or RED4ext): ' + ($(if ($taskRunnerPresent) { 'YES' } else { 'NO' })))
 
     $redscriptLog = Resolve-SafeGameChild 'r6/logs/redscript_rCURRENT.log'
-    $logItem = Record-File 'Canonical live REDscript current log' $redscriptLog
+    $logItem = Record-File 'REDscript current log (secondary context)' $redscriptLog
     $logPresent = $null -ne $logItem
     $logFresh = $false
     $errorSignals = @()
@@ -242,34 +288,42 @@ try {
         } else {
             $logFresh = $logItem.LastWriteTimeUtc -ge $latestPayloadWriteUtc
         }
-        Add-Evidence ('REDscript log at-or-after latest verified payload timestamp: ' + ($(if ($logFresh) { 'YES' } else { 'NO' })))
+        Add-Evidence ('REDscript log at-or-after latest verified payload timestamp (secondary): ' + ($(if ($logFresh) { 'YES' } else { 'NO' })))
 
         $biologySignals = @(Select-String -LiteralPath $redscriptLog -Pattern 'CyberpunkRealism|CRRealpass|CRBody|Biology' -AllMatches -ErrorAction SilentlyContinue | Select-Object -First 100)
-        Add-Evidence ('REDscript log Biology/source signal lines (bounded): ' + $biologySignals.Count)
+        Add-Evidence ('REDscript log Biology/source signal lines (bounded, secondary): ' + $biologySignals.Count)
         foreach ($hit in $biologySignals) { Add-Evidence ('BIOLOGY-LOG | ' + $hit.Line.Trim()) }
 
         $errorSignals = @(Select-String -LiteralPath $redscriptLog -Pattern '(?i)\b(error|failed|failure|fatal|panic)\b' -AllMatches -ErrorAction SilentlyContinue |
             Where-Object { $_.Line -notmatch '(?i)\b0\s+errors?\b|\bno\s+errors?\b' } |
             Select-Object -First 100)
-        Add-Evidence ('REDscript log error/failure signal lines (bounded): ' + $errorSignals.Count)
+        Add-Evidence ('REDscript log error/failure signal lines (bounded, secondary): ' + $errorSignals.Count)
         foreach ($hit in $errorSignals) { Add-Evidence ('REDSCRIPT-ERROR-SIGNAL | ' + $hit.Line.Trim()) }
 
-        Add-Evidence '--- REDscript current log tail (last 500 lines maximum) ---'
+        Add-Evidence '--- REDscript current log tail (secondary; last 500 lines maximum) ---'
         foreach ($line in @(Get-Content -LiteralPath $redscriptLog -Tail 500 -ErrorAction Stop)) { Add-Evidence $line }
     } else {
-        Add-Evidence 'REDscript current log is absent. The installed redscript project documents this file as the canonical successful-setup/runtime log surface.'
+        Add-Evidence 'REDscript current log is absent; this is secondary because Boundary 2 is classified from the scc.toml-configured output blob.'
     }
 
-    $boundary2State = if (-not $logPresent) {
-        'BROKEN — canonical live REDscript log absent'
-    } elseif (-not $logFresh) {
-        'BROKEN/STALE — canonical live REDscript log predates installed candidate payload'
-    } elseif ($errorSignals.Count -gt 0) {
-        'ERROR-SIGNALS — live REDscript log is current but contains bounded failure/error evidence'
+    $boundary2State = if (-not $blobMatch.Success) {
+        'BROKEN — scc.toml does not expose a parseable scriptsBlobPath'
+    } elseif ($null -eq $blobItem) {
+        'BROKEN — scc.toml-configured REDscript output blob is missing'
+    } elseif (-not $blobFresh -and -not $taskRunnerPresent) {
+        'BROKEN/STALE — configured REDscript output predates installed candidate and no cybercmd/RED4ext task runner is present'
+    } elseif (-not $blobFresh) {
+        'BROKEN/STALE — configured REDscript output predates installed candidate payload'
+    } elseif ($logFresh -and $errorSignals.Count -gt 0) {
+        'OUTPUT-CURRENT / ERROR-SIGNALS — configured blob is current but secondary current log contains failure/error evidence'
     } else {
-        'LOG-PRESENT — current live REDscript log exists with no bounded failure/error signal'
+        'OUTPUT-CURRENT — scc.toml-configured REDscript blob is at-or-after the installed candidate payload'
     }
-    Add-Evidence ('BOUNDARY 2 — REDSCRIPT LIVE LOADER / COMPILE: ' + $boundary2State)
+    Add-Evidence ('BOUNDARY 2 — REDSCRIPT STARTUP / CONFIGURED COMPILE OUTPUT: ' + $boundary2State)
+
+    if ($blobMatch.Success -and $null -ne $blobItem -and -not $blobFresh -and $invokeSccConfigured -and -not $taskRunnerPresent) {
+        Add-Evidence 'STATIC ROOT-CAUSE EVIDENCE: scc.toml requests InvokeScc and points the game at a stale compiled blob, but neither cybercmd.asi nor RED4ext is present to execute the configured startup task.'
+    }
 
     $modsJson = Resolve-SafeGameChild 'r6/cache/modded/mods.json'
     [void](Record-File 'Official REDmod generated mods.json' $modsJson)
@@ -288,16 +342,16 @@ try {
 
     $firstProven = if (-not $boundary1Pass) {
         'BOUNDARY 1 — ARTIFACT / INSTALL PLACEMENT'
-    } elseif (-not $logPresent -or -not $logFresh) {
-        'BOUNDARY 2 — REDSCRIPT LIVE LOADER / COMPILE'
+    } elseif (-not $blobMatch.Success -or $null -eq $blobItem -or -not $blobFresh) {
+        'BOUNDARY 2 — REDSCRIPT STARTUP / CONFIGURED COMPILE OUTPUT'
     } else {
         'NONE FROM READ-ONLY EXTERNAL EVIDENCE YET'
     }
     Add-Evidence ('FIRST PROVEN BROKEN BOUNDARY: ' + $firstProven)
-    if ($errorSignals.Count -gt 0 -and $firstProven -eq 'NONE FROM READ-ONLY EXTERNAL EVIDENCE YET') {
+    if ($logFresh -and $errorSignals.Count -gt 0 -and $firstProven -eq 'NONE FROM READ-ONLY EXTERNAL EVIDENCE YET') {
         Add-Evidence 'NEXT NARROW DECISION: inspect the captured current REDscript error lines before investigating class attachment, registration, activation gating, or UI entrypoints.'
     } elseif ($firstProven -eq 'NONE FROM READ-ONLY EXTERNAL EVIDENCE YET') {
-        Add-Evidence 'NEXT NARROW DECISION: source/install and current loader-log presence are accounted for; use this report to decide whether class/hook attachment or activation gating is the first remaining boundary.'
+        Add-Evidence 'NEXT NARROW DECISION: source/install and the configured compiled output are current; only then consider class/hook attachment or activation gating.'
     }
 
     Add-Evidence 'PROBE RESULT: PASS (evidence collection completed; this is not gameplay acceptance)'
