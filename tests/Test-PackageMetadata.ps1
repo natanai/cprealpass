@@ -49,7 +49,9 @@ foreach ($retired in @('mod-settings','archivexl','red4ext')) {
     if (@($distribution.components | Where-Object id -eq $retired).Count -ne 0) { throw "Retired settings-stack dependency remains an active distribution component: $retired" }
     if (@($distribution.removedDependencies) -notcontains $retired) { throw "Distribution does not record removed dependency: $retired" }
 }
-$redscriptPolicy = @($distribution.components | Where-Object id -eq 'redscript')
-if ($redscriptPolicy.Count -ne 1 -or $redscriptPolicy[0].status -ne 'allowed') { throw 'redscript is not the sole allowed generic runtime dependency in current distribution.' }
+$allowedGeneric = @($distribution.components | Where-Object { $_.id -in @('redscript','cybercmd') })
+if ($allowedGeneric.Count -ne 2 -or @($allowedGeneric | Where-Object status -ne 'allowed').Count -ne 0) { throw 'Player distribution does not allow exactly the redscript + cybercmd generic runtime pair.' }
+$cybercmd = @($allowedGeneric | Where-Object id -eq 'cybercmd')[0]
+if ($cybercmd.notes -notmatch '(?i)InvokeScc' -or $cybercmd.notes -notmatch '(?i)not Biology activation') { throw 'Player distribution does not constrain cybercmd to startup compilation plumbing.' }
 
-Write-Host 'PASS: Biology development source package remains non-playable/subordinate while the current player distribution is settings-self-contained and redscript-only for generic runtime.'
+Write-Host 'PASS: Biology development source package remains non-playable/subordinate while the player distribution is settings-self-contained and uses only redscript + cybercmd as generic runtime/startup plumbing.'
