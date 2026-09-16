@@ -86,12 +86,13 @@ Existing conversations do not need retroactive renaming; this ledger maps their 
 
 | Thread ID | Current visible title / alias | Role / goal | Thread state | Lane work state | GitHub / branch | Parent routing note |
 |---|---|---|---|---|---|---|
-| **P01.1** | `PARENT 1` | Parent / integration orchestrator | **ACTIVE** | **IN-PROGRESS** | Issue #35; canonical main currently includes W08.1 and parent attended-test tooling | Current parent. Hard uninstall + Biology-specific residue verification passed. W08 standalone tweak grammar is directly accepted. A new official REDmod post-uninstall output-state failure is routed to W09.1 / issue #59. If this conversation becomes too long, replace it with **P01.2** before continuing. |
+| **P01.1** | `PARENT 1` | Parent / integration orchestrator | **ACTIVE** | **IN-PROGRESS** | Issue #35 | Current parent. Hard uninstall + Biology-specific residue verification passed. W09.1 owns post-uninstall REDmod redeploy recovery. W10.1 is intentionally pulled forward in parallel to remove the temporary Mod Settings provider/dependency footprint after launcher-OFF testing exposed Windows Security warnings and a blank menu slot. If this conversation becomes too long, replace it with **P01.2** before continuing. |
+| **W10.1** | `[W10.1] SETTINGS — Self-Contained Provider` | Remove Biology's Mod Settings reliance and replace the tiny public preference surface with Biology-owned/native persistence; remove now-unused settings-stack dependencies where proven safe | **ACTIVE** | **IN-PROGRESS** | Issue #61; `agent/self-contained-settings-provider` | Fresh lane running in parallel with W09.1. Keep the settings migration separate from REDmod cache recovery. Audit Mod Settings, ArchiveXL, and RED4ext consumers; remove only dependencies with no surviving accepted Biology consumer. Long-term direction is no third-party runtime dependency, with broader redscript elimination left for a fresh lane if still needed. |
 | **W09.1** | `[W09.1] REDMOD — Post-Uninstall Deploy Recovery` | Determine and repair the official REDmod 2.31 post-uninstall/reinstall output/cache-state failure | **ACTIVE** | **IN-PROGRESS** | Issue #59; `agent/redmod-post-uninstall-deploy-recovery` | Fresh lane. Investigate why official REDmod reaches Stage 3 but cannot move compiled `tweakdb_ep1.bin` into `r6/cache/modded` after the successful player uninstaller/no-mod refresh. Preserve W08 grammar unless direct evidence disproves it. |
 | **W08.1** | `[W08.1] REDMOD — Standalone Tweak Grammar Repair` | Determine and implement the official REDmod 2.31 standalone tweak/package grammar for the launcher activation authority | **USABLE** | **MERGED** | Issue #55 closed completed; PR #56 merged; `agent/redmod-standalone-tweak-grammar-repair`; worker head `f5e675586e4cbf46027a71bf530186ba13591956` | Attended official REDmod no longer reports the prior `using` parser error and progressed to TweakDB output writing. Narrow grammar issue is accepted. Reuse only if this exact package-grammar topic directly resurfaces. |
 | **W07.1** | `[W07.1] REDMOD — Activation Sentinel Repair` | Repair the REDmod-owned launcher activation sentinel after attended TweakDB compile failure | **USABLE** | **MERGED** | Issue #53 closed as superseded by #55; PR #54 merged; `agent/redmod-activation-sentinel-repair`; worker head `b0f98c4d6df006395aaf7b5e98ab2aac2c4a1210` | Worker repair and generalized operator-probe hardening are on main. The later attended parser failure was superseded by W08.1. Reuse W07 only as context if directly helpful. |
 | **W06.1** | `Lane - INTEGRATION EXACT-COMPILE REPAIR` | Cross-lane exact-compile repair for the integrated attended follow-ups | **USABLE** | **MERGED** | Issue #50 closed; PR #52; `agent/integration-exact-compile-repair`; repaired head `8f533d8451d2a894fe3ead0eed05ac0adefb69a0` | Parent exact compile passed on integrated runtime head `1a97607332bb6237fb7516b35d1a292403fb2740`; repair is on main through PR #49. Reuse only if this same compile-repair topic directly resurfaces. |
-| **W05.1** | `Lane - PLAYER DISABLE / UNINSTALL ARCHITECTURE` | Launcher-off vanilla behavior + self-contained Biology uninstaller | **USABLE** | **MERGED** | Issue #44; PR #45 closed as superseded by integration; `agent/player-uninstall-vanilla-toggle` | Player-facing hard uninstall and Biology-specific residue verification have now attended-passed. Issue #44 remains open because launcher ON/OFF still needs attended acceptance and reinstall-after-uninstall currently exposes issue #59. |
+| **W05.1** | `Lane - PLAYER DISABLE / UNINSTALL ARCHITECTURE` | Launcher-off vanilla behavior + self-contained Biology uninstaller | **USABLE** | **MERGED** | Issue #44; PR #45 closed as superseded by integration; `agent/player-uninstall-vanilla-toggle` | Player-facing hard uninstall and Biology-specific residue verification have attended-passed. Launcher-OFF gameplay appeared otherwise normal, but Windows still attempted to load ArchiveXL and the removed Mod Settings provider left a blank menu gap; issue #44 therefore remains open pending W09/W10 follow-up acceptance. |
 | **W03.1** | `Thread 3 — E3 HUD, NPC nameplates, presentation settings` | E3-inspired neutral HUD + ambient NPC nameplates | **USABLE** | **MERGED** | Issue #40; PR #46 closed as superseded by integration; `agent/presentation-attended-followup` | Implementation is on main through PR #49. Issue #40 stays open for attended E3/nameplate/scanner acceptance. |
 | **W04.1** | `ATTENDED RUNTIME-AUTHORITY FOLLOW-UP` | Authoritative live Biology body runtime/session ownership | **USABLE** | **MERGED** | Issue #41; PR #47 closed as superseded by integration; `agent/body-runtime-attended-followup` | Implementation plus W06 compile repair are on main through PR #49. Issue #41 stays open for attended live-runtime acceptance. |
 | **W02.1** | `Thread 2 — Biology UI and body runtime` | Biology native Cyberware shell/drill-down/back/mode-state follow-up | **USABLE** | **MERGED** | Issue #39; PR #43 closed as superseded by integration; `agent/biology-ui-attended-followup` | Implementation is on main through PR #49. Issue #39 stays open for attended shell/navigation acceptance. |
@@ -102,26 +103,23 @@ Existing conversations do not need retroactive renaming; this ledger maps their 
 ```text
 P01.1 parent
   |
-  +-- canonical main contains PR #49 integrated follow-ups
-  |     +-- W02.1 shell/UI MERGED
-  |     +-- W03.1 E3/nameplates MERGED
-  |     +-- W04.1 runtime authority MERGED
-  |     +-- W05.1 launcher/uninstaller MERGED
-  |     +-- W06.1 exact-compile repair MERGED
-  |
-  +-- W07.1 / PR #54 activation-sentinel evidence/probe hardening MERGED
-  +-- W08.1 / PR #56 standalone tweak grammar repair MERGED + attended parser acceptance
+  +-- canonical main contains integrated shell/runtime/presentation/uninstaller work
+  +-- W07/W08 REDmod activation grammar work MERGED; W08 parser acceptance observed
   +-- packaged hard uninstall attended PASS
   +-- canonical Biology-specific residue verifier PASS
   |
   +-- W09.1 / issue #59 ACTIVE
-  |     `-- blocker: after hard uninstall/no-mod refresh, official REDmod reaches Stage 3 but fails moving compiled tweakdb output into r6/cache/modded
+  |     `-- official REDmod post-uninstall redeploy/output-state recovery
   |
-  +-- after W09 repair/deploy PASS: launcher ON/OFF + attended Biology UI/runtime/E3/scanner acceptance
-  +-- issue #44 remains open until launcher OFF and reinstall-after-uninstall reliability are accepted
+  +-- W10.1 / issue #61 ACTIVE
+  |     `-- remove Mod Settings provider; replace preference persistence; audit/remove ArchiveXL/RED4ext when no surviving consumer
+  |
+  +-- launcher-OFF attended observation: gameplay otherwise normal, but ArchiveXL load warning + blank former Mod Settings row mean vanilla-play acceptance is still incomplete
+  +-- after W09/W10 integration: rerun official REDmod deploy, launcher ON/OFF, settings persistence, Biology UI/runtime/E3/scanner acceptance
+  +-- issue #44 remains open until launcher OFF and reinstall-after-uninstall reliability are accepted without the temporary provider footprint
 ```
 
-W09.1 is the sole active worker. Merged worker conversations remain context reserves only.
+W09.1 and W10.1 are the active workers. Merged worker conversations remain context reserves only.
 
 ## Creating a new lane/thread
 
