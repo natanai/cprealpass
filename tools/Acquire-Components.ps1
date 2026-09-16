@@ -30,10 +30,10 @@ function Add-ComponentWithDependencies([string]$id) {
     $selected[$id] = $component
 }
 
-# No-argument acquisition now means the current production generic runtime set,
-# not every historical catalog entry. The canonical package builder also passes
-# redscript explicitly, so both paths fail closed to the same dependency inventory.
-if (@($ComponentIds).Count -eq 0) { $ComponentIds = @('redscript') }
+# No-argument acquisition means the complete current production REDscript runtime:
+# redscript supplies SCC/configuration, while standalone cybercmd executes scc.toml's
+# InvokeScc task at startup when RED4ext/CET are intentionally absent.
+if (@($ComponentIds).Count -eq 0) { $ComponentIds = @('redscript','cybercmd') }
 foreach ($id in @($ComponentIds)) {
     if ([string]::IsNullOrWhiteSpace($id)) { throw 'ComponentIds cannot contain an empty id.' }
     Add-ComponentWithDependencies $id
@@ -50,11 +50,13 @@ foreach ($component in $components) {
         $partial = "$archive.$([guid]::NewGuid().ToString('N')).partial"
         try {
             Invoke-WebRequest -Uri $uri -OutFile $partial
-            if ((Get-Sha256 $partial) -ne $component.archiveSha256) { throw "Download digest mismatch: $($component.id)" }
+            $actual = Get-Sha256 $partial
+            if ($actual -ne $component.archiveSha256) { throw "Download digest mismatch: $($component.id) expected=$($component.archiveSha256) actual=$actual" }
             Move-Item -LiteralPath $partial -Destination $archive
         } finally { if (Test-Path -LiteralPath $partial) { Remove-Item -LiteralPath $partial } }
     }
-    if ((Get-Sha256 $archive) -ne $component.archiveSha256) { throw "Cached archive changed: $archive" }
+    $cachedActual = Get-Sha256 $archive
+    if ($cachedActual -ne $component.archiveSha256) { throw "Cached archive changed: $archive expected=$($component.archiveSha256) actual=$cachedActual" }
     Write-Host "Verified $($component.id) $($component.pinnedVersion)"
 }
 
