@@ -209,7 +209,9 @@ Startup worker head independently resolved at assignment:
 
 `6361bbe2448a9d06566d6ca9d859f0bb196f4118`
 
-The attended read-only W13 probe against installed canonical candidate `68b50ed9e3c629ca252326918dbbb68b9bc35494` established the first broken boundary as **BOUNDARY 2 — REDSCRIPT STARTUP / CONFIGURED COMPILE OUTPUT**:
+Parent-provided attended installed-state evidence for canonical candidate `68b50ed9e3c629ca252326918dbbb68b9bc35494` established the first broken boundary as **BOUNDARY 2 — REDSCRIPT STARTUP / CONFIGURED COMPILE OUTPUT**. That evidence included the exact candidate receipt/hash results, installed source inventory and timestamps, current REDmod metadata, installed `scc.toml`/compiler files, the stale configured `final.redscripts`, and absence of both cybercmd and RED4ext task runners. The repository-owned W13 probe tooling was added afterward to codify and reproduce the same boundary classification; it was **not** itself the source of the parent's attended 75/75 installed-file evidence.
+
+The parent evidence established:
 
 - the Biology ownership receipt was exact: 75/75 files verified, 0 missing, 0 mismatched;
 - all 62 current Biology REDscript source files were installed;
@@ -218,18 +220,30 @@ The attended read-only W13 probe against installed canonical candidate `68b50ed9
 - that compiled blob was stale relative to the installed candidate;
 - neither `bin/x64/plugins/cybercmd.asi` nor RED4ext was installed to execute the configured startup compile task.
 
-The narrow repair is to bundle standalone cybercmd `0.0.13` only as redscript startup plumbing. The official `cybercmd-standalone.zip` is pinned at SHA-256 `87E235026D0693D7974A908E65F8C93F6503652FB781F0647B115572BBDD6103` and contributes exactly:
+The narrow runtime repair bundles standalone cybercmd `0.0.13` only as redscript startup plumbing. The official `cybercmd-standalone.zip` is pinned at SHA-256 `87E235026D0693D7974A908E65F8C93F6503652FB781F0647B115572BBDD6103` and contributes exactly:
 
 - `bin/x64/global.ini`
 - `bin/x64/plugins/cybercmd.asi`
 - `bin/x64/version.dll`
 
-The production runtime profile now retains exactly `redscript` + `cybercmd`. redscript remains the SCC/compiler/configuration provider; cybercmd exists solely to execute redscript's already-shipped `scc.toml` startup task. Generated `final.redscripts` remains forbidden from Biology artifacts. Mod Settings, ArchiveXL and RED4ext remain retired, and the REDmod-owned `Items.BiologyLauncherActivationMarker.stackable` sentinel remains the sole whole-mod activation authority.
+The production runtime profile retains exactly `redscript` + `cybercmd`. redscript remains the SCC/compiler/configuration provider; cybercmd exists solely to execute redscript's already-shipped `scc.toml` startup task. Generated `final.redscripts` remains forbidden from Biology artifacts. Mod Settings, ArchiveXL and RED4ext remain retired, and the REDmod-owned `Items.BiologyLauncherActivationMarker.stackable` sentinel remains the sole whole-mod activation authority.
 
-Regression coverage includes `tests/Test-RedscriptStartupRuntime.ps1`, specifically preventing recurrence of the observed failure where `scc.toml` ships without a compatible startup executor. Relevant package, settings, runtime-origin, install, distribution, launcher-disable, artifact-policy and uninstaller contracts were updated only where they encoded the disproven `redscript-only` plumbing assumption.
+### Parent-review blocker resolved: shared standalone-cybercmd install safety
 
-Cloud-safe validation on repair implementation head `02f33bf436e3611c5bb4941eaf045000de07aaea` passed all W13/runtime/package checks, including PowerShell syntax for 155 repository scripts and 42 uninstaller planner/executor safety checks. The overall workflow remains red only because of the inherited parent bookkeeping assertion in `Test-ActiveRoadmap.ps1`: `Thread ledger must explicitly record the current no-worker state.` That failure predates W13 and is not owned by this lane.
+Parent review of PR #69 identified that the earlier release-shaped candidate path still used `Expand-Archive -Force`, which could silently overwrite another mod's shared `bin/x64/global.ini` or `bin/x64/version.dll`. W13 now implements the upstream standalone cybercmd overwrite boundary in the actual installation path:
 
-PR #69 remains draft and unmerged. Subsequent commits on this worker branch are bookkeeping-only parent-return/handoff updates; parent integration must independently resolve the exact current PR head rather than treating the implementation-validation SHA above as the final branch SHA.
+- `tools/Install-BiologyRelease.ps1` plus `tools/BiologyReleaseInstall.Core.ps1` preflight the full inventoried release before any game-file mutation;
+- existing `bin/x64/global.ini` and `bin/x64/version.dll` are created only when absent, preserved when byte-identical to the pinned standalone payload, and cause a fail-closed pre-mutation stop when non-identical because compatibility cannot be proven;
+- `bin/x64/plugins/cybercmd.asi` is the only standalone cybercmd path that Biology may replace;
+- `tools/Bootstrap-BiologyPostTransitionCandidate.ps1` and `tools/Prepare-BiologyMilestoneTest.ps1` use the guarded installer instead of force-expanding the ZIP into the game root;
+- `Build-BiologyPackage.ps1` embeds `Install Biology.ps1` plus `BiologyReleaseInstall.Core.ps1` into the player release and `INSTALL.txt` explicitly rejects blind game-root ZIP merge;
+- install contracts encode the same rule; uninstall continues preserving all shared redscript/cybercmd files;
+- `tests/Test-BiologyReleaseInstallSafety.ps1` creates collision fixtures proving a foreign/non-identical shared loader/config causes planning to fail before any payload mutation, matching copies are preserved, and only cybercmd.asi receives a replace plan.
 
-Static/source/package work is exhausted. The smallest parent-owned attended validation is to build/install the exact release-shaped W13 repair candidate and prove, on supported launch, that `r6/cache/modded/final.redscripts` is regenerated at or after the installed candidate payload before evaluating downstream Biology UI/body/presentation behavior. W13 does not ask the user to install/play the worker branch and does not automate game launch.
+Regression coverage also retains `tests/Test-RedscriptStartupRuntime.ps1`, preventing recurrence of the original runtime failure where `scc.toml` shipped without a compatible startup executor.
+
+The inherited `Test-ActiveRoadmap.ps1` failure (`Thread ledger must explicitly record the current no-worker state.`) remains parent bookkeeping and is intentionally not absorbed into W13.
+
+PR #69 remains draft and unmerged. Parent integration must independently resolve the exact current PR head from GitHub and review the focused validation for that head before merge.
+
+The smallest parent-owned attended validation remains: build/install the exact release-shaped W13 candidate through the collision-safe installer, confirm the installer either preserves compatible shared loader/config or fails before mutation on a conflicting copy, then prove on supported launch that `r6/cache/modded/final.redscripts` is regenerated at or after the installed candidate payload before evaluating downstream Biology UI/body/presentation behavior. W13 does not ask the user to install/play the worker branch and does not automate game launch.
