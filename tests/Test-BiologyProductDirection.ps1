@@ -72,8 +72,12 @@ Require $release 'mods/Biology' 'Release target must prefer one Biology REDmod p
 Require $release 'REDmod-first does not mean REDmod-only' 'Release architecture must preserve the narrow-wrapper exception.'
 
 Require $settings '^# Biology configuration architecture' 'Settings architecture must use Biology identity.'
-Require $settings 'provider is no longer locked to Mod Settings|Provider is not product architecture' 'Settings provider must be migration-neutral.'
-Require $settings 'Do not preserve a framework stack merely to host two booleans' 'Settings architecture must not justify dependency depth by convenience.'
+Require $settings 'Biology-owned persistence and editor' 'Settings architecture must identify the self-contained persistence/editor authority.'
+Require $settings 'There is no second persisted.*Enable Biology|There is no saved `Enable Biology` Boolean' 'Settings architecture must eliminate the redundant live whole-mod preference.'
+Require $settings 'Mod Settings.*removed|external settings-provider stack has been removed' 'Settings architecture must record Mod Settings exit.'
+Require $settings 'ArchiveXL.*removed' 'Settings architecture must record ArchiveXL exit.'
+Require $settings 'RED4ext.*removed' 'Settings architecture must record RED4ext exit.'
+Require $settings 'one editable Boolean|exactly \*\*one editable Boolean\*\*' 'Settings architecture must constrain the player-facing surface to one E3 preference.'
 
 Require $history 'the product is named Biology' 'Decision history must record the product rename.'
 Require $history 'multi-agent parallel branches are the normal workflow' 'Decision history must record the parallel-development decision.'
@@ -85,4 +89,4 @@ foreach ($oldBranch in @('agent/redmod-foundation','agent/biology-ui-runtime','a
     Reject $activeDocs ([regex]::Escape($oldBranch)) "Current product/workflow docs still advertise merged branch: $oldBranch"
 }
 
-Write-Host 'PASS: Biology identity, official-source-first REDmod investigation, REDmod-first architecture, current attended follow-ups, uninstallability and branch-agnostic parallel workflow are canonical.'
+Write-Host 'PASS: Biology identity, official-source-first REDmod investigation, self-contained settings, current attended follow-ups, uninstallability and branch-agnostic parallel workflow are canonical.'
