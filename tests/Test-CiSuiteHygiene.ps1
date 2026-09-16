@@ -38,13 +38,13 @@ if ($staleDocs.Count -gt 0) {
     throw ('tests/README.md marks tests local-only that are not currently excluded from Run-CI.ps1: ' + ($staleDocs -join ', '))
 }
 
-# Policy tests may validate durable lookup/numbering rules, but must not freeze the
-# current worker assignment into CI. Live worker identity/state belongs to the
-# thread ledger and GitHub and is expected to change without rewriting test logic.
+# Policy tests may validate durable lookup/numbering rules, and may explicitly
+# REJECT stale transient strings. They must not positively REQUIRE today's worker
+# assignment/state. Live worker identity/state belongs to THREAD-LEDGER + GitHub.
 foreach ($name in @('Test-ActiveRoadmap.ps1','Test-ThreadLedger.ps1','Test-IntegrationOrchestrator.ps1','Test-ActiveGuidanceHygiene.ps1')) {
     $text = Get-Content -Raw -LiteralPath (Join-Path $PSScriptRoot $name)
     foreach ($pattern in @(
-        '(?i)no active worker',
+        '(?i)Require[^\r\n]*no active worker',
         '(?i)must be ACTIVE while',
         '(?i)must remain IN-PROGRESS',
         '(?i)current managed-evidence assignment',
@@ -59,4 +59,4 @@ Assert-True ($workflow -match 'actions/checkout@v7') 'CI workflow must use the v
 Assert-True ($workflow -match 'actions/upload-artifact@v7') 'CI workflow must use the verified current Node-24-compatible upload-artifact major.'
 Assert-True ($workflow -notmatch 'actions/(?:checkout|upload-artifact)@v4') 'CI workflow still uses the Node-20 v4 action major.'
 
-Write-Host "PASS: CI suite hygiene accepted $($listed.Count) unique cloud tests; every listed test exists, $($excluded.Count) intentional non-cloud Test-*.ps1 files are explicitly documented, policy tests do not freeze transient worker state, and workflow actions use Node-24-compatible majors."
+Write-Host "PASS: CI suite hygiene accepted $($listed.Count) unique cloud tests; every listed test exists, $($excluded.Count) intentional non-cloud Test-*.ps1 files are explicitly documented, policy tests do not positively freeze transient worker state, and workflow actions use Node-24-compatible majors."
