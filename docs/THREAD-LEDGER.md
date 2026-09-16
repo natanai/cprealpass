@@ -88,6 +88,7 @@ Existing conversations do not need retroactive renaming; this ledger maps their 
 |---|---|---|---|---|---|---|
 | **P01.2** | `[P01.2] PARENT — Integration Orchestrator` | Parent / integration orchestrator | **ACTIVE** | **IN-PROGRESS** | Issue #35; read `docs/handoffs/PARENT-P01.2.md` first | Successor to P01.1. W09 and W10 are merged. Own the combined exact-game compile/deploy and attended acceptance cycle. Do not assume the currently installed game is clean: it still contains the pre-W10 candidate/dependency footprint unless P01.2 deliberately cleans it. |
 | **P01.1** | `PARENT 1` | Parent / integration orchestrator | **TOO-LONG** | **CLOSED** | Issue #35 | Predecessor parent. User reported this conversation was becoming too long on 2026-09-15. Do not continue substantial orchestration here; use P01.2 and the durable handoff. |
+| **W11.1** | `[W11.1] RELEASE — Legacy Framework Transition Cleanup` | Safely retire pre-W10 Mod Settings / ArchiveXL / RED4ext residue before the next attended candidate | **ACTIVE** | **IN-PROGRESS** | Issue #64; `agent/pre-w10-framework-transition-cleanup` | New P01.2 transition lane. Prove exact installed receipt/path/hash/baseline/consumer safety before any deletion; preserve redscript and unrelated/shared mod state; do not ask the user to install/play the worker branch. Parent owns final cleanup execution and combined candidate acceptance. |
 | **W10.1** | `[W10.1] SETTINGS — Self-Contained Provider` | Remove Biology's Mod Settings reliance and replace the public preference surface with Biology-owned persistence; remove unused settings-stack dependencies | **USABLE** | **MERGED** | Issue #61; PR #63 merged; `agent/self-contained-settings-provider`; worker head `134ae11a20d8ae432686a7711cbb72f70e006fa6` | Mod Settings, ArchiveXL and RED4ext are removed from production package/acquisition/install architecture; redscript is the only retained generic runtime dependency. REDlauncher/REDmod is sole whole-mod activation. One save-backed E3 preference is edited from Biology-owned body UI. Attended persistence/launcher-off acceptance remains parent-owned. |
 | **W09.1** | `[W09.1] REDMOD — Post-Uninstall Deploy Recovery` | Repair official REDmod 2.31 post-uninstall/reinstall output/cache-state failure | **USABLE** | **MERGED** | Issue #59; PR #62 merged; `agent/redmod-post-uninstall-deploy-recovery`; worker head `096cbf5d3a1e4f2b19ffc0509e1afcb70d76abaa` | Deploy helper now narrowly/idempotently creates only missing `<game>/r6/cache/modded` immediately before official deploy and never synthesizes/deletes shared cache output. Official REDmod 2.31 repaired-path acceptance remains parent-owned. |
 | **W08.1** | `[W08.1] REDMOD — Standalone Tweak Grammar Repair` | Determine and implement official REDmod 2.31 standalone tweak/package grammar for launcher activation authority | **USABLE** | **MERGED** | Issue #55 closed completed; PR #56 merged; `agent/redmod-standalone-tweak-grammar-repair`; worker head `f5e675586e4cbf46027a71bf530186ba13591956` | Attended official REDmod no longer reported the prior `using` parser error and progressed to generated TweakDB output writing. Narrow grammar issue accepted. |
@@ -113,18 +114,21 @@ P01.2 parent
   +-- W10 / PR #63 MERGED
   |     `-- Mod Settings + ArchiveXL + RED4ext removed from production; redscript-only supplemental runtime
   |     `-- sole in-game public preference is save-backed E3 HUD/nameplates Boolean in Biology-owned UI
+  +-- W11 / issue #64 ACTIVE
+  |     `-- prove and implement safe pre-W10 -> W10 retirement of old Mod Settings/ArchiveXL/RED4ext residue
+  |     `-- preserve redscript and fail closed on changed/ambiguous/shared-consumer state
   |
   +-- current installed game is NOT the new W09+W10 candidate
   |     `-- it still reflects the pre-W10 candidate/dependency footprint used for the failed Stage-3 deploy and launcher-OFF observation
   |
-  +-- next parent gate: establish controlled transition from that installed state, then exact-compile/build/install/deploy one canonical-main candidate
+  +-- next parent gate: wait for W11 transition path, then establish controlled installed state and exact-compile/build/install/deploy one canonical-main candidate
   +-- then attended: launcher ON/OFF, no retired framework warning/menu gap, Biology UI/runtime, E3 preference persistence, E3/nameplates, modern scanner
   +-- issue #44 remains open until launcher OFF + reinstall-after-uninstall reliability are accepted
   +-- issue #59 remains open until repaired official REDmod deploy is attended-passed
   +-- issues #39/#40/#41 remain open for attended UI/runtime/presentation acceptance
 ```
 
-No worker lane is currently active. Merged worker conversations remain context reserves only. P01.2 should create a fresh W## lane only for a materially new finding.
+W11.1 is the only active worker lane. Merged worker conversations remain context reserves only. P01.2 should create another fresh W## lane only for a materially new finding.
 
 ## Creating a new lane/thread
 
