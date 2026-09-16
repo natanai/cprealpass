@@ -23,14 +23,14 @@ Check ($source.Contains('protected cb func OnFlatheadStatusChanged(value: Bool) 
 Check (-not $source.Contains('OnStatsChanged')) 'Unnecessary player stat callback hook reintroduced compile risk.'
 
 # Attended feedback explicitly rejected the restored native red health indicator.
-# RealPass-on is therefore barless; global master-off restores native presentation.
+# Biology-on is therefore barless; launcher-off restores native presentation.
 Check ($source.Contains('public class CRFeedbackReadiness')) 'Replacement-readiness policy is missing.'
 Check ($source.Contains('PlayerHealthReplacementAccepted() -> Bool') -and $source.Contains('NPCHealthReplacementAccepted() -> Bool')) 'Player/NPC replacement acceptance gates are not distinct.'
 $playerGate = [regex]::Match($source,'(?s)PlayerHealthReplacementAccepted\(\) -> Bool\s*\{\s*return (?<value>true|false);').Groups['value'].Value
 $npcGate = [regex]::Match($source,'(?s)NPCHealthReplacementAccepted\(\) -> Bool\s*\{\s*return (?<value>true|false);').Groups['value'].Value
 Check ($playerGate -eq 'true' -and $npcGate -eq 'true') 'Attended barless actor presentation is not accepted in runtime policy.'
-Check ($source.Contains('!CRRealpassSettings.IsEnabled(GetGameInstance()) || !CRFeedbackReadiness.PlayerHealthReplacementAccepted()')) 'Player healthbar policy does not restore native presentation only when RealPass is off/unaccepted.'
-Check ($source.Contains('!CRRealpassSettings.IsEnabled(GetGameInstance()) || !CRFeedbackReadiness.NPCHealthReplacementAccepted()')) 'NPC healthbar policy does not restore native presentation only when RealPass is off/unaccepted.'
+Check ($source.Contains('!CRRealpassSettings.IsEnabled(GetGameInstance()) || !CRFeedbackReadiness.PlayerHealthReplacementAccepted()')) 'Player healthbar policy does not restore native presentation only when Biology is off/unaccepted.'
+Check ($source.Contains('!CRRealpassSettings.IsEnabled(GetGameInstance()) || !CRFeedbackReadiness.NPCHealthReplacementAccepted()')) 'NPC healthbar policy does not restore native presentation only when Biology is off/unaccepted.'
 
 foreach ($field in @('m_healthBar','m_overshieldBarRef','m_lostHealthAggregationBar','m_damegePreview','m_fullBar','m_healthTextPath','m_maxHealthTextPath')) {
     Check ($source.Contains($field)) "Player health suppression lost field: $field"
@@ -44,18 +44,18 @@ Check ($source.Contains('this.HideBossHealthBar();') -and $source.Contains('this
 foreach ($method in @('OnInitialize','OnUpdateHealthBarVisibility','EvaluateHealthBarVisibility','EvaluateOvershieldBarVisibility')) {
     $pattern = '(?s)func ' + [regex]::Escape($method) + '\([^\)]*\).*?\{(.*?)\n\}'
     $body = [regex]::Match($source,$pattern).Groups[1].Value
-    Check ($body.Contains('this.CRApplyPlayerHealthPresentation();')) "Player visibility path does not reapply RealPass health presentation: $method"
+    Check ($body.Contains('this.CRApplyPlayerHealthPresentation();')) "Player visibility path does not reapply Biology health presentation: $method"
 }
 
 $playerHelper = [regex]::Match($source,'(?s)private func CRApplyPlayerHealthPresentation\(\) -> Void \{(.*?)\n\}').Groups[1].Value
-Check ($playerHelper.Contains('ShowTraditionalPlayerHealthBars()')) 'Player helper does not respect global master/native fallback policy.'
+Check ($playerHelper.Contains('ShowTraditionalPlayerHealthBars()')) 'Player helper does not respect launcher master/native fallback policy.'
 Check (-not $playerHelper.Contains('GetRootWidget().SetVisible(false)')) 'Player helper would hide RAM/buffs with the whole biomonitor root.'
 Check (-not $playerHelper.Contains('m_quickhacksContainer')) 'Player helper hides quickhack/RAM information.'
 Check (-not $source.Contains('m_moduleShown = false')) 'Healthbar presentation disables shared HUD module state used by contextual cues.'
 Check (-not $source.Contains('DarkFuture')) 'Healthbar presentation contains a source-mod runtime dependency.'
 
 $companion = [regex]::Match($source,'(?s)protected cb func OnFlatheadStatusChanged\(value: Bool\) -> Bool \{(.*?)\n\}').Groups[1].Value
-Check ($companion.Contains('wrappedMethod(value)') -and $companion.Contains('ShowTraditionalNPCHealthBars()')) 'Companion health path is not master-gated after native state handling.'
+Check ($companion.Contains('wrappedMethod(value)') -and $companion.Contains('ShowTraditionalNPCHealthBars()')) 'Companion health path is not launcher-master-gated after native state handling.'
 Check (-not $source.Contains('@wrapMethod(vehicle')) 'Healthbar presentation unexpectedly wraps vehicle UI.'
 Check (-not $source.Contains('ObjectiveHealth')) 'Healthbar presentation unexpectedly wraps objective durability UI.'
 
@@ -63,14 +63,14 @@ foreach ($forbidden in @('SetStatPoolValue','ApplyDamage','ProcessLocalizedDamag
     Check (-not $source.Contains($forbidden)) "Healthbar presentation mutates combat/health state: $forbidden"
 }
 
-Check ($settings.schemaVersion -eq 4) 'Current settings contract missing.'
-Check ($settings.releaseProfile.presentation -eq $true) 'Presentation authority is not enabled in the RealPass-on release profile.'
+Check ($settings.schemaVersion -eq 5) 'Current self-contained settings contract missing.'
+Check ($settings.releaseProfile.presentation -eq $true) 'Presentation authority is not enabled in the Biology-on release profile.'
 Check ($settings.releaseProfile.traditionalActorHealthBarsFinalTarget -eq $false) 'Release target re-enabled traditional actor HP bars.'
 Check ($settings.developmentFeedbackFallback.traditionalPlayerHealthBarsVisibleUntilReplacementAccepted -eq $false) 'Player healthbar fallback was re-enabled after attended rejection.'
 Check ($settings.developmentFeedbackFallback.traditionalNpcHealthBarsVisibleUntilReplacementAccepted -eq $false) 'NPC healthbar fallback was re-enabled after attended rejection.'
-Check ($settings.surface.publicMasterEnable -eq $true) 'Global master setting is not represented, so native-off fallback cannot be intentional.'
+Check ($settings.surface.publicMasterEnable -eq $false -and $settings.surface.activationOwner -eq 'redlauncher-redmod-sentinel') 'Whole-mod activation is no longer intentionally owned by REDlauncher/REDmod.'
 $module = @($modules.modules | Where-Object id -eq 'presentation')
 Check ($module.Count -eq 1 -and $module[0].releaseEnabled -eq $true -and @($module[0].owns) -contains 'healthbar-suppression') 'Presentation module does not own actor healthbar suppression.'
 Check ($module[0].fixedReleaseChoices.traditionalActorHealthBars -eq $false) 'Presentation module lost actor-healthbar policy.'
 
-Write-Host "PASS: $script:checks RealPass-on barless actor-health contract checks; the global master switch restores native presentation when RealPass is disabled."
+Write-Host "PASS: $script:checks Biology-on barless actor-health contract checks; the REDlauncher/REDmod master boundary restores native presentation when Biology is disabled."

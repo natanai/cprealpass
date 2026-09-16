@@ -10,9 +10,7 @@ try {
     $tests = Join-Path $work 'BiologyUninstallCoreTests.exe'
     & (Join-Path $project 'tools\Build-BiologyUninstaller.ps1') -OutputPath $player -TestOutputPath $tests | Out-Null
     if ($LASTEXITCODE -ne 0) { throw 'Biology uninstaller build helper failed.' }
-    if (-not (Test-Path -LiteralPath $player -PathType Leaf) -or (Get-Item -LiteralPath $player).Length -le 0) {
-        throw 'Player-facing Uninstall Biology.exe was not produced.'
-    }
+    if (-not (Test-Path -LiteralPath $player -PathType Leaf) -or (Get-Item -LiteralPath $player).Length -le 0) { throw 'Player-facing Uninstall Biology.exe was not produced.' }
     if (-not (Test-Path -LiteralPath $tests -PathType Leaf)) { throw 'Biology uninstaller safety test executable was not produced.' }
 
     & $tests
@@ -26,27 +24,29 @@ try {
         'BiologyOwnedPrefixes',
         'IsAllowedBiologyOwnedPath',
         'SharedRootNames',
-        'red4ext/plugins/mod_settings/user.ini',
+        'stored-in-save-never-target',
         'official-redmod-deploy-explicit-root',
         'No mods found, no deployment is needed'
     )) {
         if (-not ($core.Contains($needle))) { throw "Uninstaller core lost required safety contract: $needle" }
+    }
+    foreach ($forbidden in @('red4ext/plugins/mod_settings/user.ini','BiologyPreferenceCleaner','RemovePreferences','preferenceSection','preferencePath')) {
+        if ($core.Contains($forbidden) -or $program.Contains($forbidden)) { throw "Provider-specific preference residue remains in uninstaller: $forbidden" }
     }
     foreach ($needle in @(
         'options.SkipRedmodRefresh = true',
         'Directory.Exists(biologyRedmod)',
         'REDmod refresh was deliberately not run because mods/Biology still contains',
         'AppendResidualDirectory(result, biologyScripts',
-        'AppendResidualDirectory(result, biologyMetadata'
+        'AppendResidualDirectory(result, biologyMetadata',
+        'save-backed Biology preference/state'
     )) {
-        if (-not ($program.Contains($needle))) { throw "Player front-end lost partial-uninstall/REDmod safety contract: $needle" }
+        if (-not ($program.Contains($needle)) -and -not ($core.Contains($needle))) { throw "Player uninstaller lost current safety contract: $needle" }
     }
-    if ($core -match '(?i)Directory\.Delete\([^\)]*,\s*true\s*\)' -or $core -match '(?i)DeleteDirectory\w*Recursive') {
-        throw 'Player uninstaller contains recursive directory deletion.'
-    }
+    if ($core -match '(?i)Directory\.Delete\([^\)]*,\s*true\s*\)' -or $core -match '(?i)DeleteDirectory\w*Recursive') { throw 'Player uninstaller contains recursive directory deletion.' }
     if ($program -match '(?i)powershell|pwsh|vortex') { throw 'Player uninstaller unexpectedly invokes a developer/mod-manager tool.' }
 
-    Write-Host 'PASS: player-facing Biology uninstaller compiles as one EXE, deterministic planner tests pass, and partial Biology residue cannot be blindly redeployed.'
+    Write-Host 'PASS: player-facing Biology uninstaller compiles as one EXE, deterministic safety tests pass, provider-specific settings surgery is absent, and save-backed preference state is never targeted.'
 }
 finally {
     if (Test-Path -LiteralPath $work) { Remove-Item -LiteralPath $work -Recurse -Force }

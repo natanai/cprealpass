@@ -82,6 +82,8 @@ For each runtime requirement, prefer:
 
 A dependency does not survive because an older build happened to use it.
 
+The current production generic runtime set is exactly **redscript**. Issue #61 removes Mod Settings, ArchiveXL, and RED4ext from production release/acquisition/staging/install architecture because their last Biology consumer disappeared. Historical pinned evidence may remain in source control, but it is not production entitlement.
+
 ## Official-source-first investigation gate
 
 The hierarchy above is also an **investigation order**, not merely a packaging preference.
@@ -169,21 +171,29 @@ The target release should make ownership obvious:
 - any unavoidable framework payload explicitly justified and represented in ownership metadata;
 - safe disable/removal without historical rollback chains.
 
-The release UX now has three intended states:
+The release UX has three intended states:
 
 1. REDlauncher mods enabled → Biology active.
 2. REDlauncher mods disabled → Biology behavior inactive / convenient vanilla-play mode, once the activation audit proves this across supplemental routes.
 3. self-contained `Uninstall Biology.exe` → hard removal of manifest-proven Biology-owned files without requiring a full Steam reinstall.
 
-Issue #44 owns implementation of that contract. A full game reinstall is an exceptional clean-room/recovery operation, not normal Biology uninstall.
+A full game reinstall is an exceptional clean-room/recovery operation, not normal Biology uninstall.
 
 ## Settings direction
 
 Biology remains one authored simulation, not a set of independently toggled modules.
 
-The public preference surface should remain small. The provider is not product architecture. Mod Settings may remain only while a current feature justifies it; do not preserve a framework stack merely to host a small number of booleans.
+The settings-provider migration is now explicit:
 
-The launcher-level Biology activation contract and the optional E3-inspired presentation preference must remain semantically distinct.
+- REDlauncher/REDmod is the sole whole-mod public activation boundary;
+- there is no persisted in-game `Enable Biology` Boolean;
+- the only normal in-game preference is `presentation.e3-first-person-hud-visuals`;
+- that Boolean is persisted by Biology's `CRRealpassSettings` ScriptableSystem in the Cyberpunk save;
+- the player edits it from Biology-owned Ink UI on the existing Biology/Cyberware body screen;
+- Biology registers no Mod Settings/pause-menu provider row;
+- Mod Settings, ArchiveXL, and RED4ext are removed from the production package path because no current Biology consumer remains.
+
+The launcher-level Biology activation contract and E3-inspired presentation preference remain semantically distinct. The E3 preference cannot activate Biology while the REDmod marker is absent and may not change physical simulation or actor-healthbar policy.
 
 ## REDmod launch/deployment UX target
 
@@ -211,13 +221,16 @@ Already demonstrated in the first integrated REDmod milestone:
 
 The direct supported-install REDmod probe also established that the game ships more than a deploy executable: the toolset exposes module help plus shipped metadata/script/tweak/compiler-related material. Do not assume the ecosystem's most common path is the complete official capability surface.
 
+Source architecture now also establishes the W10 dependency-exit slice: production settings are Biology-owned/save-backed and the generic runtime package set is redscript-only. This source result is not attended acceptance.
+
 Still active after attended testing:
 
 - Biology native-shell/detail/back behavior (#39);
 - authoritative body-runtime lifecycle/availability (#41);
 - complete E3-inspired ordinary HUD and ambient nameplates (#40);
-- player disable/hard-uninstall contract (#44);
-- later dependency reduction where current consumers can be eliminated safely.
+- launcher-OFF/hard-uninstall attended acceptance (#44 / P01.1);
+- post-uninstall REDmod output/cache recovery (#59 / W09.1);
+- attended persistence validation for the W10 self-contained E3 preference.
 
 For exact live evidence and current branch assignments, use `ROADMAP.md`, `ACTIVE-REDMOD-ROADMAP.md`, and `docs/test-runs/`.
 
@@ -259,7 +272,8 @@ The REDmod-first architecture is successful when:
 10. body authority is available and persistent in live sessions;
 11. Biology is the body parent with Cyberware as an internal mode;
 12. E3 presentation has an obvious attended effect while the modern scanner stays native;
-13. users can install, temporarily disable and fully remove Biology without needing development knowledge or a routine Steam reinstall.
+13. the E3 preference persists through Biology-owned save state without an external settings provider;
+14. users can install, temporarily disable and fully remove Biology without needing development knowledge or a routine Steam reinstall.
 
 ## Parallelization policy
 

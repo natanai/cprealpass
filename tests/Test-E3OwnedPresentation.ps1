@@ -13,6 +13,7 @@ $paths = [ordered]@{
     identity = Join-Path $sourceRoot 'NameplatesNative.reds'
     health = Join-Path $sourceRoot 'NoHealthbars.reds'
     settings = Join-Path $sourceRoot 'RealpassSettings.reds'
+    preferenceUi = Join-Path $sourceRoot 'BiologyPreferencesNative.reds'
     primitives = Join-Path $sourceRoot 'E3PresentationPrimitives.reds'
 }
 $mappingPath = Join-Path $project 'docs/E3-COMPONENT-MAPPING.md'
@@ -89,12 +90,17 @@ Check (-not $source.health.Contains('UseE3FirstPersonHudVisuals')) 'Healthbar su
 Check ($source.health.Contains('CRRealpassSettings.IsEnabled(GetGameInstance())')) 'Healthbar suppression lost its Biology-wide master gate.'
 Check ($contract.releaseProfile.traditionalActorHealthBarsFinalTarget -eq $false) 'Contract reintroduced traditional actor health bars as an E3 toggle behavior.'
 Check ($contract.releaseProfile.nativeModernScanner -eq $true) 'Contract no longer protects the modern native scanner.'
-Check ($contract.publicControls[1].authority -eq 'presentation-only') 'E3 preference no longer has presentation-only authority.'
-Check ($source.settings.Contains('@runtimeProperty("ModSettings.displayName", "E3-inspired HUD + nameplates")')) 'Player-facing E3 preference label drifted.'
+$controls = @($contract.publicControls)
+Check ($controls.Count -eq 1) 'E3 preference is no longer the sole in-game public preference.'
+Check ($controls[0].id -eq 'presentation.e3-first-person-hud-visuals' -and $controls[0].authority -eq 'presentation-only') 'E3 preference no longer has presentation-only authority.'
+Check ($controls[0].displayName -eq 'E3-inspired HUD + nameplates') 'Player-facing E3 preference label drifted.'
+Check ($contract.surface.provider -eq 'biology-owned-body-shell' -and $contract.surface.publicMasterEnable -eq $false) 'E3 preference contract regressed to an external provider or in-game master control.'
+Check ($source.preferenceUi.Contains('E3 HUD + NAMEPLATES') -and $source.preferenceUi.Contains('ToggleE3FirstPersonHudVisuals')) 'Biology-owned E3 preference editor lost its player-facing control or persistence toggle path.'
+Check (-not ($source.settings -match '(?i)ModSettings|runtimeProperty|ModuleExists')) 'Provider registration returned to production settings source.'
 
 $allowed = @($seams.allowedHookFiles)
 foreach ($file in @('E3FirstPersonHud.reds','E3QuestHudNative.reds','E3NavigationHudNative.reds','E3WeaponHudNative.reds','E3CrosshairHudNative.reds','E3HotkeyHudNative.reds','E3NameplatesNative.reds')) {
     Check ($allowed -contains $file) "Neutral E3 native seam is not registered in the 2.31 boundary allowlist: $file"
 }
 
-Write-Host "PASS: $script:checks Biology E3 follow-up checks; persistent neutral HUD and ambient nameplates are preference-gated, contextual Project E3 systems stay out, health policy is independent, and scanner/quickhack remains native-owned."
+Write-Host "PASS: $script:checks Biology E3 follow-up checks; persistent neutral HUD and ambient nameplates are gated by the sole save-backed presentation preference, health policy is independent, and scanner/quickhack remains native-owned."

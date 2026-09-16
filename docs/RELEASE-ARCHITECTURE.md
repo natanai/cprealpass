@@ -1,12 +1,13 @@
 # Biology release and installation architecture
 
-Status: **canonical release target; implementation still in progress**  
+Status: **canonical release target; attended integration acceptance still in progress**  
 Last updated: **2026-09-15**
 
 Canonical policy sources:
 
 - `../AGREED-GOALS.md`
 - `BIOLOGY-REDMOD-MIGRATION.md`
+- `SETTINGS-ARCHITECTURE.md`
 - `CLEAN-ROOM-TESTING.md`
 - `LOCAL-OPERATOR-COMMANDS.md`
 - root `ROADMAP.md`
@@ -36,19 +37,17 @@ REDlauncher `Enable mods` ON and Biology active.
 
 Biology remains installed, REDlauncher `Enable mods` OFF, and Biology behavior is inactive.
 
-This must be **proven**, not assumed. Supplemental redscript/framework paths outside `mods/Biology` must either be inert without Biology activation, explicitly gated, or removed/restructured if they continue Biology behavior while REDmod is disabled.
+This must be **proven**, not assumed. Supplemental redscript paths outside `mods/Biology` must remain inert without the REDmod-owned Biology activation marker.
 
-Vanilla-play mode means Biology behavior is inactive; it does not necessarily mean every supplemental framework file is physically absent.
+Vanilla-play mode means Biology behavior is inactive; it does not necessarily mean the retained redscript infrastructure is physically absent.
 
 ### 3. Fully removed
 
-The player runs a self-contained Windows uninstaller with player-facing identity such as:
+The player runs:
 
 `Uninstall Biology.exe`
 
-The uninstaller removes only files whose ownership can be proven safely, preserves saves, and reports ambiguous/changed files instead of guessing.
-
-Issue #44 owns implementation of this contract.
+The uninstaller removes only files whose ownership can be proven safely, preserves saves and save-backed Biology preference/state, and reports ambiguous/changed files instead of guessing.
 
 ## REDmod-first does not mean REDmod-only
 
@@ -71,7 +70,7 @@ The first integrated REDmod-first milestone already proved:
 
 That foundation is no longer hypothetical. Current attended follow-ups are runtime/UI/presentation/release-UX defects tracked in root `ROADMAP.md`.
 
-## Runtime ownership and dependency ladder
+## Runtime ownership and current dependency set
 
 Executing gameplay/presentation behavior is Biology-owned. Dark Future and Project E3 are reference/provenance only and must not execute in the player package.
 
@@ -90,15 +89,42 @@ Biology-owned additive/wrapper seam when narrower/safer
 generic framework/native extension only when required
 ```
 
-Current framework dependencies remain transitional unless a current Biology feature specifically proves they are needed.
+The current production generic runtime dependency set is exactly:
 
-Do not retain a dependency simply because a previous build used it.
+- **redscript 0.5.31** — retained for Biology-owned additive/wrapper runtime/UI seams, ScriptableSystem persistence, and native hook integration.
+
+Issue #61 removes these former settings-stack dependencies from the production release path:
+
+- Mod Settings;
+- ArchiveXL;
+- RED4ext.
+
+They have no current accepted Biology consumer. Historical pinned component/license metadata may remain in the repository as evidence, but canonical acquisition/staging/package tooling must not install them.
+
+Do not retain or reintroduce a dependency simply because a previous build used it. Any future framework addition requires a concrete current consumer and synchronized dependency/package contracts.
+
+## Self-contained settings boundary
+
+REDlauncher/REDmod is the sole public whole-mod activation boundary. Biology does not maintain a second persisted `Enable Biology` setting.
+
+The one normal in-game public preference is:
+
+`presentation.e3-first-person-hud-visuals`
+
+It is:
+
+- presentation-only;
+- persisted as a Biology-owned `persistent` field on `CRRealpassSettings` (`ScriptableSystem`) through the Cyberpunk save lifecycle;
+- edited from Biology-owned UI on the existing Biology/Cyberware body screen;
+- unable to activate Biology when the REDmod launcher marker is absent.
+
+Biology registers no external Mod Settings/pause-menu provider row. The previous blank/inert settings gap observed while launcher mods were OFF belongs to the retired provider architecture and must not be reproduced by the current package.
 
 ## Product/package identity
 
 Player-facing identity is **Biology**.
 
-The repository may remain named `cprealpass`, and internal `RealPass`/`CR*` identifiers may remain temporarily where renaming would add risk. New player-facing package metadata, labels and documentation should use Biology.
+The repository may remain named `cprealpass`, and internal `RealPass`/`CR*` identifiers may remain where renaming would add risk. New player-facing package metadata, labels and documentation should use Biology.
 
 ## Preferred final artifact shape
 
@@ -115,21 +141,15 @@ Cyberpunk 2077/
         └── customSounds/   # only if Biology owns such content
 ```
 
-A player release may also include:
+The actual current release-shaped artifact also contains narrow supplemental Biology REDscript, redscript's pinned generic runtime files, package metadata/license/checksums, and:
 
 ```text
-Biology/
-    Uninstall Biology.exe
-    <ownership/version data required by that uninstaller>
+Uninstall Biology.exe
+biology/build-manifest.json
+biology/provenance.json
 ```
 
-If an unavoidable generic framework requires files outside `mods/Biology`, every such family must be:
-
-- pinned/hash-verified;
-- feature-justified;
-- represented in package ownership/provenance;
-- handled conservatively by uninstall logic;
-- removable when the last current consumer disappears.
+Every supplemental file family must be pinned/hash-verified, feature-justified, represented in package ownership/provenance, handled conservatively by uninstall logic, and removable when its last current consumer disappears.
 
 ## What must not ship
 
@@ -141,6 +161,7 @@ The final player package must not contain:
 - saves;
 - Cyberpunk executables, stock archives or other proprietary game payload;
 - Dark Future or Project E3 executing content;
+- Mod Settings, ArchiveXL, or RED4ext without a newly accepted concrete consumer;
 - frameworks with no current Biology consumer;
 - unexplained loose legacy payload;
 - local `ReferenceMods/` material.
@@ -158,13 +179,14 @@ It should:
 - remove only proven Biology/release-owned paths;
 - never recursively delete shared roots such as `archive`, `r6`, `red4ext`, `bin`, `engine`, or the entire `mods` directory;
 - remove only now-empty directories reached from owned paths;
-- preserve saves;
-- preserve Biology settings by default unless the player explicitly requests otherwise;
+- preserve saves and therefore save-backed Biology E3 preference/state;
 - leave changed/shared/ambiguous files in place and report them;
 - refresh official REDmod deployment/cache state appropriately after removal;
 - clearly distinguish full success from partial cleanup.
 
-Developer reset tooling may act as a reference implementation for ownership safety, but it is not the final player UX.
+A mention of `red4ext` in the uninstaller shared-root safety denylist is not a Biology dependency claim; it prevents a malformed receipt from authorizing broad deletion on an installation where another mod owns that root.
+
+W09.1 / issue #59 owns the separate post-uninstall REDmod output/cache recovery defect. W10 does not redesign that recovery path.
 
 ## Authoritative overlap and load order
 
@@ -214,7 +236,7 @@ The game installation has two test tiers:
 - **Iteration** — use current ownership/reset policy when the prior Biology install can be safely accounted for.
 - **Milestone clean-room** — Steam uninstall + residual-directory deletion + reinstall for structural/package/framework/game-patch milestones or unexplained residue.
 
-After a genuine fresh reinstall, the extra exhaustive whole-game hash pass is optional at the user's choice; fast sanity must not be mislabeled as full baseline verification.
+Removing Mod Settings/ArchiveXL/RED4ext is a structural dependency change, so the parent integration acceptance for the combined W10 candidate should use the appropriate milestone-clean-room discipline rather than treating old framework residue as representative of the new package.
 
 A full Steam reinstall is **not** the normal uninstall path for Biology. It remains exceptional clean-room/recovery evidence until the dedicated player uninstaller is fully accepted.
 
@@ -224,20 +246,20 @@ See `CLEAN-ROOM-TESTING.md`.
 
 Cloud CI can establish source/model/contract/package-policy consistency. It cannot prove:
 
+- exact REDscript compile against the user's supported installed game bundle unless that local gate is run;
+- native UI rendering of the Biology-owned E3 preference control;
+- ScriptableSystem save/load persistence of that preference;
 - REDmod runtime behavior on the user's supported installation;
-- native UI rendering;
-- ScriptableSystem lifecycle semantics;
-- save persistence;
+- launcher-off native behavior and absence of the former blank provider row/security warning;
 - quest compatibility;
 - gameplay feel/performance;
-- launcher-off vanilla-play behavior;
 - hard-uninstall cleanliness.
 
-Those require direct/attended evidence against an exact release-shaped artifact.
+Those require direct/attended evidence against an exact release-shaped artifact. P01.1 owns launcher-OFF and E3 persistence acceptance; W10 does not ask the user to install/play the worker branch.
 
 ## Release gate
 
-Do not publish a player release merely because source compiles or a ZIP assembles.
+Do not publish a player release merely because source contracts pass or a ZIP assembles.
 
 A release candidate needs, at minimum:
 
@@ -247,12 +269,14 @@ A release candidate needs, at minimum:
 - official REDmod recognition/deploy proven;
 - normal Steam launch;
 - attended Biology body/runtime/UI/presentation validation;
+- E3 preference edit/save/reload validation;
+- launcher ON/OFF semantics verified;
+- no Biology-owned dead settings row/framework warning under launcher OFF;
 - save/reload/time progression validation;
 - representative gameplay/quest safety;
 - acceptable runtime performance;
 - notices/checksums/ownership metadata present;
-- launcher ON/OFF semantics verified if advertised;
-- self-contained uninstaller safety/cleanup verified if included;
+- self-contained uninstaller safety/cleanup verified;
 - install/disable/remove instructions understandable without development context.
 
 ## Recovery philosophy

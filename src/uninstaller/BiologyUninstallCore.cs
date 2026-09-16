@@ -41,10 +41,8 @@ namespace BiologyUninstall
         public string playerBinary { get; set; }
         public string biologyOwnedPolicy { get; set; }
         public string genericDependencyPolicy { get; set; }
-        public string preferenceDefault { get; set; }
-        public string preferenceOptIn { get; set; }
-        public string preferencePath { get; set; }
-        public string preferenceSection { get; set; }
+        public string savePolicy { get; set; }
+        public string preferencePolicy { get; set; }
         public string redmodRefresh { get; set; }
     }
 
@@ -86,7 +84,6 @@ namespace BiologyUninstall
 
     public sealed class BiologyExecutionOptions
     {
-        public bool RemovePreferences { get; set; }
         public bool SkipRedmodRefresh { get; set; }
     }
 
@@ -99,7 +96,6 @@ namespace BiologyUninstall
         public readonly List<string> Errors = new List<string>();
         public readonly List<string> Notes = new List<string>();
         public bool ReceiptDeleted { get; set; }
-        public bool PreferencesRemoved { get; set; }
         public RedmodRefreshResult RedmodRefresh { get; set; }
 
         public bool BiologyPayloadFullyRemoved
@@ -299,17 +295,15 @@ namespace BiologyUninstall
             {
                 throw new InvalidDataException("Biology ownership receipt has no file inventory.");
             }
-            if (manifest.uninstall == null || manifest.uninstall.schemaVersion != 1)
+            if (manifest.uninstall == null || manifest.uninstall.schemaVersion != 2)
             {
                 throw new InvalidDataException("Biology ownership receipt does not contain the supported uninstall contract.");
             }
             if (!string.Equals(manifest.uninstall.playerBinary, ExpectedBinary, StringComparison.Ordinal) ||
                 !string.Equals(manifest.uninstall.biologyOwnedPolicy, BiologyOwnedPolicy, StringComparison.Ordinal) ||
                 !string.Equals(manifest.uninstall.genericDependencyPolicy, "preserve", StringComparison.Ordinal) ||
-                !string.Equals(manifest.uninstall.preferenceDefault, "preserve", StringComparison.Ordinal) ||
-                !string.Equals(manifest.uninstall.preferenceOptIn, "remove-biology-section-only", StringComparison.Ordinal) ||
-                !string.Equals(manifest.uninstall.preferencePath, "red4ext/plugins/mod_settings/user.ini", StringComparison.Ordinal) ||
-                !string.Equals(manifest.uninstall.preferenceSection, "CyberpunkRealism.Settings.CRRealpassSettings", StringComparison.Ordinal) ||
+                !string.Equals(manifest.uninstall.savePolicy, "never-target", StringComparison.Ordinal) ||
+                !string.Equals(manifest.uninstall.preferencePolicy, "stored-in-save-never-target", StringComparison.Ordinal) ||
                 !string.Equals(manifest.uninstall.redmodRefresh, "official-redmod-deploy-explicit-root", StringComparison.Ordinal))
             {
                 throw new InvalidDataException("Biology ownership receipt uninstall policy is unexpected; automatic uninstall refused.");
@@ -421,23 +415,10 @@ namespace BiologyUninstall
                 }
             }
 
-            if (options.RemovePreferences)
-            {
-                try
-                {
-                    string preferencePath = BiologyUninstallPlanner.ResolveSafeChildPath(plan.GameRoot, plan.Manifest.uninstall.preferencePath);
-                    result.PreferencesRemoved = BiologyPreferenceCleaner.RemoveSection(preferencePath, plan.Manifest.uninstall.preferenceSection);
-                    result.Notes.Add(result.PreferencesRemoved ? "Biology preference section removed by explicit opt-in." : "No Biology preference section was present; no preference file change was needed.");
-                }
-                catch (Exception ex)
-                {
-                    result.Errors.Add("Biology preferences — " + ex.Message);
-                }
-            }
-            else
-            {
-                result.Notes.Add("Biology preferences preserved (default).");
-            }
+            // Biology's only public preference is persisted inside Cyberpunk save
+            // state. The uninstaller never targets saves, so no provider-specific
+            // settings-file mutation is needed or permitted here.
+            result.Notes.Add("Cyberpunk saves and save-backed Biology preference/state were not targeted.");
 
             bool canRemoveReceipt = result.PreservedChanged.Count == 0 && result.Errors.Count == 0;
             if (canRemoveReceipt)
@@ -534,47 +515,6 @@ namespace BiologyUninstall
                 }
             }
             return false;
-        }
-    }
-
-    public static class BiologyPreferenceCleaner
-    {
-        public static bool RemoveSection(string iniPath, string sectionName)
-        {
-            if (!File.Exists(iniPath)) return false;
-            string[] lines = File.ReadAllLines(iniPath, Encoding.UTF8);
-            List<string> kept = new List<string>();
-            bool dropping = false;
-            bool removed = false;
-            Regex header = new Regex("^\\s*\\[(?<name>[^\\]]+)\\]\\s*$", RegexOptions.CultureInvariant);
-            foreach (string line in lines)
-            {
-                Match match = header.Match(line);
-                if (match.Success)
-                {
-                    dropping = string.Equals(match.Groups["name"].Value.Trim(), sectionName, StringComparison.OrdinalIgnoreCase);
-                    if (dropping)
-                    {
-                        removed = true;
-                        continue;
-                    }
-                }
-                if (!dropping) kept.Add(line);
-            }
-            if (!removed) return false;
-
-            string directory = Path.GetDirectoryName(iniPath);
-            string temp = Path.Combine(directory, Path.GetFileName(iniPath) + ".biology-uninstall-" + Guid.NewGuid().ToString("N") + ".tmp");
-            try
-            {
-                File.WriteAllLines(temp, kept.ToArray(), new UTF8Encoding(false));
-                File.Copy(temp, iniPath, true);
-            }
-            finally
-            {
-                if (File.Exists(temp)) File.Delete(temp);
-            }
-            return true;
         }
     }
 

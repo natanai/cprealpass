@@ -16,6 +16,7 @@ $tests = @(
     'Test-ModuleContract.ps1',
     'Test-SettingsContract.ps1',
     'Test-SettingsRuntimeSurface.ps1',
+    'Test-SelfContainedSettings.ps1',
     'Test-RuntimeOriginPolicy.ps1',
     'Test-NativeSeamPolicy.ps1',
     'Test-ProjectClassAnnotationOwnership.ps1',

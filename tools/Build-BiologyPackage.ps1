@@ -98,14 +98,10 @@ if (-not $activationPackage.Success -or -not $activationRecord.Success -or $acti
 }
 Copy-IntoPackage $activationSource $activationRelative (Get-Sha256 $activationSource) 'Biology' 'biology-launcher-activation' 'REDMOD-NATIVE' 'biology-owned'
 
-# Supplemental runtime. Project-original files are Biology-owned. Generic frameworks
-# are package-bundled for installation convenience but are shared at uninstall time:
-# the player uninstaller never auto-removes them, even when their hashes still match.
+# Supplemental runtime. Project-original files are Biology-owned. redscript is the
+# sole retained generic runtime component and is shared at uninstall time.
 $routeByComponent = @{
     'redscript' = 'REDSCRIPT-BETTER'
-    'red4ext' = 'REMOVE/RETHINK'
-    'archivexl' = 'REMOVE/RETHINK'
-    'mod-settings' = 'REMOVE/RETHINK'
 }
 foreach ($entry in @($runtimeManifest.files)) {
     $source = Resolve-SafeChildPath $project ([string]$entry.source)
@@ -122,7 +118,7 @@ foreach ($entry in @($runtimeManifest.files)) {
     }
 }
 
-$expectedRetained = @('redscript','red4ext','archivexl','mod-settings')
+$expectedRetained = @('redscript')
 foreach ($id in $expectedRetained) {
     if (-not $dependencyComponents.Contains($id)) { throw "Playable Biology candidate is missing retained dependency payload: $id" }
 }
@@ -130,8 +126,8 @@ foreach ($id in @($dependencyComponents)) {
     if ($id -notin $expectedRetained) { throw "Unexpected dependency entered playable Biology package: $id" }
 }
 
-# License snapshots follow the generic component they document and are therefore
-# also preserved by the player uninstaller rather than treated as Biology payload.
+# License snapshots follow the one retained generic component and are preserved by
+# the player uninstaller rather than treated as Biology-owned payload.
 $licenseRoot = Join-Path $packageRoot 'LICENSES'
 New-Item -ItemType Directory -Force -Path $licenseRoot | Out-Null
 foreach ($component in @($dependencyComponents | Sort-Object)) {
@@ -140,7 +136,7 @@ foreach ($component in @($dependencyComponents | Sort-Object)) {
     $relative = 'LICENSES/' + $component + '.txt'
     $destination = Resolve-SafeChildPath $packageRoot $relative
     Copy-Item -LiteralPath $matches[0].FullName -Destination $destination
-    Add-FileRecord $relative ('upstream:' + $component) ('license-notice:' + $component) 'REDMOD-NATIVE' 'generic-dependency-shared'
+    Add-FileRecord $relative ('upstream:' + $component) ('license-notice:' + $component) 'REDSCRIPT-BETTER' 'generic-dependency-shared'
 }
 
 $installText = @'
@@ -157,14 +153,16 @@ INSTALL
 5. Launch normally through Steam.
 
 PLAYER ENABLE/DISABLE CONTRACT
-- REDlauncher Enable mods ON: Biology's REDmod activation record is active and Biology may run (subject to the Biology master preference).
-- REDlauncher Enable mods OFF: the REDmod activation record is absent, so Biology's supplemental REDscript hooks fail closed to native Cyberpunk behavior even though generic script/framework files can still load.
-- Turning launcher mods OFF is not uninstall and does not delete saves, Biology state, or Biology preferences.
+- REDlauncher Enable mods ON: Biology's REDmod activation record is active and Biology runs.
+- REDlauncher Enable mods OFF: the REDmod activation record is absent, so Biology's supplemental REDscript hooks fail closed to native Cyberpunk behavior even though redscript infrastructure can still load.
+- REDlauncher is the whole-mod activation boundary. Biology does not maintain a second in-game master switch.
+- The only normal in-game preference is E3 HUD + nameplates. It is presentation-only, save-persistent, and editable from the Biology body screen.
+- Turning launcher mods OFF is not uninstall and does not delete saves, Biology state, or the E3 presentation preference.
 
 UNINSTALL
-Double-click "Uninstall Biology.exe" in the Cyberpunk 2077 game root. No PowerShell, Git, Vortex, mod manager, or game reinstall is required. The uninstaller removes only exact-hash Biology-owned payload, preserves changed/ambiguous files, preserves generic/shared dependencies, preserves saves, and preserves Biology preferences unless you explicitly opt in to remove only the Biology preference section.
+Double-click "Uninstall Biology.exe" in the Cyberpunk 2077 game root. No PowerShell, Git, Vortex, mod manager, or game reinstall is required. The uninstaller removes only exact-hash Biology-owned payload, preserves changed/ambiguous files, preserves the shared redscript dependency, and never targets saves. Because the E3 preference lives in Biology save state, uninstall leaves it untouched together with the save.
 
-Build/CI is not live acceptance. The parent integration thread must still record attended launcher ON/OFF/relaunch and hard-uninstall behavior for this exact artifact.
+Build/CI is not live acceptance. The parent integration thread must still record attended launcher ON/OFF/relaunch and E3 preference save/reload behavior for this exact architecture.
 '@
 [IO.File]::WriteAllText((Join-Path $packageRoot 'INSTALL.txt'),$installText.TrimStart() + "`n",[Text.UTF8Encoding]::new($false))
 Add-FileRecord 'INSTALL.txt' 'Biology' 'biology-package-metadata' 'REDMOD-NATIVE' 'biology-owned'
@@ -178,10 +176,9 @@ The uninstaller is driven by biology\build-manifest.json. It will:
 - refuse unsafe/rooted/traversal/duplicate ownership paths;
 - remove only Biology-owned files whose SHA-256 still matches the package receipt;
 - preserve any changed or ambiguous Biology-owned file for manual review;
-- preserve bundled generic/shared dependencies by default rather than guessing whether another mod needs them;
+- preserve the retained generic/shared redscript dependency rather than guessing whether another mod needs it;
 - remove only now-empty Biology-owned directories and never recursively delete shared roots;
-- preserve Cyberpunk saves;
-- preserve Biology preferences by default, with an explicit opt-in that removes only Biology's Mod Settings section;
+- never access or delete Cyberpunk saves, which also means save-backed Biology preference/state is preserved;
 - ask the official REDmod tool to refresh deployment using the explicit game root, without recursively clearing shared REDmod cache directories.
 
 If a changed Biology file is preserved, the ownership receipt itself is also preserved so the remaining file stays auditable.
@@ -202,7 +199,7 @@ Add-FileRecord 'BIOLOGY-VERSION.txt' 'Biology' 'biology-package-metadata' 'REDMO
 $biologyDir = Join-Path $packageRoot 'biology'
 New-Item -ItemType Directory -Force -Path $biologyDir | Out-Null
 $provenance = [ordered]@{
-    schemaVersion = 2
+    schemaVersion = 3
     product = 'Biology'
     buildId = $buildId
     version = $version
@@ -216,6 +213,13 @@ $provenance = [ordered]@{
         accessor = 'CRRealpassSettings.IsLauncherActivated()'
         failClosed = $true
         launcherOffTarget = 'Biology behavior inactive / native Cyberpunk behavior'
+        publicMasterPreference = $false
+    }
+    preferences = [ordered]@{
+        provider = 'biology-owned'
+        persistence = 'Cyberpunk save / ScriptableSystem persistent field'
+        editor = 'Biology body shell'
+        controls = @('presentation.e3-first-person-hud-visuals')
     }
     playableRuntimeIncluded = $true
     exactCompile = [ordered]@{
@@ -227,14 +231,11 @@ $provenance = [ordered]@{
         scope = [string]$compileReport.scope
     }
     retainedDependencies = @(
-        [ordered]@{ id='redscript'; uninstall='preserve'; reason='Required by accepted Biology-owned additive/wrapper REDscript runtime and native seams.' },
-        [ordered]@{ id='mod-settings'; uninstall='preserve'; reason='Temporary current UI/persistence adapter for the two provider-neutral public Boolean preferences.' },
-        [ordered]@{ id='archivexl'; uninstall='preserve'; reason='Retained only as a transitive dependency of the current Mod Settings adapter.' },
-        [ordered]@{ id='red4ext'; uninstall='preserve'; reason='Retained only as transitive runtime plumbing for ArchiveXL/Mod Settings; Biology has no project-owned RED4ext plugin.' }
+        [ordered]@{ id='redscript'; uninstall='preserve'; reason='Required by accepted Biology-owned additive/wrapper REDscript runtime, ScriptableSystem persistence, Ink UI, and native seams.' }
     )
-    removedDependencies = @('tweakxl','codeware','input-loader','darkfuture','project-e3-hud')
+    removedDependencies = @('mod-settings','archivexl','red4ext','tweakxl','codeware','input-loader','darkfuture','project-e3-hud')
     sourceModsRequired = @()
-    directGameGatesRemaining = @('launcher ON marker/behavior','launcher OFF vanilla behavior','normal relaunch persistence','self-contained uninstaller hard removal + REDmod refresh','PKG-05 safe overlap/precedence fixture')
+    directGameGatesRemaining = @('launcher ON marker/behavior','launcher OFF vanilla behavior','E3 preference body-shell edit + save/reload persistence','self-contained uninstaller hard removal + REDmod refresh','PKG-05 safe overlap/precedence fixture')
 }
 Write-JsonFile $provenance (Join-Path $biologyDir 'provenance.json')
 Add-FileRecord 'biology/provenance.json' 'Biology' 'biology-package-metadata' 'REDMOD-NATIVE' 'biology-owned'
@@ -268,14 +269,12 @@ $manifest = [ordered]@{
     officialPackageRoot = 'mods/Biology'
     files = @($files.ToArray() | Sort-Object path)
     uninstall = [ordered]@{
-        schemaVersion = 1
+        schemaVersion = 2
         playerBinary = 'Uninstall Biology.exe'
         biologyOwnedPolicy = 'biology-owned'
         genericDependencyPolicy = 'preserve'
-        preferenceDefault = 'preserve'
-        preferenceOptIn = 'remove-biology-section-only'
-        preferencePath = 'red4ext/plugins/mod_settings/user.ini'
-        preferenceSection = 'CyberpunkRealism.Settings.CRRealpassSettings'
+        savePolicy = 'never-target'
+        preferencePolicy = 'stored-in-save-never-target'
         redmodRefresh = 'official-redmod-deploy-explicit-root'
     }
     metadataHashRule = 'SHA256SUMS.txt hashes every finalized payload file except itself and biology/build-manifest.json. The schema-2 owner receipt inventories and hashes every removable/preserved payload file, and the uninstaller re-hashes the receipt during execution.'
@@ -292,7 +291,7 @@ $binaryEntry = @($manifest.files | Where-Object path -eq 'Uninstall Biology.exe'
 if ($binaryEntry.Count -ne 1 -or $binaryEntry[0].replacePolicy -ne 'biology-owned') { throw 'Player uninstaller is not exact-hash Biology-owned payload.' }
 $markerEntry = @($manifest.files | Where-Object path -eq $activationRelative)
 if ($markerEntry.Count -ne 1 -or $markerEntry[0].replacePolicy -ne 'biology-owned') { throw 'REDmod launcher activation marker is missing from exact ownership.' }
-foreach ($blocked in @('darkfuture','project e3','project-e3','input-loader','tweakxl','codeware')) {
+foreach ($blocked in @('darkfuture','project e3','project-e3','input-loader','tweakxl','codeware','mod-settings','mod_settings','archivexl','archive xl','red4ext')) {
     $hit = @(Get-ChildItem -LiteralPath $packageRoot -Recurse -File | Where-Object { $_.FullName.ToLowerInvariant().Contains($blocked) })
     if ($hit.Count -gt 0) { throw "Blocked runtime/dependency content leaked into Biology package: $($hit[0].FullName)" }
 }
@@ -303,7 +302,7 @@ Compress-Archive -Path (Join-Path $packageRoot '*') -DestinationPath $zipPath -C
 if (-not (Test-Path -LiteralPath $zipPath -PathType Leaf) -or (Get-Item -LiteralPath $zipPath).Length -le 0) { throw 'Integrated Biology package ZIP was not created.' }
 
 Write-Host ''
-Write-Host 'PASS: playable integrated Biology REDmod-first package built with launcher activation contract and self-contained player uninstaller. Nothing was deployed or launched.' -ForegroundColor Green
+Write-Host 'PASS: playable integrated Biology REDmod-first package built with self-contained preference authority, launcher activation contract, and player uninstaller. Nothing was deployed or launched.' -ForegroundColor Green
 Write-Host "Package root: $packageRoot"
 Write-Host "ZIP:          $zipPath"
 Write-Host "Game version: $gameVersion"

@@ -11,9 +11,7 @@ $packagePath = Join-Path $project 'manifest\redmod-package.json'
 $docPath = Join-Path $project 'docs\PLAYER-DISABLE-UNINSTALL.md'
 $operatorDocPath = Join-Path $project 'docs\LOCAL-OPERATOR-COMMANDS.md'
 $verifyPath = Join-Path $project 'tools\Verify-BiologyRemoval.ps1'
-foreach ($path in @($markerPath,$settingsPath,$builderPath,$installPath,$packagePath,$docPath,$operatorDocPath,$verifyPath)) {
-    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Missing player-disable contract asset: $path" }
-}
+foreach ($path in @($markerPath,$settingsPath,$builderPath,$installPath,$packagePath,$docPath,$operatorDocPath,$verifyPath)) { if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Missing player-disable contract asset: $path" } }
 
 $marker = Get-Content -Raw -LiteralPath $markerPath
 $settings = Get-Content -Raw -LiteralPath $settingsPath
@@ -25,42 +23,26 @@ $operatorDoc = Get-Content -Raw -LiteralPath $operatorDocPath
 
 $markerPackage = [regex]::Match($marker,'(?m)^\s*package\s+Items\s*$')
 $markerRecord = [regex]::Match($marker,'(?m)^\s*BiologyLauncherActivationMarker\s*:\s*IconicWeaponModAbilityBase\s*$')
-if (-not $markerPackage.Success -or -not $markerRecord.Success -or $markerPackage.Index -gt $markerRecord.Index -or $marker -match '(?m)^\s*using\s+Items\s*$' -or $marker -notmatch '(?m)^\s*stackable\s*=\s*true\s*;\s*$') {
-    throw 'REDmod-owned Biology launcher activation marker standalone source grammar drifted.'
-}
-if ($settings -notmatch 'public static func IsLauncherActivated\(\) -> Bool' -or $settings -notmatch 'Items\.BiologyLauncherActivationMarker\.stackable') {
-    throw 'Biology settings accessor does not consume the REDmod-owned launcher marker.'
-}
-if ($settings -notmatch 'if !CRRealpassSettings\.IsLauncherActivated\(\)\s*\{\s*return false;') {
-    throw 'Launcher-off contract is not fail-closed before the persisted Biology preference.'
-}
-if ($settings -notmatch 'CRRealpassSettings\.IsEnabled\(game\).*e3FirstPersonHudVisuals') {
-    throw 'E3 presentation preference is no longer subordinate to the Biology master activation boundary.'
-}
-if ($builder -notmatch [regex]::Escape('mods/Biology/tweaks/base/gameplay/static_data/database/items/weapons/parts/biology_activation.tweak')) {
-    throw 'Canonical player package builder does not package the REDmod activation marker.'
-}
-if ($builder -notmatch [regex]::Escape('Uninstall Biology.exe') -or $builder -notmatch [regex]::Escape('Build-BiologyUninstaller.ps1')) {
-    throw 'Canonical player package builder does not compile/package the self-contained uninstaller.'
-}
-if ($builder -notmatch 'generic-dependency-shared') { throw 'Canonical package has not adopted the shared/preserve generic dependency uninstall policy.' }
-if ($install.launcherActivation.signal -ne 'Items.BiologyLauncherActivationMarker.stackable' -or $install.playerUninstaller.binary -ne 'Uninstall Biology.exe') {
-    throw 'Install contract lost launcher activation or player uninstaller identity.'
-}
-if ($install.playerUninstaller.preferencesDefault -ne 'preserve' -or $install.playerUninstaller.genericDependencies -ne 'preserve') {
-    throw 'Install contract lost conservative preference/generic dependency defaults.'
-}
-if (@($install.neverRecursivelyOwnedRoots) -notcontains 'mods' -or @($install.neverRecursivelyOwnedRoots) -notcontains 'r6') {
-    throw 'Install contract no longer protects shared roots from recursive ownership.'
-}
-if ($package.redmod.launcherActivationMarker -ne 'Items.BiologyLauncherActivationMarker.stackable') {
-    throw 'REDmod package contract and runtime activation signal disagree.'
-}
-if ($doc -notmatch 'Launcher-OFF runtime audit' -or $doc -notmatch 'may still load' -or $doc -notmatch 'MILESTONE CLEAN-ROOM') {
-    throw 'Player disable/uninstall documentation lost audit or attended-test boundaries.'
-}
-if ($operatorDoc -notmatch 'Verify-BiologyRemoval\.ps1' -or $operatorDoc -notmatch 'double-click.*Uninstall Biology\.exe') {
-    throw 'Canonical local-operator catalog does not expose player hard-uninstall verification.'
-}
+if (-not $markerPackage.Success -or -not $markerRecord.Success -or $markerPackage.Index -gt $markerRecord.Index -or $marker -match '(?m)^\s*using\s+Items\s*$' -or $marker -notmatch '(?m)^\s*stackable\s*=\s*true\s*;\s*$') { throw 'REDmod-owned Biology launcher activation marker grammar drifted.' }
+if ($settings -notmatch 'public static func IsLauncherActivated\(\) -> Bool' -or $settings -notmatch 'Items\.BiologyLauncherActivationMarker\.stackable') { throw 'Biology settings accessor does not consume REDmod-owned launcher marker.' }
+if ($settings -notmatch '(?s)public static func IsEnabled\(game: GameInstance\) -> Bool\s*\{.*?return CRRealpassSettings\.IsLauncherActivated\(\);.*?\}') { throw 'REDlauncher is not the sole whole-mod activation authority.' }
+if ($settings -match '(?m)public\s+(?:persistent\s+)?let\s+enabled\s*:\s*Bool') { throw 'Redundant persisted Biology master switch returned.' }
+if ($settings -notmatch 'CRRealpassSettings\.IsEnabled\(game\)' -or $settings -notmatch 'settings\.e3FirstPersonHudVisuals') { throw 'E3 presentation preference is no longer subordinate to launcher activation.' }
+if ($settings -match '(?i)ModSettings|mod_settings') { throw 'Launcher activation source still contains old settings-provider residue.' }
 
-Write-Host 'PASS: Biology launcher activation is REDmod-owned/fail-closed and the exact player artifact couples the native-package marker, ownership receipt, and Uninstall Biology.exe.'
+if ($builder -notmatch [regex]::Escape('mods/Biology/tweaks/base/gameplay/static_data/database/items/weapons/parts/biology_activation.tweak')) { throw 'Canonical player package builder does not package REDmod activation marker.' }
+if ($builder -notmatch [regex]::Escape('Uninstall Biology.exe') -or $builder -notmatch [regex]::Escape('Build-BiologyUninstaller.ps1')) { throw 'Canonical player package builder does not compile/package self-contained uninstaller.' }
+if ($builder -notmatch 'generic-dependency-shared') { throw 'Canonical package lost shared/preserve generic dependency policy.' }
+$expectedRetainedLiteral = '$expectedRetained = @(''redscript'')'
+if (-not $builder.Contains($expectedRetainedLiteral)) { throw 'Canonical package is not redscript-only for generic runtime.' }
+
+if ($install.launcherActivation.signal -ne 'Items.BiologyLauncherActivationMarker.stackable' -or $install.playerUninstaller.binary -ne 'Uninstall Biology.exe') { throw 'Install contract lost launcher activation or player uninstaller identity.' }
+if ($install.launcherActivation.publicMasterPreference -ne $false) { throw 'Install contract reintroduced in-game whole-mod master preference.' }
+if ($install.playerUninstaller.preferences -notmatch '(?i)stored in saves|saves.*untouched') { throw 'Install contract lost save-backed preference preservation.' }
+if ($install.playerUninstaller.genericDependencies -notmatch '(?i)redscript') { throw 'Install contract lost exact surviving generic dependency policy.' }
+if (@($install.neverRecursivelyOwnedRoots) -notcontains 'mods' -or @($install.neverRecursivelyOwnedRoots) -notcontains 'r6') { throw 'Install contract no longer protects shared roots from recursive ownership.' }
+if ($package.redmod.launcherActivationMarker -ne 'Items.BiologyLauncherActivationMarker.stackable') { throw 'REDmod package contract and runtime activation signal disagree.' }
+if ($doc -notmatch 'Launcher-OFF runtime audit' -or $doc -notmatch 'may still load' -or $doc -notmatch 'Attended checks still required' -or $doc -notmatch 'P01\.1 owns attended') { throw 'Player disable/uninstall documentation lost runtime audit or parent-owned attended acceptance boundary.' }
+if ($operatorDoc -notmatch 'Verify-BiologyRemoval\.ps1' -or $operatorDoc -notmatch 'double-click.*Uninstall Biology\.exe') { throw 'Canonical local-operator catalog does not expose player hard-uninstall verification.' }
+
+Write-Host "PASS: REDlauncher/REDmod is Biology's sole whole-mod activation boundary; E3 state is presentation-only and the packaged runtime retains only redscript."

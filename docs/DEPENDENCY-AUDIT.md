@@ -3,27 +3,89 @@
 Status: **current engineering audit**  
 Last evidence review: **2026-09-15**
 
-This is an engineering release audit, not legal advice. `manifest/components.json` records pinned technical inputs and `manifest/distribution.json` records the current machine-readable release disposition.
+This is an engineering release audit, not legal advice. `manifest/components.json` may retain pinned historical/tooling evidence; `manifest/dependency-graph.json`, `manifest/distribution.json`, and the production build profile define the current release dependency disposition.
 
-A dependency is not entitled to remain because an older RealPass build used it or because another mod bundles it.
+A dependency is not entitled to remain because an older RealPass/Biology build used it or because another mod bundles it.
 
-## Current integrated dependency picture
+## Current production dependency picture
 
-The first integrated REDmod-first Biology milestone on Cyberpunk 2077 2.31 retained:
+The self-contained settings migration leaves this production runtime dependency set:
 
-- official REDmod — game-provided package/deployment foundation;
-- redscript 0.5.31 — direct retained consumer for Biology-owned narrow additive/wrapper seams;
-- Mod Settings 0.2.21 — temporary provider for the small player preference surface;
-- ArchiveXL 1.27.3 — temporary transitive dependency of the current Mod Settings route;
-- RED4ext 1.30.0 — temporary transitive plumbing for the retained settings/framework chain.
+- official REDmod — game-provided package/deployment/whole-mod activation foundation;
+- redscript 0.5.31 — the **only retained third-party runtime dependency** bundled by Biology.
 
-It did **not** require TweakXL, Codeware, Input Loader, Dark Future runtime, or Project E3 runtime.
+Removed from Biology production release/build/install architecture by issue #61:
 
-Issue #44 must additionally audit whether any supplemental path remains behaviorally active when REDlauncher `Enable mods` is OFF. Launcher-off vanilla-play behavior is a product requirement, so a physically installed framework may remain only if Biology-specific behavior is inert or otherwise correctly gated.
+- Mod Settings 0.2.21;
+- ArchiveXL 1.27.3;
+- RED4ext 1.30.0.
+
+TweakXL, Codeware, Input Loader, Dark Future runtime, and Project E3 runtime also remain not required/blocked.
+
+REDlauncher launcher-OFF acceptance must now evaluate Biology with only redscript supplemental infrastructure remaining outside `mods/Biology`. That is a materially smaller launcher-OFF surface than the previous integrated artifact.
+
+## Why redscript remains
+
+redscript has concrete current consumers independent of the retired settings stack:
+
+- project-owned Biology simulation/runtime classes;
+- Biology body UI/runtime and lifecycle hooks;
+- Biology-owned HUD/nameplate presentation hooks;
+- additive/wrapper native seams listed in `manifest/native-seams.json`;
+- `CRRealpassSettings` save-persistent ScriptableSystem state;
+- the Biology-owned E3 preference control mounted on the shared Biology/Cyberware body screen.
+
+Biology currently uses narrow additive/wrapper annotations where whole-file REDmod script replacement would copy broader vanilla implementation and increase conflict/patch surface. Full redscript elimination therefore requires a fresh dedicated lane with direct supported-game seam analysis; it is not implied by settings self-containment.
+
+## Removed settings stack
+
+### Mod Settings 0.2.21 — removed
+
+Former role: temporary UI/persistence provider for the small Biology preference surface.
+
+Current role: none. The remaining E3 Boolean is a persistent Biology `ScriptableSystem` field and is edited from Biology-owned Ink UI. No production `ModSettings.runtimeProperty`, provider module listener, package component, pause-menu registration, ownership path, or uninstaller INI surgery remains.
+
+### ArchiveXL 1.27.3 — removed
+
+Former role: transitive dependency of Mod Settings.
+
+Current role: none. The dependency audit found no direct Biology resource consumer requiring ArchiveXL. It is removed with the provider stack.
+
+### RED4ext 1.30.0 — removed
+
+Former role: transitive native loader/plumbing for ArchiveXL/Mod Settings.
+
+Current role: none. Biology owns no RED4ext plugin. It is removed from the production release/build/install dependency set.
+
+A `red4ext` path may still appear in safety allow/deny documentation as a shared root that the uninstaller must never recursively delete. That safety mention does **not** make RED4ext a Biology dependency.
+
+## Other non-required frameworks
+
+### TweakXL 1.11.4
+
+Pinned upstream evidence may remain in `manifest/components.json` for historical/tooling context. Current Biology role: **not required**; do not bundle.
+
+### Codeware 1.20.3
+
+Pinned upstream evidence may remain for historical/tooling context. Current Biology role: **not required**; do not bundle.
+
+### Input Loader 0.2.3
+
+Pinned upstream evidence may remain for historical/tooling context. Current Biology role: **not required**; Biology adds no current custom input binding requiring it.
+
+## Historical/reference gameplay and presentation sources
+
+### Dark Future
+
+Dark Future is research/provenance only for the final runtime. No executing Dark Future gameplay content may enter Biology candidates.
+
+### Project E3 - HUD
+
+Project E3 is local-only design archaeology/provenance, not a runtime dependency. `config/realpass-e3.json` preserves the reference inventory/version/hashes; the actual `ReferenceMods/` payload remains gitignored and must not be committed or shipped.
 
 ## Decision rule
 
-A generic framework can remain in a public Biology release only when all of the following are true for the exact pinned version:
+A generic framework can remain or be reintroduced in a public Biology release only when all of the following are true for the exact pinned version:
 
 1. a current accepted Biology feature requires it;
 2. a smaller vanilla/REDmod/Biology-owned route is not materially safer;
@@ -32,96 +94,20 @@ A generic framework can remain in a public Biology release only when all of the 
 5. exact official release files/hashes are inventoried;
 6. only required files are selected unless upstream packaging terms require otherwise;
 7. installed files are represented individually in Biology ownership/provenance metadata;
-8. the artifact passes `tools/Test-ArtifactPolicy.ps1` and dependency-notice tests;
+8. the artifact passes source/package policy tests;
 9. install/disable/uninstall semantics remain safe, including launcher-off behavior where advertised.
 
-## Pinned framework evidence
+## Production acquisition/package consequence
 
-### RED4ext 1.30.0
+`tools/Build-OwnedRuntimeProfile.ps1` explicitly acquires only `redscript` and stages the `biology-runtime` profile, which contains only `redscript`. `tools/Build-BiologyPackage.ps1` expects exactly that one retained generic component and fails closed if Mod Settings, ArchiveXL, RED4ext, or another blocked/unrequired runtime component leaks into the package.
 
-Pinned source/release: <https://github.com/WopsS/RED4ext/releases/tag/v1.30.0>
-
-License: MIT plus upstream third-party notices.
-
-Current Biology role: **temporary transitive dependency only**. Biology currently owns no RED4ext plugin. Keep only while the retained settings/framework chain genuinely requires it. Issue #44 must account for its launcher-off behavior and uninstaller ownership semantics.
-
-### redscript 0.5.31
-
-Pinned source/release: <https://github.com/jac3km4/redscript/releases/tag/v0.5.31>
-
-License: MIT.
-
-Current Biology role: **direct retained dependency** for accepted Biology-owned additive/wrapper runtime seams. Its retention is architectural, not merely settings-provider inheritance.
-
-### ArchiveXL 1.27.3
-
-Pinned source/release: <https://github.com/psiberx/cp2077-archive-xl/releases/tag/v1.27.3>
-
-License: MIT plus upstream third-party notices.
-
-Current Biology role: **temporary transitive dependency** of the current Mod Settings adapter. There is no current direct Biology resource consumer in the integrated package. Remove it when the provider chain no longer needs it.
-
-### Mod Settings 0.2.21
-
-Pinned source/release: <https://github.com/jackhumbert/mod_settings/releases/tag/v0.2.21>
-
-License: MIT.
-
-Current Biology role: **temporary provider** for the provider-neutral Biology/E3 preferences. It has no entitlement to remain in the final product. A Biology-owned surface or deliberate launcher/install boundary may replace it if that reduces dependency depth without increasing fragility.
-
-### TweakXL 1.11.4
-
-Pinned upstream evidence remains available in `manifest/components.json` for historical/tooling context.
-
-Current Biology role: **not required**. Do not bundle merely because Project E3 or another historical source used it.
-
-### Codeware 1.20.3
-
-Pinned upstream evidence remains available for historical/tooling context.
-
-Current Biology role: **not required**. The integrated Biology UI/presentation routes do not currently justify it.
-
-### Input Loader 0.2.3
-
-Pinned upstream evidence remains available for historical/tooling context.
-
-Current Biology role: **not required**. Biology currently adds no custom input binding requiring it.
-
-## Historical/reference gameplay and presentation sources
-
-### Dark Future
-
-Dark Future is **research/provenance only for the final runtime**. Historical adapted ideas/source records may remain where licensing/provenance requires them, but no executing Dark Future gameplay content may enter Biology candidates.
-
-Do not describe Dark Future as the current needs/UI host; that was an earlier architecture.
-
-### Project E3 - HUD
-
-Project E3 is **local-only design archaeology/provenance**, not a runtime dependency.
-
-`config/realpass-e3.json` preserves the exact reference inventory/version/hashes. The actual `ReferenceMods/` payload remains gitignored and must not be committed or shipped.
-
-Issue #40 uses that reference to map HUD responsibilities to current Cyberpunk 2.31 native seams and Biology-owned presentation. Project E3 scripts, tweaks and archives remain blocked from Biology player artifacts.
-
-## Dependency minimization before public release
-
-Before retaining any framework:
-
-- identify the exact accepted consumer;
-- prove removing it breaks an in-scope feature or accepted provider path;
-- prefer deletion over historical inertia;
-- preserve required upstream notices;
-- keep per-file ownership explicit;
-- test hard uninstall conservatively;
-- verify launcher-off behavior where Biology advertises vanilla-play mode.
-
-The target is one understandable player download, not a claim that bundled third-party software is Biology-owned.
+Historical component metadata is not production entitlement. A component present in `manifest/components.json` but absent from the production profile is not downloaded/staged by the canonical Biology package path.
 
 ## Source of truth
 
-When prose and machine-readable state disagree, treat that as a bug to fix rather than choosing whichever is convenient.
-
 Current release disposition: `manifest/distribution.json`  
-Pinned versions/hashes: `manifest/components.json`  
-Install/uninstall safety contract: `manifest/install-contract.json`  
+Current runtime dependency graph: `manifest/dependency-graph.json`  
+Production staging profile: `manifest/profiles.json`  
+Pinned historical/tooling versions/hashes: `manifest/components.json`  
+Install/uninstall safety contract: `manifest/install-contract.json` and `manifest/redmod-install-contract.json`  
 Current active work: root `ROADMAP.md` + current issues/PRs

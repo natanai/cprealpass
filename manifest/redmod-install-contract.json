@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "product": "Biology",
   "installModel": "redmod-first-game-root-relative",
   "supportedGameVersion": "2.31",
@@ -24,8 +24,18 @@
     "signal": "Items.BiologyLauncherActivationMarker.stackable",
     "signalOwner": "mods/Biology REDmod tweak payload",
     "accessor": "CRRealpassSettings.IsLauncherActivated()",
-    "missingOrFalseBehavior": "fail closed to Biology inactive regardless of saved Biology preference, loaded supplemental REDscript, RED4ext, ArchiveXL, or Mod Settings state",
-    "sessionBoundary": "restart/relaunch through the supported launcher flow; no polling watcher is installed"
+    "missingOrFalseBehavior": "fail closed to Biology inactive regardless of persisted Biology presentation preference or loaded supplemental REDscript",
+    "sessionBoundary": "restart/relaunch through the supported launcher flow; no polling watcher is installed",
+    "publicMasterPreference": false
+  },
+  "preferences": {
+    "provider": "biology-owned",
+    "persistence": "Cyberpunk save-backed ScriptableSystem persistent field",
+    "scope": "per-save",
+    "editor": "Biology body shell",
+    "publicControls": ["presentation.e3-first-person-hud-visuals"],
+    "externalSettingsProvider": false,
+    "pauseMenuRegistration": false
   },
   "playerFlow": {
     "prerequisite": "Cyberpunk 2077 2.31 plus official REDmod support installed for the player's platform/store",
@@ -35,7 +45,7 @@
     "permanentBiologyLauncher": false,
     "update": "close game; use biology/build-manifest.json as the prior exact Biology ownership receipt; never overwrite/delete changed ambiguous files automatically; install the newer exact package; refresh REDmod when REDmod payload changed",
     "disable": "turn REDlauncher Enable mods OFF, then relaunch; the REDmod-owned activation marker is absent and all Biology behavior gates yield to native Cyberpunk behavior without uninstall or save/preference reset",
-    "reenable": "turn REDlauncher Enable mods ON, then relaunch; the REDmod activation marker becomes available and the preserved Biology master preference again determines Biology activation",
+    "reenable": "turn REDlauncher Enable mods ON, then relaunch; the REDmod activation marker becomes available and Biology resumes while the save-backed E3 presentation preference remains independent and presentation-only",
     "uninstall": "close game; double-click Uninstall Biology.exe from the Cyberpunk 2077 game root; no PowerShell, Git, Vortex, mod manager, or game reinstall is required"
   },
   "releaseRootFiles": [
@@ -52,10 +62,11 @@
   "supplementalRuntime": {
     "firstPartyRoot": "r6/scripts/CyberpunkRealism",
     "firstPartyRoute": "REDSCRIPT-BETTER",
-    "retainedGenericComponents": ["redscript", "mod-settings", "archivexl", "red4ext"],
-    "launcherOffAudit": "These files/components are outside mods/Biology and may still load while REDlauncher mods are OFF. They are therefore not activation authority; CRRealpassSettings requires the REDmod-owned activation marker before any Biology preference can activate behavior.",
-    "ownershipRule": "First-party Biology files outside mods/Biology are exact-hash Biology-owned per file. Generic framework payload is exact-hash inventoried but shared/preserved by the player uninstaller.",
-    "settingsRemovalBlocker": "Mod Settings remains the current accessible/persistent provider for the two provider-neutral Biology preferences; ArchiveXL/RED4ext remain transitively. Remove this chain when no accepted consumer remains rather than treating it as product architecture."
+    "retainedGenericComponents": ["redscript"],
+    "removedGenericComponents": ["mod-settings", "archivexl", "red4ext"],
+    "launcherOffAudit": "Loose Biology REDscript and redscript infrastructure are outside mods/Biology and may still load while REDlauncher mods are OFF. They are therefore not activation authority; CRRealpassSettings requires the REDmod-owned activation marker before Biology behavior or E3 presentation can activate.",
+    "ownershipRule": "First-party Biology files outside mods/Biology are exact-hash Biology-owned per file. The remaining generic redscript payload is exact-hash inventoried but shared/preserved by the player uninstaller.",
+    "settingsArchitecture": "The E3 preference is Biology-owned save state and the existing Biology body shell edits it directly. No external settings provider, ArchiveXL resource layer, RED4ext plugin, or pause-menu provider registration is packaged."
   },
   "ownerManifest": {
     "path": "biology/build-manifest.json",
@@ -63,7 +74,7 @@
     "ownerValue": "Biology",
     "requiredFileProperties": ["path", "sha256", "owner", "component", "route", "replacePolicy"],
     "allowedReplacePolicies": ["biology-owned", "generic-dependency-shared"],
-    "rule": "Every installed payload file is listed exactly once. Biology-owned files may be automatically deleted only when the path is in Biology's narrow allowlist and the current SHA-256 matches. Generic/shared dependency files are never automatically removed by the player uninstaller."
+    "rule": "Every installed payload file is listed exactly once. Biology-owned files may be automatically deleted only when the path is in Biology's narrow allowlist and the current SHA-256 matches. Generic/shared redscript files are never automatically removed by the player uninstaller."
   },
   "playerUninstaller": {
     "binary": "Uninstall Biology.exe",
@@ -74,9 +85,8 @@
     "receiptRequired": true,
     "refuseChangedOrAmbiguousFiles": true,
     "savesNeverTargeted": true,
-    "preferencesDefault": "preserve",
-    "preferenceOptIn": "remove only [CyberpunkRealism.Settings.CRRealpassSettings] from red4ext/plugins/mod_settings/user.ini",
-    "genericDependencies": "preserve",
+    "preferences": "stored in saves and therefore untouched because saves are never targeted",
+    "genericDependencies": "preserve retained redscript files",
     "recursiveSharedRootDeletion": false,
     "redmodRefresh": "run official redMod.exe deploy with explicit game root; never recursively clear r6/cache/modded"
   },
@@ -86,11 +96,9 @@
     {"root": "engine/tools", "condition": "Exact pinned generic redscript files are inventoried but preserved by player uninstall."},
     {"root": "engine/config/base", "condition": "Exact pinned generic redscript config is inventoried but preserved by player uninstall."},
     {"root": "r6/config/cybercmd", "condition": "Exact pinned generic redscript config is inventoried but preserved by player uninstall."},
-    {"root": "red4ext", "condition": "Exact temporary RED4ext/ArchiveXL/Mod Settings files are inventoried but preserved by player uninstall."},
-    {"root": "bin/x64", "condition": "Exact temporary RED4ext loader file is inventoried but preserved by player uninstall."},
-    {"root": "LICENSES", "condition": "Generic dependency notices are inventoried and preserved with their shared components."}
+    {"root": "LICENSES", "condition": "The retained redscript license notice is inventoried and preserved with the shared component."}
   ],
-  "neverRecursivelyOwnedRoots": ["bin", "archive", "engine", "r6", "red4ext", "mods", "LICENSES"],
+  "neverRecursivelyOwnedRoots": ["bin", "archive", "engine", "mods", "r6", "red4ext", "LICENSES"],
   "preflight": [
     "game-must-be-closed-for-installer-or-uninstaller-writes",
     "supported-game-version-must-match-2.31",
@@ -99,7 +107,8 @@
     "artifact-sha256-and-file-owner-manifest-must-verify",
     "unknown-collision-must-fail-closed-for-assisted-updates",
     "changed-owned-file-must-not-be-auto-deleted",
-    "blocked-component-must-not-be-present"
+    "blocked-component-must-not-be-present",
+    "retired-settings-stack-must-not-be-present"
   ],
   "cleanRoom": {
     "freshCanonicalSourceForAttendedBuild": true,
@@ -107,7 +116,7 @@
     "milestoneReinstallRequiredForStructuralPackageOrDependencyChangeOrUnexplainedResidue": true,
     "firstIntegratedRedmodMilestoneCompleted": true,
     "fullSteamReinstallIsNormalUninstall": false,
-    "reason": "Launcher activation and the player uninstaller are structural package/runtime-authority changes. The parent integration thread must exact-build and directly validate them in the next integrated milestone; routine Biology removal should not require a Steam reinstall."
+    "reason": "The settings-stack removal is a structural dependency change. Parent integration owns attended launcher ON/OFF and persistence validation against a release-shaped artifact; routine Biology removal still must not require a Steam reinstall."
   },
   "stateAndSaves": {
     "saveDataIsNeverInArtifact": true,
@@ -125,8 +134,9 @@
   "remainingDirectGameGates": [
     "REDmod activation marker exact-compiles/deploys in the combined candidate",
     "REDlauncher Enable mods ON activates Biology",
-    "REDlauncher Enable mods OFF yields Biology-inactive native behavior despite supplemental runtime remaining installed",
-    "OFF-to-ON relaunch restores Biology while preserving preference/state",
+    "REDlauncher Enable mods OFF yields Biology-inactive native behavior with only redscript supplemental runtime remaining",
+    "E3 preference can be edited in the Biology body shell and persists across save/reload",
+    "OFF-to-ON relaunch restores Biology while preserving E3 preference/state",
     "Uninstall Biology.exe removes exact Biology-owned payload and official REDmod refresh leaves no stale Biology activation",
     "changed-file refusal and another-REDmod preservation on a real supported install",
     "safe REDmod overlap/precedence fixture",
@@ -135,9 +145,9 @@
   "rules": [
     "The repository root is not a player package.",
     "mods/Biology is the authoritative first-party REDmod namespace and launcher activation signal owner.",
-    "No saved Biology preference or supplemental framework state may override an absent launcher activation signal.",
+    "No saved Biology presentation preference may override an absent launcher activation signal.",
     "Shared framework/game roots are never deleted wholesale.",
-    "Generic dependencies bundled for installation convenience are preserved by the normal player uninstaller.",
+    "The only retained generic runtime dependency is redscript, with exact current consumers recorded in manifest/dependency-graph.json.",
     "The playable builder may read the installed supported game for version/exact compilation but may not deploy or modify it.",
     "If ownership/hash/path safety cannot be proven, automatic deletion fails closed.",
     "No successful CI/build result is live-game acceptance."

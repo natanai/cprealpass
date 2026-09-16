@@ -112,7 +112,6 @@ namespace BiologyUninstall
         private readonly string gameRoot;
         private BiologyUninstallPlan plan;
         private readonly Label summary;
-        private readonly CheckBox removePreferences;
         private readonly Button uninstall;
         private readonly Button close;
         private readonly TextBox report;
@@ -122,8 +121,8 @@ namespace BiologyUninstall
             this.gameRoot = gameRoot;
             Text = "Uninstall Biology";
             StartPosition = FormStartPosition.CenterScreen;
-            MinimumSize = new Size(700, 520);
-            Size = new Size(780, 600);
+            MinimumSize = new Size(700, 500);
+            Size = new Size(780, 580);
             Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
 
             Label title = new Label();
@@ -141,17 +140,10 @@ namespace BiologyUninstall
             summary.Height = 90;
             Controls.Add(summary);
 
-            removePreferences = new CheckBox();
-            removePreferences.Left = 20;
-            removePreferences.Top = 150;
-            removePreferences.Width = 720;
-            removePreferences.Text = "Also remove Biology preferences from Mod Settings (preferences are preserved by default)";
-            Controls.Add(removePreferences);
-
             uninstall = new Button();
             uninstall.Text = "Remove Biology";
             uninstall.Left = 20;
-            uninstall.Top = 185;
+            uninstall.Top = 150;
             uninstall.Width = 150;
             uninstall.Height = 34;
             uninstall.Click += OnUninstall;
@@ -160,7 +152,7 @@ namespace BiologyUninstall
             close = new Button();
             close.Text = "Close";
             close.Left = 180;
-            close.Top = 185;
+            close.Top = 150;
             close.Width = 100;
             close.Height = 34;
             close.Click += delegate { Close(); };
@@ -168,9 +160,9 @@ namespace BiologyUninstall
 
             report = new TextBox();
             report.Left = 20;
-            report.Top = 235;
+            report.Top = 200;
             report.Width = 730;
-            report.Height = 315;
+            report.Height = 330;
             report.Multiline = true;
             report.ReadOnly = true;
             report.ScrollBars = ScrollBars.Vertical;
@@ -219,9 +211,7 @@ namespace BiologyUninstall
                 }
 
                 uninstall.Enabled = false;
-                removePreferences.Enabled = false;
                 BiologyExecutionOptions options = new BiologyExecutionOptions();
-                options.RemovePreferences = removePreferences.Checked;
                 // The UI owns the final refresh decision so it can verify the Biology
                 // REDmod namespace is actually gone before asking REDmod to deploy.
                 // This prevents a changed/untracked partial mods/Biology package from
@@ -305,7 +295,7 @@ namespace BiologyUninstall
                 builder.AppendLine(string.Format("[{0}] {1} — {2}", item.Action, item.Entry.path, item.Reason));
             }
             builder.AppendLine();
-            builder.AppendLine("Preferences: preserve by default; optional checkbox removes only the Biology Mod Settings section.");
+            builder.AppendLine("Preferences: Biology's E3 preference is stored in Cyberpunk save state; saves are never targeted.");
             builder.AppendLine("Saves: never targeted.");
             builder.AppendLine("Directories: only now-empty Biology-owned directories are eligible; shared roots are never recursively deleted.");
             return builder.ToString();
@@ -321,7 +311,6 @@ namespace BiologyUninstall
             builder.AppendLine("Already missing: " + result.Missing.Count);
             builder.AppendLine("Errors: " + result.Errors.Count);
             builder.AppendLine("Ownership receipt deleted: " + result.ReceiptDeleted);
-            builder.AppendLine("Biology preferences removed by opt-in: " + result.PreferencesRemoved);
             builder.AppendLine();
 
             if (result.PreservedChanged.Count > 0)
@@ -358,7 +347,7 @@ namespace BiologyUninstall
                 }
             }
             builder.AppendLine();
-            builder.AppendLine("Save files were not accessed or changed.");
+            builder.AppendLine("Save files were not accessed or changed; save-backed Biology preference/state was therefore preserved.");
             return builder.ToString();
         }
     }

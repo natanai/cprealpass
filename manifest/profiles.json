@@ -1,43 +1,11 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "profiles": {
     "m1-base": [
       "redscript"
     ],
-    "m1-owned-settings": [
-      "red4ext",
-      "redscript",
-      "archivexl",
-      "mod-settings"
-    ],
-    "m1-support": [
-      "red4ext",
-      "redscript",
-      "archivexl",
-      "tweakxl",
-      "codeware",
-      "mod-settings",
-      "input-loader"
-    ],
-    "m3-body-alpha1": [
-      "red4ext",
-      "redscript",
-      "archivexl",
-      "tweakxl",
-      "codeware",
-      "mod-settings",
-      "input-loader",
-      "darkfuture"
-    ],
-    "m3-body-alpha2": [
-      "red4ext",
-      "redscript",
-      "archivexl",
-      "tweakxl",
-      "codeware",
-      "mod-settings",
-      "input-loader",
-      "darkfuture"
+    "biology-runtime": [
+      "redscript"
     ]
   }
 }

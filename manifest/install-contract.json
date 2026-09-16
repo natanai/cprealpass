@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "product": "Biology",
   "installModel": "game-root-shaped-redmod-first",
   "gameRootEvidence": [
@@ -27,11 +27,11 @@
   ],
   "ownerManifest": {
     "path": "biology/build-manifest.json",
-    "schemaVersion": 1,
+    "schemaVersion": 2,
     "requiredFileProperties": ["path", "sha256", "owner", "component", "route", "replacePolicy"],
     "biologyOwnerValue": "Biology",
     "approvedDependencyOwnerPrefix": "upstream:",
-    "allowedReplacePolicies": ["biology-owned", "approved-dependency-owned"],
+    "allowedReplacePolicies": ["biology-owned", "generic-dependency-shared"],
     "rule": "Every ordinary runtime/package payload file installed by a Biology release must appear exactly once. No broad shared-root deletion is permitted during uninstall."
   },
   "uninstaller": {
@@ -42,7 +42,7 @@
     "gameMustBeClosed": true,
     "deleteChangedFileByDefault": false,
     "preserveSaves": true,
-    "preserveSettingsByDefault": true,
+    "preferencesLiveInSaves": true,
     "removeOnlyEmptyOwnedDirectories": true,
     "refreshRedmodStateAfterRemoval": true
   },
@@ -51,7 +51,8 @@
     "saveDataIsNeverDeletedByUninstaller": true,
     "fileRemovalIsNotSaveRollback": true,
     "settingsPreservedByDefault": true,
-    "destructiveStateResetByToggle": false
+    "destructiveStateResetByToggle": false,
+    "e3PreferencePersistence": "Biology ScriptableSystem persistent field in the Cyberpunk save"
   },
   "preflight": [
     "game-must-be-closed-for-installer-or-uninstaller-writes",
@@ -59,14 +60,16 @@
     "artifact-sha256-and-file-manifest-must-verify",
     "unknown-collision-must-fail-closed-for-assisted-updates",
     "changed-owned-file-must-not-be-auto-deleted",
-    "blocked-component-must-not-be-present"
+    "blocked-component-must-not-be-present",
+    "retired-settings-stack-must-not-be-present"
   ],
   "runtimeRoots": [
     "mods/Biology",
-    "archive/pc/mod",
     "r6/scripts",
     "r6/tweaks",
-    "red4ext/plugins",
+    "engine/tools",
+    "engine/config/base",
+    "r6/config/cybercmd",
     "biology",
     "LICENSES"
   ],
@@ -81,7 +84,7 @@
   "notes": [
     "runtimeRoots are allowed locations, not a claim that every final release uses every root",
     "the player-facing package contains only roots actually required by that exact build",
-    "generic framework files may be present only when the current distribution contract permits them and must be tracked per file",
+    "redscript is the only retained generic runtime dependency and is tracked per file",
     "the public artifact never includes developer deployment receipts, reports, staging, saves, game executables, stock game archives or local ReferenceMods payload",
     "full Steam reinstall is exceptional clean-room/recovery, not the normal Biology uninstall path"
   ]
