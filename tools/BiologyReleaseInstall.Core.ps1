@@ -47,7 +47,7 @@ function Copy-BiologyReleaseVerified(
     [ValidateSet('create','replace')]
     [string]$Action,
     [AllowNull()]
-    [string]$ExpectedPriorHash
+    [object]$ExpectedPriorHash
 ) {
     if ((Get-BiologyReleaseSha256 $Source) -ne $ExpectedHash) { throw "Package source changed before copy: $Source" }
 
@@ -57,6 +57,7 @@ function Copy-BiologyReleaseVerified(
     if ($Action -eq 'replace' -and $null -eq $ExpectedPriorHash) {
         throw "Replace action is missing its preflight destination identity: $Destination"
     }
+    if ($null -ne $ExpectedPriorHash) { $ExpectedPriorHash = ([string]$ExpectedPriorHash).ToUpperInvariant() }
 
     New-Item -ItemType Directory -Force -Path (Split-Path -Parent $Destination) | Out-Null
     $temporary = $Destination + '.biology-install-' + [guid]::NewGuid().ToString('N') + '.tmp'
