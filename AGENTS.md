@@ -1,25 +1,27 @@
 # Biology agent instructions
 
-Last updated: **2026-09-15**
+Last updated: **2026-09-16**
 
 **Biology** is the player-facing product identity for this foundational Cyberpunk 2077 body/physiology overhaul. The repository and some internal identifiers still use `cprealpass`, `RealPass`, and `CR*` during migration; do not perform a risky mass rename merely for cosmetics.
 
 The product is intentionally designed so ordinary game patches should affect a small compatibility boundary rather than force broad rewrites. The current migration direction is **official REDmod-first, self-contained, and dependency-minimal**, while preserving narrower Biology-owned wrapper/native seams when REDmod whole-file replacement would be more brittle.
 
-Read `docs/BIOLOGY-REDMOD-MIGRATION.md` before making packaging/dependency/runtime-routing decisions.
+Read `docs/BIOLOGY-REDMOD-MIGRATION.md` before making packaging/dependency/runtime-routing decisions. Read `docs/AGENT-OPERATING-PATTERNS.md` before making worker-conversation, local-operator, evidence-lifecycle, or cleanup decisions; it is the canonical owner-specific operating convention.
 
-## THREAD LEDGER GATE — read before creating or reusing a conversation
+## THREAD / ASSIGNMENT GATE — read before creating or reusing a conversation
 
-`docs/THREAD-LEDGER.md` is the canonical registry for parent/worker conversation continuity.
+`docs/THREAD-LEDGER.md` is the canonical registry for parent/worker conversation continuity and assignment state. `docs/AGENT-OPERATING-PATTERNS.md` defines the numbering/reuse semantics.
 
-Before creating a new worker thread, routing work back to an older one, replacing a conversation that has become too long, or taking over as the parent/integration thread:
+Before creating a new worker thread, routing a sequential assignment into an existing worker, replacing an overgrown conversation, or taking over as the parent/integration thread:
 
-1. read `docs/THREAD-LEDGER.md`;
-2. use the official `P##.#` / `W##.#` thread ID from the ledger;
-3. prefer a **new lane for a materially new goal** rather than reusing an older chat merely because it exists;
-4. treat `USABLE` old threads as context reserves, not standing assignments;
-5. when the user says a thread is too long, mark it `TOO-LONG` and create the documented successor before continuing substantial work;
-6. the parent owns canonical ledger updates and should keep thread state aligned with current GitHub work state.
+1. read `docs/AGENT-OPERATING-PATTERNS.md` and `docs/THREAD-LEDGER.md`;
+2. use the official `P##.#` / `W##.#` assignment ID from the ledger;
+3. **prefer reusing a recent worker conversation for closely related sequential assignments when its context remains useful and no parallelism requires another worker**;
+4. keep Git issue/branch identity separate from conversation identity — a reused worker can move to a new issue/branch while retaining its base `W##`;
+5. increment the decimal suffix for each sequential assignment in that same worker conversation (`W15.1 -> W15.2 -> W15.3`);
+6. opening a new worker conversation gets the next base worker number and starts at `.1` (`W16.1`), rather than treating `.2` as a replacement-chat marker;
+7. create a new conversation when the existing one is too long/stale/unrelated or when concurrent work needs another independent worker;
+8. the parent owns canonical ledger routing state unless a handoff explicitly delegates the small ledger update.
 
 The ledger complements GitHub issues/PRs; it does not replace them.
 
@@ -30,7 +32,7 @@ The project owner can often run **2–3 agents concurrently**. Treat that capaci
 When a task is large and contains independent workstreams, the current agent SHOULD:
 
 1. identify safe parallel lanes;
-2. keep one lane in the current thread/branch;
+2. keep one lane in its current thread/branch;
 3. tell the user that another agent can usefully work in parallel;
 4. provide a copy/paste-ready handoff for the new thread;
 5. specify repository, branch, exact base SHA, owned scope, non-goals, canonical reading, deliverables, acceptance criteria and merge dependencies;
@@ -42,6 +44,7 @@ Every parallel lane works on its **own branch**. Do not use `main` as a shared s
 
 For the full workflow, branch/ownership rules, handoff template, merge order and the preferred Biology REDmod migration split, read:
 
+- `docs/AGENT-OPERATING-PATTERNS.md`
 - `docs/THREAD-LEDGER.md`
 - `docs/PARALLEL-AGENT-WORKFLOW.md`
 - `docs/BIOLOGY-REDMOD-MIGRATION.md`
@@ -54,15 +57,15 @@ Parallel feature lanes are coordinated by a long-lived **parent/integration thre
 
 The parent/integration thread owns:
 
-- the canonical `docs/THREAD-LEDGER.md` conversation/lane registry;
+- the canonical `docs/THREAD-LEDGER.md` conversation/assignment registry;
 - merge readiness and merge order across worker PRs;
 - short-lived integration branches when combined risk is high;
 - exact canonical-`main` awareness;
 - clean local-test handoffs after selected lanes are integrated;
-- durable attended test records under `docs/test-runs/`;
-- routing live findings back to the original lane when appropriate, or creating/recommending a new lane when the finding is substantial, cross-cutting, or the original context is stale.
+- durable attended test records under `docs/test-runs/` and redistributable operator evidence under `docs/operator-evidence/` when later steps depend on it;
+- routing live findings back into a useful recent worker conversation when appropriate, or opening the next worker conversation when context/parallelism requires it.
 
-The parent thread is **not** a fourth broad implementation lane. It should normally return substantive subsystem fixes to their owner. It may handle only small merge glue, integration-only fixes, documentation/test-contract alignment, and deliberate conflict resolution.
+The parent thread is **not** a fourth broad implementation lane. It should normally return substantive subsystem fixes to a worker. It may handle only small merge glue, integration-only fixes, documentation/test-contract alignment, durable evidence ingestion, and deliberate conflict resolution.
 
 Worker agents should make their PRs easy for the parent to integrate: state the exact branch/head, owned scope, CI status, remaining attended acceptance, direct-game probes, overlaps, and merge dependencies.
 
@@ -117,37 +120,43 @@ See `docs/CLEAN-ROOM-TESTING.md` before giving live-test instructions.
 
 Before asking the user to run PowerShell/CMD against their local repo or Cyberpunk install, read:
 
+- `docs/AGENT-OPERATING-PATTERNS.md`
 - `docs/LOCAL-OPERATOR-COMMANDS.md`
 
-That file is the **canonical user-run command surface**. If a catalogued command covers the operation, use it instead of recreating its internals in a new paste block. Routine milestone preparation, vanilla sanity/hash checks, baseline capture, package build, REDmod deployment, iteration reset, compatibility audit and snapshot publishing are all standardized there.
+That catalog is the **canonical user-run command surface**. If a catalogued command covers the operation, use it instead of recreating its internals in a new paste block. Routine milestone preparation, vanilla sanity/hash checks, baseline capture, package build, REDmod deployment, iteration reset, compatibility audit, operator evidence handoff, managed recovery, cleanup and snapshot publishing are standardized there.
 
 Rules:
 
+- **assume zero local cprealpass repo/worktree at the start of every separate user-facing operation**; commands may reuse a Git-validated checkout opportunistically, but correctness must never depend on it surviving;
 - prefer one repository-owned command over a long hand-written shell sequence;
 - agents may substitute the exact main SHA, disposable test-root name and known game path only where the catalog explicitly permits it;
 - if a recurring operation is missing or inefficient, improve the tool/catalog/test contract first rather than inventing another private variant;
 - one-off shell probes are allowed only for genuinely narrow, preferably read-only evidence questions not covered by the catalog;
 - long operations must provide durable console progress; `Write-Progress` alone is not sufficient because some hosts hide it;
 - attended milestone workspaces are disposable and should normally be named like `C:\Games\Biology-Test-<YYYY-MM-DD>-<short-main-sha>` rather than assuming a permanent `C:\Games\CyberpunkRealism` checkout;
-- never claim a fast sanity check is equivalent to the strict full baseline/hash comparison.
+- never claim a fast sanity check is equivalent to the strict full baseline/hash comparison;
+- operator work should produce **one obvious attachable report/bundle**. The user should not be responsible for a cross-turn mental `KEEP`/delete list;
+- when later work depends on redistributable evidence, the parent/assistant ingests the returned text/JSON into `docs/operator-evidence/<evidence-id>/`; the local PC does not need GitHub write credentials;
+- temporary candidate ZIPs/artifact roots are machine-managed only while needed. Repo-owned cleanup may remove them only after durable evidence is confirmed and exact path/hash/inventory checks pass; mismatches/foreign/reparse content fail closed.
 
 ## Read order — do this before changing scope or architecture
 
 1. `AGREED-GOALS.md` — **what the product is now**. Locked goals outrank old implementation notes.
-2. `docs/THREAD-LEDGER.md` — current parent/worker conversation registry and reuse/replacement rules.
-3. `docs/BIOLOGY-REDMOD-MIGRATION.md` — current product/package/dependency migration direction.
-4. `docs/DECISION-HISTORY.md` — when decisions changed and which misunderstandings the user already corrected.
-5. `docs/PARALLEL-AGENT-WORKFLOW.md` — branch/lane/handoff/merge rules.
-6. `docs/INTEGRATION-ORCHESTRATOR.md` — parent-thread merge/test/evidence/routing rules when coordinating multiple lanes.
-7. `docs/LOCAL-OPERATOR-COMMANDS.md` before asking the user to run local commands.
-8. The focused architecture file relevant to the task, for example:
+2. `docs/AGENT-OPERATING-PATTERNS.md` — canonical worker reuse/numbering, zero-local-repo, evidence-ingestion and cleanup conventions.
+3. `docs/THREAD-LEDGER.md` — current parent/worker conversation and assignment registry.
+4. `docs/BIOLOGY-REDMOD-MIGRATION.md` — current product/package/dependency migration direction.
+5. `docs/DECISION-HISTORY.md` — when decisions changed and which misunderstandings the user already corrected.
+6. `docs/PARALLEL-AGENT-WORKFLOW.md` — branch/lane/handoff/merge rules.
+7. `docs/INTEGRATION-ORCHESTRATOR.md` — parent-thread merge/test/evidence/routing rules when coordinating multiple lanes.
+8. `docs/LOCAL-OPERATOR-COMMANDS.md` before asking the user to run local commands.
+9. The focused architecture file relevant to the task, for example:
    - `docs/BIOLOGY-UI.md`
    - `docs/SETTINGS-ARCHITECTURE.md`
    - `docs/E3-PRESENTATION.md`
    - `docs/PATCH-RESILIENCE.md`
    - `docs/RELEASE-ARCHITECTURE.md`
    - `docs/CLEAN-ROOM-TESTING.md`
-9. Machine-readable manifests/tests for the implementation contract.
+10. Machine-readable manifests/tests for the implementation contract.
 
 Do **not** reconstruct current intent from old commits, closed branch workplans, historical prototypes, or old `RealPass` naming before reading the files above.
 
@@ -238,9 +247,10 @@ When a local probe would materially improve the work:
 3. use known absolute paths when possible;
 4. make it read-only whenever possible;
 5. explain exactly what uncertainty it resolves;
-6. filter large output locally or write it to a file before asking the user to return it;
+6. filter large output locally or write it to the one managed handoff bundle before asking the user to return it;
 7. prefer paths, hashes, symbol names, record IDs, metadata and narrow tool output over proprietary file contents;
-8. record durable conclusions in tracked code/docs/tests so another agent does not rediscover them.
+8. parent/assistant should ingest durable redistributable evidence in the repository rather than asking the user to remember loose local evidence indefinitely;
+9. record durable conclusions in tracked code/docs/tests so another agent does not rediscover them.
 
 ## Patch-resilience design rules
 
@@ -307,8 +317,8 @@ When the user changes/corrects a requirement:
 - remove obsolete active workplans/instructions instead of leaving competing current directions;
 - preserve history through Git.
 
-When large work can be parallelized, also update/provide the branch handoffs described in `docs/PARALLEL-AGENT-WORKFLOW.md` and update `docs/THREAD-LEDGER.md` for newly created/replaced conversations.
+When large work can be parallelized, also update/provide the branch handoffs described in `docs/PARALLEL-AGENT-WORKFLOW.md` and keep `docs/THREAD-LEDGER.md` aligned with reused-worker assignment IDs or newly opened worker conversations.
 
-When attended testing produces actionable evidence, the parent/integration thread should record and route it under `docs/INTEGRATION-ORCHESTRATOR.md` rather than leaving it only in conversation history.
+When attended testing produces actionable evidence, the parent/integration thread should record and route it under `docs/INTEGRATION-ORCHESTRATOR.md`; when later operator steps depend on redistributable evidence, ingest it under `docs/operator-evidence/` rather than leaving it only in conversation history or loose local files.
 
 Current tracked game baseline is Cyberpunk 2077 `2.31`; refresh/audit after later patches or whenever compatibility depends on a newer local state.
