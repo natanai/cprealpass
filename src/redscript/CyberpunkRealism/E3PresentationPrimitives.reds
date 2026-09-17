@@ -1,16 +1,13 @@
-// Shared project-original INK primitives for Biology's E3-inspired neutral HUD.
+// Shared project-original INK primitives for Biology's E3-inspired presentation.
 //
-// These helpers contain no native hooks and no Project E3 resources. Individual
-// controller adapters decide where the visual language is appropriate.
+// These helpers create Biology-owned, reversible widgets only. They deliberately do
+// not mutate the tint/state of native HUD roots: E3 OFF is therefore a clean yield
+// rather than an attempted reconstruction of CDPR-authored widget state.
 module CyberpunkRealism.Presentation
 
 public class CRBiologyE3Primitives extends IScriptable {
   public static func Red() -> HDRColor {
     return new HDRColor(1.1761, 0.1400, 0.1200, 1.0);
-  }
-
-  public static func Neutral() -> HDRColor {
-    return new HDRColor(1.0, 1.0, 1.0, 1.0);
   }
 
   public static func AddRect(parent: ref<inkCompoundWidget>, name: CName, x: Float, y: Float, width: Float, height: Float, opacity: Float) -> ref<inkRectangle> {
@@ -27,9 +24,25 @@ public class CRBiologyE3Primitives extends IScriptable {
     return widget;
   }
 
-  public static func TintNeutralHudRoot(root: wref<inkWidget>, enabled: Bool) -> Void {
-    if IsDefined(root) {
-      root.SetTintColor(enabled ? CRBiologyE3Primitives.Red() : CRBiologyE3Primitives.Neutral());
+  public static func AddPlate(parent: ref<inkCompoundWidget>, name: CName, x: Float, y: Float, width: Float, height: Float, opacity: Float) -> ref<inkRectangle> {
+    return CRBiologyE3Primitives.AddRect(parent, name, x, y, width, height, opacity);
+  }
+
+  public static func AddLabel(parent: ref<inkCompoundWidget>, name: CName, text: String, x: Float, y: Float, size: Int32, opacity: Float) -> ref<inkText> {
+    let label: ref<inkText> = new inkText();
+    if !IsDefined(parent) {
+      return label;
     }
+    label.SetName(name);
+    label.SetText(text);
+    label.SetFontFamily("base\\gameplay\\gui\\fonts\\raj\\raj.inkfontfamily");
+    label.SetFontStyle(n"Medium");
+    label.SetFontSize(size);
+    label.SetFitToContent(true);
+    label.SetTranslation(x, y);
+    label.SetTintColor(CRBiologyE3Primitives.Red());
+    label.SetOpacity(opacity);
+    label.Reparent(parent, -1);
+    return label;
   }
 }

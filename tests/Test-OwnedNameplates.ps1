@@ -12,19 +12,24 @@ Check ($source.Contains('public final func SetVisualData(puppet: ref<GameObject>
 Check ($source.Contains('let resolved: NPCNextToTheCrosshair = Deref(incomingData)')) 'Owned nameplate seam does not copy the native script_ref payload before enrichment.'
 Check ($source.Contains('wrappedMethod(puppet, resolved, isNewNpc)')) 'Owned nameplate seam does not hand its local payload back to the stock controller.'
 Check ($source.Contains('if IsStringValid(data.name)')) 'Native focus identity is not explicitly preferred over Biology fallback identity.'
-Check ($source.Contains('npc.IsCharacterCivilian()')) 'Public-name fallback is not restricted to ordinary civilian crowd identity.'
+Check ($source.Contains('npc.IsCharacterCivilian()')) 'Public-name fallback is not restricted to ordinary civilian identity.'
 Check (-not $source.Contains('npc.IsScanned()')) 'Ambient civilian identity is structurally scanner-gated instead of available to ordinary E3 focus.'
 Check ($source.Contains('this.IsQuestTarget()')) 'Owned fallback does not respect the stock controller quest-target state.'
 Check (-not $source.Contains('this.m_isQuestTarget')) 'Owned fallback reaches into the stock private quest-target field instead of its public accessor.'
 Check ($source.Contains('npc.GetBoolFromCharacterTweak("hide_nametag")')) 'Owned fallback ignores the stock character hide-name flag.'
 Check ($source.Contains('GetAllBlackboardDefs().Puppet.HideNameplate')) 'Owned fallback ignores the dynamic stock hide-nameplate flag.'
-Check ($source.Contains('t"UINameplate.CrowdSettings"')) 'Owned fallback is not restricted to the public crowd nameplate record.'
+Check ($source.Contains('character.UiNameplate()')) 'Owned fallback no longer respects the native nameplate-record authority.'
+Check ($source.Contains('if IsDefined(nameplate) && !nameplate.Enabled()')) 'Owned fallback does not reject an explicitly disabled native nameplate record.'
+Check (-not $source.Contains('t"UINameplate.CrowdSettings"')) 'Owned fallback regressed to the disproven W03.1 assumption that one specific crowd record is required.'
 Check ($source.Contains('npc.GetPS() as ScriptedPuppetPS')) 'Owned fallback does not explicitly narrow the puppet persistent-state type.'
 Check ($source.Contains('ps.HasAlternativeName()')) 'Owned fallback can reveal an actor that uses an alternative identity.'
-Check ($source.Contains('character.ScannerModulePreset()')) 'Owned fallback does not use the same native name-visibility permission source as the scanner/nameplate model.'
-Check ($source.Contains('preset.ShoulShowName()')) 'Owned fallback ignores native name-visibility permission.'
+Check (-not $source.Contains('character.ScannerModulePreset()')) 'Baseline ordinary-look identity is still coupled to scanner-module records.'
+Check (-not $source.Contains('preset.ShoulShowName()')) 'Baseline ordinary-look identity is still gated by scanner-name permission.'
 Check (-not $source.Contains('GetForcedScannerPreset')) 'Owned fallback gained an unverified forced-scanner-preset dependency.'
-Check ($source.Contains('return puppet.GetDisplayName()')) 'Owned fallback does not use the public entity display name.'
+Check ($source.Contains('return puppet.GetDisplayName()')) 'Owned fallback does not use the existing public entity display name.'
+Check (-not $source.Contains('record.FullDisplayName()')) 'Owned fallback started deriving richer record identity instead of using public display identity.'
+Check (-not $source.Contains('record.ArchetypeData()')) 'Owned fallback started deriving archetype identity.'
+Check (-not $source.Contains('record.Affiliation()')) 'Owned fallback started deriving affiliation identity.'
 Check (-not $source.Contains('incomingData.name =')) 'Owned wrapper mutates the native const script_ref payload in place.'
 
 # Identity resolution remains data-only. E3NameplatesNative.reds owns presentation.
@@ -32,4 +37,4 @@ foreach ($forbidden in @('SetVisible(', 'm_nameTextMain', 'm_nameFrame', 'm_heal
     Check (-not $source.Contains($forbidden)) "Owned identity seam gained forbidden presentation/simulation ownership: $forbidden"
 }
 
-Write-Host "PASS: $script:checks ambient nameplate identity checks; native identity wins, permitted civilian public identity is not scanner-gated, and hidden/alternative identity policy remains native-authoritative."
+Write-Host "PASS: $script:checks W03.2 ambient nameplate identity checks; native identity wins, public civilian display identity is ordinary-look capable without scanner gating, and hidden/alternative/disabled-nameplate policy remains native-authoritative."
