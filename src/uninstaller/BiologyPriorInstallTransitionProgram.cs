@@ -48,7 +48,7 @@ internal static class BiologyPriorInstallTransitionProgram
 
             AssertReplacementPreflight(plan);
             report.Add("Replacement transition preflight: PASS");
-            report.Add("All receipt-owned Biology files were revalidated before mutation; shared dependencies remain preserve-only.");
+            report.Add("All receipt-owned Biology files and owned-namespace directory structure were revalidated before mutation; shared dependencies remain preserve-only.");
 
             mutationStarted = true;
             result = BiologyUninstallExecutor.Execute(plan, new BiologyExecutionOptions { SkipRedmodRefresh = true });
@@ -87,7 +87,7 @@ internal static class BiologyPriorInstallTransitionProgram
             }
             else
             {
-                report.Add("Mutation began only after complete receipt/hash preflight. Exact execution details above define the bounded partial state; do not improvise cleanup.");
+                report.Add("Mutation began only after complete receipt/hash/owned-namespace preflight. Exact execution details above define the bounded partial state; do not improvise cleanup.");
             }
         }
         finally
@@ -165,18 +165,30 @@ internal static class BiologyPriorInstallTransitionProgram
     private static void AssertNoUntrackedOwnedNamespaceContent(BiologyUninstallPlan plan)
     {
         Dictionary<string, BiologyManifestFile> inventoried = new Dictionary<string, BiologyManifestFile>(StringComparer.OrdinalIgnoreCase);
-        foreach (BiologyManifestFile entry in plan.Manifest.files)
-        {
-            inventoried[BiologyUninstallPlanner.NormalizeRelativePath(entry.path)] = entry;
-        }
-        inventoried[BiologyUninstallPlanner.NormalizeRelativePath(BiologyUninstallPlanner.ManifestRelativePath)] = null;
-
+        HashSet<string> allowedDirectories = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         string[] roots = new[]
         {
             "mods\\Biology",
             "r6\\scripts\\CyberpunkRealism",
             "biology"
         };
+        foreach (string root in roots)
+        {
+            allowedDirectories.Add(BiologyUninstallPlanner.NormalizeRelativePath(root));
+        }
+
+        foreach (BiologyManifestFile entry in plan.Manifest.files)
+        {
+            string normalizedEntry = BiologyUninstallPlanner.NormalizeRelativePath(entry.path);
+            inventoried[normalizedEntry] = entry;
+            if (!string.Equals(entry.replacePolicy, BiologyUninstallPlanner.BiologyOwnedPolicy, StringComparison.Ordinal)) continue;
+            AddParentDirectories(normalizedEntry, allowedDirectories);
+        }
+        string receipt = BiologyUninstallPlanner.NormalizeRelativePath(BiologyUninstallPlanner.ManifestRelativePath);
+        inventoried[receipt] = null;
+        AddParentDirectories(receipt, allowedDirectories);
+
+        string rootPrefix = plan.GameRoot.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
         foreach (string relativeRoot in roots)
         {
             string fullRoot = BiologyUninstallPlanner.ResolveSafeChildPath(plan.GameRoot, relativeRoot);
@@ -198,16 +210,19 @@ internal static class BiologyPriorInstallTransitionProgram
                     {
                         throw new InvalidDataException("Replacement transition refuses reparse-point content inside Biology-owned namespace: " + entry.FullName);
                     }
+                    string relative = entry.FullName.Substring(rootPrefix.Length);
+                    string normalized = BiologyUninstallPlanner.NormalizeRelativePath(relative);
                     DirectoryInfo childDirectory = entry as DirectoryInfo;
                     if (childDirectory != null)
                     {
+                        if (!allowedDirectories.Contains(normalized))
+                        {
+                            throw new InvalidDataException("Replacement transition found untracked directory inside Biology-owned namespace: " + normalized);
+                        }
                         pending.Push(childDirectory);
                         continue;
                     }
 
-                    string rootPrefix = plan.GameRoot.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
-                    string relative = entry.FullName.Substring(rootPrefix.Length);
-                    string normalized = BiologyUninstallPlanner.NormalizeRelativePath(relative);
                     BiologyManifestFile manifestEntry;
                     if (!inventoried.TryGetValue(normalized, out manifestEntry))
                     {
@@ -219,6 +234,16 @@ internal static class BiologyPriorInstallTransitionProgram
                     }
                 }
             }
+        }
+    }
+
+    private static void AddParentDirectories(string normalizedPath, HashSet<string> allowedDirectories)
+    {
+        string parent = Path.GetDirectoryName(normalizedPath);
+        while (!string.IsNullOrEmpty(parent))
+        {
+            allowedDirectories.Add(BiologyUninstallPlanner.NormalizeRelativePath(parent));
+            parent = Path.GetDirectoryName(parent);
         }
     }
 
