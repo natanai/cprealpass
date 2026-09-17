@@ -104,6 +104,7 @@ try {
     $core = Get-Content -Raw -LiteralPath (Join-Path $project 'src\uninstaller\BiologyUninstallCore.cs')
     $program = Get-Content -Raw -LiteralPath (Join-Path $project 'src\uninstaller\BiologyUninstallerProgram.cs')
     $transitionSource = Get-Content -Raw -LiteralPath (Join-Path $project 'src\uninstaller\BiologyPriorInstallTransitionProgram.cs')
+    $packageBuilder = Get-Content -Raw -LiteralPath (Join-Path $project 'tools\Build-BiologyPackage.ps1')
     foreach ($needle in @(
         'generic-dependency-shared',
         'PreserveChangedBiologyOwned',
@@ -118,6 +119,28 @@ try {
     )) {
         if (-not ($core.Contains($needle))) { throw "Uninstaller core lost required safety contract: $needle" }
     }
+
+    # Root-level ownership authority is intentionally narrow. Derive every
+    # literal root Biology-owned payload currently emitted by the package builder
+    # and require that exact filename to be represented in the core allowlist.
+    # This makes future package-root additions fail CI until the deletion contract
+    # is reviewed deliberately instead of reproducing the W15.4 drift.
+    $emittedRootOwned = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+    foreach ($match in [regex]::Matches($packageBuilder,"(?m)^\s*Add-FileRecord\s+'(?<path>[^']+)'[^\r\n]*'biology-owned'\s*$")) {
+        $path = $match.Groups['path'].Value
+        if ($path -notmatch '[\\/]') { [void]$emittedRootOwned.Add($path) }
+    }
+    foreach ($match in [regex]::Matches($packageBuilder,"(?m)^\s*Copy-IntoPackage\s+\$[A-Za-z0-9_]+\s+'(?<path>[^']+)'[^\r\n]*'biology-owned'\s*$")) {
+        $path = $match.Groups['path'].Value
+        if ($path -notmatch '[\\/]') { [void]$emittedRootOwned.Add($path) }
+    }
+    $allowlistMatch = [regex]::Match($core,'(?s)BiologyOwnedRootFiles\s*=\s*new HashSet<string>\(StringComparer\.OrdinalIgnoreCase\)\s*\{(?<body>.*?)\};')
+    Assert-True $allowlistMatch.Success 'Could not resolve the Biology-owned root-file allowlist for package contract comparison.'
+    Assert-True ($emittedRootOwned.Count -ge 7) 'Package-builder root ownership scan found fewer intentional Biology-owned root files than expected.'
+    foreach ($path in @($emittedRootOwned | Sort-Object)) {
+        Assert-True ($allowlistMatch.Groups['body'].Value.Contains('"' + $path + '"')) "Package builder emits Biology-owned root file not accepted by uninstaller root allowlist: $path"
+    }
+
     foreach ($forbidden in @('red4ext/plugins/mod_settings/user.ini','BiologyPreferenceCleaner','RemovePreferences','preferenceSection','preferencePath')) {
         if ($core.Contains($forbidden) -or $program.Contains($forbidden)) { throw "Provider-specific preference residue remains in uninstaller: $forbidden" }
     }
@@ -228,7 +251,7 @@ try {
     $secondPreflightIndex = $candidate.IndexOf('=== COLLISION-SAFE INSTALL PREFLIGHT AFTER PRIOR-STATE TRANSITION ===',[StringComparison]::Ordinal)
     Assert-True ($buildIndex -ge 0 -and $buildIndex -lt $initialPreflightIndex -and $initialPreflightIndex -lt $transitionIndex -and $transitionIndex -lt $verifyIndex -and $verifyIndex -lt $secondPreflightIndex) 'Attended preparation no longer protects the prior candidate behind target build/preflight or residue verification.'
 
-    Write-Host 'PASS: player-facing Biology uninstaller and attended prior-install transition share the same schema-2/hash/path authority; exact current root files transition, arbitrary root claims, foreign owned-namespace directory structure, and changed Biology content fail before mutation, and shared dependencies remain preserved.'
+    Write-Host 'PASS: player-facing Biology uninstaller and attended prior-install transition share the same schema-2/hash/path authority; package-root ownership is CI-synchronized, exact current root files transition, arbitrary root claims, foreign owned-namespace directory structure, and changed Biology content fail before mutation, and shared dependencies remain preserved.'
 }
 finally {
     if (Test-Path -LiteralPath $work) { Remove-Item -LiteralPath $work -Recurse -Force }
