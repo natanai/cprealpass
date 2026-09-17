@@ -132,6 +132,8 @@ namespace BiologyUninstall
         };
         private static readonly HashSet<string> BiologyOwnedRootFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
+            "Install Biology.ps1",
+            "BiologyReleaseInstall.Core.ps1",
             "INSTALL.txt",
             "UNINSTALL.txt",
             "BIOLOGY-VERSION.txt",
