@@ -138,7 +138,11 @@ try {
     Assert-True $allowlistMatch.Success 'Could not resolve the Biology-owned root-file allowlist for package contract comparison.'
     Assert-True ($emittedRootOwned.Count -ge 7) 'Package-builder root ownership scan found fewer intentional Biology-owned root files than expected.'
     foreach ($path in @($emittedRootOwned | Sort-Object)) {
-        Assert-True ($allowlistMatch.Groups['body'].Value.Contains('"' + $path + '"')) "Package builder emits Biology-owned root file not accepted by uninstaller root allowlist: $path"
+        $literalAuthority = $allowlistMatch.Groups['body'].Value.Contains('"' + $path + '"')
+        $constantAuthority = $path -eq 'Uninstall Biology.exe' -and
+            $allowlistMatch.Groups['body'].Value.Contains('ExpectedBinary') -and
+            $core.Contains('ExpectedBinary = "Uninstall Biology.exe"')
+        Assert-True ($literalAuthority -or $constantAuthority) "Package builder emits Biology-owned root file not accepted by uninstaller root allowlist: $path"
     }
 
     foreach ($forbidden in @('red4ext/plugins/mod_settings/user.ini','BiologyPreferenceCleaner','RemovePreferences','preferenceSection','preferencePath')) {
