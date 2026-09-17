@@ -135,6 +135,8 @@ try {
         'BiologyUninstallPlanner.Build',
         'AssertReplacementPreflight',
         'AssertNoUntrackedOwnedNamespaceContent',
+        'allowedDirectories',
+        'untracked directory inside Biology-owned namespace',
         'BiologyUninstallExecutor.Execute',
         'SkipRedmodRefresh = true',
         'Game mutation started:'
@@ -175,6 +177,22 @@ try {
     Assert-True (Test-Path -LiteralPath $unexpected.manifest -PathType Leaf) 'Receipt was removed despite arbitrary root-file refusal.'
     Assert-True (Test-Path -LiteralPath (Join-Path $unexpected.root 'Install Biology.ps1') -PathType Leaf) 'Known Biology root file changed during failed arbitrary-root preflight.'
 
+    # Foreign directory structure under a Biology-owned namespace is also an
+    # ambiguity. Even an empty directory not implied by the receipt fails before
+    # any exact receipt-owned deletion begins.
+    $foreignDirectory = New-PriorInstallFixture (Join-Path $work 'transition-foreign-directory')
+    $foreignDirectoryPath = Join-Path $foreignDirectory.root 'mods\Biology\foreign-empty'
+    New-Item -ItemType Directory -Force -Path $foreignDirectoryPath | Out-Null
+    $foreignDirectoryReport = Join-Path $work 'transition-foreign-directory-report.txt'
+    $foreignDirectoryExit = Invoke-TransitionFixture $transition $foreignDirectory.root $foreignDirectoryReport
+    Assert-True ($foreignDirectoryExit -ne 0) 'Untracked empty directory inside Biology-owned namespace was accepted.'
+    $foreignDirectoryText = Get-Content -Raw -LiteralPath $foreignDirectoryReport
+    Assert-True ($foreignDirectoryText -match '(?m)^RESULT: FAIL-CLOSED\s*$') 'Untracked directory refusal did not fail closed.'
+    Assert-True ($foreignDirectoryText -match '(?im)^Game mutation started:\s*False\s*$') 'Untracked directory refusal began mutation.'
+    Assert-True (Test-Path -LiteralPath $foreignDirectoryPath -PathType Container) 'Untracked directory was removed despite preflight refusal.'
+    Assert-True (Test-Path -LiteralPath $foreignDirectory.manifest -PathType Leaf) 'Receipt was removed despite untracked directory refusal.'
+    Assert-True (Test-Path -LiteralPath (Join-Path $foreignDirectory.root 'BiologyReleaseInstall.Core.ps1') -PathType Leaf) 'Known Biology root file changed during failed directory preflight.'
+
     # A receipt-listed Biology-owned file whose bytes changed is preserved and
     # blocks the entire replacement transition before any game mutation begins.
     $changed = New-PriorInstallFixture (Join-Path $work 'transition-changed') -ChangeOwnedAfterReceipt
@@ -210,7 +228,7 @@ try {
     $secondPreflightIndex = $candidate.IndexOf('=== COLLISION-SAFE INSTALL PREFLIGHT AFTER PRIOR-STATE TRANSITION ===',[StringComparison]::Ordinal)
     Assert-True ($buildIndex -ge 0 -and $buildIndex -lt $initialPreflightIndex -and $initialPreflightIndex -lt $transitionIndex -and $transitionIndex -lt $verifyIndex -and $verifyIndex -lt $secondPreflightIndex) 'Attended preparation no longer protects the prior candidate behind target build/preflight or residue verification.'
 
-    Write-Host 'PASS: player-facing Biology uninstaller and attended prior-install transition share the same schema-2/hash/path authority; exact current root files transition, arbitrary root claims and changed Biology content fail before mutation, and shared dependencies remain preserved.'
+    Write-Host 'PASS: player-facing Biology uninstaller and attended prior-install transition share the same schema-2/hash/path authority; exact current root files transition, arbitrary root claims, foreign owned-namespace directory structure, and changed Biology content fail before mutation, and shared dependencies remain preserved.'
 }
 finally {
     if (Test-Path -LiteralPath $work) { Remove-Item -LiteralPath $work -Recurse -Force }
