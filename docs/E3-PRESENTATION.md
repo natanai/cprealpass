@@ -1,8 +1,8 @@
 # Biology E3-inspired presentation target
 
-Status: canonical visual target / W03.4 visual-completion contract
+Status: canonical visual target / W03.5 native-content-region contract
 Last updated: 2026-09-17
-Current worker: W03.4 / issue #40
+Current worker: W03.5 / issue #97 / parent issue #40
 
 ## Product decision
 
@@ -151,3 +151,71 @@ The next integrated attended run must show:
 - the nameplate has a visible compact identity frame, not only red text;
 - quest, minimap/navigation, weapon/ammo, hotkeys, prompt and activity surfaces visibly share the same compact chrome language;
 - E3 OFF removes Biology chrome and restores captured native crosshair/nameplate styling and native ambient range.
+
+
+## W03.5 — native HUD content regions
+
+T003 tested exact integrated source `67593bfbb12b4a6ebcec7042066d48b4f5fac427`.
+
+T003 preserved the W03.4 reticle/nameplate improvements but exposed a new coordinate-space boundary:
+
+- the old 112 x 112 two-corner reticle artifact is absent — KEEP;
+- ambient ordinary-focus names still appear — KEEP;
+- the compact segmented nameplate frame is visibly live — KEEP;
+- `WEAPON // AMMO` chrome is detached from the actual lower-right weapon/ammo content and floats nearer lower-center — FAIL;
+- the right-hand quest/objective stack remains essentially native/current — FAIL.
+
+The failure is not evidence that the W03.4 hooks are dead. It is evidence that a controller root is not necessarily the authored visual content region used by the native widget resource.
+
+### Current 2.31 quest content authority
+
+The current quest tracker script exposes semantic editable regions rather than only the controller root:
+
+- `m_questTrackerContainer : inkWidgetRef` — the native tracker container whose visibility is controlled by `UpdateTrackerData()`;
+- `m_QuestTitle : inkTextRef` — the native visible quest title;
+- `m_ObjectiveContainer : inkCompoundRef` — the native compound where objective rows are removed, enumerated and spawned.
+
+W03.5 therefore resolves the Biology quest host from `m_questTrackerContainer`, with `m_ObjectiveContainer` as a fail-closed semantic fallback. Chrome is created as a child of that region. Biology no longer composes quest chrome against `QuestTrackerGameController.GetRootCompoundWidget()`.
+
+The native quest title is tinted through its own `m_QuestTitle` widget while E3 is ON and its captured native tint is restored when E3 is OFF. Journal data, objective spawning/state, visibility, timers and animations remain native.
+
+### Current 2.31 weapon/ammo content authority
+
+The current weapon roster script exposes:
+
+- `m_onFootContainer : inkWidgetRef` — the semantic on-foot weapon roster region;
+- `m_weaponAmmoWrapper : inkWidgetRef` — the native ammo subregion;
+- `m_weaponName : inkTextRef`;
+- `m_weaponCurrentAmmo : inkTextRef`;
+- `m_weaponTotalAmmo : inkTextRef`.
+
+The native controller itself applies effects/visibility to `m_onFootContainer` and updates the ammo wrapper/text from weapon state. W03.5 therefore mounts Biology chrome inside `m_onFootContainer`, falling back only to `m_weaponAmmoWrapper` if the broader semantic host cannot be resolved. It no longer mounts weapon chrome at the controller root.
+
+The native weapon name/current-ammo/total-ammo tints are captured, changed to the shared Biology red while E3 is ON, and restored on E3 OFF. Native fold/unfold, weapon data, ammo counts, vehicle state, scanner/focus folding and animation remain authoritative.
+
+### No guessed screen-space compensation
+
+W03.5 does not attempt to repair T003 by adding a screen translation that merely happens to move the label toward the screenshot's lower-right corner.
+
+The presentation child is placed inside the same semantic native content host as the visible data. This means native authored position, visibility, fold/unfold and animation establish the coordinate system.
+
+### Bounded live geometry evidence
+
+Quest and weapon adapters now emit `[Biology:E3]` region evidence on initial E3 state and later ON/OFF transitions. The trace records:
+
+- semantic host selected;
+- whether host resolution succeeded;
+- whether chrome exists;
+- E3 enabled state;
+- native host size;
+- native host translation;
+- native host margins;
+- Biology chrome size;
+- Biology chrome translation;
+- Biology chrome margins.
+
+This is diagnostic evidence, not layout authority. It exists so a future attended session can distinguish a bad native-host choice from a hook that never ran or a mounted child that was clipped.
+
+### W03.5 acceptance
+
+Parent-integrated attended evidence must show the `WEAPON // AMMO` treatment traveling with the actual lower-right native weapon region and the quest treatment visibly composed with the right-side native tracker. The prior reticle removal and framed ambient nameplate are regressions if lost. Native modern scanner/quickhack remains a hard preserve.

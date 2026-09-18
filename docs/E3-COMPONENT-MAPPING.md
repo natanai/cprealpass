@@ -1,7 +1,7 @@
 # Biology E3 component mapping
 
-Status: W03.4 live-presentation design-archaeology contract  
-Last updated: 2026-09-17  
+Status: W03.5 native-content-region design-archaeology contract  
+Last updated: 2026-09-18  
 Issues: #78 / #40
 
 ## Evidence boundary
@@ -95,3 +95,19 @@ T002 on exact integrated source `3dc049ee99979f924978b671ddbbbda06b472d1b` chang
 ### W03.4 acceptance
 
 The parent-integrated E3 ON capture should show compact, repeated chrome rather than opaque slabs; the ambient nameplate should have a real framed identity treatment; the two-corner reticle artifact must be absent; and the native scanner/quickhack UI must remain unchanged. E3 OFF must hide Biology-owned chrome and restore captured native tint/range state.
+
+
+## W03.5 native-content-region correction
+
+T003 / exact integrated source `67593bfbb12b4a6ebcec7042066d48b4f5fac427` proved that a current HUD controller root can execute Biology code while still using a different authored coordinate space than its visible content.
+
+| Responsibility | T003 evidence | Current 2.31 content region | W03.5 decision |
+|---|---|---|---|
+| Weapon/ammo | `WEAPON // AMMO` chrome floats near lower-center while native weapon/ammo remains lower-right. | `WeaponRosterGameController.m_onFootContainer` is the semantic on-foot roster region; `m_weaponAmmoWrapper` is the ammo fallback/subregion; native text is `m_weaponName`, `m_weaponCurrentAmmo`, `m_weaponTotalAmmo`. | Mount chrome inside `m_onFootContainer` (fallback `m_weaponAmmoWrapper`), tint/restore the native weapon/ammo text, and inherit native fold/visibility/animation coordinates. No global offset. |
+| Quest/objectives | Right-hand `FOOL ON THE HILL` stack remains essentially current despite the quest controller hook. | `QuestTrackerGameController.m_questTrackerContainer` owns tracker visibility; `m_ObjectiveContainer` owns objective rows; `m_QuestTitle` is the native title. | Mount chrome inside `m_questTrackerContainer` (fallback `m_ObjectiveContainer`), tint/restore `m_QuestTitle`, keep Journal/objective lifecycle native. |
+| Geometry evidence | Hook traces alone cannot distinguish root/content mismatch. | Native host `GetSize()`, `GetTranslation()`, and `GetMargin()` are available on the resolved widgets. | Emit bounded `[Biology:E3]` host/chrome geometry only on initial state and ON/OFF changes. Treat it as evidence, never as a source for hard-coded screen offsets. |
+| Reticle | Old two-corner artifact absent. | Native `gameuiCrosshairBaseGameController` path from W03.4. | **KEEP.** Do not recreate `CRBiologyE3FocusFrame`. |
+| Ambient nameplate | `NC RESIDENT` plus segmented compact frame visibly live. | W03.3/W03.4 native nameplate projection/visibility seams. | **KEEP.** Do not change ambient-name lifecycle or compact frame in W03.5. |
+| Scanner/quickhack | Must remain modern/current. | Native scanner/quickhack controllers/resources. | **KEEP native.** No scanner presentation hook. |
+
+The native content region, not the screenshot's absolute coordinates, is the positioning authority.
