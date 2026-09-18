@@ -51,7 +51,7 @@ private final func CRResolveBiologyE3WeaponHost() -> ref<inkCompoundWidget> {
   }
 
   this.crBiologyE3WeaponHostName = "UNRESOLVED";
-  return NULL;
+  return host;
 }
 
 @addMethod(WeaponRosterGameController)
@@ -134,7 +134,9 @@ private final func CRRefreshBiologyE3WeaponFrame() -> Void {
     }
   }
 
-  if !this.crBiologyE3WeaponStateKnown || this.crBiologyE3WeaponLastEnabled != enabled {
+  if !this.crBiologyE3WeaponStateKnown
+    || (this.crBiologyE3WeaponLastEnabled && !enabled)
+    || (!this.crBiologyE3WeaponLastEnabled && enabled) {
     CRBiologyE3Primitives.TraceMountedRegion(
       "WeaponRoster",
       this.crBiologyE3WeaponHostName,

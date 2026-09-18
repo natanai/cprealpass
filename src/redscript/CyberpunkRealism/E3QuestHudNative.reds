@@ -40,7 +40,7 @@ private final func CRResolveBiologyE3QuestHost() -> ref<inkCompoundWidget> {
   }
 
   this.crBiologyE3QuestHostName = "UNRESOLVED";
-  return NULL;
+  return host;
 }
 
 @addMethod(QuestTrackerGameController)
@@ -91,7 +91,9 @@ private final func CRRefreshBiologyE3QuestFrame() -> Void {
     }
   }
 
-  if !this.crBiologyE3QuestStateKnown || this.crBiologyE3QuestLastEnabled != enabled {
+  if !this.crBiologyE3QuestStateKnown
+    || (this.crBiologyE3QuestLastEnabled && !enabled)
+    || (!this.crBiologyE3QuestLastEnabled && enabled) {
     CRBiologyE3Primitives.TraceMountedRegion(
       "QuestTracker",
       this.crBiologyE3QuestHostName,
