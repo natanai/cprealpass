@@ -33,6 +33,34 @@ public final func CRBiologyDetailSurfaceActive() -> Bool {
   return this.crBiologyDetailSurfaceActive;
 }
 
+// The inventory controller root owns visibility/opacity, but T002 proves that root is
+// not the authored content rectangle: it resolves at the screen origin. Stock
+// Cyberware item content is laid out by m_virtualGridContainer. Use that native child
+// as the geometry donor for Biology rather than inventing a screen-space offset.
+@addMethod(RipperdocInventoryController)
+public final func CRApplyBiologyDetailRegionLayout(target: ref<inkWidget>) -> Bool {
+  if !IsDefined(target) {
+    return false;
+  }
+
+  let nativeRegion: ref<inkWidget> = inkVirtualCompoundRef.Get(this.m_virtualGridContainer);
+  if !IsDefined(nativeRegion) {
+    return false;
+  }
+
+  target.SetAnchor(nativeRegion.GetAnchor());
+  target.SetAnchorPoint(nativeRegion.GetAnchorPoint());
+  target.SetHAlign(nativeRegion.GetHAlign());
+  target.SetVAlign(nativeRegion.GetVAlign());
+  target.SetMargin(nativeRegion.GetMargin());
+  target.SetPadding(nativeRegion.GetPadding());
+  target.SetSizeRule(nativeRegion.GetSizeRule());
+  target.SetSizeCoefficient(nativeRegion.GetSizeCoefficient());
+  target.SetSize(nativeRegion.GetSize());
+  target.SetTranslation(nativeRegion.GetTranslation());
+  return true;
+}
+
 @addMethod(RipperDocGameController)
 private final func CRBiologyNativeDetailReady() -> Bool {
   // SpawnMinigrids is asynchronous. Stock Cyberware does not finish its native
