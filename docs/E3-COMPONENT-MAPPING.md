@@ -1,8 +1,17 @@
 # Biology E3 component mapping
 
-Status: W03.6 quest/hotkey native-content-region design-archaeology contract  
+Status: **W03.7 engineering-reference mapping; historical W03.2-W03.6 detail retained below**  
 Last updated: 2026-09-18  
-Issues: #78 / #40
+Issues: #106 / #40
+
+## W03.7 authority notice
+
+Project E3 is now an **engineering reference implementation**, not merely a visual target. The durable redistribution-safe mechanism/dependency/resource mapping is:
+
+- [Project E3 engineering-reference archaeology](E3-REFERENCE-ARCHAEOLOGY.md)
+- [machine-readable derived record](reference-mods/project-e3-hud-2.31-p2.json)
+
+Those W03.7 records supersede the older assumption in this file that the ~33 MB archive can be treated as generic historical assets while Biology reproduces the look with runtime INK. The older attended chronology below remains useful for explaining why each W03 fix was made, but W03.7 is authoritative for what Project E3 actually owns through archive resources, redscript and TweakXL.
 
 ## Evidence boundary
 

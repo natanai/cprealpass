@@ -1,8 +1,14 @@
 # Biology E3-inspired presentation target
 
-Status: canonical visual target / W03.6 quest/hotkey native-content-region contract
+Status: canonical visual target / W03.7 engineering-reference reconciliation
 Last updated: 2026-09-17
-Current worker: W03.6 / issue #102 / parent issue #40
+Current worker: W03.7 / issue #106 / parent issue #40
+
+## W03.7 engineering-reference rule
+
+The exact Project E3 2.31.p2 private reference has now been traced as a layered implementation: authored archive/INK resources + redscript controller logic + TweakXL record policy, with Mod Settings only as an optional settings surface.
+
+See `E3-REFERENCE-ARCHAEOLOGY.md` for the durable mapping. W03.7 does **not** change the product boundary to “copy Project E3.” It uses Project E3 to identify the real responsibilities and then chooses the smallest current Cyberpunk 2.31 / Biology-owned seam. In particular, W03.5/W03.6 native content-region binding remains intentional, while Project E3 archive bytes/scripts/tweaks remain forbidden from the player artifact.
 
 ## Product decision
 

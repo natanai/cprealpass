@@ -1,0 +1,303 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "name": "Project E3 - HUD",
+    "version": "2.31.p2",
+    "provenance": "Nexus Mods 8800; author Virtuoso75; exact private reference identities are pinned by config/realpass-e3.json",
+    "selectedIdentities": [
+      {
+        "path": "archive/pc/mod/basegame_3e_demo_hud.archive",
+        "sha256": "776556B6913C3B6B2FE1E13DA0964732FA917A130EA9C2A43E34AD4F5FEC03B6"
+      },
+      {
+        "path": "r6/scripts/Project E3 - HUD/core/baseControllers/hudGameController.reds",
+        "sha256": "7823210FFB378E358B4787FD68FB9C0D69110A0E135838FCFBFCFCACAA95308D"
+      },
+      {
+        "path": "r6/scripts/Project E3 - HUD/cyberpunk/activityLog/activityLogControllers.reds",
+        "sha256": "25D501841CF5A6C982043517FC52062C1195F89BD14E782AC83A541B3B6E8059"
+      },
+      {
+        "path": "r6/scripts/Project E3 - HUD/cyberpunk/interactions/interactionsUI.reds",
+        "sha256": "0D8825508F8F7E0356CE6CD0B81F65A756B7CAE05726A87F5A8301A7EF240FA9"
+      },
+      {
+        "path": "r6/scripts/Project E3 - HUD/cyberpunk/interactions/dialogUI.reds",
+        "sha256": "71A9BE499C1FED03EA18A7148F721ACA768DA47C1F624C6F2107E3B21EA24AE5"
+      },
+      {
+        "path": "r6/scripts/Project E3 - HUD/cyberpunk/quests/quest_tracker.reds",
+        "sha256": "EA1DA91C3584FC182A91730DF9C5AB0841672C17A01E2F91A34571B1BF63DF43"
+      },
+      {
+        "path": "r6/scripts/Project E3 - HUD/cyberpunk/weapons/weaponRoster.reds",
+        "sha256": "E73E7EB7539652EB9F0D0E418BDA736F62FAC0DBAD885F8769FAA5DB8CF7C89C"
+      },
+      {
+        "path": "r6/scripts/Project E3 - HUD/cyberpunk/widgets/dpad_hint/dpad_hint.reds",
+        "sha256": "E29D8E6198FBB8972E19E617F6C7B0DE31EB4D02FBD378B94B04A7BED8DB282D"
+      },
+      {
+        "path": "r6/scripts/Project E3 - HUD/cyberpunk/widgets/compass/compassController.reds",
+        "sha256": "5EA730F5C30583D46C5F8906EC6A8476DCCF761813C07B95DF71934D8EE20851"
+      },
+      {
+        "path": "r6/scripts/Project E3 - HUD/cyberpunk/widgets/healthbar/nameplateVisuals.reds",
+        "sha256": "C7EE493781D7DE7D50C61219A9EBD3702F2B414349E86565AFF2C4B833B26BE4"
+      },
+      {
+        "path": "r6/scripts/Project E3 - HUD/cyberpunk/widgets/healthbar/npcNamePlate.reds",
+        "sha256": "29D8051DF451DC81938ACEEF132C6F691BF964191B6A1398DEB67A0511BCA063"
+      },
+      {
+        "path": "r6/tweaks/Project E3 - HUD/ui/npc/nameplate.yaml",
+        "sha256": "55DA1D2AD46E9DF0D3B882194E9694ED4CF1307D552FDD85C958A03906CF38E7"
+      },
+      {
+        "path": "r6/tweaks/Project E3 - HUD/ui/choice_caption/choice_ui_icon.yaml",
+        "sha256": "DEA95F5F67CC5F1EACBBD2D6C6565912E4478632AA769142AAB14D0B3816288B"
+      },
+      {
+        "path": "r6/tweaks/Project E3 - HUD/ui/mappin_ui/WorldMappinUIProfile.Quest.yaml",
+        "sha256": "FBB1633A92EB7FA73D56015312BD4EBB84D846BCB438849E3A0D4E59799017B8"
+      }
+    ]
+  },
+  "dependencies": [
+    {
+      "name": "redscript",
+      "role": "Runtime hook/additive/replace mechanism for Project E3 controller behavior.",
+      "evidence": "The exact private 2.31.p2 reference contains @wrapMethod/@replaceMethod/@addMethod/@addField sources across HUD, quest, interaction, mappin, crosshair, weapon, hotkey and nameplate controllers."
+    },
+    {
+      "name": "TweakXL",
+      "role": "Loads Project E3 YAML TweakDB record changes for nameplate policy, world/minimap mappin definitions and profiles, clamping, and interaction choice-icon mappings.",
+      "evidence": "The exact reference contains r6/tweaks/Project E3 - HUD/*.yaml records including UINameplate, MappinClampingSettings, WorldMappinUIProfile and ChoiceIcons mappings; current Project E3 distribution identifies TweakXL as required."
+    },
+    {
+      "name": "Cyberpunk archive resource override",
+      "role": "Supplies the authored INK/resources that give Project E3 its actual widget hierarchy, styling, atlases, animations and related HUD assets.",
+      "evidence": "Pinned basegame_3e_demo_hud.archive SHA-256 776556...03B6 is 33,013,760 bytes. Historical Biology archive round-trip evidence counted 370 resources; 34 scanner/quickhack/focus resources could be omitted while 336 unrelated E3 resources stayed byte-identical."
+    },
+    {
+      "name": "Mod Settings",
+      "role": "Optional settings-editor surface for ProjectE3HUDSettings only; not required for the underlying HUD hooks/resources.",
+      "evidence": "Exact reference ModSettings.reds consists of ModSettings runtime properties for compass/nameplate/mappin/crosshair options; current Project E3 distribution describes Mod Settings as optional."
+    }
+  ],
+  "mappings": [
+    {
+      "referenceArea": "HUD base fade/context transition",
+      "mechanism": "redscript-hook-replace",
+      "referencePathIdentity": "core/baseControllers/hudGameController.reds + SHA-256 7823210F...",
+      "nativeContract": {
+        "gameVersion": "2.31",
+        "controllerOrSystem": "inkHUDGameController",
+        "widgetOrResource": "native controller root/context-change animation lifecycle"
+      },
+      "biologyOwnedSeam": "Keep native global HUD fade/context logic. Biology presentation stays component-local rather than replacing the base HUD controller.",
+      "validation": "Static policy forbids a Biology inkHUDGameController replacement; exact compile/current 2.31 probe validates component seams instead."
+    },
+    {
+      "referenceArea": "Quest tracker and objective rows",
+      "mechanism": "archive-resource-replacement",
+      "referencePathIdentity": "basegame_3e_demo_hud.archive + quest_tracker.reds SHA-256 EA1DA91C...",
+      "nativeContract": {
+        "gameVersion": "2.31",
+        "controllerOrSystem": "QuestTrackerGameController + QuestTrackerObjectiveLogicController",
+        "widgetOrResource": "m_questTrackerContainer, m_QuestTitle, m_ObjectiveContainer, m_objectiveTitle, m_trackingIcon, m_trackingFrame"
+      },
+      "biologyOwnedSeam": "W03.6 keeps the native tracker/objective lifecycle and styles the proven native content host/rows. It intentionally does not reproduce Project E3's archive-authored OptionalTracker hierarchy or replace UpdateTrackerData.",
+      "validation": "W03.6 exact 2.31 compile/native probe passed on f186c557...; parent T005 must validate the composed right-hand tracker."
+    },
+    {
+      "referenceArea": "Weapon/ammo HUD",
+      "mechanism": "archive-resource-replacement",
+      "referencePathIdentity": "basegame_3e_demo_hud.archive + weaponRoster.reds SHA-256 E73E7EB7...",
+      "nativeContract": {
+        "gameVersion": "2.31",
+        "controllerOrSystem": "WeaponRosterGameController",
+        "widgetOrResource": "m_onFootContainer, m_weaponAmmoWrapper, m_weaponName, m_weaponCurrentAmmo, m_weaponTotalAmmo"
+      },
+      "biologyOwnedSeam": "Preserve W03.5 binding to the native on-foot content region and native weapon/ammo text. Do not copy Project E3's custom decorator hierarchy or replace SetRosterSlotData/GetAmmoText.",
+      "validation": "T004 proved the detached lower-center chrome is gone and weapon presentation follows the lower-right native region; exact 2.31 probe confirms fields."
+    },
+    {
+      "referenceArea": "D-pad / quickslots",
+      "mechanism": "archive-resource-replacement",
+      "referencePathIdentity": "basegame_3e_demo_hud.archive + dpad_hint.reds SHA-256 E29D8E61...",
+      "nativeContract": {
+        "gameVersion": "2.31",
+        "controllerOrSystem": "HotkeysWidgetController",
+        "widgetOrResource": "m_dpadHintsPanel plus separate phone/car/radio sibling slots"
+      },
+      "biologyOwnedSeam": "W03.6 mounts Biology chrome only in m_dpadHintsPanel and leaves phone/car/radio siblings native. It does not depend on Project E3's archive-authored newPhoneSlot child.",
+      "validation": "W03.6 exact compile/probe confirms m_dpadHintsPanel and native spawn usage; T005 must verify overlap is gone."
+    },
+    {
+      "referenceArea": "Ambient NPC nameplates",
+      "mechanism": "redscript-hook-replace",
+      "referencePathIdentity": "nameplateVisuals.reds SHA-256 C7EE4937... + npcNamePlate.reds SHA-256 29D8051D...",
+      "nativeContract": {
+        "gameVersion": "2.31",
+        "controllerOrSystem": "NameplateVisualsLogicController + NpcNameplateGameController",
+        "widgetOrResource": "m_nameTextMain, m_nameFrame, projected root and native range fields"
+      },
+      "biologyOwnedSeam": "Preserve Biology's narrower native-gated ambient identity lifecycle and compact frame. Do not import Project E3 level/health presentation, derived archetype/affiliation fallback, or blanket visibility behavior.",
+      "validation": "T003/T004 show ambient framed names live; exact 2.31 probes validate native nameplate lifecycle. Police/combat scan-enrichment remains an explicit #40 follow-up."
+    },
+    {
+      "referenceArea": "Nameplate display policy",
+      "mechanism": "tweakxl",
+      "referencePathIdentity": "ui/npc/nameplate.yaml SHA-256 55DA1D2A... + ui/npc/schema.yaml SHA-256 CBBEF6E3...",
+      "nativeContract": {
+        "gameVersion": "2.31",
+        "controllerOrSystem": "UINameplate TweakDB records + Character_Record.UiNameplate()",
+        "widgetOrResource": "Default/Crowd/Quest/Combat/MpPlayer nameplate policy records"
+      },
+      "biologyOwnedSeam": "Do not adopt Project E3's blanket Always policy or enabling of the Disabled record. Biology preserves native quest/hidden/alternative/record permission gates and only fills a public ambient identity when allowed.",
+      "validation": "Owned-nameplate tests enforce hidden/alternative/quest/disabled policy; attended civilian/police focus remains required."
+    },
+    {
+      "referenceArea": "Modern scanner / quickhack",
+      "mechanism": "archive-resource-replacement",
+      "referencePathIdentity": "basegame_3e_demo_hud.archive + scanner_border.reds SHA-256 2544861F...",
+      "nativeContract": {
+        "gameVersion": "2.31",
+        "controllerOrSystem": "native scanner/quickhack/focus controllers",
+        "widgetOrResource": "native scanning/scandetails/quickhacks/focus resources"
+      },
+      "biologyOwnedSeam": "No Biology scanner resource or scanner-controller replacement. Let current 2.31 scanner/quickhack resources and behavior remain authoritative.",
+      "validation": "Historical archive round-trip identified 34 scanner/quickhack/focus overrides and native fallback paths; T004 shows the modern scanner still renders. Tests forbid scanner-family hooks/resources."
+    },
+    {
+      "referenceArea": "Minimap / stealth mappins",
+      "mechanism": "redscript-hook-replace",
+      "referencePathIdentity": "minimapMappins.reds SHA-256 FD5CA045... + WorldMappinUIProfile/MappinClamping YAMLs",
+      "nativeContract": {
+        "gameVersion": "2.31",
+        "controllerOrSystem": "MinimapContainerController + BaseMinimapMappinController + MinimapStealthMappinController",
+        "widgetOrResource": "native minimap root/mappin profile/clamping records"
+      },
+      "biologyOwnedSeam": "Keep current MinimapContainerController presentation and native mappin semantics. Do not import Project E3's replacement clamping logic or TweakXL profile behavior unless a separate gameplay requirement is accepted.",
+      "validation": "Current 2.31 minimap controller probe passes; attended navigation overlap remains parent-owned."
+    },
+    {
+      "referenceArea": "Top compass / navigation ribbon",
+      "mechanism": "archive-resource-replacement",
+      "referencePathIdentity": "compassController.reds SHA-256 5EA730F5... + compass helper sources + basegame_3e_demo_hud.archive",
+      "nativeContract": {
+        "gameVersion": "2.31",
+        "controllerOrSystem": "IronsightGameController + CompassController (historical/custom compass host); MinimapContainerController is current persistent minimap authority",
+        "widgetOrResource": "Project E3 authored Pusula/Fluff hierarchy and compass quest/POI widgets"
+      },
+      "biologyOwnedSeam": "Do not resurrect Project E3's custom Ironsight-mounted compass merely for fidelity. Biology uses current persistent minimap/navigation authority unless a future product decision explicitly requires a separate top compass.",
+      "validation": "Private source proves Project E3 scripts require authored Pusula/Fluff children and external compass widgets; current 2.31 source separately confirms MinimapContainerController."
+    },
+    {
+      "referenceArea": "World quest/interaction mappins",
+      "mechanism": "tweakxl",
+      "referencePathIdentity": "Mappins.*.yaml + WorldMappinUIProfile.*.yaml + questMappins.reds SHA-256 CE07A291...",
+      "nativeContract": {
+        "gameVersion": "2.31",
+        "controllerOrSystem": "QuestMappinController / native mappin records",
+        "widgetOrResource": "native MappinDefinition, MappinClampingSettings and WorldMappinUIProfile records"
+      },
+      "biologyOwnedSeam": "No current Biology ownership. Keep native records and mappin behavior; Project E3's special clamping/arrows/name-distance system is reference-only.",
+      "validation": "No Biology TweakXL dependency; release policy/tests continue to exclude Project E3 tweaks."
+    },
+    {
+      "referenceArea": "Interaction prompts",
+      "mechanism": "archive-resource-replacement",
+      "referencePathIdentity": "interactionsUI.reds SHA-256 0D882550... + basegame_3e_demo_hud.archive",
+      "nativeContract": {
+        "gameVersion": "2.31",
+        "controllerOrSystem": "interactionWidgetGameController",
+        "widgetOrResource": "native interaction choice data/progress lifecycle"
+      },
+      "biologyOwnedSeam": "Keep native choice/input/update behavior and restrict Biology to presentation-only treatment. Do not copy Project E3's full OnInitialize/OnUpdateInteraction replacements or custom hierarchy assumptions.",
+      "validation": "Owned presentation tests forbid replace-method/input takeover; current 2.31 OnUpdateInteraction probe passes."
+    },
+    {
+      "referenceArea": "Dialogue choices and caption icons",
+      "mechanism": "tweakxl",
+      "referencePathIdentity": "dialogUI.reds SHA-256 71A9BE49... + choice_ui_icon.yaml SHA-256 DEA95F5F...",
+      "nativeContract": {
+        "gameVersion": "2.31",
+        "controllerOrSystem": "DialogHubLogicController + DialogChoiceLogicController + CaptionImageIconsLogicController",
+        "widgetOrResource": "native dialogue choice/caption lifecycle and ChoiceIcons records"
+      },
+      "biologyOwnedSeam": "Dialogue redesign remains outside the accepted #40 ordinary-HUD scope. Keep native dialogue/caption behavior and do not add TweakXL solely for E3 icon mappings.",
+      "validation": "Production dependency graph excludes TweakXL; no Biology dialogue replacement is registered."
+    },
+    {
+      "referenceArea": "Activity log",
+      "mechanism": "redscript-hook-replace",
+      "referencePathIdentity": "activityLogControllers.reds SHA-256 25D50184...",
+      "nativeContract": {
+        "gameVersion": "2.31",
+        "controllerOrSystem": "activityLogEntryLogicController",
+        "widgetOrResource": "native root text plus queue/entry lifecycle"
+      },
+      "biologyOwnedSeam": "Keep Biology's reversible text styling only. Native queue/timing/animation remain authoritative rather than copying Project E3's replacement animation controllers.",
+      "validation": "Current activity-log SetText/OnInitialize probe passes; owned tests forbid replacement queue/animation ownership."
+    },
+    {
+      "referenceArea": "Tech-Hex / ordinary crosshair",
+      "mechanism": "redscript-hook-replace",
+      "referencePathIdentity": "crosshairController_Tech_Hex.reds SHA-256 70447A4E...",
+      "nativeContract": {
+        "gameVersion": "2.31",
+        "controllerOrSystem": "gameuiCrosshairBaseGameController + CrosshairGameController_Tech_Hex",
+        "widgetOrResource": "native crosshair root/state lifecycle"
+      },
+      "biologyOwnedSeam": "Preserve W03.4 removal of Biology replacement reticle geometry. Only reversible native crosshair tint remains; native Scanning state hides the ordinary crosshair root.",
+      "validation": "T003/T004 show the old two-corner artifact absent; exact 2.31 probe confirms OnCrosshairStateChange/OnState_Scanning."
+    },
+    {
+      "referenceArea": "Player health/RAM lower-left HUD",
+      "mechanism": "archive-resource-replacement",
+      "referencePathIdentity": "Player/healthbar.reds SHA-256 C5D41588... + basegame_3e_demo_hud.archive",
+      "nativeContract": {
+        "gameVersion": "2.31",
+        "controllerOrSystem": "healthbarWidgetGameController",
+        "widgetOrResource": "native player health/RAM widget tree"
+      },
+      "biologyOwnedSeam": "Keep Biology's product-specific lower-left presentation and independent actor-healthbar policy. Do not copy Project E3 percentage-health/RAM-fluff behavior simply for visual fidelity.",
+      "validation": "Historical archive evidence confirms Project E3 playerhealthbar.inkwidget was retained independently of scanner removal; Biology exact compile/presentation tests cover its own lower-left seam."
+    },
+    {
+      "referenceArea": "Phone waveform / holocall presentation",
+      "mechanism": "redscript-hook-replace",
+      "referencePathIdentity": "phoneWaveformGameController.reds SHA-256 664018C7...",
+      "nativeContract": {
+        "gameVersion": "2.31",
+        "controllerOrSystem": "PhoneWaveformGameController",
+        "widgetOrResource": "native phone waveform list/controller"
+      },
+      "biologyOwnedSeam": "Out of #40 ordinary first-person scope; keep native.",
+      "validation": "No Biology phone waveform hook is registered."
+    }
+  ],
+  "opaqueAreas": [
+    {
+      "pathIdentity": "archive/pc/mod/basegame_3e_demo_hud.archive + SHA-256 776556B6913C3B6B2FE1E13DA0964732FA917A130EA9C2A43E34AD4F5FEC03B6",
+      "reason": "The exact private archive is available and historically round-tripped, but the current W03.7 private ZIP does not itself carry a complete decoded 370-resource inventory/widget ancestry. Historical safe evidence proves 370 total resources, 34 scanner-family exclusions and selected retained HUD resource paths.",
+      "nextEvidence": "Consume the #105/W16.1 private reference bundle/archive inventory when produced; if the container remains opaque, use an already-available safe WolvenKit inventory locally and commit only derived paths/hashes."
+    },
+    {
+      "pathIdentity": "Project E3 dependency package/readme metadata",
+      "reason": "The exact HUD payload has no bundled dependency README/package metadata beyond its source/tweak structure; dependency role is derived from the payload plus public Project E3 distribution metadata.",
+      "nextEvidence": "Use #105 bundle provenance notes for any locally stored dependency packages; do not copy framework binaries into Biology."
+    }
+  ],
+  "conclusions": [
+    "Project E3 2.31.p2 is a three-layer implementation: redscript controller logic, TweakXL/TweakDB policy records, and a large authored archive/resource layer. Its visual fidelity is not primarily explained by REDscript-created rectangles.",
+    "The Project E3 archive is architecturally material. Historical Biology round-trip evidence proves 370 resources; removing only 34 scanner/quickhack/focus resources preserved 336 other E3 resources byte-for-byte and kept key HUD/nameplate/minimap/interaction resources.",
+    "Biology intentionally does not copy that architecture wholesale. Whole stock-resource replacement and broad replaceMethod/TweakXL policy changes would expand patch/conflict surface compared with the narrower current native-content-region wrappers.",
+    "W03.5/W03.6 weapon, quest and hotkey semantic-host work remains architecturally sound: it uses current 2.31 native authority rather than Project E3's custom archive hierarchy.",
+    "Biology's ambient nameplate policy intentionally differs from Project E3: native hidden/alternative/quest/disabled policy remains authoritative, and actor level/health presentation is not imported.",
+    "Modern scanner/quickhack preservation is an explicit divergence from Project E3 and remains a hard boundary.",
+    "Future visual-fidelity work may use Biology-owned REDmod archive resources where a static authored INK resource is demonstrably safer/cleaner, but Project E3 resource bytes and implementation bodies must never become a runtime dependency or redistribution payload."
+  ]
+}

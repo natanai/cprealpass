@@ -1,0 +1,101 @@
+$ErrorActionPreference = 'Stop'
+. "$PSScriptRoot\..\tools\Common.ps1"
+$project = Get-ProjectRoot
+$script:checks = 0
+
+function Check($condition,[string]$message) {
+    if (-not $condition) { throw $message }
+    $script:checks++
+}
+function ReadText([string]$relative) {
+    $path = Join-Path $project $relative
+    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Missing W03.7 archaeology contract: $relative" }
+    Get-Content -Raw -LiteralPath $path
+}
+
+$recordPath = Join-Path $project 'docs/reference-mods/project-e3-hud-2.31-p2.json'
+$record = Get-Content -Raw -LiteralPath $recordPath | ConvertFrom-Json -Depth 40
+$config = Get-Content -Raw -LiteralPath (Join-Path $project 'config/realpass-e3.json') | ConvertFrom-Json -Depth 40
+$archaeology = ReadText 'docs/E3-REFERENCE-ARCHAEOLOGY.md'
+$mapping = ReadText 'docs/E3-COMPONENT-MAPPING.md'
+$presentation = ReadText 'docs/E3-PRESENTATION.md'
+$distribution = ReadText 'manifest/distribution.json'
+
+Check ($record.schemaVersion -eq 1) 'Project E3 derived record schema version is not 1.'
+Check ($record.source.name -eq 'Project E3 - HUD' -and $record.source.version -eq '2.31.p2') 'Project E3 derived source identity/version drifted.'
+Check (-not (($record | ConvertTo-Json -Depth 40) -match '(?i)C:\\Games|/mnt/data|Cyberpunk-ReferenceMods')) 'Derived Project E3 record leaked a private/local path.'
+
+$archiveConfig = @($config.files | Where-Object path -eq 'archive/pc/mod/basegame_3e_demo_hud.archive')
+$archiveIdentity = @($record.source.selectedIdentities | Where-Object path -eq 'archive/pc/mod/basegame_3e_demo_hud.archive')
+Check ($archiveConfig.Count -eq 1 -and $archiveIdentity.Count -eq 1) 'Pinned Project E3 archive identity is missing.'
+Check ($archiveIdentity[0].sha256 -eq $archiveConfig[0].sha256) 'Derived Project E3 archive hash does not match the tracked exact reference.'
+
+$deps = @($record.dependencies.name)
+foreach ($name in @('redscript','TweakXL','Cyberpunk archive resource override','Mod Settings')) {
+    Check ($deps -contains $name) "Project E3 dependency role is missing: $name"
+}
+
+$areas = @($record.mappings.referenceArea)
+foreach ($needle in @(
+    'HUD base fade/context transition',
+    'Quest tracker and objective rows',
+    'Weapon/ammo HUD',
+    'D-pad / quickslots',
+    'Ambient NPC nameplates',
+    'Nameplate display policy',
+    'Modern scanner / quickhack',
+    'Minimap / stealth mappins',
+    'Top compass / navigation ribbon',
+    'World quest/interaction mappins',
+    'Interaction prompts',
+    'Dialogue choices and caption icons',
+    'Activity log',
+    'Tech-Hex / ordinary crosshair',
+    'Player health/RAM lower-left HUD',
+    'Phone waveform / holocall presentation'
+)) {
+    Check ($areas -contains $needle) "W03.7 derived mapping is missing reference area: $needle"
+}
+
+$mechanisms = @($record.mappings.mechanism | Select-Object -Unique)
+foreach ($mechanism in @('redscript-hook-replace','tweakxl','archive-resource-replacement')) {
+    Check ($mechanisms -contains $mechanism) "W03.7 does not preserve a material Project E3 mechanism: $mechanism"
+}
+
+foreach ($needle in @('370','34','336','authored INK','OptionalTracker','m_dpadHintsPanel','Pusula','blanket Always','MinimapContainerController','Biology-owned REDmod archive resource')) {
+    Check ($archaeology.Contains($needle)) "W03.7 archaeology document is missing a material derived conclusion: $needle"
+}
+Check ($archaeology.Contains('does **not** reproduce Project E3 source bodies or archive payloads')) 'W03.7 archaeology doc lost its redistribution boundary.'
+Check ($archaeology.Contains('never copy Project E3 resource bytes')) 'W03.7 archaeology doc no longer forbids Project E3 runtime/resource copying.'
+Check (@($record.opaqueAreas).Count -ge 1) 'W03.7 record must represent incomplete archive internals as opaque rather than inventing them.'
+
+# The architecture conclusion is intentionally not "copy Project E3". Preserve the
+# narrower native-content seams that attended evidence already proved useful.
+$quest = ReadText 'src/redscript/CyberpunkRealism/E3QuestHudNative.reds'
+$weapon = ReadText 'src/redscript/CyberpunkRealism/E3WeaponHudNative.reds'
+$hotkey = ReadText 'src/redscript/CyberpunkRealism/E3HotkeyHudNative.reds'
+$crosshair = ReadText 'src/redscript/CyberpunkRealism/E3CrosshairHudNative.reds'
+$nameplate = ReadText 'src/redscript/CyberpunkRealism/E3NameplatesNative.reds'
+$identity = ReadText 'src/redscript/CyberpunkRealism/NameplatesNative.reds'
+
+Check ($quest.Contains('this.m_questTrackerContainer') -and $quest.Contains('QuestTrackerObjectiveLogicController')) 'W03.7 discarded the W03.6 native quest/content-row seam.'
+Check ($weapon.Contains('this.m_onFootContainer') -and $weapon.Contains('this.m_weaponAmmoWrapper')) 'W03.7 discarded the W03.5 native lower-right weapon binding.'
+Check ($hotkey.Contains('this.m_dpadHintsPanel') -and -not $hotkey.Contains('this.GetRootCompoundWidget()')) 'W03.7 discarded the W03.6 hotkey semantic-host seam.'
+Check (-not $crosshair.Contains('private let crBiologyE3FocusFrame') -and -not $crosshair.Contains('SetName(n"CRBiologyE3FocusFrame")')) 'W03.7 reintroduced the attended reticle artifact owner.'
+Check ($nameplate.Contains('CRBiologyE3IdentityChrome') -and $identity.Contains('CRPublicAmbientNameAllowed')) 'W03.7 discarded the live framed ambient-name lifecycle.'
+
+$combined = @($quest,$weapon,$hotkey,$crosshair,$nameplate,$identity) -join [Environment]::NewLine
+foreach ($forbidden in @('module ProjectE3','import ProjectE3','basegame_3e_demo_hud.archive','r6/tweaks/Project E3 - HUD')) {
+    Check (-not $combined.Contains($forbidden)) "Project E3 reference content leaked into Biology runtime source: $forbidden"
+}
+Check ($distribution.Contains('Project E3 scripts, archives and tweaks remain forbidden from player runtime artifacts')) 'Distribution contract no longer states the Project E3 runtime exclusion.'
+
+# Scanner/quickhack remains a hard preserve after the full archaeology pass.
+foreach ($forbidden in @('ScannerGameController','scannerGameController','ScannerDetailsGameController','ScannerNPCHeaderGameController','quickhackWidgetGameController','QuickHackGameController','scanner.inkwidget','scandetails.inkwidget','quickhacks.inkwidget')) {
+    Check (-not $combined.Contains($forbidden)) "W03.7 crossed the native modern scanner/quickhack boundary: $forbidden"
+}
+
+Check ($mapping.Contains('E3-REFERENCE-ARCHAEOLOGY.md')) 'Legacy component mapping does not route future workers to the W03.7 engineering-reference authority.'
+Check ($presentation.Contains('W03.7')) 'Canonical E3 presentation contract does not identify the W03.7 engineering-reference update.'
+
+Write-Host "PASS: $script:checks W03.7 Project E3 archaeology checks; archive/redscript/TweakXL responsibilities are durable, W03.6 live wins are preserved, third-party runtime content remains excluded, and opaque archive details are not invented."
