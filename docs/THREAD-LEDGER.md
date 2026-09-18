@@ -13,13 +13,14 @@ The repository is the durable source of truth. Git issues/branches/PRs track imp
 This snapshot exists because a substantial recent parent-chat segment disappeared from the visible conversation. Treat GitHub and durable test records as the continuity source.
 
 - Parent: **P01.2**, active integration/orchestration.
-- Latest completed numbered attended session: **T003**, exact tested source `67593bfbb12b4a6ebcec7042066d48b4f5fac427`; see `docs/test-runs/TEST-LEDGER.md` and the completed T003 record.
-- T003 operational listener/session path: PASS; direct process start/exit observation remains healthy.
-- T003 Biology: selected anatomy drill-down still works, but W02.4 detail telemetry disappears entirely -> **W02.5 / issue #96**, `agent/biology-detail-live-visibility-followup`, handoff `docs/handoffs/W02.5-BIOLOGY-DETAIL-LIVE-VISIBILITY.md`, initial handoff head `4eb5dd21f774f8a3c948e3035566f40f00931935`.
-- T003 E3: old reticle-corner artifact appears fixed and framed ambient nameplate is live; however `WEAPON // AMMO` chrome is detached and the right-hand quest tracker remains untreated -> **W03.5 / issue #97**, `agent/e3-native-content-region-followup`, handoff `docs/handoffs/W03.5-E3-NATIVE-CONTENT-REGIONS.md`, initial handoff head `6513b62b9d5278927e0e5eee57e887b8d14913ef`.
-- Body-runtime persistence issue #41 remains open for a separate live WAIT/save-reload/SLEEP acceptance boundary; T003 intentionally did not exercise it.
-- The next unallocated live test ID is **T004**.
-- Reuse the existing W02 and W03 worker conversations for W02.5 and W03.5 unless either conversation has become too long/unusable. Do not recreate T003 because of missing chat history.
+- Latest completed numbered attended session: **T004**, exact tested source `ffa6f64d6c837146d032aaab565d671c932453a2`; see `docs/test-runs/TEST-LEDGER.md` and the completed T004 record.
+- T004 operational listener/session: PASS; direct polling handled two observed launch/exit cycles during the same attended hold.
+- T004 Biology: selector breadcrumb proves `BIOLOGY LAYOUT: MOUNTED`, but title/summary/metrics remain invisible. Diagnosis is now post-mount -> next **W02.6** under parent issue #39.
+- T004 E3: quest semantic host is reached but treatment remains tiny/partial; weapon detached-center regression is repaired; lower-left hotkey/quickslot chrome is visibly mis-composed -> next **W03.6** under parent issue #40.
+- Ambient framed nameplates remain live and the old two-corner reticle artifact remains absent; KEEP both.
+- Body-runtime persistence issue #41 remains open for a separate live WAIT/save-reload/SLEEP acceptance boundary; T004 intentionally did not exercise it.
+- The next unallocated live test ID is **T005**.
+- A bounded **LIVE EVIDENCE HOLD** may be used before END when ambiguous UI evidence would benefit from a few worker-requested screenshots/ordinary state changes. It must not introduce commands, probes, installs, file mutation, or open-ended testing.
 
 ## Core rule
 
