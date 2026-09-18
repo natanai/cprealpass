@@ -173,7 +173,6 @@ try {
         $extract = Invoke-QuietCaptured $dotnet @(
             $cli,'unbundle',$candidate.Archive.FullName,
             '--outpath',$candidateExtract,
-            '--gamepath',$GamePath,
             '--regex',$exactRegex
         )
         Add-Report "CANDIDATE_EXTRACT_EXIT=$($extract.ExitCode)"
