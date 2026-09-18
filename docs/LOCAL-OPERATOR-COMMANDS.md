@@ -379,6 +379,18 @@ pwsh '<exact-reviewed-checkout>\tools\Bootstrap-ReferenceModBundle.ps1' `
 
 If `-ReferenceName` is omitted, the command lists only immediate children of the private library and asks the owner to select one or more by number. A parent may instead pass exact immediate-child names, for example `-ReferenceName 'Project E3 HUD','Project E3 UI'`.
 
+For a Cyberware/Ripperdoc worker that also needs current installed 2.31 native evidence, add `-IncludeBiologyNativeUi`. This optional read-only companion includes the current installed official Ripperdoc scripts plus the existing WolvenKit-backed native-region probe report and privately serialized target INK JSON when resolvable. It preserves targeted HandleId `219` / package-copy `743` context and provenance so a worker can reconstruct the authored parent/ancestor chain without committing proprietary resources.
+
+Example shape after the parent supplies the exact reviewed source revision:
+
+```powershell
+pwsh '<exact-reviewed-checkout>\tools\Bootstrap-ReferenceModBundle.ps1' `
+  -Branch main `
+  -ExpectedHead '<exact 40-character reviewed main SHA>' `
+  -ReferenceName 'Cyberware-EX' `
+  -IncludeBiologyNativeUi
+```
+
 Zero local repo is supported through the mandatory bootstrap-loader boundary above: use a local exact reviewed script when available, otherwise an exact-revision raw GitHub download may materialize this one repository-owned bootstrap. Never use an unpinned `main` download.
 
 The bootstrap:
@@ -386,6 +398,7 @@ The bootstrap:
 - fetches the requested branch and fails closed unless the exact supplied head is proven, with the canonical exact-head cached-origin fallback after network failure;
 - creates a disposable detached exact-head checkout;
 - reads selected references without modifying/deleting the source library and without installing anything into Cyberpunk;
+- when `-IncludeBiologyNativeUi` is requested, reads the installed game only for official script/resource evidence and never installs/deploys/mutates the game;
 - prefers a selected extracted folder over a selected same-basename ZIP so duplicate payload is not bundled twice;
 - copies bounded text/source/config material for private worker analysis;
 - hashes and inventories every encountered file;
