@@ -3,6 +3,7 @@ param(
     [string]$LibraryPath = 'C:\Games\Cyberpunk-ReferenceMods',
     [string[]]$ReferenceName,
     [string]$OutputRoot = 'C:\Games\Biology-Reference-Bundles',
+    [ValidatePattern('^$|^[0-9a-fA-F]{40}$')][string]$WorkflowSourceRevision = '',
     [ValidateRange(1,20)][int]$MaxTextFileMiB = 2,
     [ValidateRange(1,200)][int]$MaxCopiedTextMiB = 40
 )
@@ -199,7 +200,7 @@ try{
     @($signals)|ConvertTo-Json -Depth 8|Set-Content -LiteralPath (Join-Path $stage 'signals.json') -Encoding utf8
     $manifest=[ordered]@{
       schemaVersion=1;kind='private-reference-mod-archaeology-bundle';createdUtc=[DateTime]::UtcNow.ToString('o')
-      analysisOnly=$true;redistributionAllowed=$false;sourceLibrary=$LibraryPath;referenceSelections=@($refs)
+      analysisOnly=$true;redistributionAllowed=$false;workflowSourceRevision=$WorkflowSourceRevision;sourceLibrary=$LibraryPath;referenceSelections=@($refs)
       provenanceVersionNotes=@($notes|Select-Object -Unique);fileCount=$index.Count;copiedTextBytes=$copied
       archiveInventory=@($archives);sourceMutation='none';gameInstallation='not accessed or modified'
       duplicatePolicy='Selected ZIPs with the same basename as a selected extracted sibling folder are hash-recorded but their duplicate payload is skipped.'
