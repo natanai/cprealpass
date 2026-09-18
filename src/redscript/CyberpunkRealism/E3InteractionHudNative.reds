@@ -1,8 +1,8 @@
 // Biology-owned E3-inspired ordinary interaction-prompt treatment.
 //
-// Project E3 replaced this controller's choice logic. Biology deliberately does not:
-// native InteractionChoiceHubData, timing, spawning, input and visibility remain
-// authoritative. W03.2 only adds a reversible red/minimal shell around the live prompt.
+// Native InteractionChoiceHubData, timing, option spawning, input and visibility remain
+// authoritative. W03.3 makes the owned treatment root-sized so it follows the actual
+// prompt layout instead of relying on a large translated child canvas.
 module CyberpunkRealism.Presentation
 
 import CyberpunkRealism.Settings.*
@@ -20,18 +20,12 @@ private final func CRCreateBiologyE3InteractionFrame() -> Void {
     return;
   }
 
-  this.crBiologyE3InteractionFrame = new inkCanvas();
-  this.crBiologyE3InteractionFrame.SetName(n"CRBiologyE3InteractionFrame");
-  this.crBiologyE3InteractionFrame.SetSize(Vector2(560.0, 210.0));
-  this.crBiologyE3InteractionFrame.SetTranslation(-24.0, -16.0);
-  this.crBiologyE3InteractionFrame.Reparent(root, -1);
-
-  CRBiologyE3Primitives.AddPlate(this.crBiologyE3InteractionFrame, n"CRBiologyE3InteractionWash", 0.0, 0.0, 530.0, 176.0, 0.045);
-  CRBiologyE3Primitives.AddRect(this.crBiologyE3InteractionFrame, n"CRBiologyE3InteractionLeft", 0.0, 0.0, 4.0, 154.0, 0.92);
-  CRBiologyE3Primitives.AddRect(this.crBiologyE3InteractionFrame, n"CRBiologyE3InteractionTop", 0.0, 0.0, 388.0, 4.0, 0.92);
-  CRBiologyE3Primitives.AddRect(this.crBiologyE3InteractionFrame, n"CRBiologyE3InteractionBottom", 0.0, 150.0, 220.0, 4.0, 0.70);
-  CRBiologyE3Primitives.AddRect(this.crBiologyE3InteractionFrame, n"CRBiologyE3InteractionTick", 400.0, 0.0, 28.0, 4.0, 0.58);
-  CRBiologyE3Primitives.AddLabel(this.crBiologyE3InteractionFrame, n"CRBiologyE3InteractionLabel", "INTERACTION", 12.0, 10.0, 13, 0.78);
+  this.crBiologyE3InteractionFrame = CRBiologyE3Primitives.CreateFillShell(root, n"CRBiologyE3InteractionFrame");
+  CRBiologyE3Primitives.AddFillWash(this.crBiologyE3InteractionFrame, n"CRBiologyE3InteractionWash", 0.075);
+  CRBiologyE3Primitives.AddRect(this.crBiologyE3InteractionFrame, n"CRBiologyE3InteractionTop", 0.0, 0.0, 210.0, 4.0, 0.96);
+  CRBiologyE3Primitives.AddRect(this.crBiologyE3InteractionFrame, n"CRBiologyE3InteractionLeft", 0.0, 0.0, 4.0, 58.0, 0.88);
+  CRBiologyE3Primitives.AddRect(this.crBiologyE3InteractionFrame, n"CRBiologyE3InteractionAccent", 0.0, 0.0, 24.0, 9.0, 1.00);
+  CRBiologyE3Primitives.AddLabel(this.crBiologyE3InteractionFrame, n"CRBiologyE3InteractionLabel", "INTERACTION // ACTION", 32.0, 8.0, 13, 0.84);
 }
 
 @addMethod(interactionWidgetGameController)
@@ -46,6 +40,7 @@ private final func CRRefreshBiologyE3InteractionFrame() -> Void {
 @wrapMethod(interactionWidgetGameController)
 protected cb func OnInitialize() -> Bool {
   let result: Bool = wrappedMethod();
+  CRBiologyE3Primitives.Trace("interactionWidgetGameController.OnInitialize");
   this.CRRefreshBiologyE3InteractionFrame();
   return result;
 }

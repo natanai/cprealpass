@@ -1,4 +1,4 @@
-// Biology-owned E3-inspired weapon/ammo presentation for the neutral first-person HUD.
+// Biology-owned E3-inspired weapon/ammo presentation.
 // Native WeaponRosterGameController remains the sole weapon/ammo data authority.
 module CyberpunkRealism.Presentation
 
@@ -17,21 +17,12 @@ private final func CRCreateBiologyE3WeaponFrame() -> Void {
     return;
   }
 
-  this.crBiologyE3WeaponFrame = new inkCanvas();
-  this.crBiologyE3WeaponFrame.SetName(n"CRBiologyE3WeaponFrame");
-  this.crBiologyE3WeaponFrame.SetAnchor(inkEAnchor.BottomRight);
-  this.crBiologyE3WeaponFrame.SetHAlign(inkEHorizontalAlign.Right);
-  this.crBiologyE3WeaponFrame.SetVAlign(inkEVerticalAlign.Bottom);
-  this.crBiologyE3WeaponFrame.SetSize(Vector2(484.0, 176.0));
-  this.crBiologyE3WeaponFrame.SetTranslation(-10.0, -8.0);
-  this.crBiologyE3WeaponFrame.Reparent(root, -1);
-
-  CRBiologyE3Primitives.AddPlate(this.crBiologyE3WeaponFrame, n"CRBiologyE3WeaponWash", 30.0, 0.0, 430.0, 132.0, 0.050);
-  CRBiologyE3Primitives.AddRect(this.crBiologyE3WeaponFrame, n"CRBiologyE3WeaponTop", 68.0, 0.0, 392.0, 4.0, 0.98);
-  CRBiologyE3Primitives.AddRect(this.crBiologyE3WeaponFrame, n"CRBiologyE3WeaponRight", 456.0, 0.0, 4.0, 126.0, 0.98);
-  CRBiologyE3Primitives.AddRect(this.crBiologyE3WeaponFrame, n"CRBiologyE3WeaponBottom", 270.0, 126.0, 190.0, 4.0, 0.78);
-  CRBiologyE3Primitives.AddRect(this.crBiologyE3WeaponFrame, n"CRBiologyE3WeaponAccent", 38.0, 0.0, 21.0, 9.0, 1.00);
-  CRBiologyE3Primitives.AddLabel(this.crBiologyE3WeaponFrame, n"CRBiologyE3WeaponLabel", "WEAPON // AMMO", 68.0, 8.0, 14, 0.82);
+  this.crBiologyE3WeaponFrame = CRBiologyE3Primitives.CreateFillShell(root, n"CRBiologyE3WeaponFrame");
+  CRBiologyE3Primitives.AddFillWash(this.crBiologyE3WeaponFrame, n"CRBiologyE3WeaponWash", 0.080);
+  CRBiologyE3Primitives.AddRect(this.crBiologyE3WeaponFrame, n"CRBiologyE3WeaponTop", 0.0, 0.0, 200.0, 4.0, 0.98);
+  CRBiologyE3Primitives.AddRect(this.crBiologyE3WeaponFrame, n"CRBiologyE3WeaponLeft", 0.0, 0.0, 4.0, 54.0, 0.88);
+  CRBiologyE3Primitives.AddRect(this.crBiologyE3WeaponFrame, n"CRBiologyE3WeaponAccent", 0.0, 0.0, 24.0, 9.0, 1.00);
+  CRBiologyE3Primitives.AddLabel(this.crBiologyE3WeaponFrame, n"CRBiologyE3WeaponLabel", "WEAPON // AMMO", 32.0, 8.0, 13, 0.86);
 }
 
 @addMethod(WeaponRosterGameController)
@@ -46,6 +37,7 @@ private final func CRRefreshBiologyE3WeaponFrame() -> Void {
 @wrapMethod(WeaponRosterGameController)
 protected cb func OnInitialize() -> Bool {
   let result: Bool = wrappedMethod();
+  CRBiologyE3Primitives.Trace("WeaponRosterGameController.OnInitialize");
   this.CRRefreshBiologyE3WeaponFrame();
   return result;
 }
