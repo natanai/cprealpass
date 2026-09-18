@@ -77,7 +77,121 @@ try {
     Add-Report "WolvenKitCLI: $cli"
     Add-Report "WolvenKitCLISHA256: $($toolchain.cliDllSha256)"
 
-    $resourceRegex = '(?i)(ripperdoc|cyberware).*\.inkwidget$'
+    $resourceRegex = '(?i)^gameplay[\\/]gui[\\/]fullscreen[\\/]ripperdoc[\\/]ripperdoc\.inkwidget
+    $archiveOutput = Invoke-Captured 'LIST MATCHING INKWIDGET RESOURCES' $dotnet @(
+        $cli,'archive',$archiveRoot,'--list','--regex',$resourceRegex
+    )
+
+    $resourcePaths = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+    foreach ($line in $archiveOutput) {
+        foreach ($m in [regex]::Matches($line,'(?i)([A-Za-z0-9_./\\-]*(?:ripperdoc|cyberware)[A-Za-z0-9_./\\-]*\.inkwidget)')) {
+            $null = $resourcePaths.Add($m.Groups[1].Value.Replace('/','\'))
+        }
+    }
+    Add-Report ""
+    Add-Report "MATCHED_RESOURCE_PATHS=$($resourcePaths.Count)"
+    foreach ($path in @($resourcePaths | Sort-Object)) { Add-Report "RESOURCE: $path" }
+    if ($resourcePaths.Count -ne 1) { throw "Expected exactly one installed Ripperdoc fullscreen .inkwidget resource; found $($resourcePaths.Count)." }
+
+    Invoke-Captured 'EXTRACT MATCHING INKWIDGET RESOURCES' $dotnet @(
+        $cli,'unbundle',$archiveRoot,'--outpath',$extractRoot,'--gamepath',$GamePath,'--regex',$resourceRegex
+    ) | Out-Null
+
+    $extracted = @(Get-ChildItem -LiteralPath $extractRoot -Recurse -File -Filter '*.inkwidget')
+    Add-Report ""
+    Add-Report "EXTRACTED_INKWIDGETS=$($extracted.Count)"
+    foreach ($file in $extracted) {
+        Add-Report ("EXTRACTED: " + [IO.Path]::GetRelativePath($extractRoot,$file.FullName) + " SHA256=" + (Get-Sha256 $file.FullName))
+    }
+    if ($extracted.Count -ne 1) { throw "Expected exactly one extracted Ripperdoc fullscreen .inkwidget; found $($extracted.Count)." }
+
+    Invoke-Captured 'SERIALIZE INKWIDGET RESOURCES TO JSON' $dotnet @(
+        $cli,'convert','serialize',$extractRoot,'--outpath',$jsonRoot,'--pattern','*.inkwidget'
+    ) | Out-Null
+
+    $jsonFiles = @(Get-ChildItem -LiteralPath $jsonRoot -Recurse -File -Filter '*.json')
+    Add-Report ""
+    Add-Report "SERIALIZED_JSON_FILES=$($jsonFiles.Count)"
+    if ($jsonFiles.Count -eq 0) { throw 'No JSON was produced from the extracted .inkwidget resources.' }
+
+    $needles = @(
+        'RipperdocInventoryController',
+        'inventoryViewAnchor',
+        'virtualGridContainer',
+        'scrollBarContainer',
+        'labelPrefix',
+        'labelSuffix',
+        'item_area_extended'
+    )
+    $relevantFiles = 0
+    foreach ($file in $jsonFiles) {
+        $raw = Get-Content -Raw -LiteralPath $file.FullName
+        $fileRelevant = $false
+        foreach ($needle in $needles) {
+            if ($raw.IndexOf($needle,[StringComparison]::OrdinalIgnoreCase) -ge 0) { $fileRelevant = $true; break }
+        }
+        if (-not $fileRelevant) { continue }
+        $relevantFiles++
+        Add-Report ""
+        Add-Report ("=== RELEVANT JSON: " + [IO.Path]::GetRelativePath($jsonRoot,$file.FullName) + " ===")
+        foreach ($needle in $needles) {
+            $cursor = 0
+            $occurrence = 0
+            while ($occurrence -lt 4) {
+                $index = $raw.IndexOf($needle,$cursor,[StringComparison]::OrdinalIgnoreCase)
+                if ($index -lt 0) { break }
+                $occurrence++
+                $start = [Math]::Max(0,$index-1200)
+                $length = [Math]::Min(3000,$raw.Length-$start)
+                $snippet = $raw.Substring($start,$length)
+                $snippet = $snippet -replace '[\r\n]+',' '
+                Add-Report ("NEEDLE[$needle]#$occurrence OFFSET=$index")
+                Add-Report $snippet
+                $cursor = $index + $needle.Length
+            }
+        }
+    }
+    Add-Report ""
+    Add-Report "RELEVANT_JSON_FILES=$relevantFiles"
+    if ($relevantFiles -eq 0) { throw 'Serialized candidate resources did not expose the expected Ripperdoc controller/widget reference names.' }
+
+    Add-Report ""
+    Add-Report 'PROBE_RESULT=PASS'
+    Add-Report 'PROOF_BOUNDARY=Archive/INK structure and serialized widget properties only; this does not prove Biology runtime placement.'
+    $probeSucceeded = $true
+} catch {
+    Add-Report ""
+    Add-Report "PROBE_RESULT=FAIL"
+    Add-Report ("ERROR=" + $_.Exception.Message)
+    throw
+} finally {
+    try {
+        if ($createdLocalOodle -and (Test-Path -LiteralPath $localOodle -PathType Leaf)) {
+            if ((Get-Sha256 $localOodle) -eq $sourceOodleHash) {
+                Remove-Item -LiteralPath $localOodle -Force
+                Add-Report "TemporaryOodleCopyRemoved: $localOodle"
+            } else {
+                Add-Report "WARNING: temporary Oodle destination changed; preserving it rather than deleting."
+            }
+        }
+    } catch {
+        Add-Report ("WARNING: Oodle cleanup failed: " + $_.Exception.Message)
+    }
+    try {
+        if (Test-Path -LiteralPath $workRoot -PathType Container) {
+            Remove-Item -LiteralPath $workRoot -Recurse -Force
+            Add-Report "TemporaryExtractionRemoved: $workRoot"
+        }
+    } catch {
+        Add-Report ("WARNING: extraction cleanup failed: " + $_.Exception.Message)
+    }
+    $report | Set-Content -LiteralPath $ReportPath -Encoding utf8
+    Write-Host ""
+    Write-Host "LOCAL EVIDENCE REPORT: $ReportPath" -ForegroundColor Cyan
+    Write-Host "Attach that .txt file to the W02 worker conversation." -ForegroundColor DarkGray
+}
+if (-not $probeSucceeded) { exit 1 }
+
     $archiveOutput = Invoke-Captured 'LIST MATCHING INKWIDGET RESOURCES' $dotnet @(
         $cli,'archive',$archiveRoot,'--list','--regex',$resourceRegex
     )
