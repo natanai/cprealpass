@@ -2,7 +2,8 @@
 [CmdletBinding()]
 param(
     [string]$GamePath = 'C:\Games\Steam\steamapps\common\Cyberpunk 2077',
-    [string]$ReportPath
+    [string]$ReportPath,
+    [string]$PrivateTargetJsonPath
 )
 
 $ErrorActionPreference = 'Stop'
@@ -71,6 +72,19 @@ function Add-NeedleSnippets([string]$Raw,[string]$Needle,[int]$MaxOccurrences = 
         Add-Report ("NEEDLE[$Needle]#$occurrence OFFSET=$index")
         Add-Report $snippet
         $cursor = $index + $Needle.Length
+    }
+}
+
+function Add-RegexSnippets([string]$Raw,[string]$Label,[string]$Pattern,[int]$MaxOccurrences = 12) {
+    $matches = [regex]::Matches($Raw,$Pattern,[Text.RegularExpressions.RegexOptions]::IgnoreCase)
+    $take = [Math]::Min($MaxOccurrences,$matches.Count)
+    for ($i=0; $i -lt $take; $i++) {
+        $match = $matches[$i]
+        $start = [Math]::Max(0,$match.Index-6000)
+        $length = [Math]::Min(14000,$Raw.Length-$start)
+        $snippet = $Raw.Substring($start,$length) -replace '[\r\n]+',' '
+        Add-Report ("TARGETED[$Label]#$($i+1) OFFSET=$($match.Index)")
+        Add-Report $snippet
     }
 }
 
@@ -242,6 +256,21 @@ try {
     Add-Report ("TARGET_RESOURCE_SHA256=" + (Get-Sha256 $target.ResourceFile.FullName))
     Add-Report ("TARGET_JSON=" + [IO.Path]::GetRelativePath($jsonRoot,$target.JsonFile.FullName))
 
+    if (-not [string]::IsNullOrWhiteSpace($PrivateTargetJsonPath)) {
+        if (-not [IO.Path]::IsPathRooted($PrivateTargetJsonPath)) {
+            throw 'PrivateTargetJsonPath must be an absolute path outside the checkout.'
+        }
+        $privateJson = [IO.Path]::GetFullPath($PrivateTargetJsonPath)
+        $projectBoundary = [IO.Path]::GetFullPath($project).TrimEnd('\') + '\'
+        if (($privateJson + '\').StartsWith($projectBoundary,[StringComparison]::OrdinalIgnoreCase)) {
+            throw 'PrivateTargetJsonPath must remain outside the cprealpass checkout because it contains proprietary serialized game resource data.'
+        }
+        New-Item -ItemType Directory -Force -Path (Split-Path -Parent $privateJson) | Out-Null
+        Copy-Item -LiteralPath $target.JsonFile.FullName -Destination $privateJson -Force
+        Add-Report ("PRIVATE_TARGET_JSON=" + $privateJson)
+        Add-Report ("PRIVATE_TARGET_JSON_SHA256=" + (Get-Sha256 $privateJson))
+    }
+
     $needles = @(
         'RipperDocGameController',
         'RipperdocInventoryController',
@@ -259,6 +288,15 @@ try {
     foreach ($needle in $needles) {
         Add-NeedleSnippets $target.Raw $needle
     }
+
+    Add-Report ''
+    Add-Report '=== TARGETED HANDLE/ANCESTRY EVIDENCE ==='
+    Add-Report 'Focus: preserve exact serialized object context for W17.1 around virtualGridContainer parent HandleId 219 (package-copy 743) and its direct references.'
+    Add-RegexSnippets $target.Raw 'HANDLE_ID_219_OR_743' '"HandleId"\s*:\s*(219|743)\b'
+    Add-RegexSnippets $target.Raw 'HANDLE_REF_219_OR_743' '"HandleRefId"\s*:\s*(219|743)\b'
+    Add-RegexSnippets $target.Raw 'HANDLE_ID_GRID_LABEL_SCROLL' '"HandleId"\s*:\s*(208|210|215|221|727|730|737|746)\b'
+    Add-RegexSnippets $target.Raw 'PARENT_WIDGET' '"parentWidget"\s*:'
+    Add-Report 'Full serialized target JSON may be preserved privately by the caller with -PrivateTargetJsonPath for exact ancestry reconstruction without broad needle re-probing.'
 
     Add-Report ''
     Add-Report 'PROBE_RESULT=PASS'
