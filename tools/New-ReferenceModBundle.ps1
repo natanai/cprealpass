@@ -110,7 +110,7 @@ $seven=Get-Command 7z,7zz -ErrorAction SilentlyContinue|Select-Object -First 1
 
 function AnalyzeText([string]$ref,[string]$rel,[string]$text){
     $lineNo=0
-    foreach($line in ($text -split [Environment]::NewLine)){
+    foreach($line in ($text -split "\r?\n")){
         $lineNo++
         if($line -match '@(wrapMethod|replaceMethod|addMethod|addField)\b'){$signals.Add([pscustomobject]@{reference=$ref;path=$rel;line=$lineNo;kind='redscript-hook';signal=$line.Trim()})}
         if($line -match '(?i)\b(ArchiveXL|TweakXL|RED4ext|Codeware|Cyber Engine Tweaks|CET|Input Loader|redscript|REDmod)\b'){$signals.Add([pscustomobject]@{reference=$ref;path=$rel;line=$lineNo;kind='framework';signal=$line.Trim()})}
@@ -199,10 +199,10 @@ try{
         if(-not $item.PSIsContainer -and $item.Extension -ieq '.zip'){
             $base=[IO.Path]::GetFileNameWithoutExtension($item.Name)
             $zipRoot=ZipSingleRoot $item.FullName
-            $dup=@($folders|Where-Object {$_ -ieq $base -or ($zipRoot -and $_ -ieq $zipRoot)}|Select-Object -First 1)
+            $dup=[string]($folders|Where-Object {$_ -ieq $base -or ($zipRoot -and $_ -ieq $zipRoot)}|Select-Object -First 1)
         }
         if($dup){
-            $refs.Add([pscustomobject]@{name=$item.Name;type='zip';status='skipped-duplicate-payload';duplicateOf=$dup;sourceSha256=Sha $item.FullName})
+            $refs.Add([pscustomobject]@{name=$item.Name;type='zip';status='skipped-duplicate-payload';duplicateOf=$dup;sourceBytes=[int64]$item.Length;sourceSha256=Sha $item.FullName})
             continue
         }
         $start=$index.Count
@@ -231,8 +231,8 @@ try{
                 }
             }finally{$z.Dispose()}
             $inspect=ArchiveInventory $item.Name $item.Name $item.FullName
-            $refs.Add([pscustomobject]@{name=$item.Name;type='zip';status='included';sourceSha256=Sha $item.FullName;indexedFiles=($index.Count-$start);archiveInspectability=$inspect})
-        }else{AddDiskFile $item.Name $item.Name $item.FullName;$refs.Add([pscustomobject]@{name=$item.Name;type='file';status='included';sourceSha256=Sha $item.FullName;indexedFiles=1})}
+            $refs.Add([pscustomobject]@{name=$item.Name;type='zip';status='included';sourceBytes=[int64]$item.Length;sourceSha256=Sha $item.FullName;indexedFiles=($index.Count-$start);archiveInspectability=$inspect})
+        }else{AddDiskFile $item.Name $item.Name $item.FullName;$refs.Add([pscustomobject]@{name=$item.Name;type='file';status='included';sourceBytes=[int64]$item.Length;sourceSha256=Sha $item.FullName;indexedFiles=1})}
     }
 
     @(
