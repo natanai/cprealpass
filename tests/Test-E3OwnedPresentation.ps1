@@ -63,6 +63,7 @@ foreach ($forbidden in @('@replaceMethod(gameuiCrosshairContainerController)','p
 
 Check ($source.activity.Contains('@wrapMethod(activityLogEntryLogicController)')) 'Transient activity presentation is not covered.'
 Check ($source.activity.Contains('textLetterCase.UpperCase') -and $source.activity.Contains('CRBiologyE3Primitives.Red()')) 'Activity entries do not use the shared E3 text language.'
+Check ($source.activity.Contains('crBiologyE3NativeActivityTint') -and $source.activity.Contains('public final func SetText(const displayText: script_ref<String>) -> Void')) 'Activity presentation cannot restore native tint when E3 is off for reused entries.'
 Check (-not $source.activity.Contains('@replaceMethod') -and -not $source.activity.Contains('new inkAnimController')) 'Activity styling took over native queue/animation behavior.'
 
 Check ($source.identity.Contains('CRPublicAmbientNameAllowed')) 'W03.3 ambient identity helper is missing.'
@@ -85,7 +86,7 @@ foreach ($forbidden in @('m_healthbarWidget','m_damagePreviewWidget','currentHea
 }
 
 Check ($source.primitives.Contains('[Biology:E3]')) 'W03.3 presentation hook trace prefix is missing.'
-foreach ($key in @('lowerLeft','quest','navigation','weapon','hotkey','interaction','crosshair','nameplate')) {
+foreach ($key in @('lowerLeft','quest','navigation','weapon','hotkey','interaction','activity','crosshair','nameplate')) {
     Check ($source[$key].Contains('CRBiologyE3Primitives.Trace(')) "$key lacks W03.3 live hook-execution trace evidence."
 }
 
