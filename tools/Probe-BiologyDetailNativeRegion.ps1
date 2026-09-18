@@ -12,9 +12,7 @@ $project = Get-ProjectRoot
 $GamePath = [IO.Path]::GetFullPath($GamePath)
 $archiveRoot = Join-Path $GamePath 'archive\pc'
 $oodleSource = Join-Path $GamePath 'bin\x64\oo2ext_7_win64.dll'
-$targetResource = 'gameplay\gui\fullscreen\ripperdoc\ripperdoc.inkwidget'
-$targetResourceHash = '13533725445430520621'
-$resourceRegex = '(?i)(^gameplay[\\/]gui[\\/]fullscreen[\\/]ripperdoc[\\/]ripperdoc\.inkwidget$|^13533725445430520621\.bin$)'
+$candidateRegex = '(?i)(ripperdoc|cyberware).*\.inkwidget$'
 
 if (-not (Test-Path -LiteralPath $archiveRoot -PathType Container)) {
     throw "Cyberpunk archive root not found: $archiveRoot"
@@ -50,31 +48,48 @@ function Add-Report([string]$Text = '') {
     Write-Host $Text
 }
 
-function Invoke-Captured(
-    [string]$Label,
-    [string]$Exe,
-    [string[]]$Arguments,
-    [switch]$AllowFailure
-) {
+function Invoke-QuietCaptured([string]$Exe,[string[]]$Arguments) {
+    $output = @(& $Exe @Arguments 2>&1)
+    [pscustomobject]@{
+        ExitCode = $LASTEXITCODE
+        Output = @($output | ForEach-Object { [string]$_ })
+    }
+}
+
+function Invoke-Reported([string]$Label,[string]$Exe,[string[]]$Arguments) {
     Add-Report ''
     Add-Report "=== $Label ==="
     Add-Report ("COMMAND: " + $Exe + " " + ($Arguments -join ' '))
-    $output = @(& $Exe @Arguments 2>&1)
-    $exitCode = $LASTEXITCODE
-    foreach ($line in $output) {
+    $result = Invoke-QuietCaptured $Exe $Arguments
+    foreach ($line in $result.Output) {
         $text = [string]$line
         if ($text.Length -gt 600) {
             $text = $text.Substring(0,600) + ' ...'
         }
         Add-Report $text
     }
-    Add-Report "EXIT_CODE=$exitCode"
-    if (-not $AllowFailure -and $exitCode -ne 0) {
-        throw "$Label failed with exit code $exitCode"
+    Add-Report "EXIT_CODE=$($result.ExitCode)"
+    if ($result.ExitCode -ne 0) {
+        throw "$Label failed with exit code $($result.ExitCode)"
     }
-    return [pscustomobject]@{
-        ExitCode = $exitCode
-        Output = @($output | ForEach-Object { [string]$_ })
+    $result
+}
+
+function Add-NeedleSnippets([string]$Raw,[string]$Needle,[int]$MaxOccurrences = 6) {
+    $cursor = 0
+    $occurrence = 0
+    while ($occurrence -lt $MaxOccurrences) {
+        $index = $Raw.IndexOf($Needle,$cursor,[StringComparison]::OrdinalIgnoreCase)
+        if ($index -lt 0) {
+            break
+        }
+        $occurrence++
+        $start = [Math]::Max(0,$index-1800)
+        $length = [Math]::Min(4400,$Raw.Length-$start)
+        $snippet = $Raw.Substring($start,$length) -replace '[\r\n]+',' '
+        Add-Report ("NEEDLE[$Needle]#$occurrence OFFSET=$index")
+        Add-Report $snippet
+        $cursor = $index + $Needle.Length
     }
 }
 
@@ -90,9 +105,8 @@ try {
     Add-Report "ArchiveRoot: $archiveRoot"
     Add-Report "ArchiveFiles: $($archiveFiles.Count)"
     Add-Report "GameOodleSHA256: $sourceOodleHash"
-    Add-Report "TargetResource: $targetResource"
-    Add-Report "TargetResourceFNV1a64: $targetResourceHash"
-    Add-Report 'Purpose: identify the actual CP2077 2.31 INK child/layout geometry behind RipperdocInventoryController content.'
+    Add-Report "CandidateRegex: $candidateRegex"
+    Add-Report 'Purpose: discover the actual installed CP2077 2.31 INK resource carrying RipperDocGameController/RipperdocInventoryController, then report its authored detail geometry.'
     Add-Report 'Mutation boundary: read-only game archives; temporary local extraction only.'
 
     if (-not (Test-Path -LiteralPath $localOodle -PathType Leaf)) {
@@ -112,134 +126,141 @@ try {
     Add-Report "WolvenKitCLI: $cli"
     Add-Report "WolvenKitCLISHA256: $($toolchain.cliDllSha256)"
 
-    $matchingArchives = [Collections.Generic.List[IO.FileInfo]]::new()
+    Write-Host ''
+    Write-Host "Scanning $($archiveFiles.Count) installed archives for Ripperdoc/Cyberware INK candidates..." -ForegroundColor Cyan
+
+    $candidates = [Collections.Generic.List[object]]::new()
+    $seen = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+
     foreach ($archiveFile in $archiveFiles) {
         $relativeArchive = [IO.Path]::GetRelativePath($archiveRoot,$archiveFile.FullName)
-        $result = Invoke-Captured "SEARCH ARCHIVE $relativeArchive" $dotnet @(
-            $cli,'archive',$archiveFile.FullName,'--list','--regex',$resourceRegex
-        ) -AllowFailure
-
+        $result = Invoke-QuietCaptured $dotnet @(
+            $cli,'archive',$archiveFile.FullName,'--list','--regex',$candidateRegex
+        )
         if ($result.ExitCode -ne 0) {
             throw "WolvenKit could not inspect archive: $relativeArchive"
         }
 
-        $matched = $false
         foreach ($line in $result.Output) {
-            if ($line.IndexOf($targetResource,[StringComparison]::OrdinalIgnoreCase) -ge 0) {
-                $matched = $true
-                break
+            $candidatePath = ([string]$line).Trim().Replace('/','\')
+            if ($candidatePath -notmatch '(?i)\.inkwidget$' -or $candidatePath -notmatch '(?i)(ripperdoc|cyberware)') {
+                continue
             }
-            if ($line.IndexOf($targetResource.Replace('\','/'),[StringComparison]::OrdinalIgnoreCase) -ge 0) {
-                $matched = $true
-                break
+            $key = $archiveFile.FullName + '|' + $candidatePath
+            if ($seen.Add($key)) {
+                $candidates.Add([pscustomobject]@{
+                    Archive = $archiveFile
+                    RelativeArchive = $relativeArchive
+                    Path = $candidatePath
+                })
             }
-            if ($line.Trim().Equals($targetResourceHash,[StringComparison]::OrdinalIgnoreCase)) {
-                $matched = $true
-                break
-            }
-        }
-        if ($matched) {
-            $matchingArchives.Add($archiveFile)
-            Add-Report "MATCHING_ARCHIVE: $relativeArchive"
         }
     }
 
     Add-Report ''
-    Add-Report "MATCHING_ARCHIVE_COUNT=$($matchingArchives.Count)"
-    if ($matchingArchives.Count -ne 1) {
-        throw "Expected exactly one archive containing $targetResource; found $($matchingArchives.Count)."
+    Add-Report "DISCOVERED_INKWIDGET_CANDIDATES=$($candidates.Count)"
+    foreach ($candidate in $candidates) {
+        Add-Report ("CANDIDATE: " + $candidate.Path + " | ARCHIVE: " + $candidate.RelativeArchive)
+    }
+    if ($candidates.Count -eq 0) {
+        throw 'No installed Ripperdoc/Cyberware .inkwidget candidates were discoverable by WolvenKit path metadata.'
     }
 
-    $sourceArchive = $matchingArchives[0]
-    Add-Report ("SOURCE_ARCHIVE=" + [IO.Path]::GetRelativePath($archiveRoot,$sourceArchive.FullName))
+    $controllerMatches = [Collections.Generic.List[object]]::new()
+    for ($i = 0; $i -lt $candidates.Count; $i++) {
+        $candidate = $candidates[$i]
+        $slot = ('candidate-{0:D2}' -f ($i+1))
+        $candidateExtract = Join-Path $extractRoot $slot
+        $candidateJson = Join-Path $jsonRoot $slot
+        New-Item -ItemType Directory -Force -Path $candidateExtract,$candidateJson | Out-Null
 
-    Invoke-Captured 'EXTRACT RIPPERDOC FULLSCREEN INKWIDGET' $dotnet @(
-        $cli,'unbundle',$sourceArchive.FullName,
-        '--outpath',$extractRoot,
-        '--gamepath',$GamePath,
-        '--hash',$targetResourceHash
-    ) | Out-Null
+        $exactRegex = '^' + [regex]::Escape($candidate.Path) + '$'
+        Add-Report ''
+        Add-Report ("TEST_CANDIDATE[$($i+1)]: " + $candidate.Path)
+        $extract = Invoke-QuietCaptured $dotnet @(
+            $cli,'unbundle',$candidate.Archive.FullName,
+            '--outpath',$candidateExtract,
+            '--gamepath',$GamePath,
+            '--regex',$exactRegex
+        )
+        Add-Report "CANDIDATE_EXTRACT_EXIT=$($extract.ExitCode)"
+        if ($extract.ExitCode -ne 0) {
+            Add-Report 'CANDIDATE_RESULT=EXTRACT_FAILED'
+            continue
+        }
 
-    $extracted = @(Get-ChildItem -LiteralPath $extractRoot -Recurse -File)
+        $resources = @(Get-ChildItem -LiteralPath $candidateExtract -Recurse -File -Filter '*.inkwidget')
+        Add-Report "CANDIDATE_EXTRACTED_INKWIDGETS=$($resources.Count)"
+        if ($resources.Count -ne 1) {
+            Add-Report 'CANDIDATE_RESULT=UNEXPECTED_EXTRACT_COUNT'
+            continue
+        }
+
+        $serialize = Invoke-QuietCaptured $dotnet @(
+            $cli,'convert','serialize',$resources[0].FullName,
+            '--outpath',$candidateJson
+        )
+        Add-Report "CANDIDATE_SERIALIZE_EXIT=$($serialize.ExitCode)"
+        if ($serialize.ExitCode -ne 0) {
+            Add-Report 'CANDIDATE_RESULT=SERIALIZE_FAILED'
+            continue
+        }
+
+        $jsonFiles = @(Get-ChildItem -LiteralPath $candidateJson -Recurse -File -Filter '*.json')
+        if ($jsonFiles.Count -eq 0) {
+            Add-Report 'CANDIDATE_RESULT=NO_JSON'
+            continue
+        }
+
+        $candidateMatched = $false
+        foreach ($jsonFile in $jsonFiles) {
+            $raw = Get-Content -Raw -LiteralPath $jsonFile.FullName
+            $hasGameController = $raw.IndexOf('RipperDocGameController',[StringComparison]::OrdinalIgnoreCase) -ge 0
+            $hasInventoryController = $raw.IndexOf('RipperdocInventoryController',[StringComparison]::OrdinalIgnoreCase) -ge 0
+            $hasInventoryAnchor = $raw.IndexOf('inventoryViewAnchor',[StringComparison]::OrdinalIgnoreCase) -ge 0
+            $hasVirtualGrid = $raw.IndexOf('virtualGridContainer',[StringComparison]::OrdinalIgnoreCase) -ge 0
+
+            if (($hasGameController -or $hasInventoryController) -and ($hasInventoryAnchor -or $hasVirtualGrid)) {
+                $candidateMatched = $true
+                $controllerMatches.Add([pscustomobject]@{
+                    Candidate = $candidate
+                    JsonFile = $jsonFile
+                    Raw = $raw
+                })
+            }
+        }
+
+        Add-Report ("CANDIDATE_RESULT=" + $(if ($candidateMatched) { 'CONTROLLER_MATCH' } else { 'NOT_TARGET' }))
+    }
+
     Add-Report ''
-    Add-Report "EXTRACTED_FILES=$($extracted.Count)"
-    foreach ($file in $extracted) {
-        Add-Report ("EXTRACTED: " + [IO.Path]::GetRelativePath($extractRoot,$file.FullName) + " SHA256=" + (Get-Sha256 $file.FullName))
-    }
-    if ($extracted.Count -ne 1) {
-        throw "Expected exactly one extracted CR2W file for Ripperdoc resource hash $targetResourceHash; found $($extracted.Count)."
+    Add-Report "CONTROLLER_MATCH_COUNT=$($controllerMatches.Count)"
+    if ($controllerMatches.Count -ne 1) {
+        throw "Expected exactly one installed INK candidate carrying the Ripperdoc controller/detail contract; found $($controllerMatches.Count)."
     }
 
-    $extractedResource = $extracted[0]
-    if (-not $extractedResource.Name.EndsWith('.inkwidget',[StringComparison]::OrdinalIgnoreCase)) {
-        $normalizedResource = Join-Path $extractRoot 'ripperdoc.inkwidget'
-        Move-Item -LiteralPath $extractedResource.FullName -Destination $normalizedResource -Force
-        $extractedResource = Get-Item -LiteralPath $normalizedResource
-        Add-Report 'NORMALIZED_EXTRACTED_RESOURCE=ripperdoc.inkwidget'
-    }
-
-    Invoke-Captured 'SERIALIZE RIPPERDOC INKWIDGET TO JSON' $dotnet @(
-        $cli,'convert','serialize',$extractedResource.FullName,
-        '--outpath',$jsonRoot
-    ) | Out-Null
-
-    $jsonFiles = @(Get-ChildItem -LiteralPath $jsonRoot -Recurse -File -Filter '*.json')
-    Add-Report ''
-    Add-Report "SERIALIZED_JSON_FILES=$($jsonFiles.Count)"
-    if ($jsonFiles.Count -eq 0) {
-        throw 'No JSON was produced from the extracted Ripperdoc .inkwidget resource.'
-    }
+    $target = $controllerMatches[0]
+    Add-Report ("TARGET_RESOURCE_DISCOVERED=" + $target.Candidate.Path)
+    Add-Report ("TARGET_SOURCE_ARCHIVE=" + $target.Candidate.RelativeArchive)
+    Add-Report ("TARGET_RESOURCE_SHA256=" + (Get-Sha256 (Get-ChildItem -LiteralPath (Split-Path -Parent $target.JsonFile.FullName).Replace($jsonRoot,$extractRoot) -Recurse -File -Filter '*.inkwidget' | Select-Object -First 1).FullName))
+    Add-Report ("TARGET_JSON=" + [IO.Path]::GetRelativePath($jsonRoot,$target.JsonFile.FullName))
 
     $needles = @(
+        'RipperDocGameController',
         'RipperdocInventoryController',
         'inventoryViewAnchor',
         'virtualGridContainer',
         'scrollBarContainer',
         'labelPrefix',
         'labelSuffix',
+        'minigridTargetAnchor',
+        'selectorAnchor',
         'item_area_extended'
     )
-
-    $relevantFiles = 0
-    foreach ($file in $jsonFiles) {
-        $raw = Get-Content -Raw -LiteralPath $file.FullName
-        $fileRelevant = $false
-        foreach ($needle in $needles) {
-            if ($raw.IndexOf($needle,[StringComparison]::OrdinalIgnoreCase) -ge 0) {
-                $fileRelevant = $true
-                break
-            }
-        }
-        if (-not $fileRelevant) {
-            continue
-        }
-
-        $relevantFiles++
-        Add-Report ''
-        Add-Report ("=== RELEVANT JSON: " + [IO.Path]::GetRelativePath($jsonRoot,$file.FullName) + " ===")
-        foreach ($needle in $needles) {
-            $cursor = 0
-            $occurrence = 0
-            while ($occurrence -lt 4) {
-                $index = $raw.IndexOf($needle,$cursor,[StringComparison]::OrdinalIgnoreCase)
-                if ($index -lt 0) {
-                    break
-                }
-                $occurrence++
-                $start = [Math]::Max(0,$index-1200)
-                $length = [Math]::Min(3000,$raw.Length-$start)
-                $snippet = $raw.Substring($start,$length) -replace '[\r\n]+',' '
-                Add-Report ("NEEDLE[$needle]#$occurrence OFFSET=$index")
-                Add-Report $snippet
-                $cursor = $index + $needle.Length
-            }
-        }
-    }
-
     Add-Report ''
-    Add-Report "RELEVANT_JSON_FILES=$relevantFiles"
-    if ($relevantFiles -eq 0) {
-        throw 'Serialized Ripperdoc resource did not expose the expected controller/widget-reference names.'
+    Add-Report '=== TARGET NATIVE INK EVIDENCE ==='
+    foreach ($needle in $needles) {
+        Add-NeedleSnippets $target.Raw $needle
     }
 
     Add-Report ''
