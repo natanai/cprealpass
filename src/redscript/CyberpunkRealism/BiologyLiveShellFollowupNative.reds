@@ -33,21 +33,61 @@ public final func CRBiologyDetailSurfaceActive() -> Bool {
   return this.crBiologyDetailSurfaceActive;
 }
 
-// The inventory controller root owns visibility/opacity, but T002 proves that root is
-// not the authored content rectangle: it resolves at the screen origin. Stock
-// Cyberware item content is laid out by m_virtualGridContainer. Use that native child
-// as the geometry donor for Biology rather than inventing a screen-space offset.
+// T002 plus the attended 2.31 INK probe proved the inventory controller root is only
+// a zero-margin Fill lifecycle container. m_virtualGridContainer is nested below an
+// additional native parent. Its layout values are therefore LOCAL to that parent.
+// Copying those values onto a widget mounted directly under the controller root loses
+// the authored ancestor transform and reproduces the extreme top-left failure.
+//
+// Vanilla redscript does not expose inkWidget.GetParentWidget(). Walk DOWN from the
+// known inventory root instead, find the compound that directly owns the native virtual
+// grid, and mount Biology beside it. Only then is copying the native child's local
+// geometry valid.
 @addMethod(RipperdocInventoryController)
-public final func CRApplyBiologyDetailRegionLayout(target: ref<inkWidget>) -> Bool {
+private final func CRFindBiologyDetailRegionParent(parent: ref<inkCompoundWidget>, nativeRegion: ref<inkWidget>) -> ref<inkCompoundWidget> {
+  if !IsDefined(parent) || !IsDefined(nativeRegion) {
+    return null;
+  }
+
+  let i: Int32 = 0;
+  while i < parent.GetNumChildren() {
+    let child: wref<inkWidget> = parent.GetWidgetByIndex(i);
+    if IsDefined(child) {
+      if child == nativeRegion {
+        return parent;
+      }
+
+      let childCompound: ref<inkCompoundWidget> = child as inkCompoundWidget;
+      if IsDefined(childCompound) {
+        let found: ref<inkCompoundWidget> = this.CRFindBiologyDetailRegionParent(childCompound, nativeRegion);
+        if IsDefined(found) {
+          return found;
+        }
+      }
+    }
+    i += 1;
+  }
+  return null;
+}
+
+@addMethod(RipperdocInventoryController)
+public final func CRMountBiologyDetailInNativeRegion(target: ref<inkWidget>) -> Bool {
   if !IsDefined(target) {
     return false;
   }
 
   let nativeRegion: ref<inkWidget> = inkVirtualCompoundRef.Get(this.m_virtualGridContainer);
-  if !IsDefined(nativeRegion) {
+  let inventoryRoot: ref<inkCompoundWidget> = this.GetRootWidget() as inkCompoundWidget;
+  if !IsDefined(nativeRegion) || !IsDefined(inventoryRoot) {
     return false;
   }
 
+  let nativeParent: ref<inkCompoundWidget> = this.CRFindBiologyDetailRegionParent(inventoryRoot, nativeRegion);
+  if !IsDefined(nativeParent) {
+    return false;
+  }
+
+  target.Reparent(nativeParent, -1);
   target.SetAnchor(nativeRegion.GetAnchor());
   target.SetAnchorPoint(nativeRegion.GetAnchorPoint());
   target.SetHAlign(nativeRegion.GetHAlign());
