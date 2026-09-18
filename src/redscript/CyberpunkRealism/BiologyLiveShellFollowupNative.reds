@@ -164,24 +164,67 @@ public final func CRBiologyDetailPostMountStatus(target: ref<inkWidget>) -> Stri
     result += " R?";
   }
 
-  result += target.IsVisible() ? " T1/" : " T0/";
+  if target.IsVisible() {
+    result += " T1/";
+  } else {
+    result += " T0/";
+  }
   result += FloatToStringPrec(target.GetOpacity(), 1);
 
+  let stored: Vector2 = target.GetSize();
   let desired: Vector2 = target.GetDesiredSize();
+  result += " S" + FloatToStringPrec(stored.X, 0) + "x" + FloatToStringPrec(stored.Y, 0);
   result += " D" + FloatToStringPrec(desired.X, 0) + "x" + FloatToStringPrec(desired.Y, 0);
+  result += " K" + FloatToStringPrec(target.GetSizeCoefficient(), 1);
+  if Equals(target.GetSizeRule(), inkESizeRule.Stretch) {
+    result += " QS";
+  } else {
+    result += " QF";
+  }
 
-  if IsDefined(nativeParent) {
+  let targetCompound: ref<inkCompoundWidget> = target as inkCompoundWidget;
+  if IsDefined(targetCompound) {
+    result += " N" + IntToString(targetCompound.GetNumChildren());
+  } else {
+    result += " N?";
+  }
+
+  if IsDefined(nativeParent) && IsDefined(nativeRegion) {
     let childSize: Vector2 = nativeParent.GetChildSize(target);
     let childPosition: Vector2 = nativeParent.GetChildPosition(target);
     let parentDesired: Vector2 = nativeParent.GetDesiredSize();
     let targetIndex: Int32 = this.CRBiologyChildIndex(nativeParent, target);
     let nativeIndex: Int32 = this.CRBiologyChildIndex(nativeParent, nativeRegion);
-    let childOrder: String = Equals(nativeParent.GetChildOrder(), inkEChildOrder.Backward) ? "B" : "F";
 
     result += " C" + FloatToStringPrec(childSize.X, 0) + "x" + FloatToStringPrec(childSize.Y, 0);
     result += " P" + FloatToStringPrec(parentDesired.X, 0) + "x" + FloatToStringPrec(parentDesired.Y, 0);
-    result += " XY" + FloatToStringPrec(childPosition.X, 0) + "," + FloatToStringPrec(childPosition.Y, 0);
-    result += " I" + IntToString(targetIndex) + "/" + IntToString(nativeIndex) + childOrder;
+    result += " X" + FloatToStringPrec(childPosition.X, 0) + "," + FloatToStringPrec(childPosition.Y, 0);
+    result += " I" + IntToString(targetIndex) + "/" + IntToString(nativeIndex);
+    if Equals(nativeParent.GetChildOrder(), inkEChildOrder.Backward) {
+      result += "B";
+    } else {
+      result += "F";
+    }
+
+    let targetMargin: inkMargin = target.GetMargin();
+    let nativeMargin: inkMargin = nativeRegion.GetMargin();
+    let targetTranslation: Vector2 = target.GetTranslation();
+    let nativeTranslation: Vector2 = nativeRegion.GetTranslation();
+    let layoutMatch: Bool = Equals(target.GetAnchor(), nativeRegion.GetAnchor())
+      && Equals(target.GetAnchorPoint(), nativeRegion.GetAnchorPoint())
+      && Equals(target.GetHAlign(), nativeRegion.GetHAlign())
+      && Equals(target.GetVAlign(), nativeRegion.GetVAlign())
+      && targetMargin.left == nativeMargin.left
+      && targetMargin.top == nativeMargin.top
+      && targetMargin.right == nativeMargin.right
+      && targetMargin.bottom == nativeMargin.bottom
+      && targetTranslation.X == nativeTranslation.X
+      && targetTranslation.Y == nativeTranslation.Y;
+    if layoutMatch {
+      result += " L1";
+    } else {
+      result += " L0";
+    }
   } else {
     result += " P?";
   }
