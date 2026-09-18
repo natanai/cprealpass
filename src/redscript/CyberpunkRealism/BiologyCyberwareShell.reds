@@ -154,8 +154,11 @@ private let crBiologyOverview: ref<inkVerticalPanel>;
 private let crBiologyOverviewText: ref<inkText>;
 
 // Biology detail stays inside the stock inventory-controller subtree for native
-// visibility/depth lifecycle. W02.4 mounts it beside m_virtualGridContainer so its
-// local geometry is interpreted in the exact same authored native coordinate space.
+// visibility/depth lifecycle. W02.4/W02.6 mount it beside m_virtualGridContainer so its
+// geometry is interpreted in that child's local coordinate space. W17.1 source
+// archaeology proves the grid is the controller's virtualized item-list child, not the
+// selected-detail lifecycle authority. Treat this mount as diagnostic/provisional until
+// current-2.31 INK evidence classifies the grid's direct parent as a reusable host.
 @addField(RipperDocGameController)
 private let crBiologyNativeContent: ref<inkVerticalPanel>;
 
