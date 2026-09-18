@@ -119,7 +119,7 @@ try{
     if($wt.ExitCode -ne 0){throw "Could not create detached exact-head checkout. $($wt.StdErr.Trim())"}
 
     $args=@('-NoLogo','-NoProfile','-File',(Join-Path $worktree 'tools\New-ReferenceModBundle.ps1'),'-LibraryPath',$LibraryPath,'-OutputRoot',$OutputRoot,'-WorkflowSourceRevision',$ExpectedHead)
-    if($ReferenceName -and $ReferenceName.Count -gt 0){$args += '-ReferenceName';$args += @($ReferenceName)}
+    if($ReferenceName -and $ReferenceName.Count -gt 0){$args += '-ReferenceNameJson';$args += ($ReferenceName | ConvertTo-Json -Compress)}
     $child=Native 'pwsh' $args
     if($child.StdOut){Write-Host $child.StdOut.TrimEnd()}
     if($child.ExitCode -ne 0){throw "Reference bundle builder failed with exit $($child.ExitCode). $($child.StdErr.Trim())"}
