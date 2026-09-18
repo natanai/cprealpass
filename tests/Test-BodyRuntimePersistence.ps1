@@ -62,9 +62,10 @@ Check ($shell.Contains('this.CRRefreshBiologyOverview();')) 'Biology menu reopen
 
 # Save/load keeps physiology persistent and rebuilds only transient runtime machinery.
 Check ($runtime -match '(?s)private func OnRestored\(saveVersion: Int32, gameVersion: Int32\) -> Void \{\s*this\.ResetTransientState\(\);\s*\}') 'Save restore no longer rebuilds only transient runtime state.'
-$reset = [regex]::Match($runtime,'(?s)private func ResetTransientState\(\) -> Void \{(?<body>.*?)\n  \}\n\n  public func Activate')
-Check $reset.Success 'Could not isolate ResetTransientState for persistence audit.'
-$resetBody = $reset.Groups['body'].Value
+$resetStart = $runtime.IndexOf('private func ResetTransientState() -> Void {')
+$activateStart = $runtime.IndexOf('public func Activate() -> Void {')
+Check ($resetStart -ge 0 -and $activateStart -gt $resetStart) 'Could not isolate ResetTransientState for persistence audit.'
+$resetBody = $runtime.Substring($resetStart,$activateStart - $resetStart)
 foreach ($persistentMutation in @('this.body =','this.inputs =','this.bodySchemaVersion =')) {
     Check (-not $resetBody.Contains($persistentMutation)) "Restore reset mutates persisted physiology: $persistentMutation"
 }
