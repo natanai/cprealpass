@@ -524,7 +524,11 @@ private final func CRBiologyDetailPostMountStatus(layoutReady: Bool) -> String {
 
   if IsDefined(this.crBiologyDetailTitle) {
     let headingDesired: Vector2 = this.crBiologyDetailTitle.GetDesiredSize();
-    result += this.crBiologyDetailTitle.IsVisible() ? " H1/" : " H0/";
+    if this.crBiologyDetailTitle.IsVisible() {
+      result += " H1/";
+    } else {
+      result += " H0/";
+    }
     result += FloatToStringPrec(this.crBiologyDetailTitle.GetOpacity(), 1);
     result += ":" + FloatToStringPrec(headingDesired.X, 0) + "x" + FloatToStringPrec(headingDesired.Y, 0);
   } else {
@@ -533,7 +537,11 @@ private final func CRBiologyDetailPostMountStatus(layoutReady: Bool) -> String {
 
   if ArraySize(this.crBiologyMetricRows) > 0 && IsDefined(this.crBiologyMetricRows[0]) {
     let rowDesired: Vector2 = this.crBiologyMetricRows[0].GetDesiredSize();
-    result += this.crBiologyMetricRows[0].IsVisible() ? " M1:" : " M0:";
+    if this.crBiologyMetricRows[0].IsVisible() {
+      result += " M1:";
+    } else {
+      result += " M0:";
+    }
     result += FloatToStringPrec(rowDesired.X, 0) + "x" + FloatToStringPrec(rowDesired.Y, 0);
   } else {
     result += " M?";
