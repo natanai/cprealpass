@@ -320,7 +320,7 @@ function Test-BiologyAttendedFileAdvancedAfterReady($BeforeState,$AfterState,[da
     return $false
 }
 
-function Get-BiologyAttendedStartupEvidenceAssessment($Before,$After,$StartupDiagnostics) {
+function Get-BiologyAttendedStartupEvidenceAssessment($Before,$After,$StartupDiagnostics,$ReadyUtc = $null) {
     $signals = [Collections.Generic.List[string]]::new()
     if ($null -eq $Before -or $null -eq $After) {
         return [pscustomobject]@{
@@ -332,7 +332,11 @@ function Get-BiologyAttendedStartupEvidenceAssessment($Before,$After,$StartupDia
         }
     }
 
-    $readyUtc = [DateTime]::Parse([string]$Before.capturedUtc).ToUniversalTime()
+    $readyUtc = if ($null -ne $ReadyUtc) {
+        ([DateTime]$ReadyUtc).ToUniversalTime()
+    } else {
+        [DateTime]::Parse([string]$Before.capturedUtc).ToUniversalTime()
+    }
     $configuredOutputAdvanced =
         (Test-BiologyAttendedFileAdvancedAfterReady -BeforeState $Before.files.configuredBlob -AfterState $After.files.configuredBlob -ReadyUtc $readyUtc) -or
         (Test-BiologyAttendedFileAdvancedAfterReady -BeforeState $Before.files.configuredBlobTimestamp -AfterState $After.files.configuredBlobTimestamp -ReadyUtc $readyUtc)
@@ -370,7 +374,12 @@ function Resolve-BiologyAttendedLaunchResult($ListenerResult,$Before,$After,$Sta
     $events = @($ListenerResult.events)
     $classification = Get-BiologyAttendedLaunchClassification -Events $events
     $basis = if ($classification -eq 'NOT-OBSERVED') { 'no-direct-process-observation' } else { 'direct-process-polling' }
-    $startupEvidence = Get-BiologyAttendedStartupEvidenceAssessment -Before $Before -After $After -StartupDiagnostics $StartupDiagnostics
+    $readyUtc = if ($ListenerResult.PSObject.Properties.Name -contains 'readyUtc' -and -not [string]::IsNullOrWhiteSpace([string]$ListenerResult.readyUtc)) {
+        [DateTime]::Parse([string]$ListenerResult.readyUtc).ToUniversalTime()
+    } else {
+        [DateTime]::Parse([string]$Before.capturedUtc).ToUniversalTime()
+    }
+    $startupEvidence = Get-BiologyAttendedStartupEvidenceAssessment -Before $Before -After $After -StartupDiagnostics $StartupDiagnostics -ReadyUtc $readyUtc
     $endedWithoutProcess = $null -ne $After -and @($After.processes).Count -eq 0
 
     if ($classification -eq 'NOT-OBSERVED' -and $endedWithoutProcess -and [bool]$startupEvidence.provesStartup) {
@@ -379,6 +388,7 @@ function Resolve-BiologyAttendedLaunchResult($ListenerResult,$Before,$After,$Sta
     }
 
     return [pscustomobject]@{
+        readyUtc = $readyUtc.ToString('o')
         endedUtc = [string]$ListenerResult.endedUtc
         classification = $classification
         classificationBasis = $basis
@@ -397,6 +407,7 @@ function Invoke-BiologyAttendedQuietListener(
     $events = [Collections.Generic.List[object]]::new()
     $seen = @{}
     $active = @{}
+    $readyUtc = [DateTime]::UtcNow
     Write-Host 'READY TO LAUNCH CYBERPUNK' -ForegroundColor Green
     Write-Host 'Listener active. Leave this window open.'
     Write-Host 'After you have exited the game, return here and type END.'
@@ -424,6 +435,7 @@ function Invoke-BiologyAttendedQuietListener(
 
     Add-BiologyAttendedProcessObservation -Events $events -Seen $seen -Active $active -ProcessProvider $ProcessProvider
     return [pscustomobject]@{
+        readyUtc = $readyUtc.ToString('o')
         endedUtc = [DateTime]::UtcNow.ToString('o')
         classification = Get-BiologyAttendedLaunchClassification @($events)
         events = @($events)
