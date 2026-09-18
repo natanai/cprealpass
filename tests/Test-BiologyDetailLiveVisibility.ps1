@@ -43,10 +43,10 @@ Check ($followup.Contains('public final func CRBiologyDetailMountStatus() -> Str
 # and failed native mounts, so a blank MOUNTED screen proves the failure moved later.
 Check ($sync.Contains('public final func CRSetBiologyLayoutDiagnostic(status: String) -> Void')) 'W02.5 lacks bounded native-selector mount diagnostics.'
 Check ($sync.Contains('[BIOLOGY LAYOUT: ')) 'W02.5 failure diagnostic does not identify the Biology layout boundary.'
-Check ($shell.Contains('this.m_selector.CRSetBiologyLayoutDiagnostic(this.m_inventoryView.CRBiologyDetailMountStatus());')) 'W02.5 does not surface the exact live inventory mount result in attended UI evidence.'
-Check ($sync.Contains('INCLUDING') -and $sync.Contains('MOUNTED')) 'W02.5 does not preserve positive MOUNTED evidence for a still-blank attended detail screen.'
-Check (-not $sync.Contains('Equals(status, "MOUNTED")')) 'W02.5 still hides the successful MOUNTED breadcrumb instead of distinguishing post-mount failures.'
-Check ($shell.Contains('this.m_selector.CRSetBiologyLayoutDiagnostic("INVENTORY_MISSING");')) 'W02.5 cannot distinguish a missing inventory controller from deeper mount failures.'
+Check ($shell.Contains('this.m_selector.CRSetBiologyLayoutDiagnostic(this.CRBiologyDetailPostMountStatus(detailLayoutReady));')) 'W02.6 no longer surfaces the live mount result through the native selector breadcrumb.'
+Check ($followup.Contains('this.crBiologyDetailMountStatus = "MOUNTED";')) 'W02.5 positive MOUNTED state was removed instead of extended with post-mount evidence.'
+Check (-not $sync.Contains('Equals(status, "MOUNTED")')) 'The selector still suppresses successful MOUNTED evidence.'
+Check ($shell.Contains('return "INVENTORY_MISSING " + this.crBiologyDetailContentStatus;')) 'The attended breadcrumb can no longer distinguish a missing inventory controller from post-mount state.'
 
 # Preserve the actual selected-system/runtime path and native navigation. Invisible UI
 # must not be misdiagnosed as body-runtime failure or repaired with fake data.
