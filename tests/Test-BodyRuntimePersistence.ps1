@@ -110,7 +110,7 @@ Check ($stableGuard -ge 0 -and $metersGuard -gt $stableGuard -and $stableReturn 
 # adding release telemetry, another timer, or another persistence authority.
 Check ($runtime.Contains('if !CRBodyTestPolicy.Diagnostics()')) 'Body diagnostic snapshots are no longer development-gated.'
 foreach ($event in @('activate','skip-start','skip-finish','tick')) {
-    Check ($runtime.Contains("this.TestSnapshot(\"$event\");")) "Missing bounded runtime diagnostic event: $event"
+    Check ($runtime.Contains(('this.TestSnapshot("' + $event + '");'))) "Missing bounded runtime diagnostic event: $event"
 }
 Check (-not ($runtime -match 'persistent let testLastSnapshot|persistent let testSnapshotCount')) 'Development diagnostics became save-persistent state.'
 
