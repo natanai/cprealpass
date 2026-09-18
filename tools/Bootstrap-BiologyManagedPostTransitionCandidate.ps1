@@ -144,7 +144,7 @@ try {
 
     $child=Invoke-NativeSafe 'pwsh' @('-NoLogo','-NoProfile','-File',(Join-Path $worktree 'tools\Bootstrap-BiologyPostTransitionCandidate.ps1'),'-MainSha',$MainSha,'-TransitionCleanupReportPath',$TransitionCleanupReportPath,'-ExpectedTransitionCleanupReportSha256',(Get-BiologyOperatorSha256 $TransitionCleanupReportPath),'-GamesRoot',$GamesRoot,'-GameRoot',$GameRoot)
     $childExit=$child.ExitCode; $childStdOut=$child.StdOut; $childStdErr=$child.StdErr
-    $reportMatch=[regex]::Match($childStdOut,'(?im)^ATTACH THIS FILE TO CHATGPT:\s*\r?\n(?<path>[A-Za-z]:\\[^\r\n]+\.txt)\s*$')
+    $reportMatch=[regex]::Match($child.StdOut,'(?im)^ATTACH THIS FILE TO CHATGPT:\s*\r?\n(?<path>[A-Za-z]:\\[^\r\n]+\.txt)\s*$')
     if (-not $reportMatch.Success) { throw 'Inner candidate preparation did not expose its failure-durable report path.' }
     $childReportPath=[IO.Path]::GetFullPath($reportMatch.Groups['path'].Value.Trim())
     if (-not (Test-Path -LiteralPath $childReportPath -PathType Leaf)) { throw 'Inner candidate preparation report is missing.' }
@@ -181,9 +181,11 @@ try {
 
     $result=if($innerPassed){'PASS'}else{'FAIL-CLOSED'}
     $gameMutationStarted=if($innerPassed){$true}else{Get-ReportBool $innerText 'Game mutation started'}
+    $targetInstallMutationStarted=if($innerPassed){$true}else{Get-ReportBool $innerText 'Target install mutation started'}
+    $priorTransitionMutationStarted=Get-ReportBool $innerText 'Prior Biology transition mutation started'
     $installedReceiptVerified=if($innerPassed){$true}else{Get-ReportBool $innerText 'Installed receipt exact revision verified'}
     $deployPassed=if($innerPassed){$true}else{Get-ReportBool $innerText 'REDmod deployment passed'}
-    $recoveryEligible=($result -eq 'FAIL-CLOSED' -and $gameMutationStarted -and $null -ne $manifest -and $null -ne $receiptHash)
+    $recoveryEligible=($result -eq 'FAIL-CLOSED' -and $targetInstallMutationStarted -and $null -ne $manifest -and $null -ne $receiptHash)
     $evidenceId=if($null -ne $manifest){[string]$manifest.buildId}else{'candidate-' + $MainSha.Substring(0,12) + '-' + $signature}
     if ($evidenceId -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]{0,119}$') { $evidenceId='candidate-' + $MainSha.Substring(0,12) + '-' + $signature }
     $bundleName='Biology-Operator-Evidence-' + $evidenceId + '.zip'
@@ -202,6 +204,8 @@ try {
             ('Transition evidence normalized SHA-256: ' + (Get-BiologyOperatorTextSha256 $TransitionCleanupReportPath)),
             ('Transition evidence file SHA-256 supplied to legacy inner command: ' + (Get-BiologyOperatorSha256 $TransitionCleanupReportPath)),
             ('Game mutation started: ' + $gameMutationStarted),
+            ('Prior Biology transition mutation started: ' + $priorTransitionMutationStarted),
+            ('Target install mutation started: ' + $targetInstallMutationStarted),
             ('Installed receipt exact revision verified: ' + $installedReceiptVerified),
             ('REDmod deployment passed: ' + $deployPassed),
             ('Recovery evidence eligible: ' + $recoveryEligible),
@@ -231,7 +235,7 @@ try {
             proofBoundary='Exact candidate preparation evidence. Embedded schema-2 payload manifest and receipt hash authenticate later failed-install recovery without retaining the historical ZIP as proof.'
             game=[ordered]@{productVersion=$gameVersion;executableSha256=$gameHash;redmodProductVersion=$redmodVersion;redmodSha256=$redmodHash}
             artifact=$artifactObject
-            install=[ordered]@{transitionEvidenceNormalizedSha256=(Get-BiologyOperatorTextSha256 $TransitionCleanupReportPath);transitionEvidenceFileSha256=(Get-BiologyOperatorSha256 $TransitionCleanupReportPath);preflightPassed=($innerText -match 'Collision-safe install preflight: PASS');gameMutationStarted=$gameMutationStarted;installedReceiptVerified=$installedReceiptVerified;redmodDeploymentPassed=$deployPassed}
+            install=[ordered]@{transitionEvidenceNormalizedSha256=(Get-BiologyOperatorTextSha256 $TransitionCleanupReportPath);transitionEvidenceFileSha256=(Get-BiologyOperatorSha256 $TransitionCleanupReportPath);preflightPassed=($innerText -match 'Collision-safe install preflight(?: after transition)?: PASS');gameMutationStarted=$gameMutationStarted;priorTransitionMutationStarted=$priorTransitionMutationStarted;targetInstallMutationStarted=$targetInstallMutationStarted;installedReceiptVerified=$installedReceiptVerified;redmodDeploymentPassed=$deployPassed}
             recovery=[ordered]@{mode=if($null -ne $manifest){'exact-payload-manifest'}else{'none'};eligible=$recoveryEligible;receiptSha256=$receiptHash}
             cleanup=$cleanup
             handoff=[ordered]@{bundleName=$bundleName;reportSha256=$reportHash}
@@ -258,7 +262,7 @@ try {
             $reportOut=Join-Path $temp 'report.txt'
             @('BIOLOGY MANAGED CANDIDATE WRAPPER FAIL-CLOSED',('Canonical source revision: ' + $MainSha),('Exception type: ' + $_.Exception.GetType().FullName),('Error: ' + $_.Exception.Message),('Inner child exit code: ' + $childExit),'stdout:',$childStdOut.TrimEnd(),'stderr:',$childStdErr.TrimEnd()) | Set-Content -LiteralPath $reportOut -Encoding utf8
             if (Get-Command Get-BiologyOperatorTextSha256 -ErrorAction SilentlyContinue) { $reportHash=Get-BiologyOperatorTextSha256 $reportOut } else { $reportHash=(Get-FileHash -LiteralPath $reportOut -Algorithm SHA256).Hash.ToUpperInvariant() }
-            $record=[ordered]@{schemaVersion=1;product='Biology';evidenceId=$evidenceId;operation='post-transition-candidate-preparation';createdUtc=[DateTime]::UtcNow.ToString('o');sourceRevision=$MainSha;result='FAIL-CLOSED';proofBoundary='Wrapper failed before it could establish exact payload evidence; no recovery authority is asserted by this record.';game=$null;artifact=$null;install=[ordered]@{gameMutationStarted=$false};recovery=[ordered]@{mode='none';eligible=$false};cleanup=[ordered]@{artifactRootName=$null;artifactZipName=$null;packageRootName=$null};handoff=[ordered]@{bundleName=$bundleName;reportSha256=$reportHash}}
+            $record=[ordered]@{schemaVersion=1;product='Biology';evidenceId=$evidenceId;operation='post-transition-candidate-preparation';createdUtc=[DateTime]::UtcNow.ToString('o');sourceRevision=$MainSha;result='FAIL-CLOSED';proofBoundary='Wrapper failed before it could establish exact payload evidence; no recovery authority is asserted by this record.';game=$null;artifact=$null;install=[ordered]@{gameMutationStarted=$false;priorTransitionMutationStarted=$false;targetInstallMutationStarted=$false};recovery=[ordered]@{mode='none';eligible=$false};cleanup=[ordered]@{artifactRootName=$null;artifactZipName=$null;packageRootName=$null};handoff=[ordered]@{bundleName=$bundleName;reportSha256=$reportHash}}
             $record | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath (Join-Path $temp 'evidence.json') -Encoding utf8
             Compress-Archive -LiteralPath (Join-Path $temp 'evidence.json'),(Join-Path $temp 'report.txt') -DestinationPath $bundlePath -CompressionLevel Optimal
         } finally { if (Test-Path -LiteralPath $temp) { Remove-Item -LiteralPath $temp -Recurse -Force } }

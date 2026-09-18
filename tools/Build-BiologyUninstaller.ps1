@@ -1,7 +1,8 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory=$true)][string]$OutputPath,
-    [string]$TestOutputPath
+    [string]$TestOutputPath,
+    [string]$TransitionOutputPath
 )
 
 $ErrorActionPreference = 'Stop'
@@ -10,6 +11,7 @@ $project = Get-ProjectRoot
 
 $core = Join-Path $project 'src\uninstaller\BiologyUninstallCore.cs'
 $program = Join-Path $project 'src\uninstaller\BiologyUninstallerProgram.cs'
+$transitionProgram = Join-Path $project 'src\uninstaller\BiologyPriorInstallTransitionProgram.cs'
 $tests = Join-Path $project 'tests\BiologyUninstallCoreTests.cs'
 foreach ($required in @($core,$program)) {
     if (-not (Test-Path -LiteralPath $required -PathType Leaf)) { throw "Missing Biology uninstaller source: $required" }
@@ -66,6 +68,16 @@ if (-not [string]::IsNullOrWhiteSpace($TestOutputPath)) {
         'System.Core.dll',
         'System.Web.Extensions.dll'
     ))
+}
+
+if (-not [string]::IsNullOrWhiteSpace($TransitionOutputPath)) {
+    if (-not (Test-Path -LiteralPath $transitionProgram -PathType Leaf)) { throw "Missing Biology prior-install transition source: $transitionProgram" }
+    $transitionBinary = Invoke-CSharpCompiler -Target $TransitionOutputPath -TargetType 'exe' -Sources @($core,$transitionProgram) -References @(
+        'System.dll',
+        'System.Core.dll',
+        'System.Web.Extensions.dll'
+    )
+    Write-Host "PASS: Biology receipt-bounded prior-install transition helper compiled: $transitionBinary"
 }
 
 Write-Host "PASS: Biology single-binary player uninstaller compiled: $binary"

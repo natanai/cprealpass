@@ -36,6 +36,11 @@ $artifactZip = $null
 $artifactHash = $null
 $artifactBytes = $null
 $gameMutationStarted = $false
+$targetInstallMutationStarted = $false
+$priorTransitionAttempted = $false
+$priorTransitionPassed = $false
+$priorTransitionMutationStarted = $false
+$priorTransitionToolRoot = $null
 $installedReceiptVerified = $false
 $deployPassed = $false
 $failed = $false
@@ -161,7 +166,7 @@ function Resolve-SafeGameChild([string]$RelativePath) {
     ('Expected transition cleanup report SHA-256: ' + $ExpectedTransitionCleanupReportSha256),
     ('Artifact retention root: ' + $artifactRoot),
     'Game-state classification target: accounted W11 transition; NOT a vanilla-baseline verification.',
-    'Installed game is read-only until the exact release artifact is successfully built and transition preconditions are rechecked.',
+    'An installed schema-2 Biology candidate may be retired internally only after the exact target artifact builds and collision preflight passes.',
     'The game is never launched by this tool.',
     ''
 ) | Set-Content -LiteralPath $reportPath -Encoding utf8
@@ -252,18 +257,9 @@ try {
     }
     Add-Evidence ('Intentionally preserved shared redscript deployment paths present: ' + $retainedRedscriptCount)
 
-    Add-Evidence ''
-    Add-Evidence '=== PRE-INSTALL BIOLOGY-SPECIFIC RESIDUE VERIFICATION ==='
-    $verify = Invoke-NativeSafe 'pwsh' @('-NoLogo','-NoProfile','-File',(Join-Path $worktree 'tools\Verify-BiologyRemoval.ps1'),'-GameRoot',$GameRoot)
-    Record-Process 'Verify-BiologyRemoval.ps1' $verify
-    if ($verify.ExitCode -ne 0 -or $verify.StdOut -notmatch 'PASS: no Biology-specific package/runtime residue was found') { throw 'Biology-specific residue verification did not PASS before candidate install.' }
-
-    Add-Evidence 'Transition-state classification: W11 plan-bound retired-framework cleanup PASS + current retired-path absence + Biology-specific residue verifier PASS + shared redscript intentionally preserved.'
-    Add-Evidence 'Proof boundary: this is an explicitly accounted transition state, NOT a fresh reinstall and NOT verification against the recorded vanilla baseline.'
-
     New-Item -ItemType Directory -Force -Path $artifactRoot | Out-Null
     Add-Evidence ''
-    Add-Evidence '=== EXACT COMPILE / RELEASE-SHAPED BUILD ==='
+    Add-Evidence '=== EXACT COMPILE / RELEASE-SHAPED TARGET BUILD ==='
     $build = Invoke-NativeSafe 'pwsh' @('-NoLogo','-NoProfile','-File',(Join-Path $worktree 'tools\Build-BiologyPackage.ps1'),'-GameRoot',$GameRoot,'-OutputRoot',$artifactRoot)
     Record-Process 'Build-BiologyPackage.ps1' $build
     if ($build.ExitCode -ne 0) { throw "Biology release-shaped build/exact compile failed with exit code $($build.ExitCode)." }
@@ -287,20 +283,79 @@ try {
 
     Assert-GameStopped
     foreach ($relative in @($retiredPaths | Sort-Object)) {
-        if (Test-Path -LiteralPath (Resolve-SafeGameChild $relative)) { throw "Transition state changed before install; retired path returned: $relative" }
+        if (Test-Path -LiteralPath (Resolve-SafeGameChild $relative)) { throw "Transition state changed before target preflight; retired path returned: $relative" }
     }
 
     Add-Evidence ''
-    Add-Evidence '=== COLLISION-SAFE INSTALL PREFLIGHT ==='
+    Add-Evidence '=== COLLISION-SAFE TARGET PREFLIGHT AGAINST CURRENT INSTALL ==='
     $installScript = Join-Path $worktree 'tools\Install-BiologyRelease.ps1'
+    $initialPreflight = Invoke-NativeSafe 'pwsh' @('-NoLogo','-NoProfile','-File',$installScript,'-PackageRoot',$roots[0].FullName,'-GameRoot',$GameRoot,'-WhatIf')
+    Record-Process 'Install-BiologyRelease.ps1 -WhatIf before prior-install transition' $initialPreflight
+    if ($initialPreflight.ExitCode -ne 0) { throw 'Target Biology release install preflight failed before any prior-install transition. Protected shared loader/config collisions remain fail-closed.' }
+    Add-Evidence 'Target collision preflight before prior-install transition: PASS.'
+
+    $priorReceiptPath = Join-Path $GameRoot 'biology\build-manifest.json'
+    if (Test-Path -LiteralPath $priorReceiptPath -PathType Leaf) {
+        $priorTransitionAttempted = $true
+        Add-Evidence ''
+        Add-Evidence '=== PRIOR SCHEMA-2 BIOLOGY CANDIDATE TRANSITION ==='
+        try {
+            $priorReceipt = Get-Content -Raw -LiteralPath $priorReceiptPath | ConvertFrom-Json
+            Add-Evidence ('Prior receipt sourceRevision: ' + [string]$priorReceipt.sourceRevision)
+            Add-Evidence ('Prior receipt buildId: ' + [string]$priorReceipt.buildId)
+        } catch {
+            throw 'Installed Biology ownership receipt is not parseable; prior-install transition refused before mutation.'
+        }
+
+        $priorTransitionToolRoot = Join-Path ([IO.Path]::GetTempPath()) ('biology-prior-install-transition-' + [guid]::NewGuid().ToString('N'))
+        New-Item -ItemType Directory -Force -Path $priorTransitionToolRoot | Out-Null
+        $scratchPlayer = Join-Path $priorTransitionToolRoot 'Uninstall Biology.exe'
+        $transitionExe = Join-Path $priorTransitionToolRoot 'BiologyPriorInstallTransition.exe'
+        $transitionReport = Join-Path $priorTransitionToolRoot 'transition-report.txt'
+        $transitionBuild = Invoke-NativeSafe 'pwsh' @('-NoLogo','-NoProfile','-File',(Join-Path $worktree 'tools\Build-BiologyUninstaller.ps1'),'-OutputPath',$scratchPlayer,'-TransitionOutputPath',$transitionExe)
+        Record-Process 'Build receipt-bounded prior-install transition helper' $transitionBuild
+        if ($transitionBuild.ExitCode -ne 0 -or -not (Test-Path -LiteralPath $transitionExe -PathType Leaf)) { throw 'Could not build the current exact-source prior-install transition helper.' }
+
+        $transition = Invoke-NativeSafe $transitionExe @(('--game-root=' + $GameRoot),('--report=' + $transitionReport))
+        Record-Process 'BiologyPriorInstallTransition.exe' $transition
+        $priorTransitionText = if (Test-Path -LiteralPath $transitionReport -PathType Leaf) { Get-Content -Raw -LiteralPath $transitionReport } else { '' }
+        Add-Evidence '--- PRIOR-INSTALL TRANSITION REPORT ---'
+        Add-Evidence $priorTransitionText.TrimEnd()
+        $priorTransitionMutationStarted = $priorTransitionText -match '(?im)^Game mutation started:\s*True\s*$'
+        if ($priorTransitionMutationStarted) { $gameMutationStarted = $true }
+        if ($transition.ExitCode -ne 0 -or $priorTransitionText -notmatch '(?m)^RESULT: PASS\s*$') {
+            throw 'Receipt-bounded prior Biology transition did not PASS. The current report records whether any exact deletion began.'
+        }
+        $priorTransitionPassed = $true
+        Remove-Item -LiteralPath $priorTransitionToolRoot -Recurse -Force
+        $priorTransitionToolRoot = $null
+    } else {
+        Add-Evidence 'No installed schema-2 Biology ownership receipt was present; no prior-install transition mutation was attempted.'
+    }
+
+    Add-Evidence ''
+    Add-Evidence '=== POST-TRANSITION BIOLOGY-SPECIFIC RESIDUE VERIFICATION ==='
+    $verify = Invoke-NativeSafe 'pwsh' @('-NoLogo','-NoProfile','-File',(Join-Path $worktree 'tools\Verify-BiologyRemoval.ps1'),'-GameRoot',$GameRoot)
+    Record-Process 'Verify-BiologyRemoval.ps1' $verify
+    if ($verify.ExitCode -ne 0 -or $verify.StdOut -notmatch 'PASS: no Biology-specific package/runtime residue was found') { throw 'Biology-specific residue verification did not PASS before target candidate install.' }
+
+    foreach ($relative in @($retiredPaths | Sort-Object)) {
+        if (Test-Path -LiteralPath (Resolve-SafeGameChild $relative)) { throw "Transition state changed before install; retired path returned: $relative" }
+    }
+    Add-Evidence 'Transition-state classification: W11 plan-bound retired-framework cleanup PASS + target build/preflight PASS + receipt-bounded prior Biology transition when present + Biology residue verifier PASS + shared redscript/cybercmd preserved.'
+    Add-Evidence 'Proof boundary: this is an explicitly accounted transition state, NOT a fresh reinstall and NOT verification against the recorded vanilla baseline.'
+
+    Add-Evidence ''
+    Add-Evidence '=== COLLISION-SAFE INSTALL PREFLIGHT AFTER PRIOR-STATE TRANSITION ==='
     $installPreflight = Invoke-NativeSafe 'pwsh' @('-NoLogo','-NoProfile','-File',$installScript,'-PackageRoot',$roots[0].FullName,'-GameRoot',$GameRoot,'-WhatIf')
-    Record-Process 'Install-BiologyRelease.ps1 -WhatIf' $installPreflight
-    if ($installPreflight.ExitCode -ne 0) { throw 'Biology release install preflight failed before game mutation. Shared global.ini/version.dll collisions are never overwritten.' }
-    Add-Evidence 'Collision-safe install preflight: PASS. Existing non-identical bin/x64/global.ini or bin/x64/version.dll would have failed closed before mutation; only cybercmd.asi is replaceable.'
+    Record-Process 'Install-BiologyRelease.ps1 -WhatIf after prior-install transition' $installPreflight
+    if ($installPreflight.ExitCode -ne 0) { throw 'Biology release install preflight failed after prior-state transition. Shared global.ini/version.dll collisions are never overwritten.' }
+    Add-Evidence 'Collision-safe install preflight after transition: PASS.'
 
     Add-Evidence ''
     Add-Evidence '=== INSTALL EXACT RETAINED ARTIFACT ==='
     $gameMutationStarted = $true
+    $targetInstallMutationStarted = $true
     $install = Invoke-NativeSafe 'pwsh' @('-NoLogo','-NoProfile','-File',$installScript,'-PackageRoot',$roots[0].FullName,'-GameRoot',$GameRoot)
     Record-Process 'Install-BiologyRelease.ps1' $install
     if ($install.ExitCode -ne 0 -or $install.StdOut -notmatch 'PASS: Biology release install verified') { throw 'Collision-safe Biology release installer did not return its positive verification marker.' }
@@ -328,6 +383,10 @@ try {
     Add-Evidence ('Artifact ZIP: ' + $artifactZip)
     Add-Evidence ('Artifact SHA-256: ' + $artifactHash)
     Add-Evidence ('Artifact bytes: ' + $artifactBytes)
+    Add-Evidence ('Prior Biology transition attempted: ' + $priorTransitionAttempted)
+    Add-Evidence ('Prior Biology transition passed: ' + $priorTransitionPassed)
+    Add-Evidence ('Prior Biology transition mutation started: ' + $priorTransitionMutationStarted)
+    Add-Evidence ('Target install mutation started: ' + $targetInstallMutationStarted)
     Add-Evidence 'Collision-safe release install: PASS'
     Add-Evidence 'REDmod deployment: PASS'
     Add-Evidence 'STOP_BEFORE_GAME_LAUNCH=YES'
@@ -347,11 +406,19 @@ try {
     Add-Evidence ('Artifact SHA-256: ' + $artifactHash)
     Add-Evidence ('Artifact bytes: ' + $artifactBytes)
     Add-Evidence ('Game mutation started: ' + $gameMutationStarted)
+    Add-Evidence ('Prior Biology transition attempted: ' + $priorTransitionAttempted)
+    Add-Evidence ('Prior Biology transition passed: ' + $priorTransitionPassed)
+    Add-Evidence ('Prior Biology transition mutation started: ' + $priorTransitionMutationStarted)
+    Add-Evidence ('Target install mutation started: ' + $targetInstallMutationStarted)
     Add-Evidence ('Installed receipt exact revision verified: ' + $installedReceiptVerified)
     Add-Evidence ('REDmod deployment passed: ' + $deployPassed)
-    if ($gameMutationStarted) { Add-Evidence 'IMPORTANT: failure occurred after installation mutation began. Do not improvise cleanup; return this report to P01.2.' }
-    else { Add-Evidence 'Installed game remained read-only because failure occurred before artifact installation began.' }
+    if ($gameMutationStarted) { Add-Evidence 'IMPORTANT: failure occurred after a bounded game mutation began. Do not improvise cleanup; return this report to P01.2.' }
+    else { Add-Evidence 'Installed game remained read-only because failure occurred before any prior-candidate retirement or target installation began.' }
 } finally {
+    if ($priorTransitionToolRoot -and (Test-Path -LiteralPath $priorTransitionToolRoot)) {
+        try { Remove-Item -LiteralPath $priorTransitionToolRoot -Recurse -Force -ErrorAction Stop }
+        catch { Add-Evidence ('WARNING: temporary prior-transition helper cleanup failed: ' + $priorTransitionToolRoot + ' | ' + $_.Exception.Message) }
+    }
     if ($worktree -and $seedRepo -and (Test-Path -LiteralPath $worktree)) {
         try {
             $removeWorktree = Invoke-NativeSafe 'git' @('-C',$seedRepo,'worktree','remove','--force',$worktree)
