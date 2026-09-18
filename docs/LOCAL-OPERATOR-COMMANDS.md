@@ -359,6 +359,47 @@ The installed Biology candidate is **not** a generic session-cleanup target. It 
 
 ---
 
+## Command 18 — private reference-mod archaeology bundle
+
+Use this when a worker requests private engineering evidence from one or more third-party reference mods in the owner's persistent library:
+
+`C:\Games\Cyberpunk-ReferenceMods`
+
+Repository entrypoint:
+
+`tools/Bootstrap-ReferenceModBundle.ps1`
+
+Canonical reviewed-checkout invocation:
+
+```powershell
+pwsh '<exact-reviewed-checkout>\tools\Bootstrap-ReferenceModBundle.ps1' `
+  -Branch main `
+  -ExpectedHead '<exact 40-character reviewed main SHA>'
+```
+
+If `-ReferenceName` is omitted, the command lists only immediate children of the private library and asks the owner to select one or more by number. A parent may instead pass exact immediate-child names, for example `-ReferenceName 'Project E3 HUD','Project E3 UI'`.
+
+Zero local repo is supported through the mandatory bootstrap-loader boundary above: use a local exact reviewed script when available, otherwise an exact-revision raw GitHub download may materialize this one repository-owned bootstrap. Never use an unpinned `main` download.
+
+The bootstrap:
+- discovers only Git-validated immediate-child cprealpass clones/worktrees under `C:\Games`;
+- fetches the requested branch and fails closed unless the exact supplied head is proven, with the canonical exact-head cached-origin fallback after network failure;
+- creates a disposable detached exact-head checkout;
+- reads selected references without modifying/deleting the source library and without installing anything into Cyberpunk;
+- prefers a selected extracted folder over a selected same-basename ZIP so duplicate payload is not bundled twice;
+- copies bounded text/source/config material for private worker analysis;
+- hashes and inventories every encountered file;
+- lists ZIP contents natively and uses an already-available safe `7z l`/ `7zz l` listing for other resource containers when it succeeds;
+- marks unsupported/failed archive interiors explicitly opaque rather than inventing an interpretation;
+- writes one private ZIP outside the repo and outside the source library, by default under `C:\Games\Biology-Reference-Bundles`;
+- prints exactly one obvious `ATTACH THIS ONE REFERENCE BUNDLE TO CHATGPT:` path.
+
+The returned bundle is **private third-party reference material**. Do not ingest its payload, archives, or third-party source into GitHub/operator-evidence. After analysis, commit only redistribution-safe derived records conforming to `docs/reference-mods/reference-record.schema.json`.
+
+A worker requesting this command must name the desired mod/dependencies, why they matter, and the exact uncertainty the reference is expected to resolve.
+
+---
+
 ## Parent evidence ingestion rule
 
 When the owner returns a managed evidence ZIP, P01.2 inspects it, records meaningful attended conclusions under `docs/test-runs/` as appropriate, and commits redistributable evidence members under:
