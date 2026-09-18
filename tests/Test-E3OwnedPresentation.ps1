@@ -75,7 +75,7 @@ Check (-not $source.quest.Contains('crBiologyE3QuestLastEnabled != enabled') -an
 Check ($source.hotkey.Contains('@wrapMethod(HotkeysWidgetController)')) 'Quick-slot/D-pad lost its native controller seam.'
 Check ($source.hotkey.Contains('CRResolveBiologyE3HotkeyHost') -and $source.hotkey.Contains('this.m_dpadHintsPanel')) 'W03.6 hotkey chrome is not bound to the native m_dpadHintsPanel semantic content host.'
 Check ($source.hotkey.Contains('CreateFillShell(this.crBiologyE3HotkeyHost')) 'W03.6 hotkey chrome still mounts against the controller root instead of the semantic content host.'
-Check (-not $source.hotkey.Contains('GetRootCompoundWidget()')) 'W03.6 hotkey repair regressed to controller-root composition.'
+Check (-not $source.hotkey.Contains('this.GetRootCompoundWidget()')) 'W03.6 hotkey repair regressed to controller-root composition.'
 Check (-not $source.hotkey.Contains('SetTranslation(')) 'W03.6 hotkey repair introduced an arbitrary screenshot-derived/global translation.'
 Check ($source.hotkey.Contains('TraceMountedRegion')) 'W03.6 hotkey adapter does not emit bounded native-host/chrome geometry evidence.'
 Check ($source.interaction.Contains('@wrapMethod(interactionWidgetGameController)') -and $source.interaction.Contains('"INTERACTION"')) 'Ordinary interaction prompt lost W03.4 compact chrome.'
