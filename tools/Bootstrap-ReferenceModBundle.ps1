@@ -5,7 +5,9 @@ param(
     [string]$GamesRoot = 'C:\Games',
     [string]$LibraryPath = 'C:\Games\Cyberpunk-ReferenceMods',
     [string[]]$ReferenceName,
-    [string]$OutputRoot = 'C:\Games\Biology-Reference-Bundles'
+    [string]$OutputRoot = 'C:\Games\Biology-Reference-Bundles',
+    [switch]$IncludeBiologyNativeUi,
+    [string]$GamePath = 'C:\Games\Steam\steamapps\common\Cyberpunk 2077'
 )
 
 $ErrorActionPreference='Stop'
@@ -120,6 +122,7 @@ try{
 
     $args=@('-NoLogo','-NoProfile','-File',(Join-Path $worktree 'tools\New-ReferenceModBundle.ps1'),'-LibraryPath',$LibraryPath,'-OutputRoot',$OutputRoot,'-WorkflowSourceRevision',$ExpectedHead)
     if($ReferenceName -and $ReferenceName.Count -gt 0){$args += '-ReferenceNameJson';$args += ($ReferenceName | ConvertTo-Json -Compress)}
+    if($IncludeBiologyNativeUi){$args += '-IncludeBiologyNativeUi';$args += '-GamePath';$args += $GamePath}
     $child=Native 'pwsh' $args
     if($child.StdOut){Write-Host $child.StdOut.TrimEnd()}
     if($child.ExitCode -ne 0){throw "Reference bundle builder failed with exit $($child.ExitCode). $($child.StdErr.Trim())"}
