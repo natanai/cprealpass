@@ -22,6 +22,7 @@ public class CRBiologyE3Primitives extends IScriptable {
     }
     shell.SetName(name);
     shell.SetAnchor(inkEAnchor.Fill);
+    shell.SetSizeRule(inkESizeRule.Stretch);
     shell.Reparent(parent, -1);
     return shell;
   }
@@ -33,6 +34,7 @@ public class CRBiologyE3Primitives extends IScriptable {
     }
     widget.SetName(name);
     widget.SetAnchor(inkEAnchor.Fill);
+    widget.SetSizeRule(inkESizeRule.Stretch);
     widget.SetTintColor(CRBiologyE3Primitives.Red());
     widget.SetOpacity(opacity);
     widget.Reparent(parent, 0);

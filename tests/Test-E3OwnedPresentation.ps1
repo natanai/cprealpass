@@ -34,7 +34,7 @@ foreach ($key in $paths.Keys) { $source[$key] = Get-Content -Raw -LiteralPath $p
 $mapping = Get-Content -Raw -LiteralPath $mappingPath
 $presentation = Get-Content -Raw -LiteralPath $presentationPath
 
-Check ($source.primitives.Contains('CreateFillShell') -and $source.primitives.Contains('SetAnchor(inkEAnchor.Fill)')) 'Shared primitives do not provide root-fitted E3 shells.'
+Check ($source.primitives.Contains('CreateFillShell') -and $source.primitives.Contains('SetAnchor(inkEAnchor.Fill)') -and $source.primitives.Contains('SetSizeRule(inkESizeRule.Stretch)')) 'Shared primitives do not provide root-fitted stretch E3 shells.'
 Check ($source.primitives.Contains('AddFillWash')) 'Shared primitives do not provide a root-fitted E3 wash.'
 Check (-not $source.primitives.Contains('TintNeutralHudRoot')) 'Native-root tint mutation path returned.'
 foreach ($key in @('lowerLeft','quest','navigation','weapon','hotkey','interaction')) {
