@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "name": "Example reference mod",
+    "version": null,
+    "provenance": null,
+    "selectedIdentities": [
+      {
+        "path": "relative/path/to/evidence.ext",
+        "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    ]
+  },
+  "dependencies": [
+    {
+      "name": "Example framework",
+      "role": "What generic plumbing it provides to the reference mod",
+      "evidence": "Relative config/readme/hash identity or other redistribution-safe evidence"
+    }
+  ],
+  "mappings": [
+    {
+      "referenceArea": "HUD base controller",
+      "mechanism": "unknown",
+      "referencePathIdentity": null,
+      "nativeContract": {
+        "gameVersion": "2.31",
+        "controllerOrSystem": null,
+        "widgetOrResource": null
+      },
+      "biologyOwnedSeam": "Describe the minimal Biology-owned seam after independent native verification",
+      "validation": "Describe exact compile/direct-inspection/attended validation required"
+    }
+  ],
+  "opaqueAreas": [
+    {
+      "pathIdentity": "relative/path/to/resource.archive + SHA-256",
+      "reason": "Archive internals were not safely inspectable in the private bundle.",
+      "nextEvidence": "Request a safe local inventory/extraction capability or inspect current native game resources directly."
+    }
+  ],
+  "conclusions": [
+    "Only redistribution-safe derived conclusions belong here; never third-party implementation bodies."
+  ]
+}
