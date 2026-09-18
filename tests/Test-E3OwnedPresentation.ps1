@@ -79,6 +79,7 @@ Check ($source.nameplate.Contains('this.GetNameplateVisible()')) 'Projection ada
 Check ($source.nameplate.Contains('inkWidgetRef.SetVisible(this.m_displayName, true)')) 'Projection adapter does not expose the native display-name surface when the native root is visible.'
 Check ($source.nameplate.Contains('this.c_DisplayRangeNotAggressive = 10.0') -and $source.nameplate.Contains('this.c_MaxDisplayRangeNotAggressive = 20.0')) 'E3 ambient non-aggressive projection range is not restored to the intended ordinary-look envelope.'
 Check ($source.nameplate.Contains('SNameplateRangesData.GetDisplayRangeNotAggressive()') -and $source.nameplate.Contains('SNameplateRangesData.GetMaxDisplayRangeNotAggressive()')) 'E3 OFF cannot restore native non-aggressive nameplate range.'
+Check ($source.nameplate.Contains('crBiologyE3NativeFrameVisible') -and $source.nameplate.Contains('crBiologyE3NativeFrameOpacity')) 'E3 OFF does not preserve/restore native name-frame visibility and opacity after W03.3 styling.'
 foreach ($forbidden in @('m_healthbarWidget','m_damagePreviewWidget','currentHealth','maximumHealth','StatPoolType.Health')) {
     Check (-not $source.nameplate.Contains($forbidden)) "E3 nameplate absorbed health-meter ownership: $forbidden"
 }
