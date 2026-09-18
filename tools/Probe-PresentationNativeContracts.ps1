@@ -64,6 +64,15 @@ $contracts = @(
         )
     },
     [pscustomobject]@{
+        path = 'cyberpunk/UI/weapons/crosshairs/crosshairBaseControllers.script'
+        patterns = @(
+            '\bgameuiCrosshairBaseGameController\b',
+            '\bevent\s+OnInitialize\s*\(',
+            '\bfunction\s+OnCrosshairStateChange\s*\(',
+            '\bfunction\s+OnState_Scanning\s*\('
+        )
+    },
+    [pscustomobject]@{
         path = 'cyberpunk/UI/interactions/interactionsUI.script'
         patterns = @(
             '\bclass\s+interactionWidgetGameController\b',
@@ -143,4 +152,4 @@ foreach ($hit in $deduped) {
 }
 
 Write-Host ''
-Write-Host 'PASS: all W03.3 current-controller and nameplate-lifecycle contracts were found in the installed official REDmod script tree.' -ForegroundColor Green
+Write-Host 'PASS: all W03.4 current-controller, crosshair-state, and nameplate-lifecycle contracts were found in the installed official REDmod script tree.' -ForegroundColor Green

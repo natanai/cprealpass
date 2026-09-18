@@ -1,15 +1,12 @@
 // Biology-owned E3-inspired ambient NPC nameplate treatment.
 //
-// W03.3 fixes the actual native visibility bottleneck proven by the attended result and
-// the 2.31 controller source: NpcNameplateGameController hides the entire projected
-// root when NameplateVisualsLogicController.IsAnyElementVisible() is false. W03.2 only
-// tried to reveal m_displayName after that decision, so ordinary civilians stayed
-// hidden; after scan the native root could become visible and expose the oversized
-// Biology child as the observed small red reticle-adjacent rectangle.
+// W03.3's ambient identity lifecycle is a live KEEP: ordinary-look names now appear.
+// W03.4 preserves that lifecycle and upgrades presentation from plain red text to a
+// compact Project-E3-informed identity frame. No actor HP bar/health number is added.
 //
-// This implementation reuses native name text/frame instead of an oversized custom
-// projected canvas, counts legitimate Biology ambient identity as a visible element,
-// and preserves native projection/dialog/distance/hide-name authority.
+// T002 also proves the reticle bracket was not nameplate-owned; it exactly matches the
+// deleted CRBiologyE3FocusFrame in E3CrosshairHudNative.reds. Nameplate chrome therefore
+// stays scoped to the native projected nameplate root.
 module CyberpunkRealism.Presentation
 
 import CyberpunkRealism.Settings.*
@@ -21,6 +18,9 @@ private let crBiologyE3LastPuppet: wref<GameObject>;
 private let crBiologyE3LastData: NPCNextToTheCrosshair;
 
 @addField(NameplateVisualsLogicController)
+private let crBiologyE3NativeNameTint: HDRColor;
+
+@addField(NameplateVisualsLogicController)
 private let crBiologyE3NativeFrameTint: HDRColor;
 
 @addField(NameplateVisualsLogicController)
@@ -30,7 +30,13 @@ private let crBiologyE3NativeFrameOpacity: Float;
 private let crBiologyE3NativeFrameVisible: Bool;
 
 @addField(NameplateVisualsLogicController)
+private let crBiologyE3HasNativeNameTint: Bool;
+
+@addField(NameplateVisualsLogicController)
 private let crBiologyE3HasNativeFrameStyle: Bool;
+
+@addField(NameplateVisualsLogicController)
+private let crBiologyE3IdentityChrome: ref<inkCanvas>;
 
 @addField(NameplateVisualsLogicController)
 private let crBiologyE3LoggedVisualData: Bool;
@@ -46,8 +52,14 @@ private final func CRBiologyE3ShouldShowAmbientName(puppet: wref<GameObject>, da
 }
 
 @addMethod(NameplateVisualsLogicController)
-private final func CRCaptureBiologyE3NativeFrameStyle() -> Void {
+private final func CRCaptureBiologyE3NativeNameplateStyle() -> Void {
+  let nativeNameText: ref<inkText> = inkWidgetRef.Get(this.m_nameTextMain) as inkText;
   let nativeNameFrame: ref<inkWidget> = inkWidgetRef.Get(this.m_nameFrame);
+
+  if IsDefined(nativeNameText) && !this.crBiologyE3HasNativeNameTint {
+    this.crBiologyE3NativeNameTint = nativeNameText.GetTintColor();
+    this.crBiologyE3HasNativeNameTint = true;
+  }
 
   if IsDefined(nativeNameFrame) && !this.crBiologyE3HasNativeFrameStyle {
     this.crBiologyE3NativeFrameTint = nativeNameFrame.GetTintColor();
@@ -58,6 +70,37 @@ private final func CRCaptureBiologyE3NativeFrameStyle() -> Void {
 }
 
 @addMethod(NameplateVisualsLogicController)
+private final func CRCreateBiologyE3IdentityChrome() -> Void {
+  let root: ref<inkCompoundWidget>;
+  if IsDefined(this.crBiologyE3IdentityChrome) {
+    return;
+  }
+
+  root = this.GetRootWidget() as inkCompoundWidget;
+  if !IsDefined(root) {
+    return;
+  }
+
+  this.crBiologyE3IdentityChrome = new inkCanvas();
+  this.crBiologyE3IdentityChrome.SetName(n"CRBiologyE3IdentityChrome");
+  this.crBiologyE3IdentityChrome.SetAnchor(inkEAnchor.Centered);
+  this.crBiologyE3IdentityChrome.SetAnchorPoint(Vector2(0.5, 0.5));
+  this.crBiologyE3IdentityChrome.SetHAlign(inkEHorizontalAlign.Center);
+  this.crBiologyE3IdentityChrome.SetVAlign(inkEVerticalAlign.Center);
+  this.crBiologyE3IdentityChrome.SetSize(Vector2(340.0, 46.0));
+  this.crBiologyE3IdentityChrome.Reparent(root, 0);
+
+  CRBiologyE3Primitives.AddRect(this.crBiologyE3IdentityChrome, n"CRBiologyE3NameTLH", 0.0, 0.0, 88.0, 2.0, 0.92);
+  CRBiologyE3Primitives.AddRect(this.crBiologyE3IdentityChrome, n"CRBiologyE3NameTLV", 0.0, 0.0, 2.0, 14.0, 0.88);
+  CRBiologyE3Primitives.AddRect(this.crBiologyE3IdentityChrome, n"CRBiologyE3NameTRH", 252.0, 0.0, 88.0, 2.0, 0.92);
+  CRBiologyE3Primitives.AddRect(this.crBiologyE3IdentityChrome, n"CRBiologyE3NameTRV", 338.0, 0.0, 2.0, 14.0, 0.88);
+  CRBiologyE3Primitives.AddRect(this.crBiologyE3IdentityChrome, n"CRBiologyE3NameBLH", 0.0, 44.0, 42.0, 2.0, 0.62);
+  CRBiologyE3Primitives.AddRect(this.crBiologyE3IdentityChrome, n"CRBiologyE3NameBRH", 298.0, 44.0, 42.0, 2.0, 0.62);
+  CRBiologyE3Primitives.AddRect(this.crBiologyE3IdentityChrome, n"CRBiologyE3NameAccent", 9.0, 18.0, 7.0, 10.0, 1.00);
+  CRBiologyE3Primitives.AddRect(this.crBiologyE3IdentityChrome, n"CRBiologyE3NameBand", 20.0, 10.0, 300.0, 27.0, 0.08);
+}
+
+@addMethod(NameplateVisualsLogicController)
 private final func CRRefreshBiologyE3Nameplate(puppet: wref<GameObject>, data: NPCNextToTheCrosshair) -> Void {
   let e3Enabled: Bool = IsDefined(puppet) && CRRealpassSettings.UseE3FirstPersonHudVisuals(puppet.GetGame());
   let name: String = this.CRResolveBiologyAmbientName(puppet, data);
@@ -65,7 +108,17 @@ private final func CRRefreshBiologyE3Nameplate(puppet: wref<GameObject>, data: N
   let nativeNameText: ref<inkText> = inkWidgetRef.Get(this.m_nameTextMain) as inkText;
   let nativeNameFrame: ref<inkWidget> = inkWidgetRef.Get(this.m_nameFrame);
 
+  this.CRCaptureBiologyE3NativeNameplateStyle();
+  this.CRCreateBiologyE3IdentityChrome();
+
+  if IsDefined(this.crBiologyE3IdentityChrome) {
+    this.crBiologyE3IdentityChrome.SetVisible(showName);
+  }
+
   if !e3Enabled {
+    if IsDefined(nativeNameText) && this.crBiologyE3HasNativeNameTint {
+      nativeNameText.SetTintColor(this.crBiologyE3NativeNameTint);
+    }
     if IsDefined(nativeNameFrame) && this.crBiologyE3HasNativeFrameStyle {
       nativeNameFrame.SetTintColor(this.crBiologyE3NativeFrameTint);
       nativeNameFrame.SetOpacity(this.crBiologyE3NativeFrameOpacity);
@@ -84,7 +137,7 @@ private final func CRRefreshBiologyE3Nameplate(puppet: wref<GameObject>, data: N
 
   if showName && IsDefined(nativeNameFrame) {
     nativeNameFrame.SetTintColor(CRBiologyE3Primitives.Red());
-    nativeNameFrame.SetOpacity(0.82);
+    nativeNameFrame.SetOpacity(0.72);
     nativeNameFrame.SetVisible(true);
   }
 }
@@ -113,7 +166,6 @@ public final func SetVisualData(puppet: ref<GameObject>, const incomingData: scr
 private func SetElementVisibility(const incomingData: script_ref<NPCNextToTheCrosshair>) -> Void {
   this.crBiologyE3LastData = Deref(incomingData);
   wrappedMethod(incomingData);
-  this.CRCaptureBiologyE3NativeFrameStyle();
   this.CRRefreshBiologyE3Nameplate(this.crBiologyE3LastPuppet, this.crBiologyE3LastData);
 }
 

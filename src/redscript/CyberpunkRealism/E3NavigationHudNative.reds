@@ -1,6 +1,6 @@
-// Biology-owned red/minimal framing on Cyberpunk 2.31's current native minimap host.
-// Native minimap/mappin/navigation data remains authoritative; scanner/quickhack and
-// historical Project E3 compass ownership remain untouched.
+// Biology-owned framing on Cyberpunk 2.31's current native minimap host.
+// Mappins/navigation stay native. W03.4 removes the attended root wash and uses compact
+// chrome so the map remains readable rather than becoming one large red rectangle.
 module CyberpunkRealism.Presentation
 
 import CyberpunkRealism.Settings.*
@@ -19,11 +19,7 @@ private final func CRCreateBiologyE3MinimapFrame() -> Void {
   }
 
   this.crBiologyE3MinimapFrame = CRBiologyE3Primitives.CreateFillShell(root, n"CRBiologyE3MinimapFrame");
-  CRBiologyE3Primitives.AddFillWash(this.crBiologyE3MinimapFrame, n"CRBiologyE3MinimapWash", 0.060);
-  CRBiologyE3Primitives.AddRect(this.crBiologyE3MinimapFrame, n"CRBiologyE3MinimapTop", 0.0, 0.0, 190.0, 4.0, 0.96);
-  CRBiologyE3Primitives.AddRect(this.crBiologyE3MinimapFrame, n"CRBiologyE3MinimapLeft", 0.0, 0.0, 4.0, 56.0, 0.86);
-  CRBiologyE3Primitives.AddRect(this.crBiologyE3MinimapFrame, n"CRBiologyE3MinimapAccent", 0.0, 0.0, 22.0, 9.0, 1.00);
-  CRBiologyE3Primitives.AddLabel(this.crBiologyE3MinimapFrame, n"CRBiologyE3MinimapLabel", "NAV // ROUTE", 30.0, 8.0, 13, 0.84);
+  CRBiologyE3Primitives.AddPanelChrome(this.crBiologyE3MinimapFrame, "NAV // ROUTE", 172.0);
 }
 
 @addMethod(MinimapContainerController)

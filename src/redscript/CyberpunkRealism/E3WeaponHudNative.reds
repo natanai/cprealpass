@@ -1,5 +1,6 @@
 // Biology-owned E3-inspired weapon/ammo presentation.
-// Native WeaponRosterGameController remains the sole weapon/ammo data authority.
+// Native WeaponRosterGameController remains the sole weapon/ammo authority. W03.4
+// replaces the attended full-root red slab with the same compact chrome used elsewhere.
 module CyberpunkRealism.Presentation
 
 import CyberpunkRealism.Settings.*
@@ -18,11 +19,7 @@ private final func CRCreateBiologyE3WeaponFrame() -> Void {
   }
 
   this.crBiologyE3WeaponFrame = CRBiologyE3Primitives.CreateFillShell(root, n"CRBiologyE3WeaponFrame");
-  CRBiologyE3Primitives.AddFillWash(this.crBiologyE3WeaponFrame, n"CRBiologyE3WeaponWash", 0.080);
-  CRBiologyE3Primitives.AddRect(this.crBiologyE3WeaponFrame, n"CRBiologyE3WeaponTop", 0.0, 0.0, 200.0, 4.0, 0.98);
-  CRBiologyE3Primitives.AddRect(this.crBiologyE3WeaponFrame, n"CRBiologyE3WeaponLeft", 0.0, 0.0, 4.0, 54.0, 0.88);
-  CRBiologyE3Primitives.AddRect(this.crBiologyE3WeaponFrame, n"CRBiologyE3WeaponAccent", 0.0, 0.0, 24.0, 9.0, 1.00);
-  CRBiologyE3Primitives.AddLabel(this.crBiologyE3WeaponFrame, n"CRBiologyE3WeaponLabel", "WEAPON // AMMO", 32.0, 8.0, 13, 0.86);
+  CRBiologyE3Primitives.AddPanelChrome(this.crBiologyE3WeaponFrame, "WEAPON // AMMO", 178.0);
 }
 
 @addMethod(WeaponRosterGameController)

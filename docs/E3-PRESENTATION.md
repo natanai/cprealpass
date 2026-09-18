@@ -1,8 +1,8 @@
 # Biology E3-inspired presentation target
 
-Status: canonical visual target / W03.3 functional-follow-up contract
+Status: canonical visual target / W03.4 visual-completion contract
 Last updated: 2026-09-17
-Current worker: W03.3 / issue #40
+Current worker: W03.4 / issue #40
 
 ## Product decision
 
@@ -91,3 +91,63 @@ With E3 OFF:
 Parent P01.2 should integrate and test the release-shaped candidate rather than this worker branch directly. Capture the same state/location with E3 ON and OFF, including quest/objective, minimap/navigation, weapon/ammo/hotkeys, one interaction prompt, civilian focus, police/combatant focus, post-scan identity where applicable, and the modern scanner. Also inspect the captured game/functional trace output for the [Biology:E3] markers so missing visuals can be tied to hooks that did or did not execute.
 
 The strange post-scan red rectangle must be absent. If any red artifact remains, identify its owner before accepting #40.
+
+
+## W03.4 attended visual-completion boundary
+
+T002 tested exact integrated source `3dc049ee99979f924978b671ddbbbda06b472d1b`. It proved two things simultaneously:
+
+- W03.3's ambient ordinary-look identity lifecycle is now real and must be preserved;
+- the visible presentation still needs substantial design completion.
+
+The T002 screenshots show ambient names such as `FEDOT VASILYEV` / `NC RESIDENT`, but they also show large full-root red blocks behind the lower-left HUD, weapon/ammo, quest stack and minimap. Those blocks are unmistakably Biology-owned, yet they read as generic tinted panels rather than one restrained E3 system.
+
+### Reticle artifact — concrete owner
+
+The reticle-adjacent red box is no longer ambiguous. The live screenshots show exactly two Biology-red corners: one top-left and one bottom-right around the center reticle. W03.3's `CRBiologyE3FocusFrame` is a centered **112 x 112** canvas that draws exactly those top-left and bottom-right corner pairs.
+
+Therefore W03.4 treats `CRBiologyE3FocusFrame` as the concrete artifact owner and removes that canvas/geometry outright. It does not add a replacement reticle overlay.
+
+Ordinary crosshair treatment moves to the native `gameuiCrosshairBaseGameController` root. Biology only captures/restores the native tint and applies the shared red tint while E3 is enabled. The native controller already hides its root in `OnState_Scanning`, so Biology adds no scanner reticle geometry and does not take over scanner/quickhack controllers.
+
+### HUD language — compact chrome, not full-root red
+
+W03.4 keeps the proven current native controller seams but removes the full-root red wash from quest, navigation, weapon/ammo, hotkeys, lower-left Biology presentation and ordinary interaction prompts.
+
+Those surfaces now share a small Biology-owned chrome language:
+
+- short 2 px top rule;
+- short left rule;
+- compact accent cell;
+- faint label band with a small uppercase system label;
+- faint lower-right corner marker;
+- no full-root fill.
+
+This preserves the root-fitted lifecycle advantage from W03.3 while eliminating the large red slabs visible in T002.
+
+### Nameplate completion
+
+The ambient-name lifecycle from W03.3 remains untouched: native `NPCNextToTheCrosshair.name` wins, public `GetDisplayName()` may fill an empty ordinary identity when native hidden/quest/alternative/disabled policy permits, and `IsAnyElementVisible()` continues to keep the native projected root alive for legitimate ambient identity.
+
+W03.4 upgrades the visual treatment rather than changing identity knowledge:
+
+- native `m_nameTextMain` remains the actual name text;
+- native `m_nameFrame` remains part of the presentation;
+- Biology adds a compact 340 x 46 projected identity chrome behind the native text, with segmented top/bottom rails, small vertical caps, a small accent cell and a very low-opacity inner band;
+- no actor health meter, health number, affiliation database, archetype derivation or scanner-only identity is added;
+- native name/frame tint is captured and restored on E3 OFF;
+- the proven 10 / 20 non-aggressive ambient range remains, with native range restored on E3 OFF.
+
+The Project E3 2.31.p2 reference is design archaeology only. Its source confirms that the historical nameplate presentation combined name text, a name frame and optional background/level framing rather than treating a red string alone as the finished design. Biology recreates only the compact framing language in project-original code; it does not ship or execute the reference archive/scripts.
+
+## W03.4 parent acceptance
+
+The next integrated attended run must show:
+
+- E3 ON reads as one coherent HUD rather than multiple red slabs;
+- the `CRBiologyE3FocusFrame` reticle corners are absent;
+- ordinary crosshair behavior remains native-functional and the modern scanner remains current;
+- civilian and police/combatant ambient identity still appears before scanning;
+- the nameplate has a visible compact identity frame, not only red text;
+- quest, minimap/navigation, weapon/ammo, hotkeys, prompt and activity surfaces visibly share the same compact chrome language;
+- E3 OFF removes Biology chrome and restores captured native crosshair/nameplate styling and native ambient range.
