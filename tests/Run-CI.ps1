@@ -42,6 +42,7 @@ $tests = @(
     'Test-BiologyShell.ps1',
     'Test-BiologyNativeDrilldown.ps1',
     'Test-BiologyLiveShellFollowup.ps1',
+    'Test-BiologyDetailLayout.ps1',
     'Test-BiologyRuntimeLifecycle.ps1',
     'Test-BodyRuntimeAuthority.ps1',
     'Test-ConditionArchitecture.ps1',

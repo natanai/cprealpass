@@ -49,8 +49,10 @@ Check ($shell.Contains('this.UpdateTitle(this.GetAreaHeader(area))')) 'Cyberware
 Check ($shell.Contains('this.DollHover(evt.area)')) 'Biology overview hover does not reuse native doll hover.'
 
 # Drill-down must adopt native Cyberware depth/state rather than a parallel custom
-# detail mode. The custom content is injected into the stock inventory/content anchor.
-Check ($shell.Contains('inkCompoundRef.Get(this.m_inventoryViewAnchor)')) 'Biology detail is not mounted in the native Cyberware content anchor.'
+# detail mode. W02.3 mounts custom content inside the RipperdocInventoryController
+# root so it inherits the native detail region's authored geometry and opacity.
+Check ($shell.Contains('this.m_inventoryView.GetRootWidget() as inkCompoundWidget')) 'Biology detail is not mounted inside the native Cyberware inventory controller root.'
+Check (-not $shell.Contains('let nativeContentParent: ref<inkCompoundWidget> = inkCompoundRef.Get(this.m_inventoryViewAnchor) as inkCompoundWidget;')) 'Biology detail still mounts beside the native inventory controller.'
 Check ($shell.Contains('this.m_filterMode = RipperdocModes.Item;')) 'Biology detail does not adopt native Ripperdoc Item depth.'
 Check ($shell.Contains('this.m_isInventoryOpen = true;')) 'Biology detail does not adopt the native detail-open marker.'
 Check ($shell.Contains('this.DollHover(area);') -and $shell.Contains('this.DollSelect(true);')) 'Biology detail does not use native body focus/select behavior.'
@@ -102,7 +104,7 @@ Check ($overview.Contains('!Equals(result.needs, "STABLE")')) 'Biology hasNeeds 
 Check ($detail.Contains('return "NO CONDITION";')) 'Healthy drill-down does not remain inspectable.'
 Check ($detail.Contains('CRBodyRuntime.Get().GetBodySnapshot()') -and $detail.Contains('CRBodyRuntime.Get().GetMeters()')) 'Drill-down is not reading authoritative shared body state.'
 Check ($detail.Contains('CRPainRuntime.Get().Read()')) 'Drill-down pain/analgesia is not read from authoritative pain state.'
-Check ($shell.Contains('SetSize(Vector2(270.0 * ClampF(detail.metrics[i].percent / 100.0')) 'Detail bars are not projections of the selected authoritative metric.'
+Check ($shell.Contains('SetSize(Vector2(300.0 * ClampF(detail.metrics[i].percent / 100.0')) 'Detail bars are not projections of the selected authoritative metric.'
 Check ($shell.Contains('[ BIOLOGY ERROR ] BODY DETAIL UNAVAILABLE')) 'Unavailable runtime/detail state is not fail-obvious.'
 
 # Contextual actions live at detail depth, are area-scoped, and remain gateways into

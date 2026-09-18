@@ -215,30 +215,30 @@ private final func CRShellModeAction(text: String, name: CName) -> ref<inkText> 
 private final func CRCreateMetricRow(index: Int32) -> Void {
   let row: ref<inkCanvas> = new inkCanvas();
   row.SetName(StringToName("CRBiologyMetricRow" + ToString(index + 1)));
-  row.SetSize(Vector2(620.0, 34.0));
+  row.SetSize(Vector2(680.0, 40.0));
 
-  let label: ref<inkText> = this.CRShellText("", StringToName("CRBiologyMetricLabel" + ToString(index + 1)), 17);
+  let label: ref<inkText> = this.CRShellText("", StringToName("CRBiologyMetricLabel" + ToString(index + 1)), 18);
   label.SetFitToContent(false);
-  label.SetSize(Vector2(205.0, 28.0));
+  label.SetSize(Vector2(240.0, 30.0));
   label.SetTranslation(0.0, 0.0);
   label.Reparent(row, -1);
 
   let background: ref<inkRectangle> = new inkRectangle();
   background.SetName(StringToName("CRBiologyMetricBG" + ToString(index + 1)));
-  background.SetSize(Vector2(270.0, 9.0));
-  background.SetTranslation(215.0, 8.0);
+  background.SetSize(Vector2(300.0, 10.0));
+  background.SetTranslation(250.0, 10.0);
   background.SetOpacity(0.28);
   background.Reparent(row, -1);
 
   let fill: ref<inkRectangle> = new inkRectangle();
   fill.SetName(StringToName("CRBiologyMetricFill" + ToString(index + 1)));
-  fill.SetSize(Vector2(0.0, 9.0));
-  fill.SetTranslation(215.0, 8.0);
+  fill.SetSize(Vector2(0.0, 10.0));
+  fill.SetTranslation(250.0, 10.0);
   fill.SetOpacity(0.90);
   fill.Reparent(row, -1);
 
-  let value: ref<inkText> = this.CRShellText("", StringToName("CRBiologyMetricValue" + ToString(index + 1)), 17);
-  value.SetTranslation(500.0, 0.0);
+  let value: ref<inkText> = this.CRShellText("", StringToName("CRBiologyMetricValue" + ToString(index + 1)), 18);
+  value.SetTranslation(565.0, 0.0);
   value.Reparent(row, -1);
 
   row.Reparent(this.crBiologyNativeContent, -1);
@@ -300,24 +300,31 @@ private final func CRCreateBiologyShell() -> Void {
   this.crBiologyOverviewText = this.CRShellWrappedText("", n"CRBiologyOverviewText", 18, 760.0);
   this.crBiologyOverviewText.Reparent(this.crBiologyOverview, -1);
 
-  // Mount detail into Cyberware's existing content/inventory anchor rather than the
-  // fullscreen root. Native selector/zoom/back remain outside and continue to own
-  // the structural drill-down grammar.
-  let nativeContentParent: ref<inkCompoundWidget> = inkCompoundRef.Get(this.m_inventoryViewAnchor) as inkCompoundWidget;
+  // Mount Biology inside RipperdocInventoryController's own root, not beside that
+  // controller under m_inventoryViewAnchor. The native root carries the stock detail
+  // region's authored position/size and opacity transition; inheriting that geometry
+  // keeps Biology telemetry in the same composed content area as Cyberware.
+  let nativeContentParent: ref<inkCompoundWidget>;
+  if IsDefined(this.m_inventoryView) {
+    nativeContentParent = this.m_inventoryView.GetRootWidget() as inkCompoundWidget;
+  }
   if IsDefined(nativeContentParent) {
     this.crBiologyNativeContent = new inkVerticalPanel();
     this.crBiologyNativeContent.SetName(n"CRBiologyNativeContent");
+    this.crBiologyNativeContent.SetAnchor(inkEAnchor.TopLeft);
     this.crBiologyNativeContent.SetHAlign(inkEHorizontalAlign.Left);
     this.crBiologyNativeContent.SetVAlign(inkEVerticalAlign.Top);
-    this.crBiologyNativeContent.SetMargin(inkMargin(28.0, 30.0, 18.0, 0.0));
-    this.crBiologyNativeContent.SetChildMargin(inkMargin(0.0, 3.0, 0.0, 3.0));
-    this.crBiologyNativeContent.SetSize(Vector2(660.0, 0.0));
+    this.crBiologyNativeContent.SetMargin(inkMargin(0.0, 42.0, 0.0, 0.0));
+    this.crBiologyNativeContent.SetChildMargin(inkMargin(0.0, 4.0, 0.0, 4.0));
+    this.crBiologyNativeContent.SetSize(Vector2(720.0, 0.0));
     this.crBiologyNativeContent.SetVisible(false);
     this.crBiologyNativeContent.Reparent(nativeContentParent, -1);
 
-    this.crBiologyDetailTitle = this.CRShellText("", n"CRBiologyDetailHeading", 25);
+    this.crBiologyDetailTitle = this.CRShellText("", n"CRBiologyDetailHeading", 30);
+    this.crBiologyDetailTitle.SetMargin(inkMargin(0.0, 0.0, 0.0, 2.0));
     this.crBiologyDetailTitle.Reparent(this.crBiologyNativeContent, -1);
-    this.crBiologyDetailSummary = this.CRShellWrappedText("", n"CRBiologyDetailSummary", 17, 620.0);
+    this.crBiologyDetailSummary = this.CRShellWrappedText("", n"CRBiologyDetailSummary", 18, 680.0);
+    this.crBiologyDetailSummary.SetMargin(inkMargin(0.0, 0.0, 0.0, 14.0));
     this.crBiologyDetailSummary.SetOpacity(0.80);
     this.crBiologyDetailSummary.Reparent(this.crBiologyNativeContent, -1);
 
@@ -388,7 +395,8 @@ public final func CRMountBiologyActionsInNativeContent() -> Void {
   this.crBioActionsPanel.SetAnchor(inkEAnchor.TopLeft);
   this.crBioActionsPanel.SetHAlign(inkEHorizontalAlign.Left);
   this.crBioActionsPanel.SetVAlign(inkEVerticalAlign.Top);
-  this.crBioActionsPanel.SetMargin(inkMargin(0.0, 14.0, 0.0, 0.0));
+  this.crBioActionsPanel.SetMargin(inkMargin(0.0, 18.0, 0.0, 0.0));
+  this.crBioActionsPanel.SetSize(Vector2(680.0, 0.0));
   this.crBioActionsPanel.Reparent(this.crBiologyNativeContent, -1);
 }
 
@@ -569,7 +577,7 @@ private final func CRRefreshBiologyDetail() -> Void {
   let i: Int32 = 0;
   while i < ArraySize(detail.metrics) && i < ArraySize(this.crBiologyMetricRows) {
     this.crBiologyMetricLabels[i].SetText(detail.metrics[i].label);
-    this.crBiologyMetricFills[i].SetSize(Vector2(270.0 * ClampF(detail.metrics[i].percent / 100.0, 0.0, 1.0), 9.0));
+    this.crBiologyMetricFills[i].SetSize(Vector2(300.0 * ClampF(detail.metrics[i].percent / 100.0, 0.0, 1.0), 10.0));
     this.crBiologyMetricValues[i].SetText(detail.metrics[i].valueText);
     this.crBiologyMetricRows[i].SetVisible(true);
     i += 1;
