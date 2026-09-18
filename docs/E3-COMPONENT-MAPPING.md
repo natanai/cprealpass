@@ -1,6 +1,6 @@
 # Biology E3 component mapping
 
-Status: W03.5 native-content-region design-archaeology contract  
+Status: W03.6 quest/hotkey native-content-region design-archaeology contract  
 Last updated: 2026-09-18  
 Issues: #78 / #40
 
@@ -111,3 +111,20 @@ T003 / exact integrated source `67593bfbb12b4a6ebcec7042066d48b4f5fac427` proved
 | Scanner/quickhack | Must remain modern/current. | Native scanner/quickhack controllers/resources. | **KEEP native.** No scanner presentation hook. |
 
 The native content region, not the screenshot's absolute coordinates, is the positioning authority.
+
+
+## W03.6 quest / hotkey content-region correction
+
+T004 / exact integrated source `ffa6f64d6c837146d032aaab565d671c932453a2` accepts W03.5's weapon-region repair but rejects the remaining quest/hotkey composition.
+
+| Responsibility | T004 evidence | Current 2.31 semantic authority | W03.6 decision |
+|---|---|---|---|
+| Quest host | Small Biology chrome reaches the correct right-hand tracker area but does not compose around the visible stack. | `m_questTrackerContainer` remains the safe parent content host. | Keep the W03.5 host. Replace the tiny fixed label/rail with host-relative segmented region chrome. |
+| Quest visible rows | Title/objective text and tracking glyphs remain overwhelmingly native/current. | `QuestTrackerObjectiveLogicController.m_objectiveTitle`, `m_trackingIcon`, and `m_trackingFrame` are the actual spawned native row presentation. | Recolor/restore those native row widgets after native `UpdateTrackerData()`; keep Journal/objective lifecycle native. |
+| Objective child list | Vanilla enumerates/casts every `m_ObjectiveContainer` child as an objective controller. | `m_ObjectiveContainer` is an objective-only managed list. | **Never mount Biology chrome there.** Iterate existing native children only. |
+| Lower-left quickslots | Root-mounted Biology red geometry overlaps/misaligns with cyan quickslot controls. | `HotkeysWidgetController.m_dpadHintsPanel` is where consumable, gadget, cyberware, leeroy and time-bank children are spawned. Phone/car/radio use separate sibling slots. | Mount Biology chrome only inside `m_dpadHintsPanel`; leave sibling phone/car/radio slots outside the custom frame. |
+| Region chrome | Fixed controller-root chrome has repeatedly failed across HUD surfaces. | Native semantic child regions provide authored local coordinates. | Use a shared **segmented region** frame anchored to the semantic host itself; no global translation. |
+| Weapon/ammo | T004 shows the prior lower-center detached chrome is gone. | W03.5 `m_onFootContainer` / ammo fallback. | **KEEP unchanged.** |
+| Nameplate / reticle / scanner | T004 keeps framed ambient names and reticle cleanup; scanner remains a hard preserve. | Existing W03.3–W03.5 native seams. | **KEEP unchanged.** |
+
+The native content host and native row widgets are the positioning/presentation authority. Screenshot coordinates are evidence, not layout inputs.

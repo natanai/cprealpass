@@ -1,9 +1,8 @@
 // Shared project-original INK primitives for Biology's E3-inspired presentation.
 //
-// W03.4 standardized compact chrome. W03.5 adds bounded geometry traces so attended
-// evidence can distinguish "hook fired" from "chrome is mounted in the visible native
-// content region". Geometry is read from the native host after mounting; no global
-// screen-space offsets are inferred or stored.
+// W03.4 standardized compact chrome. W03.5 added bounded geometry traces for semantic
+// content hosts. W03.6 adds a host-relative segmented frame primitive that is safe to
+// mount inside authored native content regions without guessing global screen offsets.
 module CyberpunkRealism.Presentation
 
 public class CRBiologyE3Primitives extends IScriptable {
@@ -129,5 +128,21 @@ public class CRBiologyE3Primitives extends IScriptable {
     CRBiologyE3Primitives.AddLabel(parent, n"CRBiologyE3ChromeLabel", label, 23.0, 4.0, 10, 0.82);
     CRBiologyE3Primitives.AddAnchoredRect(parent, n"CRBiologyE3ChromeBRH", inkEAnchor.BottomRight, Vector2(1.0, 1.0), -4.0, -4.0, 22.0, 2.0, 0.54);
     CRBiologyE3Primitives.AddAnchoredRect(parent, n"CRBiologyE3ChromeBRV", inkEAnchor.BottomRight, Vector2(1.0, 1.0), -4.0, -4.0, 2.0, 15.0, 0.54);
+  }
+
+  public static func AddSegmentedRegionChrome(parent: ref<inkCompoundWidget>) -> Void {
+    CRBiologyE3Primitives.AddRect(parent, n"CRBiologyE3RegionTLH", 0.0, 0.0, 44.0, 2.0, 0.92);
+    CRBiologyE3Primitives.AddRect(parent, n"CRBiologyE3RegionTLV", 0.0, 0.0, 2.0, 18.0, 0.86);
+
+    CRBiologyE3Primitives.AddAnchoredRect(parent, n"CRBiologyE3RegionTRH", inkEAnchor.TopRight, Vector2(1.0, 0.0), -4.0, 0.0, 44.0, 2.0, 0.92);
+    CRBiologyE3Primitives.AddAnchoredRect(parent, n"CRBiologyE3RegionTRV", inkEAnchor.TopRight, Vector2(1.0, 0.0), -4.0, 0.0, 2.0, 18.0, 0.86);
+
+    CRBiologyE3Primitives.AddAnchoredRect(parent, n"CRBiologyE3RegionBLH", inkEAnchor.BottomLeft, Vector2(0.0, 1.0), 0.0, -4.0, 30.0, 2.0, 0.56);
+    CRBiologyE3Primitives.AddAnchoredRect(parent, n"CRBiologyE3RegionBLV", inkEAnchor.BottomLeft, Vector2(0.0, 1.0), 0.0, -4.0, 2.0, 14.0, 0.56);
+
+    CRBiologyE3Primitives.AddAnchoredRect(parent, n"CRBiologyE3RegionBRH", inkEAnchor.BottomRight, Vector2(1.0, 1.0), -4.0, -4.0, 30.0, 2.0, 0.56);
+    CRBiologyE3Primitives.AddAnchoredRect(parent, n"CRBiologyE3RegionBRV", inkEAnchor.BottomRight, Vector2(1.0, 1.0), -4.0, -4.0, 2.0, 14.0, 0.56);
+
+    CRBiologyE3Primitives.AddRect(parent, n"CRBiologyE3RegionAccent", 8.0, 7.0, 7.0, 7.0, 1.00);
   }
 }
