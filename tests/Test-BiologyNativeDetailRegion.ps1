@@ -30,7 +30,7 @@ Check (-not $probe.Contains("`$cli,'unbundle',`$archiveRoot")) 'W02.4 probe stil
 # T002 disproved the W02.3 assumption that RipperdocInventoryController's root owns
 # authored content placement. The stock item region is the editable virtual-grid child.
 Check ($followup.Contains('inkVirtualCompoundRef.Get(this.m_virtualGridContainer)')) 'W02.4 does not resolve the native Cyberware item-region widget.'
-Check ($followup.Contains('public final func CRApplyBiologyDetailRegionLayout(target: ref<inkWidget>) -> Bool')) 'W02.4 native detail-region layout adapter is missing.'
+Check ($followup.Contains('public final func CRMountBiologyDetailInNativeRegion(target: ref<inkWidget>) -> Bool')) 'W02.4 native detail-region mount adapter is missing.'
 
 # Biology placement must be copied from native authored geometry, not reconstructed
 # from a new absolute screen offset. Cover every layout property that can materially
@@ -53,10 +53,18 @@ Check (-not $shell.Contains('this.crBiologyNativeContent.SetAnchor(inkEAnchor.To
 Check (-not $shell.Contains('this.crBiologyNativeContent.SetMargin(inkMargin(0.0, 42.0, 0.0, 0.0));')) 'Biology detail still carries the disproven W02.3 fixed top-left margin.'
 Check (-not $shell.Contains('this.crBiologyNativeContent.SetSize(Vector2(720.0, 0.0));')) 'Biology detail still overrides the native content-region size with the W02.3 fixed width.'
 
-# Keep native controller-root lifecycle/opacity while using the child as geometry donor.
-Check ($shell.Contains('nativeContentParent = this.m_inventoryView.GetRootWidget() as inkCompoundWidget;')) 'Biology no longer participates in the native inventory controller visibility lifecycle.'
-Check ($shell.Contains('this.crBiologyNativeContent.Reparent(nativeContentParent, -1);')) 'Biology detail is not kept under the native inventory controller root.'
-Check ($shell.Contains('this.m_inventoryView.CRApplyBiologyDetailRegionLayout(this.crBiologyNativeContent);')) 'Biology does not apply native child geometry after mounting.'
+# The attended 2.31 INK proves m_virtualGridContainer is nested. Biology must locate
+# the compound that directly owns that widget and become its sibling, so copied local
+# geometry is interpreted in the same native coordinate space while the inventory root
+# still remains the visibility/opacity ancestor.
+Check ($followup.Contains('private final func CRFindBiologyDetailRegionParent(parent: ref<inkCompoundWidget>, nativeRegion: ref<inkWidget>) -> ref<inkCompoundWidget>')) 'W02.4 does not search the native inventory subtree for the virtual-grid parent.'
+Check ($followup.Contains('while i < parent.GetNumChildren()')) 'W02.4 native-parent search does not traverse compound children.'
+Check ($followup.Contains('let child: wref<inkWidget> = parent.GetWidgetByIndex(i);')) 'W02.4 native-parent search does not use vanilla child traversal.'
+Check ($followup.Contains('if child == nativeRegion')) 'W02.4 native-parent search does not identify the actual virtual-grid child.'
+Check ($followup.Contains('target.Reparent(nativeParent, -1);')) 'W02.4 does not mount Biology beside the native virtual grid.'
+Check ($shell.Contains('this.m_inventoryView.CRMountBiologyDetailInNativeRegion(nativeContent)')) 'Biology creation does not use the native-parent mount.'
+Check ($shell.Contains('this.m_inventoryView.CRMountBiologyDetailInNativeRegion(this.crBiologyNativeContent);')) 'Biology detail-time sync does not revalidate the native-parent mount.'
+Check (-not $shell.Contains('nativeContentParent = this.m_inventoryView.GetRootWidget() as inkCompoundWidget;')) 'Biology still mounts detail directly under the zero-margin inventory root.'
 
 # Re-read geometry at detail depth. If the native child cannot be resolved, fail closed
 # instead of making the telemetry visible at root/screen origin.
