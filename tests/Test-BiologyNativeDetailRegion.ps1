@@ -13,10 +13,13 @@ $sync = Text 'BiologyModeSyncNative.reds'
 $probe = Get-Content -Raw -LiteralPath (Join-Path $project 'tools\Probe-BiologyDetailNativeRegion.ps1')
 
 # WolvenKit archive/unbundle directory inputs are non-recursive. The installed archives
-# live below archive\pc, so the probe must enumerate concrete .archive files.
+# live below archive\pc, so the probe enumerates real archives, asks each archive for
+# the exact Ripperdoc resource, then extracts from the one matching source archive.
 Check ($probe.Contains("Get-ChildItem -LiteralPath `$archiveRoot -Recurse -File -Filter '*.archive'")) 'W02.4 probe does not enumerate installed archives recursively.'
-Check ($probe.Contains('$archiveArguments.Add($archiveFile.FullName)')) 'W02.4 archive-list probe does not pass concrete archive files.'
-Check ($probe.Contains('$unbundleArguments.Add($archiveFile.FullName)')) 'W02.4 unbundle probe does not pass concrete archive files.'
+Check ($probe.Contains("Invoke-Captured \"SEARCH ARCHIVE `$relativeArchive\" `$dotnet @(")) 'W02.4 probe does not inspect concrete archives individually.'
+Check ($probe.Contains("`$cli,'archive',`$archiveFile.FullName,'--list','--regex',`$resourceRegex")) 'W02.4 archive search does not pass the concrete archive file.'
+Check ($probe.Contains('`$matchingArchives.Count -ne 1'.Replace('`$','$'))) 'W02.4 probe does not fail closed unless exactly one archive owns the target resource.'
+Check ($probe.Contains("`$cli,'unbundle',`$sourceArchive.FullName,")) 'W02.4 extraction is not bound to the discovered source archive.'
 Check (-not $probe.Contains("`$cli,'archive',`$archiveRoot,'--list'")) 'W02.4 probe still passes the non-recursive archive root to WolvenKit archive.'
 Check (-not $probe.Contains("`$cli,'unbundle',`$archiveRoot")) 'W02.4 probe still passes the non-recursive archive root to WolvenKit unbundle.'
 
