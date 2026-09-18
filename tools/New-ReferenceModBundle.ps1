@@ -2,6 +2,7 @@
 param(
     [string]$LibraryPath = 'C:\Games\Cyberpunk-ReferenceMods',
     [string[]]$ReferenceName,
+    [string]$ReferenceNameJson = '',
     [string]$OutputRoot = 'C:\Games\Biology-Reference-Bundles',
     [ValidatePattern('^$|^[0-9a-fA-F]{40}$')][string]$WorkflowSourceRevision = '',
     [ValidateRange(1,20)][int]$MaxTextFileMiB = 2,
@@ -73,6 +74,9 @@ New-Item -ItemType Directory -Force -Path $OutputRoot | Out-Null
 
 $children=@(Get-ChildItem -LiteralPath $LibraryPath -Force | Sort-Object Name)
 if($children.Count -eq 0){throw 'Reference library is empty.'}
+if(( -not $ReferenceName -or $ReferenceName.Count -eq 0) -and -not [string]::IsNullOrWhiteSpace($ReferenceNameJson)){
+    try{$ReferenceName=@($ReferenceNameJson|ConvertFrom-Json)}catch{throw "ReferenceNameJson is invalid JSON: $($_.Exception.Message)"}
+}
 if(-not $ReferenceName -or $ReferenceName.Count -eq 0){
     Write-Host 'Available private references:' -ForegroundColor Cyan
     for($i=0;$i -lt $children.Count;$i++){Write-Host ("[{0}] {1}" -f ($i+1),$children[$i].Name)}
@@ -116,6 +120,19 @@ function AnalyzeText([string]$ref,[string]$rel,[string]$text){
         $v=[regex]::Match($text,'(?im)^\s*(?:version|ver)\s*[:= -]\s*[vV]?([0-9]+\.[0-9]+(?:\.[0-9]+)?)')
         if($v.Success){$notes.Add("$ref :: $rel :: version=$($v.Groups[1].Value)")}
     }
+    if([IO.Path]::GetExtension($rel) -ieq '.json'){
+        try{
+            $j=$text|ConvertFrom-Json -Depth 40
+            foreach($property in @('name','version','author')){
+                if($j.PSObject.Properties.Name -contains $property -and $null -ne $j.$property -and "$($j.$property)"){
+                    $notes.Add("$ref :: $rel :: $property=$($j.$property)")
+                }
+            }
+            if($j.PSObject.Properties.Name -contains 'dependencies' -and $null -ne $j.dependencies){
+                $notes.Add("$ref :: $rel :: dependencies field present")
+            }
+        }catch{}
+    }
 }
 function CopyText([string]$ref,[string]$rel,[byte[]]$bytes){
     if(-not (IsText $rel)){return 'not-text'}
@@ -156,13 +173,33 @@ function AddDiskFile([string]$ref,[string]$rel,[string]$path){
     $index.Add([pscustomobject]@{reference=$ref;path=$rel.Replace('\','/');bytes=$info.Length;sha256=Sha $path;classification=$class;inspectability=$inspect;privatePayload=$copy})
 }
 
+function ZipSingleRoot([string]$path){
+    try{
+        $z=[IO.Compression.ZipFile]::OpenRead($path)
+        try{
+            $roots=@($z.Entries|ForEach-Object{
+                $p=$_.FullName.Replace('\','/').TrimStart('/')
+                if($p){$p.Split('/')[0]}
+            }|Where-Object{$_}|Select-Object -Unique)
+            if($roots.Count -eq 1){return [string]$roots[0]}
+        }finally{$z.Dispose()}
+    }catch{}
+    $null
+}
+function HashZipEntry($entry){
+    $s=$entry.Open()
+    $sha=[Security.Cryptography.SHA256]::Create()
+    try{[Convert]::ToHexString($sha.ComputeHash($s))}finally{$sha.Dispose();$s.Dispose()}
+}
+
 try{
     $folders=@($selected|Where-Object PSIsContainer|ForEach-Object Name)
     foreach($item in $selected){
         $dup=$null
         if(-not $item.PSIsContainer -and $item.Extension -ieq '.zip'){
             $base=[IO.Path]::GetFileNameWithoutExtension($item.Name)
-            $dup=@($folders|Where-Object {$_ -ieq $base}|Select-Object -First 1)
+            $zipRoot=ZipSingleRoot $item.FullName
+            $dup=@($folders|Where-Object {$_ -ieq $base -or ($zipRoot -and $_ -ieq $zipRoot)}|Select-Object -First 1)
         }
         if($dup){
             $refs.Add([pscustomobject]@{name=$item.Name;type='zip';status='skipped-duplicate-payload';duplicateOf=$dup;sourceSha256=Sha $item.FullName})
@@ -179,8 +216,17 @@ try{
                     if(-not $e.Name){continue}
                     $rel=$e.FullName.Replace('/','\')
                     if([IO.Path]::IsPathRooted($rel)-or$rel.Contains('..\')){$index.Add([pscustomobject]@{reference=$item.Name;path=$e.FullName;bytes=$e.Length;classification='unsafe-archive-entry';inspectability='not-extracted'});continue}
-                    $ms=[IO.MemoryStream]::new();try{$s=$e.Open();try{$s.CopyTo($ms)}finally{$s.Dispose()};$b=$ms.ToArray()}finally{$ms.Dispose()}
-                    $hash=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($b));$class=Classify $rel;$copy=CopyText $item.Name $rel $b
+                    $class=Classify $rel
+                    $hash=HashZipEntry $e
+                    $copy='not-text'
+                    if($class -eq 'text/source/config'){
+                        if($e.Length -gt $oneLimit){$copy='skipped-per-file-limit'}
+                        elseif($script:copied+$e.Length -gt $allLimit){$copy='skipped-total-text-limit'}
+                        else{
+                            $ms=[IO.MemoryStream]::new()
+                            try{$s=$e.Open();try{$s.CopyTo($ms)}finally{$s.Dispose()};$copy=CopyText $item.Name $rel $ms.ToArray()}finally{$ms.Dispose()}
+                        }
+                    }
                     $index.Add([pscustomobject]@{reference=$item.Name;path=$e.FullName;bytes=$e.Length;sha256=$hash;classification=$class;inspectability=if($class -eq 'text/source/config'){'private-text-copy-eligible'}else{'zip-entry-hash-only'};privatePayload=$copy})
                 }
             }finally{$z.Dispose()}
@@ -203,7 +249,7 @@ try{
       analysisOnly=$true;redistributionAllowed=$false;workflowSourceRevision=$WorkflowSourceRevision;sourceLibrary=$LibraryPath;referenceSelections=@($refs)
       provenanceVersionNotes=@($notes|Select-Object -Unique);fileCount=$index.Count;copiedTextBytes=$copied
       archiveInventory=@($archives);sourceMutation='none';gameInstallation='not accessed or modified'
-      duplicatePolicy='Selected ZIPs with the same basename as a selected extracted sibling folder are hash-recorded but their duplicate payload is skipped.'
+      duplicatePolicy='Selected ZIPs whose basename or sole top-level root matches a selected extracted sibling folder are hash-recorded but their duplicate payload is skipped.'
       archivePolicy='ZIP contents are listed natively. Other archive/resource containers use safe 7z/7zz listing only when already available and successful; otherwise internals are explicitly opaque.'
     }
     $manifest|ConvertTo-Json -Depth 12|Set-Content -LiteralPath (Join-Path $stage 'manifest.json') -Encoding utf8
