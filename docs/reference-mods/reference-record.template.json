@@ -29,7 +29,18 @@
         "widgetOrResource": null
       },
       "biologyOwnedSeam": "Describe the minimal Biology-owned seam after independent native verification",
-      "validation": "Describe exact compile/direct-inspection/attended validation required"
+      "validation": "Describe exact compile/direct-inspection/attended validation required",
+      "widgetAncestry": [
+        {
+          "path": "RipperDocGameController/inventoryViewAnchor/Inventory/.../virtualGridContainer",
+          "widgetType": null,
+          "name": "virtualGridContainer",
+          "parent": "HandleId 219 / package-copy 743 (example unresolved parent)",
+          "childOrder": null,
+          "constraints": "Record only derived clipping, fit-to-content, size/layout, anchor/alignment/margin/translation, opacity/visibility and sibling-order facts.",
+          "evidenceIdentity": "private target JSON/report identity + SHA-256; no serialized object body in Git"
+        }
+      ]
     }
   ],
   "opaqueAreas": [
