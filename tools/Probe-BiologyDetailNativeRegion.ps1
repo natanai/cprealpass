@@ -424,9 +424,9 @@ try {
     Add-Report ''
     Add-Report '=== TARGETED HANDLE/ANCESTRY EVIDENCE ==='
     Add-Report 'Focus: preserve exact serialized object context for W17.1 around virtualGridContainer parent HandleId 219 (package-copy 743) and its direct references.'
-    Add-RegexSnippets $target.Raw 'HANDLE_ID_219_OR_743' '"HandleId"\s*:\s*(219|743)\b'
-    Add-RegexSnippets $target.Raw 'HANDLE_REF_219_OR_743' '"HandleRefId"\s*:\s*(219|743)\b'
-    Add-RegexSnippets $target.Raw 'HANDLE_ID_GRID_LABEL_SCROLL' '"HandleId"\s*:\s*(208|210|215|221|727|730|737|746)\b'
+    Add-RegexSnippets $target.Raw 'HANDLE_ID_219_OR_743' '"HandleId"\s*:\s*"?(219|743)"?\b'
+    Add-RegexSnippets $target.Raw 'HANDLE_REF_219_OR_743' '"HandleRefId"\s*:\s*"?(219|743)"?\b'
+    Add-RegexSnippets $target.Raw 'HANDLE_ID_GRID_LABEL_SCROLL' '"HandleId"\s*:\s*"?(208|210|215|221|727|730|737|746)"?\b'
     Add-RegexSnippets $target.Raw 'PARENT_WIDGET' '"parentWidget"\s*:'
     Add-Report 'Full serialized target JSON may be preserved privately by the caller with -PrivateTargetJsonPath for exact ancestry reconstruction without broad needle re-probing.'
 
