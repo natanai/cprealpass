@@ -6,6 +6,7 @@ param(
     [string]$OutputRoot = 'C:\Games\Biology-Reference-Bundles',
     [switch]$IncludeBiologyNativeUi,
     [string]$GamePath = 'C:\Games\Steam\steamapps\common\Cyberpunk 2077',
+    [switch]$SuppressHandoffMarker,
     [ValidatePattern('^$|^[0-9a-fA-F]{40}$')][string]$WorkflowSourceRevision = '',
     [ValidateRange(1,20)][int]$MaxTextFileMiB = 2,
     [ValidateRange(1,200)][int]$MaxCopiedTextMiB = 40
@@ -415,9 +416,11 @@ try{
 
     Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $zipPath -CompressionLevel Optimal
     if(-not (Test-Path -LiteralPath $zipPath -PathType Leaf)){throw 'Reference bundle ZIP was not created.'}
-    Write-Host ''
-    Write-Host 'ATTACH THIS ONE REFERENCE BUNDLE TO CHATGPT:' -ForegroundColor Cyan
-    Write-Host $zipPath -ForegroundColor Yellow
+    if(-not $SuppressHandoffMarker){
+        Write-Host ''
+        Write-Host 'ATTACH THIS ONE REFERENCE BUNDLE TO CHATGPT:' -ForegroundColor Cyan
+        Write-Host $zipPath -ForegroundColor Yellow
+    }
     return $zipPath
 }finally{
     if(Test-Path -LiteralPath $stage -PathType Container){Remove-Item -LiteralPath $stage -Recurse -Force}
