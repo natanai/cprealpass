@@ -15,10 +15,11 @@ This snapshot exists because a substantial recent parent-chat segment disappeare
 - Parent: **P01.2**, active integration/orchestration.
 - Latest completed numbered attended session: **T002**, exact source `3dc049ee99979f924978b671ddbbbda06b472d1b`; see `docs/test-runs/TEST-LEDGER.md` and the completed T002 record.
 - T002 operational listener/session path: PASS; W15.5 direct process polling is attended-accepted.
-- T002 Biology layout: still fails; telemetry is at/extreme top-left -> issue #39, next W02 sequential follow-up.
-- T002 E3 presentation: ambient names now appear, proving live nameplate lifecycle progress, but the overall HUD is still not unmistakably E3 and the reticle-adjacent red artifact persists -> issue #40, next W03 sequential follow-up.
+- T002 Biology layout: still fails; telemetry is at/extreme top-left -> **W02.4**, issue #39, `agent/biology-detail-native-region-followup`, handoff `docs/handoffs/W02.4-BIOLOGY-DETAIL-NATIVE-REGION.md`, initial handoff head `e9018d704166a12332b6d7324a3bc9e5c5512172`.
+- T002 E3 presentation: ambient names now appear, proving live nameplate lifecycle progress, but the overall HUD is still not unmistakably E3 and the reticle-adjacent red artifact persists -> **W03.4**, issue #40, `agent/e3-visual-reticle-followup`, handoff `docs/handoffs/W03.4-E3-VISUAL-RETICLE-FOLLOWUP.md`, initial handoff head `d39ee3245eb825247f953265c5664568d8260bda`.
 - Body-runtime implementation audit W04.2 merged, but live wait/save-reload/sleep continuity was not exercised in T002; issue #41 is open for future attended acceptance.
 - W02.3 / PR #87, W15.5 / PR #88, W04.2 / PR #90, and W03.3 / PR #89 are represented in the T002 source boundary.
+- W02.4 and W03.4 are the current implementation follow-ups. Reuse the existing W02 and W03 worker conversations respectively; do not open replacement chats merely because T002 created new branches.
 - The next live session ID is allocated from `docs/test-runs/TEST-LEDGER.md`, not from chat memory.
 
 Do not rerun T001/T002 merely because their chat messages are missing. Read their durable records and route only unresolved findings.
