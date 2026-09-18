@@ -10,14 +10,15 @@ $shell = Text 'BiologyCyberwareShell.reds'
 $followup = Text 'BiologyLiveShellFollowupNative.reds'
 $sync = Text 'BiologyModeSyncNative.reds'
 
-# W02.3 must compose Biology telemetry inside the native RipperdocInventoryController
-# root. Parenting beside the controller under m_inventoryViewAnchor reproduces the live
-# top-left placement because that sibling does not inherit the authored inventory region.
+# W02.3 established the correct native controller/lifecycle root. T002 then proved
+# that root itself resolves at screen origin. W02.4 keeps the root parenting but derives
+# placement from the native m_virtualGridContainer child that owns stock item geometry.
 Check ($shell.Contains('nativeContentParent = this.m_inventoryView.GetRootWidget() as inkCompoundWidget;')) 'Biology detail is not parented inside the native inventory controller root.'
 Check (-not $shell.Contains('let nativeContentParent: ref<inkCompoundWidget> = inkCompoundRef.Get(this.m_inventoryViewAnchor) as inkCompoundWidget;')) 'Biology detail still mounts beside the native inventory controller under m_inventoryViewAnchor.'
-Check ($shell.Contains('this.crBiologyNativeContent.Reparent(nativeContentParent, -1);')) 'Biology detail is not attached to the resolved native content root.'
-Check ($shell.Contains('this.crBiologyNativeContent.SetAnchor(inkEAnchor.TopLeft);')) 'Biology detail lacks an explicit anchor inside the native content region.'
-Check ($shell.Contains('this.crBiologyNativeContent.SetHAlign(inkEHorizontalAlign.Left);') -and $shell.Contains('this.crBiologyNativeContent.SetVAlign(inkEVerticalAlign.Top);')) 'Biology detail alignment is not deterministic inside the native content region.'
+Check ($shell.Contains('this.crBiologyNativeContent.Reparent(nativeContentParent, -1);')) 'Biology detail is not attached to the native controller lifecycle root.'
+Check ($shell.Contains('this.m_inventoryView.CRApplyBiologyDetailRegionLayout(this.crBiologyNativeContent);')) 'Biology detail does not derive placement from the native content child.'
+Check (-not $shell.Contains('this.crBiologyNativeContent.SetAnchor(inkEAnchor.TopLeft);')) 'Biology detail still forces a screen-origin TopLeft anchor.'
+Check (-not $shell.Contains('this.crBiologyNativeContent.SetMargin(inkMargin(0.0, 42.0, 0.0, 0.0));')) 'Biology detail still uses the disproven W02.3 fixed root-relative offset.'
 
 # Functional hierarchy only: title, summary, metric rows, then contextual actions.
 # Broad visual redesign remains deliberately deferred.
