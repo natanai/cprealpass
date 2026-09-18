@@ -1,28 +1,25 @@
 # Biology parent/worker thread ledger
 
 Status: **canonical active conversation/lane registry**  
-Last updated: **2026-09-17**
+Last updated: **2026-09-18**
 
 > **MANDATORY:** Read this file together with `docs/AGENT-OPERATING-PATTERNS.md` before creating a new worker conversation, routing another assignment into an existing worker conversation, replacing a conversation that has become too long, or handing parent/orchestrator responsibility to a new conversation.
 
 The repository is the durable source of truth. Git issues/branches/PRs track implementation state; ChatGPT conversations carry temporary working context. Conversation identity and Git issue/branch identity are intentionally separate.
 
 
-## Parent recovery snapshot — 2026-09-17
+## Parent recovery snapshot — 2026-09-18
 
 This snapshot exists because a substantial recent parent-chat segment disappeared from the visible conversation. Treat GitHub and durable test records as the continuity source.
 
 - Parent: **P01.2**, active integration/orchestration.
-- Latest completed numbered attended session: **T002**, exact source `3dc049ee99979f924978b671ddbbbda06b472d1b`; see `docs/test-runs/TEST-LEDGER.md` and the completed T002 record.
-- T002 operational listener/session path: PASS; W15.5 direct process polling is attended-accepted.
-- T002 Biology layout: still fails; telemetry is at/extreme top-left -> **W02.4**, issue #39, `agent/biology-detail-native-region-followup`, handoff `docs/handoffs/W02.4-BIOLOGY-DETAIL-NATIVE-REGION.md`, initial handoff head `e9018d704166a12332b6d7324a3bc9e5c5512172`.
-- T002 E3 presentation: ambient names now appear, proving live nameplate lifecycle progress, but the overall HUD is still not unmistakably E3 and the reticle-adjacent red artifact persists -> **W03.4**, issue #40, `agent/e3-visual-reticle-followup`, handoff `docs/handoffs/W03.4-E3-VISUAL-RETICLE-FOLLOWUP.md`, initial handoff head `d39ee3245eb825247f953265c5664568d8260bda`.
-- Body-runtime implementation audit W04.2 merged, but live wait/save-reload/sleep continuity was not exercised in T002; issue #41 is open for future attended acceptance.
-- W02.3 / PR #87, W15.5 / PR #88, W04.2 / PR #90, and W03.3 / PR #89 are represented in the T002 source boundary.
-- W02.4 and W03.4 are the current implementation follow-ups. Reuse the existing W02 and W03 worker conversations respectively; do not open replacement chats merely because T002 created new branches.
-- The next live session ID is allocated from `docs/test-runs/TEST-LEDGER.md`, not from chat memory.
-
-Do not rerun T001/T002 merely because their chat messages are missing. Read their durable records and route only unresolved findings.
+- Latest completed numbered attended session: **T003**, exact tested source `67593bfbb12b4a6ebcec7042066d48b4f5fac427`; see `docs/test-runs/TEST-LEDGER.md` and the completed T003 record.
+- T003 operational listener/session path: PASS; direct process start/exit observation remains healthy.
+- T003 Biology: selected anatomy drill-down still works, but W02.4 detail telemetry disappears entirely -> **W02.5 / issue #96**.
+- T003 E3: old reticle-corner artifact appears fixed and framed ambient nameplate is live; however `WEAPON // AMMO` chrome is detached and the right-hand quest tracker remains untreated -> **W03.5 / issue #97**.
+- Body-runtime persistence issue #41 remains open for a separate live WAIT/save-reload/SLEEP acceptance boundary; T003 intentionally did not exercise it.
+- The next unallocated live test ID is **T004**.
+- Reuse the existing W02 and W03 worker conversations for W02.5 and W03.5 unless either conversation has become too long/unusable. Do not recreate T003 because of missing chat history.
 
 ## Core rule
 

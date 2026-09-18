@@ -1,8 +1,8 @@
 # Biology attended-test ledger
 
 Status: **canonical numbered live-test index**  
-Last updated: **2026-09-17**  
-Next unallocated live test ID: **T003**
+Last updated: **2026-09-18**  
+Next unallocated live test ID: **T004**
 
 This file is the parent-owned chronological authority for owner-run live Cyberpunk attended sessions. It is intentionally compact. Open the linked completed record for detail.
 
@@ -22,11 +22,13 @@ Before a live launch, parent creates/updates a GitHub `[T###]` tracking issue so
 |---|---|---|---|---|
 | **T001** | 2026-09-17 | `205578b11d818f474dc74a873e6d6ea5a1e1accd` | **PARTIAL** | Runtime-backed detail present, but layout wrong -> W02.3; E3 mostly retail/nameplates absent/red artifact -> W03.3; listener false NOT-OBSERVED -> W15.5. |
 | **T002** | 2026-09-17 | `3dc049ee99979f924978b671ddbbbda06b472d1b` | **PARTIAL** | Listener fixed; ambient names now live; Biology telemetry still extreme top-left; overall E3 design still insufficient; reticle red artifact persists; persistence sequence not exercised. |
+| **T003** | 2026-09-18 | `67593bfbb12b4a6ebcec7042066d48b4f5fac427` | **PARTIAL** | Listener/session PASS. Biology selected anatomy works but detail telemetry disappears entirely -> W02.5/#96. E3 nameplate + old reticle fix improved, but WEAPON // AMMO chrome is detached and quest tracker remains untreated -> W03.5/#97. |
 
 ## Records
 
 - `T001-2026-09-17-205578b1-reconstructed-integrated-followup.md`
 - `T002-2026-09-17-3dc049ee-live-ui-followup.md`
+- `T003-2026-09-18-67593bfb-native-region-e3-followup.md`
 
 ## Pre-numbering history
 
