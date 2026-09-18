@@ -13,7 +13,8 @@ $GamePath = [IO.Path]::GetFullPath($GamePath)
 $archiveRoot = Join-Path $GamePath 'archive\pc'
 $oodleSource = Join-Path $GamePath 'bin\x64\oo2ext_7_win64.dll'
 $targetResource = 'gameplay\gui\fullscreen\ripperdoc\ripperdoc.inkwidget'
-$resourceRegex = '(?i)^gameplay[\\/]gui[\\/]fullscreen[\\/]ripperdoc[\\/]ripperdoc\.inkwidget$'
+$targetResourceHash = '13533725445430520621'
+$resourceRegex = '(?i)(^gameplay[\\/]gui[\\/]fullscreen[\\/]ripperdoc[\\/]ripperdoc\.inkwidget$|^13533725445430520621\.bin$)'
 
 if (-not (Test-Path -LiteralPath $archiveRoot -PathType Container)) {
     throw "Cyberpunk archive root not found: $archiveRoot"
@@ -90,6 +91,7 @@ try {
     Add-Report "ArchiveFiles: $($archiveFiles.Count)"
     Add-Report "GameOodleSHA256: $sourceOodleHash"
     Add-Report "TargetResource: $targetResource"
+    Add-Report "TargetResourceFNV1a64: $targetResourceHash"
     Add-Report 'Purpose: identify the actual CP2077 2.31 INK child/layout geometry behind RipperdocInventoryController content.'
     Add-Report 'Mutation boundary: read-only game archives; temporary local extraction only.'
 
@@ -131,6 +133,10 @@ try {
                 $matched = $true
                 break
             }
+            if ($line.Trim().Equals($targetResourceHash,[StringComparison]::OrdinalIgnoreCase)) {
+                $matched = $true
+                break
+            }
         }
         if ($matched) {
             $matchingArchives.Add($archiveFile)
@@ -151,23 +157,30 @@ try {
         $cli,'unbundle',$sourceArchive.FullName,
         '--outpath',$extractRoot,
         '--gamepath',$GamePath,
-        '--regex',$resourceRegex
+        '--hash',$targetResourceHash
     ) | Out-Null
 
-    $extracted = @(Get-ChildItem -LiteralPath $extractRoot -Recurse -File -Filter '*.inkwidget')
+    $extracted = @(Get-ChildItem -LiteralPath $extractRoot -Recurse -File)
     Add-Report ''
-    Add-Report "EXTRACTED_INKWIDGETS=$($extracted.Count)"
+    Add-Report "EXTRACTED_FILES=$($extracted.Count)"
     foreach ($file in $extracted) {
         Add-Report ("EXTRACTED: " + [IO.Path]::GetRelativePath($extractRoot,$file.FullName) + " SHA256=" + (Get-Sha256 $file.FullName))
     }
     if ($extracted.Count -ne 1) {
-        throw "Expected exactly one extracted Ripperdoc fullscreen .inkwidget; found $($extracted.Count)."
+        throw "Expected exactly one extracted CR2W file for Ripperdoc resource hash $targetResourceHash; found $($extracted.Count)."
+    }
+
+    $extractedResource = $extracted[0]
+    if (-not $extractedResource.Name.EndsWith('.inkwidget',[StringComparison]::OrdinalIgnoreCase)) {
+        $normalizedResource = Join-Path $extractRoot 'ripperdoc.inkwidget'
+        Move-Item -LiteralPath $extractedResource.FullName -Destination $normalizedResource -Force
+        $extractedResource = Get-Item -LiteralPath $normalizedResource
+        Add-Report 'NORMALIZED_EXTRACTED_RESOURCE=ripperdoc.inkwidget'
     }
 
     Invoke-Captured 'SERIALIZE RIPPERDOC INKWIDGET TO JSON' $dotnet @(
-        $cli,'convert','serialize',$extractRoot,
-        '--outpath',$jsonRoot,
-        '--pattern','*.inkwidget'
+        $cli,'convert','serialize',$extractedResource.FullName,
+        '--outpath',$jsonRoot
     ) | Out-Null
 
     $jsonFiles = @(Get-ChildItem -LiteralPath $jsonRoot -Recurse -File -Filter '*.json')
