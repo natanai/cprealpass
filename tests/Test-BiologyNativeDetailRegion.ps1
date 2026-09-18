@@ -32,9 +32,10 @@ Check (-not $probe.Contains("`$cli,'unbundle',`$archiveRoot")) 'W02.4 probe stil
 Check ($followup.Contains('inkVirtualCompoundRef.Get(this.m_virtualGridContainer)')) 'W02.4 does not resolve the native Cyberware item-region widget.'
 Check ($followup.Contains('public final func CRMountBiologyDetailInNativeRegion(target: ref<inkWidget>) -> Bool')) 'W02.4 native detail-region mount adapter is missing.'
 
-# Biology placement must be copied from native authored geometry, not reconstructed
-# from a new absolute screen offset. Cover every layout property that can materially
-# move/size the panel inside the native controller root.
+# Biology placement must still come from native authored POSITIONING geometry, not
+# a reconstructed screen-space offset. T004 proved that copying the virtualized grid's
+# FIXED content extent onto a normal vertical panel is not a valid visibility contract,
+# so W02.6 deliberately owns its content sizing via fit-to-content.
 foreach ($needle in @(
     'target.SetAnchor(nativeRegion.GetAnchor());',
     'target.SetAnchorPoint(nativeRegion.GetAnchorPoint());',
@@ -42,12 +43,13 @@ foreach ($needle in @(
     'target.SetVAlign(nativeRegion.GetVAlign());',
     'target.SetMargin(nativeRegion.GetMargin());',
     'target.SetPadding(nativeRegion.GetPadding());',
-    'target.SetSizeRule(nativeRegion.GetSizeRule());',
-    'target.SetSizeCoefficient(nativeRegion.GetSizeCoefficient());',
-    'target.SetSize(nativeRegion.GetSize());',
     'target.SetTranslation(nativeRegion.GetTranslation());')) {
-    Check ($followup.Contains($needle)) "Native detail-region geometry copy missing: $needle"
+    Check ($followup.Contains($needle)) "Native detail-region positioning copy missing: $needle"
 }
+Check ($followup.Contains('target.SetFitToContent(true);')) 'W02.6 detail panel does not size from its real content after MOUNTED.'
+Check (-not $followup.Contains('target.SetSizeRule(nativeRegion.GetSizeRule());')) 'W02.6 still copies the virtual grid size rule onto a non-virtual Biology panel.'
+Check (-not $followup.Contains('target.SetSizeCoefficient(nativeRegion.GetSizeCoefficient());')) 'W02.6 still copies the virtual grid size coefficient onto Biology.'
+Check (-not $followup.Contains('target.SetSize(nativeRegion.GetSize());')) 'W02.6 still copies the virtual grid fixed extent onto Biology.'
 
 Check (-not $shell.Contains('this.crBiologyNativeContent.SetAnchor(inkEAnchor.TopLeft);')) 'Biology detail still forces the screen-origin TopLeft anchor.'
 Check (-not $shell.Contains('this.crBiologyNativeContent.SetMargin(inkMargin(0.0, 42.0, 0.0, 0.0));')) 'Biology detail still carries the disproven W02.3 fixed top-left margin.'
