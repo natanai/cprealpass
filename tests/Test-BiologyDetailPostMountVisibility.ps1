@@ -42,12 +42,18 @@ Check ($followup.Contains('inventoryRoot.GetOpacity()')) 'W02.6 does not report 
 Check ($followup.Contains('target.IsVisible()')) 'W02.6 does not report Biology panel visibility.'
 Check ($followup.Contains('target.GetOpacity()')) 'W02.6 does not report Biology panel opacity.'
 Check ($followup.Contains('target.GetDesiredSize()')) 'W02.6 does not report Biology desired size.'
+Check ($followup.Contains('target.GetSize()')) 'W02.6 does not report Biology stored size.'
+Check ($followup.Contains('target.GetSizeRule()')) 'W02.6 does not report Biology size-rule state.'
+Check ($followup.Contains('target.GetSizeCoefficient()')) 'W02.6 does not report Biology size coefficient.'
+Check ($followup.Contains('targetCompound.GetNumChildren()')) 'W02.6 does not report Biology child count.'
 Check ($followup.Contains('nativeParent.GetChildSize(target)')) 'W02.6 does not report the native parent assigned size for Biology.'
 Check ($followup.Contains('nativeParent.GetDesiredSize()')) 'W02.6 does not report native parent effective/desired size.'
 Check ($followup.Contains('nativeParent.GetChildPosition(target)')) 'W02.6 does not report Biology position within the native parent for clipping diagnosis.'
 Check ($followup.Contains('this.CRBiologyChildIndex(nativeParent, target)')) 'W02.6 does not report Biology sibling index.'
 Check ($followup.Contains('this.CRBiologyChildIndex(nativeParent, nativeRegion)')) 'W02.6 does not report the native grid sibling index for covering/order diagnosis.'
 Check ($followup.Contains('nativeParent.GetChildOrder()')) 'W02.6 does not report native child ordering direction.'
+Check ($followup.Contains('let layoutMatch: Bool = Equals(target.GetAnchor(), nativeRegion.GetAnchor())')) 'W02.6 does not report whether native anchor/alignment/margin/translation survived post-mount.'
+Check ($followup.Contains('targetMargin.left == nativeMargin.left') -and $followup.Contains('targetTranslation.X == nativeTranslation.X')) 'W02.6 native-layout match omits margin/translation evidence.'
 
 # Prove the presentation path itself populated content rather than inferring from an
 # invisible screen. The status is set at the exact authoritative detail projection.
