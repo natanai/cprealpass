@@ -12,7 +12,7 @@ $project = Get-ProjectRoot
 $GamePath = [IO.Path]::GetFullPath($GamePath)
 $archiveRoot = Join-Path $GamePath 'archive\pc'
 $oodleSource = Join-Path $GamePath 'bin\x64\oo2ext_7_win64.dll'
-$candidateRegex = '(?i)(ripperdoc|cyberware).*\.inkwidget$'
+$candidateRegex = '(?i)\.inkwidget$'
 
 if (-not (Test-Path -LiteralPath $archiveRoot -PathType Container)) {
     throw "Cyberpunk archive root not found: $archiveRoot"
@@ -56,25 +56,6 @@ function Invoke-QuietCaptured([string]$Exe,[string[]]$Arguments) {
     }
 }
 
-function Invoke-Reported([string]$Label,[string]$Exe,[string[]]$Arguments) {
-    Add-Report ''
-    Add-Report "=== $Label ==="
-    Add-Report ("COMMAND: " + $Exe + " " + ($Arguments -join ' '))
-    $result = Invoke-QuietCaptured $Exe $Arguments
-    foreach ($line in $result.Output) {
-        $text = [string]$line
-        if ($text.Length -gt 600) {
-            $text = $text.Substring(0,600) + ' ...'
-        }
-        Add-Report $text
-    }
-    Add-Report "EXIT_CODE=$($result.ExitCode)"
-    if ($result.ExitCode -ne 0) {
-        throw "$Label failed with exit code $($result.ExitCode)"
-    }
-    $result
-}
-
 function Add-NeedleSnippets([string]$Raw,[string]$Needle,[int]$MaxOccurrences = 6) {
     $cursor = 0
     $occurrence = 0
@@ -106,7 +87,7 @@ try {
     Add-Report "ArchiveFiles: $($archiveFiles.Count)"
     Add-Report "GameOodleSHA256: $sourceOodleHash"
     Add-Report "CandidateRegex: $candidateRegex"
-    Add-Report 'Purpose: discover the actual installed CP2077 2.31 INK resource carrying RipperDocGameController/RipperdocInventoryController, then report its authored detail geometry.'
+    Add-Report 'Purpose: discover the installed CP2077 2.31 INK resource that actually carries RipperDocGameController/RipperdocInventoryController, then report its authored detail geometry.'
     Add-Report 'Mutation boundary: read-only game archives; temporary local extraction only.'
 
     if (-not (Test-Path -LiteralPath $localOodle -PathType Leaf)) {
@@ -127,7 +108,7 @@ try {
     Add-Report "WolvenKitCLISHA256: $($toolchain.cliDllSha256)"
 
     Write-Host ''
-    Write-Host "Scanning $($archiveFiles.Count) installed archives for Ripperdoc/Cyberware INK candidates..." -ForegroundColor Cyan
+    Write-Host "Scanning $($archiveFiles.Count) installed archives for resolvable INK resources..." -ForegroundColor Cyan
 
     $candidates = [Collections.Generic.List[object]]::new()
     $seen = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
@@ -143,40 +124,52 @@ try {
 
         foreach ($line in $result.Output) {
             $candidatePath = ([string]$line).Trim().Replace('/','\')
-            if ($candidatePath -notmatch '(?i)\.inkwidget$' -or $candidatePath -notmatch '(?i)(ripperdoc|cyberware)') {
+            if ($candidatePath -notmatch '(?i)\.inkwidget$') {
                 continue
             }
             $key = $archiveFile.FullName + '|' + $candidatePath
-            if ($seen.Add($key)) {
-                $candidates.Add([pscustomobject]@{
-                    Archive = $archiveFile
-                    RelativeArchive = $relativeArchive
-                    Path = $candidatePath
-                })
+            if (-not $seen.Add($key)) {
+                continue
             }
+
+            $priority = 2
+            if ($candidatePath -match '(?i)(ripperdoc|cyberware)') {
+                $priority = 0
+            } elseif ($candidatePath -match '(?i)fullscreen') {
+                $priority = 1
+            }
+
+            $candidates.Add([pscustomobject]@{
+                Archive = $archiveFile
+                RelativeArchive = $relativeArchive
+                Path = $candidatePath
+                Priority = $priority
+            })
         }
     }
 
     Add-Report ''
     Add-Report "DISCOVERED_INKWIDGET_CANDIDATES=$($candidates.Count)"
-    foreach ($candidate in $candidates) {
-        Add-Report ("CANDIDATE: " + $candidate.Path + " | ARCHIVE: " + $candidate.RelativeArchive)
-    }
     if ($candidates.Count -eq 0) {
-        throw 'No installed Ripperdoc/Cyberware .inkwidget candidates were discoverable by WolvenKit path metadata.'
+        throw 'No installed .inkwidget resources were discoverable by WolvenKit path metadata.'
     }
 
+    $orderedCandidates = @($candidates | Sort-Object Priority, Path, RelativeArchive)
+    Add-Report "PRIORITY_0_RIPPERDOC_CYBERWARE=$(@($orderedCandidates | Where-Object Priority -eq 0).Count)"
+    Add-Report "PRIORITY_1_FULLSCREEN=$(@($orderedCandidates | Where-Object Priority -eq 1).Count)"
+
     $controllerMatches = [Collections.Generic.List[object]]::new()
-    for ($i = 0; $i -lt $candidates.Count; $i++) {
-        $candidate = $candidates[$i]
-        $slot = ('candidate-{0:D2}' -f ($i+1))
+    for ($i = 0; $i -lt $orderedCandidates.Count; $i++) {
+        $candidate = $orderedCandidates[$i]
+        $slot = ('candidate-{0:D4}' -f ($i+1))
         $candidateExtract = Join-Path $extractRoot $slot
         $candidateJson = Join-Path $jsonRoot $slot
         New-Item -ItemType Directory -Force -Path $candidateExtract,$candidateJson | Out-Null
 
         $exactRegex = '^' + [regex]::Escape($candidate.Path) + '$'
         Add-Report ''
-        Add-Report ("TEST_CANDIDATE[$($i+1)]: " + $candidate.Path)
+        Add-Report ("TEST_CANDIDATE[$($i+1)] PRIORITY=$($candidate.Priority): " + $candidate.Path + " | ARCHIVE: " + $candidate.RelativeArchive)
+
         $extract = Invoke-QuietCaptured $dotnet @(
             $cli,'unbundle',$candidate.Archive.FullName,
             '--outpath',$candidateExtract,
@@ -224,25 +217,30 @@ try {
                 $candidateMatched = $true
                 $controllerMatches.Add([pscustomobject]@{
                     Candidate = $candidate
+                    ResourceFile = $resources[0]
                     JsonFile = $jsonFile
                     Raw = $raw
                 })
+                break
             }
         }
 
         Add-Report ("CANDIDATE_RESULT=" + $(if ($candidateMatched) { 'CONTROLLER_MATCH' } else { 'NOT_TARGET' }))
+        if ($candidateMatched) {
+            break
+        }
     }
 
     Add-Report ''
     Add-Report "CONTROLLER_MATCH_COUNT=$($controllerMatches.Count)"
     if ($controllerMatches.Count -ne 1) {
-        throw "Expected exactly one installed INK candidate carrying the Ripperdoc controller/detail contract; found $($controllerMatches.Count)."
+        throw "Expected one installed INK candidate carrying the Ripperdoc controller/detail contract; found $($controllerMatches.Count)."
     }
 
     $target = $controllerMatches[0]
     Add-Report ("TARGET_RESOURCE_DISCOVERED=" + $target.Candidate.Path)
     Add-Report ("TARGET_SOURCE_ARCHIVE=" + $target.Candidate.RelativeArchive)
-    Add-Report ("TARGET_RESOURCE_SHA256=" + (Get-Sha256 (Get-ChildItem -LiteralPath (Split-Path -Parent $target.JsonFile.FullName).Replace($jsonRoot,$extractRoot) -Recurse -File -Filter '*.inkwidget' | Select-Object -First 1).FullName))
+    Add-Report ("TARGET_RESOURCE_SHA256=" + (Get-Sha256 $target.ResourceFile.FullName))
     Add-Report ("TARGET_JSON=" + [IO.Path]::GetRelativePath($jsonRoot,$target.JsonFile.FullName))
 
     $needles = @(
