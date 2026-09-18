@@ -12,7 +12,7 @@ The repository is the durable source of truth. Git issues/branches/PRs track imp
 
 This snapshot exists because a substantial recent parent-chat segment disappeared from the visible conversation. Treat GitHub and durable test records as the continuity source.
 
-- Parent: **P01.2**, active integration/orchestration.
+- Parent: **P02**, active integration/orchestration by explicit owner handoff. P01.2 is predecessor history.
 - Latest completed numbered attended session: **T004**, exact tested source `ffa6f64d6c837146d032aaab565d671c932453a2`; see `docs/test-runs/TEST-LEDGER.md` and the completed T004 record.
 - T004 operational listener/session: PASS; direct polling handled two observed launch/exit cycles during the same attended hold.
 - T004 Biology: selector breadcrumb proves `BIOLOGY LAYOUT: MOUNTED`, but title/summary/metrics remain invisible. Diagnosis is now post-mount -> **W02.6 / issue #101**, `agent/biology-detail-post-mount-visibility`, handoff `docs/handoffs/W02.6-BIOLOGY-DETAIL-POST-MOUNT.md`, initial handoff head `0a4b1f65e3e09fce097235981a8b10030c3e1018`.
@@ -110,8 +110,9 @@ Existing conversations do not need retroactive renaming; this ledger maps their 
 
 | Thread ID | Current visible title / alias | Role / goal | Thread state | Lane work state | GitHub / branch | Parent routing note |
 |---|---|---|---|---|---|---|
-| **P01.2** | `[P01.2] PARENT — Integration Orchestrator` | Parent / integration orchestrator | **ACTIVE** | **IN-PROGRESS** | Issue #35; read `docs/handoffs/PARENT-P01.2.md` first | Parent owns merge/integration, attended execution, durable evidence ingestion, and routing. W13-W15.1 implementation is merged; W15.2 is the active release/evidence-lifecycle follow-up. |
-| **W15.2** | existing W15 worker conversation | Managed operator evidence lifecycle: repo-backed handoff state, ZIP-independent recovery evidence, and fail-closed local cleanup | **ACTIVE** | **IN-PROGRESS** | Issue #74; PR #75; `agent/operator-evidence-lifecycle`; handoff `docs/handoffs/W15.2-OPERATOR-EVIDENCE-LIFECYCLE.md` | Second sequential assignment in worker conversation W15. It intentionally reuses W15.1 recovery context while keeping a distinct issue/branch/PR. Parent P01.2 owns merge and attended recovery/cleanup. |
+| **P02** | `[P02] PARENT — Integration Orchestrator` | Parent / integration orchestrator | **ACTIVE** | **IN-PROGRESS** | Issue #35; read `docs/handoffs/PARENT-P02.md` first | Owner-designated successor parent. Owns pre-T005 archaeology gates, worker routing, merge/integration, attended execution, durable evidence ingestion, and finding routing. |
+| **P01.2** | `[P01.2] PARENT — Integration Orchestrator` | Predecessor parent / integration orchestrator | **RETIRED** | **CLOSED** | Issue #35; historical handoff `docs/handoffs/PARENT-P01.2.md` | Superseded by P02 at owner request. Preserve its durable evidence and decisions; do not route new parent work here. |
+| **W15.2** | existing W15 worker conversation | Managed operator evidence lifecycle | **USABLE** | **MERGED** | Issue #74; PR #75 merged; `agent/operator-evidence-lifecycle` | Historical release/operator context; subsequent W15.3-W15.5 listener/session work is also merged. |
 | **W15.1** | `[W15.1] RELEASE — Failed-Install Recovery ZIP Validation Repair` | Accept ordinary safe ZIP directory entries without weakening failed-install recovery validation | **USABLE** | **MERGED** | Issue #72; PR #73 merged; `agent/failed-install-recovery-zip-validation`; worker head `5e7ee3611104f68213c095d7fc54821a1d7a511f` | First assignment in the same W15 conversation. Retained as immediately useful recovery context; W15.2 is a new issue/branch in that same conversation, not a replacement chat. |
 | **W14.1** | `[W14.1] RELEASE — Collision-Safe Installer Create-Path Repair` | Repair guarded installer create execution and provide exact failed-install recovery | **USABLE** | **MERGED** | Issue #70; PR #71 merged; `agent/release-installer-create-repair`; worker head `48d8f630a9ba24f5f2b339886a5c1bcfff6c559b` | W14 implementation is merged. Its attended first-install failure and recovery boundary are provenance for W15.1/W15.2; do not reopen its create/replace design in W15.2. |
 | **W13.1** | `[W13.1] RUNTIME — Installed Biology Activation Follow-Up` | Repair the installed REDscript startup/task-runner boundary | **USABLE** | **MERGED** | Issue #68; PR #69 merged; `agent/installed-runtime-activation-followup`; worker head `6736e456d90879abe1c4d3fd0c96c2df8da7bd05` | Standalone cybercmd startup repair and guarded shared-loader install safety are merged. Downstream attended acceptance remains parent-owned. |
@@ -128,26 +129,37 @@ Existing conversations do not need retroactive renaming; this ledger maps their 
 | **W04.1** | `ATTENDED RUNTIME-AUTHORITY FOLLOW-UP` | Authoritative live Biology body runtime/session ownership | **USABLE** | **MERGED** | Issue #41; PR #47 closed as superseded by integration; `agent/body-runtime-attended-followup` | Implementation plus W06 compile repair are on main; issue #41 remains for attended acceptance. |
 | **W02.1** | `Thread 2 — Biology UI and body runtime` | Biology native Cyberware shell/drill-down/back/mode-state follow-up | **USABLE** | **MERGED** | Issue #39; PR #43 closed as superseded by integration; `agent/biology-ui-attended-followup` | Implementation is on main through PR #49; issue #39 remains for attended acceptance. |
 | **W01.1** | `Thread 1 — REDmod foundation` | Original REDmod package/deployment foundation | **USABLE** | **MERGED** | Issue #28; PR #31; historical branch `agent/redmod-foundation` | Foundation work is already on main. |
+| **W02.6** | existing W02 worker conversation | Biology post-mount detail visibility | **USABLE** | **MERGED** | Issue #101; PR #103 merged; `agent/biology-detail-post-mount-visibility` | Implementation is on current main. Remaining acceptance is live T005; W17.1 now performs fresh reference/native archaeology before another layout iteration. |
+| **W03.6** | existing W03 worker conversation | E3 quest/hotkey native content-region completion | **USABLE** | **READY-PARENT** | Issue #102; PR #104 open/draft; `agent/e3-quest-hotkey-content-region` | Do not merge yet. W03.7 supersedes the immediate parent gate by reconciling current main and completing full Project E3 archaeology first. |
+| **W03.7** | existing W03 worker conversation | Project E3 full archaeology + W03.6/current-main reconciliation | **ACTIVE** | **IN-PROGRESS** | Issue #106; `agent/e3-reference-archaeology-integration`; handoff `docs/handoffs/W03.7-E3-REFERENCE-ARCHAEOLOGY.md` | Sequential W03 assignment. Consume the private Project E3 bundle from W16.1; return a current-main-reconciled PR for P02. |
+| **W04.2** | existing W04 worker conversation | Body runtime persistence / authority proof | **USABLE** | **MERGED** | Issue #41; PR #90 merged | Source authority/persistence audit is merged; live WAIT/save-reload/SLEEP acceptance remains for T005. |
+| **W15.3-W15.5** | existing W15 worker conversation | One-command attended session, prior-install transition, listener observation repair | **USABLE** | **MERGED** | Issues #79/#83/#86; PRs #82/#85/#88 merged | Command 17 owner lifecycle and listener fixes are on main and have passed subsequent attended sessions. |
+| **W16.1** | new W16 worker conversation | Private reference-mod archaeology handoff tooling | **ACTIVE** | **IN-PROGRESS** | Issue #105; `agent/reference-mod-archaeology-workflow`; handoff `docs/handoffs/W16.1-REFERENCE-MOD-ARCHAEOLOGY.md` | Build one read-only private handoff bundle from `C:\Games\Cyberpunk-ReferenceMods`; no third-party payload committed to Git. |
+| **W17.1** | new W17 worker conversation | Biology Cyberware/native-screen reference archaeology | **ACTIVE** | **IN-PROGRESS** | Issue #107; `agent/biology-ui-reference-archaeology`; handoff `docs/handoffs/W17.1-BIOLOGY-UI-REFERENCE-ARCHAEOLOGY.md` | Fresh conversation due W02 continuity problems; inspect native 2.31 + Cyberware-EX/reference implementations before T005. |
 
 ## Current integration relationship
 
 ```text
-P01.2 parent
+P02 parent
   |
-  +-- W09-W12 merged and attended release-transition evidence retained
-  +-- W13 / PR #69 merged
-  |     `-- installed REDscript startup/task-runner repair + guarded shared cybercmd install safety
-  +-- W14 / PR #71 merged
-  |     `-- collision-safe installer create path + exact failed-install recovery
-  +-- W15.1 / PR #73 merged
-  |     `-- safe explicit ZIP directory entries accepted by recovery validator
-  +-- W15.2 / issue #74 / PR #75 ACTIVE
-  |     `-- repo-backed evidence identity + managed cleanup + missing-old-ZIP current-state path
+  +-- current canonical main: 2657bae32c9d855fd90e5ffc7780148c6a8cf023
+  +-- latest completed attended session: T004
+  +-- next unallocated attended session: T005
   |
-  +-- next parent gate: review/merge W15.2 if sound, ingest returned durable evidence, then execute only the parent-owned attended recovery/cleanup/candidate path authorized by that evidence
+  +-- W02.6 / PR #103 MERGED
+  |     `-- post-mount Biology detail sizing/diagnostics; live acceptance pending
+  +-- W03.6 / PR #104 READY-PARENT but NOT YET MERGED
+  |     `-- branch diverged after W02.6 merged
+  |
+  +-- pre-T005 process gate #105
+        +-- W16.1 private reference-bundle tooling
+        +-- W03.7 full Project E3 archaeology + current-main reconciliation
+        +-- W17.1 Biology Cyberware/native-screen archaeology
 ```
 
-The active worker assignment in this ledger is **W15.2**. It is the second assignment in the existing W15 conversation, not a second W15 conversation.
+**T005 is not ready yet.** P02 will allocate it only after the three pre-test lanes return, the selected E3/Biology work is merged deliberately, current-main CI is green, and the required exact supported-game compile/audit boundary is satisfied.
+
+The next owner-facing live test remains one Command 17 attended session and should include Biology detail/navigation, E3 presentation, and #41 persistence acceptance.
 
 ## Routing another assignment
 
