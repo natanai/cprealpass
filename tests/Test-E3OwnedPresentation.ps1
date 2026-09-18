@@ -121,7 +121,7 @@ Check ($controls[0].id -eq 'presentation.e3-first-person-hud-visuals' -and $cont
 foreach ($needle in @('T002','3dc049ee99979f924978b671ddbbbda06b472d1b','CRBiologyE3FocusFrame','112','full-root red','W03.4')) {
     Check ($presentation.Contains($needle)) "Canonical W03.4 presentation contract is missing attended evidence/diagnosis: $needle"
 }
-foreach ($needle in @('T003','67593bfbb12b4a6ebcec7042066d48b4f5fac427','native content region','m_questTrackerContainer','m_onFootContainer','W03.5')) {
+foreach ($needle in @('T003','67593bfbb12b4a6ebcec7042066d48b4f5fac427','native HUD content regions','m_questTrackerContainer','m_onFootContainer','W03.5')) {
     Check ($presentation.Contains($needle)) "Canonical W03.5 presentation contract is missing attended/content-region evidence: $needle"
 }
 foreach ($needle in @('W03.4','CRBiologyE3FocusFrame','compact chrome','ambient')) {

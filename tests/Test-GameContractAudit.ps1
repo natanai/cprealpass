@@ -81,8 +81,8 @@ foreach ($needle in @('MinimapContainerController','IronsightGameController','Qu
     Check ($probe.Contains($needle)) "Presentation native probe no longer checks required current-game symbol: $needle"
 }
 Check ($probe.Contains("path = 'cyberpunk/UI/widgets/minimap/minimap.script'")) 'Presentation probe no longer pins current minimap evidence to the installed native minimap script.'
-Check ($probe.Contains("'\\bm_questTrackerContainer\\b'") -and $probe.Contains("'\\bm_ObjectiveContainer\\b'") -and $probe.Contains("'\\bm_QuestTitle\\b'")) 'Presentation probe no longer verifies W03.5 quest native content-region fields.'
-Check ($probe.Contains("'\\bm_onFootContainer\\b'") -and $probe.Contains("'\\bm_weaponAmmoWrapper\\b'") -and $probe.Contains("'\\bm_weaponCurrentAmmo\\b'") -and $probe.Contains("'\\bm_weaponTotalAmmo\\b'")) 'Presentation probe no longer verifies W03.5 weapon/ammo native content-region fields.'
+Check ($probe.Contains("'\bm_questTrackerContainer\b'") -and $probe.Contains("'\bm_ObjectiveContainer\b'") -and $probe.Contains("'\bm_QuestTitle\b'")) 'Presentation probe no longer verifies W03.5 quest native content-region fields.'
+Check ($probe.Contains("'\bm_onFootContainer\b'") -and $probe.Contains("'\bm_weaponAmmoWrapper\b'") -and $probe.Contains("'\bm_weaponCurrentAmmo\b'") -and $probe.Contains("'\bm_weaponTotalAmmo\b'")) 'Presentation probe no longer verifies W03.5 weapon/ammo native content-region fields.'
 Check ($probe.Contains("'\bfunction\s+SetElementVisibility\s*\('") -and $probe.Contains("'\bfunction\s+IsAnyElementVisible\s*\('")) 'Presentation probe no longer verifies the exact nameplate visibility lifecycle W03.5 preserves.'
 Check ($probe.Contains("'\bevent\s+OnUpdateInteraction\s*\('") -and $probe.Contains("'\bfunction\s+SetText\s*\('")) 'Presentation probe no longer verifies interaction/activity W03.3 update seams.'
 Check ($probe.Contains('Read-only targeted symbol/signature evidence only')) 'Presentation probe does not state its read-only narrow-evidence boundary.'
