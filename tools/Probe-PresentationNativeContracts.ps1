@@ -30,8 +30,13 @@ $contracts = @(
         path = 'cyberpunk/UI/quests/quest_tracker.script'
         patterns = @(
             '\bclass\s+QuestTrackerGameController\b',
+            '\bm_questTrackerContainer\b',
+            '\bm_QuestTitle\b',
+            '\bm_ObjectiveContainer\b',
             '\bevent\s+OnInitialize\s*\(',
-            '\bfunction\s+UpdateTrackerData\s*\('
+            '\bfunction\s+UpdateTrackerData\s*\(',
+            'inkWidgetRef\.SetVisible\(\s*m_questTrackerContainer',
+            'inkCompoundRef\.Get\(\s*m_ObjectiveContainer'
         )
     },
     [pscustomobject]@{
@@ -45,8 +50,14 @@ $contracts = @(
         path = 'cyberpunk/UI/weapons/weaponRoster.script'
         patterns = @(
             '\bWeaponRosterGameController\b',
+            '\bm_weaponName\b',
+            '\bm_weaponCurrentAmmo\b',
+            '\bm_weaponTotalAmmo\b',
+            '\bm_weaponAmmoWrapper\b',
+            '\bm_onFootContainer\b',
             '\bevent\s+OnInitialize\s*\(',
-            '\bfunction\s+SetRosterSlotData\s*\('
+            '\bfunction\s+SetRosterSlotData\s*\(',
+            'inkWidgetRef\.Get\(\s*m_onFootContainer'
         )
     },
     [pscustomobject]@{
@@ -152,4 +163,4 @@ foreach ($hit in $deduped) {
 }
 
 Write-Host ''
-Write-Host 'PASS: all W03.4 current-controller, crosshair-state, and nameplate-lifecycle contracts were found in the installed official REDmod script tree.' -ForegroundColor Green
+Write-Host 'PASS: all W03.5 current-controller, native content-region, crosshair-state, and nameplate-lifecycle contracts were found in the installed official REDmod script tree.' -ForegroundColor Green

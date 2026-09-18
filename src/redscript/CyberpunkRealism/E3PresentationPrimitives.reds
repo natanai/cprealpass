@@ -1,8 +1,9 @@
 // Shared project-original INK primitives for Biology's E3-inspired presentation.
 //
-// W03.4 removes the attended full-root red slabs and standardizes a compact chrome
-// language: a short top rail, a small accent cell/label band, and a faint lower-right
-// corner. Native controller content stays readable and authoritative underneath.
+// W03.4 standardized compact chrome. W03.5 adds bounded geometry traces so attended
+// evidence can distinguish "hook fired" from "chrome is mounted in the visible native
+// content region". Geometry is read from the native host after mounting; no global
+// screen-space offsets are inferred or stored.
 module CyberpunkRealism.Presentation
 
 public class CRBiologyE3Primitives extends IScriptable {
@@ -12,6 +13,52 @@ public class CRBiologyE3Primitives extends IScriptable {
 
   public static func Trace(hook: String) -> Void {
     FTLog("[Biology:E3] " + hook);
+  }
+
+  public static func TraceMountedRegion(surface: String, hostName: String, host: ref<inkCompoundWidget>, chrome: ref<inkCanvas>, enabled: Bool) -> Void {
+    let hostSize: Vector2;
+    let hostTranslation: Vector2;
+    let hostMargin: inkMargin;
+    let chromeSize: Vector2;
+    let chromeTranslation: Vector2;
+    let chromeMargin: inkMargin;
+
+    if !IsDefined(host) {
+      CRBiologyE3Primitives.Trace(surface + " host=" + hostName + " resolved=false enabled=" + BoolToString(enabled));
+      return;
+    }
+
+    hostSize = host.GetSize();
+    hostTranslation = host.GetTranslation();
+    hostMargin = host.GetMargin();
+
+    if !IsDefined(chrome) {
+      CRBiologyE3Primitives.Trace(
+        surface
+        + " host=" + hostName
+        + " resolved=true chrome=false enabled=" + BoolToString(enabled)
+        + " hostSize=" + FloatToString(hostSize.X) + "x" + FloatToString(hostSize.Y)
+        + " hostTranslation=" + FloatToString(hostTranslation.X) + "," + FloatToString(hostTranslation.Y)
+        + " hostMargin=" + FloatToString(hostMargin.left) + "," + FloatToString(hostMargin.top) + "," + FloatToString(hostMargin.right) + "," + FloatToString(hostMargin.bottom)
+      );
+      return;
+    }
+
+    chromeSize = chrome.GetSize();
+    chromeTranslation = chrome.GetTranslation();
+    chromeMargin = chrome.GetMargin();
+
+    CRBiologyE3Primitives.Trace(
+      surface
+      + " host=" + hostName
+      + " resolved=true chrome=true enabled=" + BoolToString(enabled)
+      + " hostSize=" + FloatToString(hostSize.X) + "x" + FloatToString(hostSize.Y)
+      + " hostTranslation=" + FloatToString(hostTranslation.X) + "," + FloatToString(hostTranslation.Y)
+      + " hostMargin=" + FloatToString(hostMargin.left) + "," + FloatToString(hostMargin.top) + "," + FloatToString(hostMargin.right) + "," + FloatToString(hostMargin.bottom)
+      + " chromeSize=" + FloatToString(chromeSize.X) + "x" + FloatToString(chromeSize.Y)
+      + " chromeTranslation=" + FloatToString(chromeTranslation.X) + "," + FloatToString(chromeTranslation.Y)
+      + " chromeMargin=" + FloatToString(chromeMargin.left) + "," + FloatToString(chromeMargin.top) + "," + FloatToString(chromeMargin.right) + "," + FloatToString(chromeMargin.bottom)
+    );
   }
 
   public static func CreateFillShell(parent: ref<inkCompoundWidget>, name: CName) -> ref<inkCanvas> {
