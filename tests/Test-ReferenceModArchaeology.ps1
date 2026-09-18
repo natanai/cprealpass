@@ -37,12 +37,14 @@ Require $bootstrap 'ATTACH THIS ONE REFERENCE BUNDLE TO CHATGPT:' 'Reference boo
 Reject $bootstrap [regex]::Escape('.git\config') 'Reference bootstrap must not use .git/config-only worktree discovery.'
 Reject $bootstrap '(?i)Start-Process.*Cyberpunk|Cyberpunk2077\.exe|Deploy-BiologyRedmod' 'Reference bootstrap must never launch/install/deploy into Cyberpunk.'
 
-Require $builder 'sourceMutation=.none.|sourceMutation=''none''' 'Bundle manifest must declare no source-library mutation.'
-Require $builder 'gameInstallation=.not accessed or modified.|gameInstallation=''not accessed or modified''' 'Bundle manifest must declare no game installation access.'
+Require $builder ([regex]::Escape("sourceMutation='none'")) 'Bundle manifest must declare no source-library mutation.'
+Require $builder ([regex]::Escape("gameInstallation='not accessed or modified'")) 'Bundle manifest must declare no game installation access.'
 Require $builder 'skipped-duplicate-payload' 'Builder must suppress duplicate selected ZIP payload.'
 Require $builder 'opaque-no-safe-listing-tool|opaque-tool-could-not-list' 'Builder must represent uninspectable resource containers explicitly.'
 Require $builder 'PRIVATE-THIRD-PARTY-REFERENCE' 'Bundle must carry a prominent private-analysis marker.'
 Require $builder 'WorkflowSourceRevision' 'Bundle must bind evidence to exact workflow source.'
+Require $bootstrap 'ReferenceNameJson' 'Bootstrap must forward multiple selected reference names losslessly as one JSON argument.'
+Require $builder 'ZipSingleRoot' 'Builder must recognize ZIP/extracted-folder duplicates by the ZIP sole top-level root as well as basename.'
 
 Require $agents 'REFERENCE-MOD ARCHAEOLOGY GATE' 'AGENTS must require reference archaeology before speculative probing when relevant.'
 Require $agents 'mod and any dependencies wanted' 'Worker request convention must name desired mod/dependencies.'
@@ -78,11 +80,11 @@ try{
     )|Set-Content -LiteralPath (Join-Path $mod 'scripts\hud.reds') -Encoding utf8
     '{"name":"Project E3 fixture","version":"2.31.2","dependencies":{"TweakXL":"test"}}'|Set-Content -LiteralPath (Join-Path $mod 'config\info.json') -Encoding utf8
     [IO.File]::WriteAllBytes((Join-Path $mod 'archive\pc\mod\e3.archive'),[byte[]](1,2,3,4,5,6,7,8))
-    Compress-Archive -Path $mod -DestinationPath (Join-Path $library 'Project E3.zip') -CompressionLevel Fastest
+    Compress-Archive -Path $mod -DestinationPath (Join-Path $library 'Downloaded E3 Package.zip') -CompressionLevel Fastest
 
     $before=Fingerprint $library
     $sourceRevision='aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
-    $bundle=& (Join-Path $project 'tools\New-ReferenceModBundle.ps1') -LibraryPath $library -ReferenceName @('Project E3','Project E3.zip') -OutputRoot $out -WorkflowSourceRevision $sourceRevision
+    $bundle=& (Join-Path $project 'tools\New-ReferenceModBundle.ps1') -LibraryPath $library -ReferenceName @('Project E3','Downloaded E3 Package.zip') -OutputRoot $out -WorkflowSourceRevision $sourceRevision
     if($LASTEXITCODE -and $LASTEXITCODE -ne 0){throw "Reference builder returned exit $LASTEXITCODE"}
     $bundlePath=[string](@($bundle)[-1])
     if(-not (Test-Path -LiteralPath $bundlePath -PathType Leaf)){throw "Reference bundle missing: $bundlePath"}
@@ -97,8 +99,9 @@ try{
     if($manifest.workflowSourceRevision -ne $sourceRevision){throw 'Bundle did not record exact workflow source revision.'}
     if($manifest.sourceMutation -ne 'none'){throw 'Bundle does not prove source mutation boundary.'}
     if($manifest.gameInstallation -ne 'not accessed or modified'){throw 'Bundle does not prove game-install boundary.'}
-    $dup=@($manifest.referenceSelections|Where-Object name -eq 'Project E3.zip')
-    if($dup.Count -ne 1 -or $dup[0].status -ne 'skipped-duplicate-payload'){throw 'Selected extracted folder did not suppress duplicate ZIP payload.'}
+    if(@($manifest.provenanceVersionNotes|Where-Object {$_ -match 'version=2\.31\.2'}).Count -lt 1){throw 'Discoverable reference version metadata was not recorded.'}
+    $dup=@($manifest.referenceSelections|Where-Object name -eq 'Downloaded E3 Package.zip')
+    if($dup.Count -ne 1 -or $dup[0].status -ne 'skipped-duplicate-payload' -or $dup[0].duplicateOf -ne 'Project E3'){throw 'Selected extracted folder did not suppress differently named ZIP payload with the same sole root.'}
 
     if(-not (Test-Path -LiteralPath (Join-Path $expanded 'payload\Project_E3\README.md') -PathType Leaf)){throw 'README metadata was not exposed in private payload.'}
     if(-not (Test-Path -LiteralPath (Join-Path $expanded 'payload\Project_E3\scripts\hud.reds') -PathType Leaf)){throw 'redscript source was not exposed in private payload.'}
