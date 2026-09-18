@@ -16,86 +16,131 @@ Write-Host ''
 Write-Host '=== Supported-install presentation native-contract probe ===' -ForegroundColor Cyan
 Write-Host "Script source: $scriptRoot" -ForegroundColor DarkGray
 Write-Host 'Primary evidence is the installed official REDmod decompiled script tree.' -ForegroundColor DarkGray
-Write-Host 'Read-only symbol/signature evidence only; no game files are modified.' -ForegroundColor DarkGray
+Write-Host 'Read-only targeted symbol/signature evidence only; no game files are modified.' -ForegroundColor DarkGray
 
-$patterns = @(
-    '\bclass\s+MinimapContainerController\b',
-    '\bclass\s+IronsightGameController\b',
-    '\bclass\s+QuestTrackerGameController\b',
-    '\bclass\s+WeaponRosterGameController\b',
-    '\bclass\s+HotkeysWidgetController\b',
-    '\bclass\s+gameuiCrosshairContainerController\b',
-    '\bclass\s+CrosshairGameController_Tech_Hex\b',
-    '\bclass\s+interactionWidgetGameController\b',
-    '\bclass\s+activityLogEntryLogicController\b',
-    '\bclass\s+NpcNameplateGameController\b',
-    '\bclass\s+NameplateVisualsLogicController\b',
-    '\bevent\s+OnInitialize\s*\(',
-    '\bevent\s+OnPlayerAttach\s*\(',
-    '\bfunc\s+OnCompassUpdate\s*\(',
-    '\bfunc\s+OnPlayerAttach\s*\(',
-    '\bfunc\s+GetQuestMappin\s*\(',
-    '\bfunc\s+GetPOIMappin\s*\(',
-    '\bfunc\s+UpdateTrackerData\s*\(',
-    '\bfunc\s+SetRosterSlotData\s*\(',
-    '\bfunc\s+OnScreenProjectionUpdate\s*\(',
-    '\bfunc\s+SetElementVisibility\s*\(',
-    '\bfunc\s+IsAnyElementVisible\s*\(',
-    '\bfunc\s+OnUpdateInteraction\s*\(',
-    '\bfunc\s+SetText\s*\(',
-    '\bc_DisplayRangeNotAggressive\b',
-    '\bc_MaxDisplayRangeNotAggressive\b',
-    '\bm_displayName\b',
-    '\bm_nameTextMain\b',
-    '\bm_nameFrame\b'
+$contracts = @(
+    [pscustomobject]@{
+        path = 'cyberpunk/UI/Player/healthbar.script'
+        patterns = @(
+            '\bhealthbarWidgetGameController\b',
+            '\bevent\s+OnInitialize\s*\('
+        )
+    },
+    [pscustomobject]@{
+        path = 'cyberpunk/UI/quests/quest_tracker.script'
+        patterns = @(
+            '\bclass\s+QuestTrackerGameController\b',
+            '\bevent\s+OnInitialize\s*\(',
+            '\bfunction\s+UpdateTrackerData\s*\('
+        )
+    },
+    [pscustomobject]@{
+        path = 'cyberpunk/UI/widgets/minimap/minimap.script'
+        patterns = @(
+            '\bMinimapContainerController\b',
+            '\bevent\s+OnInitialize\s*\('
+        )
+    },
+    [pscustomobject]@{
+        path = 'cyberpunk/UI/weapons/weaponRoster.script'
+        patterns = @(
+            '\bWeaponRosterGameController\b',
+            '\bevent\s+OnInitialize\s*\(',
+            '\bfunction\s+SetRosterSlotData\s*\('
+        )
+    },
+    [pscustomobject]@{
+        path = 'cyberpunk/UI/widgets/dpad_hint/dpad_hint.script'
+        patterns = @(
+            '\bclass\s+HotkeysWidgetController\b',
+            '\bevent\s+OnInitialize\s*\('
+        )
+    },
+    [pscustomobject]@{
+        path = 'cyberpunk/UI/weapons/crosshairs/crosshairContainerController.script'
+        patterns = @(
+            '\bgameuiCrosshairContainerController\b',
+            '\bevent\s+OnInitialize\s*\('
+        )
+    },
+    [pscustomobject]@{
+        path = 'cyberpunk/UI/interactions/interactionsUI.script'
+        patterns = @(
+            '\bclass\s+interactionWidgetGameController\b',
+            '\bevent\s+OnInitialize\s*\(',
+            '\bevent\s+OnUpdateInteraction\s*\('
+        )
+    },
+    [pscustomobject]@{
+        path = 'cyberpunk/UI/activityLog/activityLogControllers.script'
+        patterns = @(
+            '\bclass\s+activityLogEntryLogicController\b',
+            '\bevent\s+OnInitialize\s*\(',
+            '\bfunction\s+SetText\s*\('
+        )
+    },
+    [pscustomobject]@{
+        path = 'cyberpunk/UI/widgets/healthbar/nameplateVisuals.script'
+        patterns = @(
+            '\bclass\s+NameplateVisualsLogicController\b',
+            '\bm_nameTextMain\b',
+            '\bm_nameFrame\b',
+            '\bfunction\s+SetElementVisibility\s*\(',
+            '\bfunction\s+IsAnyElementVisible\s*\(',
+            '\bfunction\s+IsQuestTarget\s*\('
+        )
+    },
+    [pscustomobject]@{
+        path = 'cyberpunk/UI/widgets/healthbar/npcNamePlate.script'
+        patterns = @(
+            '\bNpcNameplateGameController\b',
+            '\bm_displayName\b',
+            '\bc_DisplayRangeNotAggressive\b',
+            '\bc_MaxDisplayRangeNotAggressive\b',
+            '\bevent\s+OnInitialize\s*\(',
+            '\bevent\s+OnScreenProjectionUpdate\s*\(',
+            '\bSNameplateRangesData\.GetDisplayRangeNotAggressive\s*\(',
+            '\bSNameplateRangesData\.GetMaxDisplayRangeNotAggressive\s*\('
+        )
+    },
+    [pscustomobject]@{
+        path = 'cyberpunk/UI/weapons/crosshairs/ironsight.script'
+        patterns = @(
+            '\bclass\s+IronsightGameController\b'
+        )
+    }
 )
 
-# REDmod's official decompiled game sources are .script files. Tolerate .reds too so
-# the probe remains useful if a supported toolchain starts exposing redscript copies.
-$files = @(Get-ChildItem -LiteralPath $scriptRoot -Recurse -File | Where-Object {
-    $_.Extension -in @('.script','.reds')
-})
-if ($files.Count -eq 0) { throw "No .script/.reds files found under official REDmod script tree: $scriptRoot" }
-
 $hits = [Collections.Generic.List[object]]::new()
-foreach ($file in $files) {
-    foreach ($match in @(Select-String -LiteralPath $file.FullName -Pattern $patterns -AllMatches -ErrorAction Stop)) {
-        $relative = [IO.Path]::GetRelativePath($scriptRoot, $file.FullName).Replace('\','/')
-        $line = $match.Line.Trim()
-        if ($line.Length -gt 300) { $line = $line.Substring(0,300) + ' ...' }
-        $hits.Add([pscustomobject]@{
-            path = $relative
-            lineNumber = $match.LineNumber
-            text = $line
-        })
+foreach ($contract in $contracts) {
+    $fullPath = Join-Path $scriptRoot $contract.path
+    if (-not (Test-Path -LiteralPath $fullPath -PathType Leaf)) {
+        throw "Required installed presentation source missing: $($contract.path)"
+    }
+
+    foreach ($pattern in $contract.patterns) {
+        $matches = @(Select-String -LiteralPath $fullPath -Pattern $pattern -AllMatches -ErrorAction Stop)
+        if ($matches.Count -eq 0) {
+            throw "Expected presentation symbol/signature not found in $($contract.path): $pattern"
+        }
+
+        foreach ($match in $matches) {
+            $line = $match.Line.Trim()
+            if ($line.Length -gt 300) { $line = $line.Substring(0,300) + ' ...' }
+            $hits.Add([pscustomobject]@{
+                path = $contract.path
+                lineNumber = $match.LineNumber
+                text = $line
+            })
+        }
     }
 }
 
-if ($hits.Count -eq 0) {
-    throw 'No expected presentation controller/symbol evidence found in the official REDmod script tree.'
-}
-
 $deduped = @($hits | Sort-Object path,lineNumber,text -Unique)
-Write-Host "Presentation symbol hits: $($deduped.Count)"
+Write-Host "Targeted presentation symbol hits: $($deduped.Count)"
 foreach ($hit in $deduped) {
     Write-Host ("  {0}:{1}  {2}" -f $hit.path,$hit.lineNumber,$hit.text)
 }
 
-$minimapRelative = 'cyberpunk/UI/widgets/minimap/minimap.script'
-$minimapHits = @($deduped | Where-Object { $_.path -eq $minimapRelative })
-$minimapContainerFound = @($minimapHits | Where-Object { $_.text -match '\bclass\s+MinimapContainerController\b' }).Count -gt 0
-$minimapInitializeFound = @($minimapHits | Where-Object { $_.text -match '\bevent\s+OnInitialize\s*\(' }).Count -gt 0
-$ironsightFound = @($deduped | Where-Object { $_.text -match '\bclass\s+IronsightGameController\b' }).Count -gt 0
-
-if (-not $minimapContainerFound) {
-    throw "Current native minimap controller was not found in installed REDmod source: $minimapRelative"
-}
-if (-not $minimapInitializeFound) {
-    throw "Current native minimap OnInitialize lifecycle was not found in installed REDmod source: $minimapRelative"
-}
-
 Write-Host ''
-Write-Host "MinimapContainerController found: $minimapContainerFound"
-Write-Host "Minimap OnInitialize found:       $minimapInitializeFound"
-Write-Host "IronsightGameController found:    $ironsightFound"
-Write-Host 'PASS: current installed REDmod script sources yielded presentation controller/signature evidence.' -ForegroundColor Green
+Write-Host 'PASS: all W03.3 current-controller and nameplate-lifecycle contracts were found in the installed official REDmod script tree.' -ForegroundColor Green

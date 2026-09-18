@@ -76,14 +76,14 @@ foreach ($needle in @('Audit-GameContracts.ps1','Probe-PresentationNativeContrac
 Check ($presentation.Contains('-ReportPath $ReportPath')) 'Presentation wrapper does not consolidate exact-compile output into its single text evidence report.'
 Check ($probe.Contains('tools\redmod\scripts')) 'Presentation native probe is not grounded in the installed official REDmod decompiled scripts.'
 Check ($probe.Contains('Primary evidence is the installed official REDmod decompiled script tree.')) 'Presentation probe no longer declares installed REDmod scripts as primary native evidence.'
-Check ($probe.Contains("@('.script','.reds')")) 'Presentation native probe must search REDmod .script sources (with optional .reds tolerance), not assume loose redscript format.'
+Check (-not $probe.Contains("Get-ChildItem -LiteralPath $scriptRoot -Recurse")) 'Presentation native probe regressed to a noisy full-tree symbol sweep instead of narrow W03.3 source contracts.'
 foreach ($needle in @('MinimapContainerController','IronsightGameController','QuestTrackerGameController','WeaponRosterGameController','HotkeysWidgetController','gameuiCrosshairContainerController','CrosshairGameController_Tech_Hex','interactionWidgetGameController','activityLogEntryLogicController','NpcNameplateGameController','NameplateVisualsLogicController','OnInitialize','OnScreenProjectionUpdate','SetElementVisibility','IsAnyElementVisible','OnUpdateInteraction','SetText','c_DisplayRangeNotAggressive','c_MaxDisplayRangeNotAggressive','OnCompassUpdate')) {
     Check ($probe.Contains($needle)) "Presentation native probe no longer checks required current-game symbol: $needle"
 }
-Check ($probe.Contains('$minimapRelative = ''cyberpunk/UI/widgets/minimap/minimap.script''')) 'Presentation probe no longer pins current minimap evidence to the installed native minimap script.'
-Check ($probe.Contains('$minimapInitializeFound')) 'Presentation probe no longer requires the current minimap initialization lifecycle from installed REDmod source.'
-Check ($probe.Contains('GetRelativePath')) 'Presentation probe should return narrow relative script-path evidence rather than proprietary file dumps.'
-Check ($probe.Contains('Read-only symbol/signature evidence only')) 'Presentation probe does not state its read-only narrow-evidence boundary.'
+Check ($probe.Contains("path = 'cyberpunk/UI/widgets/minimap/minimap.script'")) 'Presentation probe no longer pins current minimap evidence to the installed native minimap script.'
+Check ($probe.Contains("'\\bfunction\\s+SetElementVisibility\\s*\\('") -and $probe.Contains("'\\bfunction\\s+IsAnyElementVisible\\s*\\('")) 'Presentation probe no longer verifies the exact nameplate visibility lifecycle W03.3 depends on.'
+Check ($probe.Contains("'\\bevent\\s+OnUpdateInteraction\\s*\\('") -and $probe.Contains("'\\bfunction\\s+SetText\\s*\\('")) 'Presentation probe no longer verifies interaction/activity W03.3 update seams.'
+Check ($probe.Contains('Read-only targeted symbol/signature evidence only')) 'Presentation probe does not state its read-only narrow-evidence boundary.'
 
 Check ($localReference.Contains('Prefer the installed official REDmod script tree for script contracts')) 'Local-game reference no longer prioritizes installed REDmod script archaeology.'
 Check ($localReference.Contains('tools\redmod\scripts')) 'Local-game reference does not identify the official installed REDmod script tree.'

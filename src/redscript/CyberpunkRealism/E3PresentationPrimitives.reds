@@ -12,7 +12,7 @@ public class CRBiologyE3Primitives extends IScriptable {
   }
 
   public static func Trace(hook: String) -> Void {
-    LogChannel(n"DEBUG", "[Biology:E3] " + hook);
+    FTLog("[Biology:E3] " + hook);
   }
 
   public static func CreateFillShell(parent: ref<inkCompoundWidget>, name: CName) -> ref<inkCanvas> {

@@ -64,7 +64,7 @@ This remains a presentation rule, not a scanner knowledge database. Biology does
 
 The next integrated attended session needs to answer a question W03.2 could not: which mapped presentation hooks actually execute in live ordinary play?
 
-W03.3 therefore emits narrow [Biology:E3] DEBUG trace markers at persistent controller initialization and the first relevant nameplate projection/data events. These markers are diagnostics for the parent-integrated attended run; they do not change release/startup architecture and they do not ask the owner to play a worker branch.
+W03.3 therefore emits narrow [Biology:E3] FTLog trace markers at persistent controller initialization and the first relevant nameplate projection/data events. These markers are diagnostics for the parent-integrated attended run; they do not change release/startup architecture and they do not ask the owner to play a worker branch.
 
 If a visible surface still remains retail while its hook trace is present, the fault is presentation geometry/state inside that proven controller. If its trace is absent, the parent can route the next repair to the actual live controller instead of guessing.
 
@@ -88,6 +88,6 @@ With E3 OFF:
 
 ## Parent attended acceptance
 
-Parent P01.2 should integrate and test the release-shaped candidate rather than this worker branch directly. Capture the same state/location with E3 ON and OFF, including quest/objective, minimap/navigation, weapon/ammo/hotkeys, one interaction prompt, civilian focus, police/combatant focus, post-scan identity where applicable, and the modern scanner. Also inspect the REDscript log for the [Biology:E3] markers so missing visuals can be tied to hooks that did or did not execute.
+Parent P01.2 should integrate and test the release-shaped candidate rather than this worker branch directly. Capture the same state/location with E3 ON and OFF, including quest/objective, minimap/navigation, weapon/ammo/hotkeys, one interaction prompt, civilian focus, police/combatant focus, post-scan identity where applicable, and the modern scanner. Also inspect the captured game/functional trace output for the [Biology:E3] markers so missing visuals can be tied to hooks that did or did not execute.
 
 The strange post-scan red rectangle must be absent. If any red artifact remains, identify its owner before accepting #40.

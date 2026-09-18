@@ -86,6 +86,8 @@ foreach ($forbidden in @('m_healthbarWidget','m_damagePreviewWidget','currentHea
 }
 
 Check ($source.primitives.Contains('[Biology:E3]')) 'W03.3 presentation hook trace prefix is missing.'
+Check ($source.primitives.Contains('FTLog("[Biology:E3] " + hook)')) 'W03.3 trace does not use the native FTLog surface available in the 2.31 base scripts.'
+Check (-not $source.primitives.Contains('LogChannel(')) 'W03.3 trace regressed to the unsupported LogChannel function.'
 foreach ($key in @('lowerLeft','quest','navigation','weapon','hotkey','interaction','activity','crosshair','nameplate')) {
     Check ($source[$key].Contains('CRBiologyE3Primitives.Trace(')) "$key lacks W03.3 live hook-execution trace evidence."
 }
