@@ -169,7 +169,8 @@ function ArchiveInventory([string]$ref,[string]$rel,[string]$path){
 function AddDiskFile([string]$ref,[string]$rel,[string]$path){
     $info=Get-Item -LiteralPath $path; $class=Classify $rel
     $inspect=if($class -eq 'archive/resource-container'){ArchiveInventory $ref $rel $path}elseif($class -eq 'text/source/config'){'private-text-copy-eligible'}else{'hash-and-metadata-only'}
-    $bytes=[IO.File]::ReadAllBytes($path); $copy=CopyText $ref $rel $bytes
+    $copy='not-text'
+    if($class -eq 'text/source/config'){$copy=CopyText $ref $rel ([IO.File]::ReadAllBytes($path))}
     $index.Add([pscustomobject]@{reference=$ref;path=$rel.Replace('\','/');bytes=$info.Length;sha256=Sha $path;classification=$class;inspectability=$inspect;privatePayload=$copy})
 }
 
