@@ -120,15 +120,16 @@ public final func CRSetBiologyLayoutDiagnostic(status: String) -> Void {
     return;
   }
 
-  if Equals(status, "") || Equals(status, "MOUNTED") {
+  if Equals(status, "") {
     inkTextRef.SetText(this.m_label, this.m_names[index]);
     return;
   }
 
   // Bounded attended evidence: T003 proved this native selector remains visible even
-  // when Biology detail disappears. Use that existing label only on layout failure so
-  // the next integrated capture distinguishes mount-resolution failure from a panel
-  // that mounted successfully but is still clipped/hidden. No new overlay is created.
+  // when Biology detail disappears. Show the exact native-region result, INCLUDING
+  // MOUNTED, so a still-blank integrated capture can distinguish "mount failed" from
+  // "mount succeeded; investigate clipping/size/opacity/async layout next." No new
+  // overlay or absolute-positioned diagnostic is created.
   inkTextRef.SetText(this.m_label, this.m_names[index] + "  [BIOLOGY LAYOUT: " + status + "]");
 }
 
