@@ -300,20 +300,23 @@ private final func CRCreateBiologyShell() -> Void {
   this.crBiologyOverviewText = this.CRShellWrappedText("", n"CRBiologyOverviewText", 18, 760.0);
   this.crBiologyOverviewText.Reparent(this.crBiologyOverview, -1);
 
-  // Keep Biology inside RipperdocInventoryController's native subtree so stock
-  // visibility/opacity remains authoritative. The attended 2.31 INK evidence showed
-  // m_virtualGridContainer is nested below an additional native parent. Mount beside
-  // that child rather than under the controller root, then copy its LOCAL geometry.
-  if IsDefined(this.m_inventoryView) {
-    let nativeContent: ref<inkVerticalPanel> = new inkVerticalPanel();
-    nativeContent.SetName(n"CRBiologyNativeContent");
-    nativeContent.SetChildMargin(inkMargin(0.0, 4.0, 0.0, 4.0));
-    nativeContent.SetVisible(false);
+  // Create the Biology detail subtree independently of the first native mount attempt.
+  // W02.4 discarded this panel when initialization-time native-region resolution failed;
+  // detail-time fail-closed logic then had no panel left to retry. Retain the panel and
+  // all runtime-bound children while hidden, and let every detail transition re-resolve
+  // the current native host before making it visible.
+  this.crBiologyNativeContent = new inkVerticalPanel();
+  this.crBiologyNativeContent.SetName(n"CRBiologyNativeContent");
+  this.crBiologyNativeContent.SetChildMargin(inkMargin(0.0, 4.0, 0.0, 4.0));
+  this.crBiologyNativeContent.SetVisible(false);
+  this.crBiologyNativeContent.SetAffectsLayoutWhenHidden(true);
 
-    if this.m_inventoryView.CRMountBiologyDetailInNativeRegion(nativeContent) {
-      this.crBiologyNativeContent = nativeContent;
-    }
+  // Best-effort early mount only. Failure here is not terminal; the panel remains
+  // retained and CRSyncBiologyNativeContentLayout retries against the live native tree.
+  if IsDefined(this.m_inventoryView) {
+    this.m_inventoryView.CRMountBiologyDetailInNativeRegion(this.crBiologyNativeContent);
   }
+
   if IsDefined(this.crBiologyNativeContent) {
     this.crBiologyDetailTitle = this.CRShellText("", n"CRBiologyDetailHeading", 30);
     this.crBiologyDetailTitle.SetMargin(inkMargin(0.0, 0.0, 0.0, 2.0));
@@ -504,19 +507,38 @@ private final func CRSyncBiologyContentVisibility() -> Void {
   if IsDefined(this.crBiologyOverview) {
     this.crBiologyOverview.SetVisible(this.crBiologyShellMode && !detail);
   }
+
+  let detailLayoutReady: Bool = true;
+  if detail {
+    detailLayoutReady = this.CRSyncBiologyNativeContentLayout();
+  }
   if IsDefined(this.crBiologyNativeContent) {
-    // Re-read the native child geometry at detail depth. This catches authored layout
-    // changes that settle after initialization and fails closed instead of falling
-    // back to the inventory-controller/screen origin.
-    let detailLayoutReady: Bool = !detail || this.CRSyncBiologyNativeContentLayout();
+    // Re-read the native child geometry at detail depth. Keep the W02.4 fail-closed
+    // safety rule, but unlike W02.4 the retained panel can now recover from an early
+    // mount miss. A failed live mount is exposed through the already-native selector
+    // label rather than silently presenting an empty drill-down.
     this.crBiologyNativeContent.SetVisible(detail && detailLayoutReady);
   }
+
   if this.crBiologyShellMode {
     inkCompoundRef.SetVisible(this.m_selectorAnchor, detail);
     this.CRSetBiologyOverviewNodesVisible(!detail);
   } else {
     inkCompoundRef.SetVisible(this.m_selectorAnchor, !this.m_isTutorial);
   }
+
+  if detail && IsDefined(this.m_selector) {
+    if detailLayoutReady {
+      this.m_selector.CRSetBiologyLayoutDiagnostic("");
+    } else {
+      if IsDefined(this.m_inventoryView) {
+        this.m_selector.CRSetBiologyLayoutDiagnostic(this.m_inventoryView.CRBiologyDetailMountStatus());
+      } else {
+        this.m_selector.CRSetBiologyLayoutDiagnostic("INVENTORY_MISSING");
+      }
+    }
+  }
+
   this.CRSyncBiologyModeSwitcher();
   this.CRConstrainBiologyActionsToSelectedArea();
 }
