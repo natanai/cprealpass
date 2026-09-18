@@ -39,7 +39,8 @@ Reject $bootstrap [regex]::Escape('.git\config') 'Reference bootstrap must not u
 Reject $bootstrap '(?i)Start-Process.*Cyberpunk|Cyberpunk2077\.exe|Deploy-BiologyRedmod' 'Reference bootstrap must never launch/install/deploy into Cyberpunk.'
 
 Require $builder ([regex]::Escape("sourceMutation='none'")) 'Bundle manifest must declare no source-library mutation.'
-Require $builder ([regex]::Escape("gameInstallation='not accessed or modified'")) 'Bundle manifest must declare no game installation access.'
+Require $builder ([regex]::Escape("else{'not accessed or modified'}")) 'Bundle must preserve no-game-access as the default reference-only boundary.'
+Require $builder ([regex]::Escape('gameInstallation=$gameAccess')) 'Bundle manifest must record the resolved game-access boundary.'
 Require $builder 'skipped-duplicate-payload' 'Builder must suppress duplicate selected ZIP payload.'
 Require $builder 'opaque-no-safe-listing-tool|opaque-tool-could-not-list' 'Builder must represent uninspectable resource containers explicitly.'
 Require $builder 'PRIVATE-THIRD-PARTY-REFERENCE' 'Bundle must carry a prominent private-analysis marker.'
