@@ -133,6 +133,15 @@ function AnalyzeText([string]$ref,[string]$rel,[string]$text){
             }
             if($j.PSObject.Properties.Name -contains 'dependencies' -and $null -ne $j.dependencies){
                 $notes.Add("$ref :: $rel :: dependencies field present")
+                if($j.dependencies -is [pscustomobject]){
+                    foreach($dependency in @($j.dependencies.PSObject.Properties)){
+                        $notes.Add("$ref :: $rel :: dependency=$($dependency.Name) value=$($dependency.Value)")
+                    }
+                }elseif($j.dependencies -is [System.Collections.IEnumerable] -and -not ($j.dependencies -is [string])){
+                    foreach($dependency in @($j.dependencies)){$notes.Add("$ref :: $rel :: dependency=$dependency")}
+                }else{
+                    $notes.Add("$ref :: $rel :: dependency=$($j.dependencies)")
+                }
             }
         }catch{}
     }
