@@ -117,6 +117,7 @@ try{
     if($manifest.sourceMutation -ne 'none'){throw 'Bundle does not prove source mutation boundary.'}
     if($manifest.gameInstallation -ne 'not accessed or modified'){throw 'Bundle does not prove game-install boundary.'}
     if(@($manifest.provenanceVersionNotes|Where-Object {$_ -match 'version=2\.31\.2'}).Count -lt 1){throw 'Discoverable reference version metadata was not recorded.'}
+    if(@($manifest.provenanceVersionNotes|Where-Object {$_ -match 'dependency=TweakXL'}).Count -lt 1){throw 'Discoverable dependency metadata was not recorded.'}
     $dup=@($manifest.referenceSelections|Where-Object name -eq 'Downloaded E3 Package.zip')
     if($dup.Count -ne 1 -or $dup[0].status -ne 'skipped-duplicate-payload' -or $dup[0].duplicateOf -ne 'Project E3'){throw 'Selected extracted folder did not suppress differently named ZIP payload with the same sole root.'}
 
