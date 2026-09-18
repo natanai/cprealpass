@@ -21,6 +21,10 @@ A successful local bundle contains:
 
 If a resource container cannot be safely listed, the bundle records it as opaque. Workers must not infer archive internals from filenames or screenshots.
 
+For Cyberware/Ripperdoc archaeology, the same command can add `-IncludeBiologyNativeUi`. That optional companion remains read-only against the installed game and privately adds the current installed official `ripperdoc.script` / `ripperdocInventoryController.script`, the exact native-region probe report, and—when the existing WolvenKit-backed probe can resolve it—the full serialized current target `.inkwidget` JSON with resource/archive/hash provenance. The probe also preserves enlarged targeted context for HandleId `219` / package-copy `743`, the direct-parent evidence currently needed to decide whether `virtualGridContainer` sits under a reusable authored content host or only a grid/scroll wrapper.
+
+If that native resource sub-capability cannot resolve or serialize the target, the reference bundle still completes and records the native portion as failed/opaque rather than inventing hierarchy.
+
 The bundle is intentionally written outside both the repository and the source reference library, by default under `C:\Games\Biology-Reference-Bundles`. The source library is read-only and reference mods are not installed into Cyberpunk for this workflow.
 
 ## Worker request convention
