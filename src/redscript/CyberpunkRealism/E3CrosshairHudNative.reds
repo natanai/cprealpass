@@ -1,53 +1,59 @@
 // Biology-owned ordinary crosshair/focus treatment.
 //
-// W03.3 keeps one generic current crosshair-container seam. The W03.2 Tech-Hex child
-// frame is intentionally removed: it could remain visible independently near scanner
-// focus and is one plausible source of the attended post-scan red rectangle. Native
-// crosshair controllers still own spread, charge, ADS, weapon selection and visibility.
+// T002 conclusively identified the previous CRBiologyE3FocusFrame as the reticle artifact:
+// its 112x112 centered canvas drew exactly the top-left and bottom-right red corners seen
+// beside the live reticle. W03.4 deletes that geometry entirely.
+//
+// Ordinary crosshair treatment now uses the native crosshair root itself. The native
+// gameuiCrosshairBaseGameController already hides that root in Scanning state, so this
+// tint does not create Biology geometry in the modern scanner/quickhack presentation.
 module CyberpunkRealism.Presentation
 
 import CyberpunkRealism.Settings.*
 
-@addField(gameuiCrosshairContainerController)
-private let crBiologyE3FocusFrame: ref<inkCanvas>;
+@addField(gameuiCrosshairBaseGameController)
+private let crBiologyE3NativeCrosshairTint: HDRColor;
 
-@addMethod(gameuiCrosshairContainerController)
-private final func CRCreateBiologyE3FocusFrame() -> Void {
-  if IsDefined(this.crBiologyE3FocusFrame) {
-    return;
+@addField(gameuiCrosshairBaseGameController)
+private let crBiologyE3HasNativeCrosshairTint: Bool;
+
+@addMethod(gameuiCrosshairBaseGameController)
+private final func CRCaptureBiologyE3CrosshairTint() -> Void {
+  let root: ref<inkWidget> = this.GetRootWidget();
+  if IsDefined(root) && !this.crBiologyE3HasNativeCrosshairTint {
+    this.crBiologyE3NativeCrosshairTint = root.GetTintColor();
+    this.crBiologyE3HasNativeCrosshairTint = true;
   }
-  let root: ref<inkCompoundWidget> = this.GetRootCompoundWidget();
+}
+
+@addMethod(gameuiCrosshairBaseGameController)
+private final func CRRefreshBiologyE3CrosshairTint() -> Void {
+  let root: ref<inkWidget> = this.GetRootWidget();
   if !IsDefined(root) {
     return;
   }
 
-  this.crBiologyE3FocusFrame = new inkCanvas();
-  this.crBiologyE3FocusFrame.SetName(n"CRBiologyE3FocusFrame");
-  this.crBiologyE3FocusFrame.SetAnchor(inkEAnchor.Centered);
-  this.crBiologyE3FocusFrame.SetHAlign(inkEHorizontalAlign.Center);
-  this.crBiologyE3FocusFrame.SetVAlign(inkEVerticalAlign.Center);
-  this.crBiologyE3FocusFrame.SetSize(Vector2(112.0, 112.0));
-  this.crBiologyE3FocusFrame.Reparent(root, -1);
+  this.CRCaptureBiologyE3CrosshairTint();
 
-  CRBiologyE3Primitives.AddRect(this.crBiologyE3FocusFrame, n"CRBiologyE3FocusTLH", 4.0, 4.0, 22.0, 2.0, 0.72);
-  CRBiologyE3Primitives.AddRect(this.crBiologyE3FocusFrame, n"CRBiologyE3FocusTLV", 4.0, 4.0, 2.0, 22.0, 0.72);
-  CRBiologyE3Primitives.AddRect(this.crBiologyE3FocusFrame, n"CRBiologyE3FocusBRH", 86.0, 106.0, 22.0, 2.0, 0.72);
-  CRBiologyE3Primitives.AddRect(this.crBiologyE3FocusFrame, n"CRBiologyE3FocusBRV", 106.0, 86.0, 2.0, 22.0, 0.72);
-}
-
-@addMethod(gameuiCrosshairContainerController)
-private final func CRRefreshBiologyE3FocusFrame() -> Void {
-  let enabled: Bool = CRRealpassSettings.UseE3FirstPersonHudVisuals(GetGameInstance());
-  this.CRCreateBiologyE3FocusFrame();
-  if IsDefined(this.crBiologyE3FocusFrame) {
-    this.crBiologyE3FocusFrame.SetVisible(enabled);
+  if CRRealpassSettings.UseE3FirstPersonHudVisuals(GetGameInstance()) {
+    root.SetTintColor(CRBiologyE3Primitives.Red());
+  } else {
+    if this.crBiologyE3HasNativeCrosshairTint {
+      root.SetTintColor(this.crBiologyE3NativeCrosshairTint);
+    }
   }
 }
 
-@wrapMethod(gameuiCrosshairContainerController)
+@wrapMethod(gameuiCrosshairBaseGameController)
 protected cb func OnInitialize() -> Bool {
   let result: Bool = wrappedMethod();
-  CRBiologyE3Primitives.Trace("gameuiCrosshairContainerController.OnInitialize");
-  this.CRRefreshBiologyE3FocusFrame();
+  CRBiologyE3Primitives.Trace("gameuiCrosshairBaseGameController.OnInitialize");
+  this.CRRefreshBiologyE3CrosshairTint();
   return result;
+}
+
+@wrapMethod(gameuiCrosshairBaseGameController)
+protected func OnCrosshairStateChange(oldState: gamePSMCrosshairStates, newState: gamePSMCrosshairStates) -> Void {
+  wrappedMethod(oldState, newState);
+  this.CRRefreshBiologyE3CrosshairTint();
 }

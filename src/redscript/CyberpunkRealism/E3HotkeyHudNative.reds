@@ -1,5 +1,6 @@
 // Biology-owned E3-inspired D-pad/quick-slot presentation.
-// Input semantics and slot authority remain native.
+// Input semantics and slot authority remain native. W03.4 removes the full-root wash
+// that made the bottom-left HUD read as an opaque red block in T002.
 module CyberpunkRealism.Presentation
 
 import CyberpunkRealism.Settings.*
@@ -18,11 +19,7 @@ private final func CRCreateBiologyE3HotkeyFrame() -> Void {
   }
 
   this.crBiologyE3HotkeyFrame = CRBiologyE3Primitives.CreateFillShell(root, n"CRBiologyE3HotkeyFrame");
-  CRBiologyE3Primitives.AddFillWash(this.crBiologyE3HotkeyFrame, n"CRBiologyE3HotkeyWash", 0.060);
-  CRBiologyE3Primitives.AddRect(this.crBiologyE3HotkeyFrame, n"CRBiologyE3HotkeyTop", 0.0, 0.0, 160.0, 3.0, 0.92);
-  CRBiologyE3Primitives.AddRect(this.crBiologyE3HotkeyFrame, n"CRBiologyE3HotkeyLeft", 0.0, 0.0, 3.0, 44.0, 0.84);
-  CRBiologyE3Primitives.AddRect(this.crBiologyE3HotkeyFrame, n"CRBiologyE3HotkeyAccent", 0.0, 0.0, 20.0, 7.0, 1.00);
-  CRBiologyE3Primitives.AddLabel(this.crBiologyE3HotkeyFrame, n"CRBiologyE3HotkeyLabel", "QUICK // INPUT", 28.0, 7.0, 12, 0.80);
+  CRBiologyE3Primitives.AddPanelChrome(this.crBiologyE3HotkeyFrame, "QUICK // INPUT", 154.0);
 }
 
 @addMethod(HotkeysWidgetController)

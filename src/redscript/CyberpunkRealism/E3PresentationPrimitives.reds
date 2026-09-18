@@ -1,9 +1,8 @@
 // Shared project-original INK primitives for Biology's E3-inspired presentation.
 //
-// W03.3 deliberately sizes owned presentation from the native controller root instead
-// of guessing large fixed canvases inside controller-local layouts. This keeps the
-// treatment visible without replacing CDPR controller logic and makes E3 OFF a clean
-// yield: owned shells are hidden rather than native roots being repainted.
+// W03.4 removes the attended full-root red slabs and standardizes a compact chrome
+// language: a short top rail, a small accent cell/label band, and a faint lower-right
+// corner. Native controller content stays readable and authoritative underneath.
 module CyberpunkRealism.Presentation
 
 public class CRBiologyE3Primitives extends IScriptable {
@@ -27,26 +26,28 @@ public class CRBiologyE3Primitives extends IScriptable {
     return shell;
   }
 
-  public static func AddFillWash(parent: ref<inkCompoundWidget>, name: CName, opacity: Float) -> ref<inkRectangle> {
-    let widget: ref<inkRectangle> = new inkRectangle();
-    if !IsDefined(parent) {
-      return widget;
-    }
-    widget.SetName(name);
-    widget.SetAnchor(inkEAnchor.Fill);
-    widget.SetSizeRule(inkESizeRule.Stretch);
-    widget.SetTintColor(CRBiologyE3Primitives.Red());
-    widget.SetOpacity(opacity);
-    widget.Reparent(parent, 0);
-    return widget;
-  }
-
   public static func AddRect(parent: ref<inkCompoundWidget>, name: CName, x: Float, y: Float, width: Float, height: Float, opacity: Float) -> ref<inkRectangle> {
     let widget: ref<inkRectangle> = new inkRectangle();
     if !IsDefined(parent) {
       return widget;
     }
     widget.SetName(name);
+    widget.SetSize(Vector2(width, height));
+    widget.SetTranslation(x, y);
+    widget.SetTintColor(CRBiologyE3Primitives.Red());
+    widget.SetOpacity(opacity);
+    widget.Reparent(parent, -1);
+    return widget;
+  }
+
+  public static func AddAnchoredRect(parent: ref<inkCompoundWidget>, name: CName, anchor: inkEAnchor, anchorPoint: Vector2, x: Float, y: Float, width: Float, height: Float, opacity: Float) -> ref<inkRectangle> {
+    let widget: ref<inkRectangle> = new inkRectangle();
+    if !IsDefined(parent) {
+      return widget;
+    }
+    widget.SetName(name);
+    widget.SetAnchor(anchor);
+    widget.SetAnchorPoint(anchorPoint);
     widget.SetSize(Vector2(width, height));
     widget.SetTranslation(x, y);
     widget.SetTintColor(CRBiologyE3Primitives.Red());
@@ -71,5 +72,15 @@ public class CRBiologyE3Primitives extends IScriptable {
     label.SetOpacity(opacity);
     label.Reparent(parent, -1);
     return label;
+  }
+
+  public static func AddPanelChrome(parent: ref<inkCompoundWidget>, label: String, span: Float) -> Void {
+    CRBiologyE3Primitives.AddRect(parent, n"CRBiologyE3ChromeTop", 0.0, 0.0, span, 2.0, 0.94);
+    CRBiologyE3Primitives.AddRect(parent, n"CRBiologyE3ChromeLeft", 0.0, 0.0, 2.0, 26.0, 0.86);
+    CRBiologyE3Primitives.AddRect(parent, n"CRBiologyE3ChromeAccent", 7.0, 6.0, 7.0, 7.0, 1.00);
+    CRBiologyE3Primitives.AddRect(parent, n"CRBiologyE3ChromeLabelBand", 18.0, 4.0, 104.0, 17.0, 0.13);
+    CRBiologyE3Primitives.AddLabel(parent, n"CRBiologyE3ChromeLabel", label, 23.0, 4.0, 10, 0.82);
+    CRBiologyE3Primitives.AddAnchoredRect(parent, n"CRBiologyE3ChromeBRH", inkEAnchor.BottomRight, Vector2(1.0, 1.0), -4.0, -4.0, 22.0, 2.0, 0.54);
+    CRBiologyE3Primitives.AddAnchoredRect(parent, n"CRBiologyE3ChromeBRV", inkEAnchor.BottomRight, Vector2(1.0, 1.0), -4.0, -4.0, 2.0, 15.0, 0.54);
   }
 }

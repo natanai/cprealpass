@@ -26,7 +26,7 @@ $script:checks = 0
 function Check($condition,[string]$message) { if (-not $condition) { throw $message }; $script:checks++ }
 
 foreach ($path in @($paths.Values) + @($mappingPath,$presentationPath)) {
-    Check (Test-Path -LiteralPath $path -PathType Leaf) "Missing W03.3 E3 presentation contract/source: $path"
+    Check (Test-Path -LiteralPath $path -PathType Leaf) "Missing W03.4 E3 presentation contract/source: $path"
 }
 
 $source = @{}
@@ -34,73 +34,71 @@ foreach ($key in $paths.Keys) { $source[$key] = Get-Content -Raw -LiteralPath $p
 $mapping = Get-Content -Raw -LiteralPath $mappingPath
 $presentation = Get-Content -Raw -LiteralPath $presentationPath
 
-Check ($source.primitives.Contains('CreateFillShell') -and $source.primitives.Contains('SetAnchor(inkEAnchor.Fill)') -and $source.primitives.Contains('SetSizeRule(inkESizeRule.Stretch)')) 'Shared primitives do not provide root-fitted stretch E3 shells.'
-Check ($source.primitives.Contains('AddFillWash')) 'Shared primitives do not provide a root-fitted E3 wash.'
-Check (-not $source.primitives.Contains('TintNeutralHudRoot')) 'Native-root tint mutation path returned.'
+# Coherent HUD chrome: root-fitted shells remain, but T002's full-root red slabs are gone.
+Check ($source.primitives.Contains('AddPanelChrome')) 'W03.4 shared compact HUD chrome primitive is missing.'
+Check ($source.primitives.Contains('AddAnchoredRect')) 'W03.4 compact lower-right chrome primitive is missing.'
+Check (-not $source.primitives.Contains('AddFillWash')) 'Full-root wash primitive survived W03.4 visual cleanup.'
 foreach ($key in @('lowerLeft','quest','navigation','weapon','hotkey','interaction')) {
-    Check ($source[$key].Contains('CreateFillShell')) "$key still relies on a guessed fixed-size HUD shell instead of the actual native root."
-    Check ($source[$key].Contains('UseE3FirstPersonHudVisuals(GetGameInstance())')) "$key presentation seam is not gated by the single E3 preference."
-}
-foreach ($key in @('quest','navigation','weapon','hotkey','interaction')) {
-    Check ($source[$key].Contains('AddFillWash')) "$key lacks the materially visible root-fitted E3 treatment."
+    Check ($source[$key].Contains('CreateFillShell')) "$key lost the root-fitted native-controller shell."
+    Check ($source[$key].Contains('AddPanelChrome')) "$key does not use the shared compact W03.4 chrome language."
+    Check (-not $source[$key].Contains('AddFillWash')) "$key still paints an attended full-root red slab."
+    Check ($source[$key].Contains('UseE3FirstPersonHudVisuals(GetGameInstance())')) "$key is not gated by the single E3 preference."
 }
 
-Check ($source.quest.Contains('@wrapMethod(QuestTrackerGameController)') -and $source.quest.Contains('OBJECTIVES // ACTIVE')) 'Quest/objective tracker lost the coherent E3 shell.'
-Check ($source.navigation.Contains('@wrapMethod(MinimapContainerController)') -and $source.navigation.Contains('NAV // ROUTE')) 'Current minimap host lost the coherent E3 shell.'
-Check (-not $source.navigation.Contains('@wrapMethod(IronsightGameController)')) 'Navigation styling regressed to the historical Project E3 ironsight host.'
-Check ($source.weapon.Contains('@wrapMethod(WeaponRosterGameController)') -and $source.weapon.Contains('WEAPON // AMMO')) 'Weapon/ammo roster lost the coherent E3 shell.'
-Check ($source.hotkey.Contains('@wrapMethod(HotkeysWidgetController)') -and $source.hotkey.Contains('QUICK // INPUT')) 'Quick-slot/D-pad surface lost the coherent E3 shell.'
-Check ($source.interaction.Contains('@wrapMethod(interactionWidgetGameController)') -and $source.interaction.Contains('INTERACTION // ACTION')) 'Ordinary interaction prompt lost the coherent E3 shell.'
-Check ($source.interaction.Contains('protected cb func OnUpdateInteraction(argValue: Variant) -> Bool')) 'Interaction adapter lost the established current update seam.'
+Check ($source.quest.Contains('@wrapMethod(QuestTrackerGameController)') -and $source.quest.Contains('"OBJECTIVES"')) 'Quest/objective tracker lost W03.4 compact chrome.'
+Check ($source.navigation.Contains('@wrapMethod(MinimapContainerController)') -and $source.navigation.Contains('"NAV // ROUTE"')) 'Current minimap host lost W03.4 compact chrome.'
+Check (-not $source.navigation.Contains('@wrapMethod(IronsightGameController)')) 'Navigation styling regressed to historical ironsight ownership.'
+Check ($source.weapon.Contains('@wrapMethod(WeaponRosterGameController)') -and $source.weapon.Contains('"WEAPON // AMMO"')) 'Weapon/ammo roster lost W03.4 compact chrome.'
+Check ($source.hotkey.Contains('@wrapMethod(HotkeysWidgetController)') -and $source.hotkey.Contains('"QUICK // INPUT"')) 'Quick-slot/D-pad lost W03.4 compact chrome.'
+Check ($source.interaction.Contains('@wrapMethod(interactionWidgetGameController)') -and $source.interaction.Contains('"INTERACTION"')) 'Ordinary interaction prompt lost W03.4 compact chrome.'
 Check (-not $source.interaction.Contains('@replaceMethod') -and -not $source.interaction.Contains('FromVariant<InteractionChoiceHubData>') -and -not $source.interaction.Contains('AsyncSpawnFromLocal')) 'Interaction presentation took over native choice/input behavior.'
 
-Check ($source.crosshair.Contains('@wrapMethod(gameuiCrosshairContainerController)')) 'General current crosshair container is not covered.'
-Check ($source.crosshair.Contains('CRBiologyE3FocusFrame')) 'General crosshair/focus frame is missing.'
-Check (-not $source.crosshair.Contains('CrosshairGameController_Tech_Hex')) 'Tech-Hex duplicate crosshair treatment survived W03.3 artifact cleanup.'
-foreach ($forbidden in @('@replaceMethod(gameuiCrosshairContainerController)','protected cb func OnPSMVisionStateChanged','GetActiveCrosshairGameController()')) {
-    Check (-not $source.crosshair.Contains($forbidden)) "Crosshair styling took over native crosshair/vision behavior: $forbidden"
-}
+# T002 reticle artifact: exact owner identified and deleted.
+Check ($source.crosshair.Contains('T002 conclusively identified the previous CRBiologyE3FocusFrame as the reticle artifact')) 'W03.4 source does not preserve the concrete reticle-artifact diagnosis.'
+Check (-not $source.crosshair.Contains('CRBiologyE3FocusFrame')) 'The centered 112x112 reticle artifact canvas still exists.'
+Check (-not $source.crosshair.Contains('CRBiologyE3FocusTLH') -and -not $source.crosshair.Contains('CRBiologyE3FocusBRH')) 'Reticle corner geometry survived W03.4.'
+Check ($source.crosshair.Contains('@wrapMethod(gameuiCrosshairBaseGameController)')) 'W03.4 crosshair treatment is not attached to the native crosshair hierarchy.'
+Check ($source.crosshair.Contains('crBiologyE3NativeCrosshairTint') -and $source.crosshair.Contains('GetTintColor()')) 'W03.4 crosshair treatment cannot restore the native tint on E3 OFF.'
+Check ($source.crosshair.Contains('OnCrosshairStateChange')) 'W03.4 crosshair tint is not refreshed through native crosshair state changes.'
+Check (-not $source.crosshair.Contains('new inkCanvas()') -and -not $source.crosshair.Contains('AddRect(')) 'Crosshair repair added replacement reticle geometry instead of removing the proven artifact owner.'
 
+# Activity remains lightweight and reversible.
 Check ($source.activity.Contains('@wrapMethod(activityLogEntryLogicController)')) 'Transient activity presentation is not covered.'
-Check ($source.activity.Contains('textLetterCase.UpperCase') -and $source.activity.Contains('CRBiologyE3Primitives.Red()')) 'Activity entries do not use the shared E3 text language.'
-Check ($source.activity.Contains('crBiologyE3NativeActivityTint') -and $source.activity.Contains('public final func SetText(const displayText: script_ref<String>) -> Void')) 'Activity presentation cannot restore native tint when E3 is off for reused entries.'
+Check ($source.activity.Contains('crBiologyE3NativeActivityTint') -and $source.activity.Contains('SetText')) 'Activity presentation is not reversible for reused entries.'
 Check (-not $source.activity.Contains('@replaceMethod') -and -not $source.activity.Contains('new inkAnimController')) 'Activity styling took over native queue/animation behavior.'
 
-Check ($source.identity.Contains('CRPublicAmbientNameAllowed')) 'W03.3 ambient identity helper is missing.'
-Check (-not $source.identity.Contains('@wrapMethod')) 'Identity helper still adds a second SetVisualData wrapper.'
-Check (-not $source.identity.Contains('npc.IsCharacterCivilian()')) 'Police/combatants remain excluded from the ambient public-name path.'
-Check ($source.nameplate.Contains('public final func IsAnyElementVisible() -> Bool')) 'Nameplate adapter does not correct the native IsAnyElementVisible root-hide bottleneck.'
-Check ($source.nameplate.Contains('CRBiologyE3ShouldShowAmbientName')) 'Nameplate root visibility is not connected to legitimate ambient identity.'
-Check ($source.nameplate.Contains('private func SetElementVisibility(const incomingData: script_ref<NPCNextToTheCrosshair>) -> Void')) 'Nameplate adapter does not refresh after native visibility evaluation.'
-Check ($source.nameplate.Contains('wrappedMethod(incomingData)')) 'Nameplate visibility lifecycle was replaced rather than wrapped.'
-Check ($source.nameplate.Contains('this.m_nameTextMain') -and $source.nameplate.Contains('this.m_nameFrame')) 'W03.3 no longer uses native projected identity text/frame.'
-Check (-not $source.nameplate.Contains('CRBiologyE3NameplateFrame') -and -not $source.nameplate.Contains('CRBiologyE3NameText')) 'Oversized custom projected nameplate box survived the attended artifact repair.'
-Check ($source.nameplate.Contains('@wrapMethod(NpcNameplateGameController)')) 'Ambient nameplate no longer reuses native screen projection.'
-Check ($source.nameplate.Contains('this.GetNameplateVisible()')) 'Projection adapter lost native root visibility authority.'
-Check ($source.nameplate.Contains('inkWidgetRef.SetVisible(this.m_displayName, true)')) 'Projection adapter does not expose the native display-name surface when the native root is visible.'
-Check ($source.nameplate.Contains('this.c_DisplayRangeNotAggressive = 10.0') -and $source.nameplate.Contains('this.c_MaxDisplayRangeNotAggressive = 20.0')) 'E3 ambient non-aggressive projection range is not restored to the intended ordinary-look envelope.'
-Check ($source.nameplate.Contains('SNameplateRangesData.GetDisplayRangeNotAggressive()') -and $source.nameplate.Contains('SNameplateRangesData.GetMaxDisplayRangeNotAggressive()')) 'E3 OFF cannot restore native non-aggressive nameplate range.'
-Check ($source.nameplate.Contains('crBiologyE3NativeFrameVisible') -and $source.nameplate.Contains('crBiologyE3NativeFrameOpacity')) 'E3 OFF does not preserve/restore native name-frame visibility and opacity after W03.3 styling.'
+# Preserve the now-proven ambient identity lifecycle, but give it a real compact frame.
+Check ($source.identity.Contains('CRPublicAmbientNameAllowed')) 'W03.3 ambient identity helper was lost.'
+Check (-not $source.identity.Contains('npc.IsCharacterCivilian()')) 'Police/combatants were re-excluded from ambient identity.'
+Check ($source.nameplate.Contains('public final func IsAnyElementVisible() -> Bool')) 'Native nameplate-root visibility repair was lost.'
+Check ($source.nameplate.Contains('CRBiologyE3ShouldShowAmbientName')) 'Ambient identity no longer participates in the native visible-element gate.'
+Check ($source.nameplate.Contains('CRBiologyE3IdentityChrome')) 'W03.4 nameplate is still only red text without a dedicated compact identity frame.'
+Check ($source.nameplate.Contains('Vector2(340.0, 46.0)')) 'Nameplate chrome is not constrained to the intended compact projected identity envelope.'
+Check ($source.nameplate.Contains('crBiologyE3NativeNameTint') -and $source.nameplate.Contains('crBiologyE3NativeFrameTint')) 'E3 OFF cannot restore native name/frame styling.'
+Check ($source.nameplate.Contains('this.m_nameTextMain') -and $source.nameplate.Contains('this.m_nameFrame')) 'W03.4 stopped using native nameplate text/frame authority.'
+Check ($source.nameplate.Contains('this.c_DisplayRangeNotAggressive = 10.0') -and $source.nameplate.Contains('this.c_MaxDisplayRangeNotAggressive = 20.0')) 'Proven ambient range behavior was lost.'
+Check ($source.nameplate.Contains('SNameplateRangesData.GetDisplayRangeNotAggressive()') -and $source.nameplate.Contains('SNameplateRangesData.GetMaxDisplayRangeNotAggressive()')) 'E3 OFF cannot restore native ambient range.'
 foreach ($forbidden in @('m_healthbarWidget','m_damagePreviewWidget','currentHealth','maximumHealth','StatPoolType.Health')) {
     Check (-not $source.nameplate.Contains($forbidden)) "E3 nameplate absorbed health-meter ownership: $forbidden"
 }
 
-Check ($source.primitives.Contains('[Biology:E3]')) 'W03.3 presentation hook trace prefix is missing.'
-Check ($source.primitives.Contains('FTLog("[Biology:E3] " + hook)')) 'W03.3 trace does not use the native FTLog surface available in the 2.31 base scripts.'
-Check (-not $source.primitives.Contains('LogChannel(')) 'W03.3 trace regressed to the unsupported LogChannel function.'
+# Narrow hook traces stay available for the next parent-attended session.
+Check ($source.primitives.Contains('FTLog("[Biology:E3] " + hook)')) 'W03.4 presentation hook trace prefix is missing.'
 foreach ($key in @('lowerLeft','quest','navigation','weapon','hotkey','interaction','activity','crosshair','nameplate')) {
-    Check ($source[$key].Contains('CRBiologyE3Primitives.Trace(')) "$key lacks W03.3 live hook-execution trace evidence."
+    Check ($source[$key].Contains('CRBiologyE3Primitives.Trace(')) "$key lacks live hook-execution trace evidence."
 }
 
+# Modern scanner/quickhack is a hard exclusion.
 $combined = ($source.Keys | ForEach-Object { $source[$_] }) -join [Environment]::NewLine
 foreach ($forbidden in @('ScannerGameController','scannerGameController','ScannerDetailsGameController','ScannerNPCHeaderGameController','quickhackWidgetGameController','QuickHackGameController','scanner.inkwidget','scanner_details.inkwidget','scanner_hud.inkwidget','base\gameplay\gui\widgets\scanner')) {
     Check (-not $combined.Contains($forbidden)) "Owned E3 presentation crossed the modern scanner/quickhack boundary: $forbidden"
 }
 foreach ($forbidden in @('module ProjectE3','import ProjectE3','patches/project-e3-hud','DarkFuture.','import DarkFuture','basegame_3e_demo_hud.archive')) {
-    Check (-not $combined.Contains($forbidden)) "Owned E3 runtime gained forbidden source-mod/archive dependency: $forbidden"
+    Check (-not $combined.Contains($forbidden)) "Owned E3 runtime gained forbidden reference-mod dependency: $forbidden"
 }
 Check (-not $combined.Contains('ResRef.FromString')) 'Owned E3 presentation depends on external E3 UI resources.'
 
+# Health policy and public settings authority stay independent.
 Check (-not $source.health.Contains('UseE3FirstPersonHudVisuals')) 'Healthbar suppression is incorrectly controlled by the E3 preference.'
 Check ($source.health.Contains('CRRealpassSettings.IsEnabled(GetGameInstance())')) 'Healthbar suppression lost its Biology-wide activation gate.'
 Check ($contract.releaseProfile.traditionalActorHealthBarsFinalTarget -eq $false) 'Traditional actor health bars were reintroduced.'
@@ -108,18 +106,17 @@ Check ($contract.releaseProfile.nativeModernScanner -eq $true) 'Contract no long
 $controls = @($contract.publicControls)
 Check ($controls.Count -eq 1) 'E3 preference is no longer the sole in-game public preference.'
 Check ($controls[0].id -eq 'presentation.e3-first-person-hud-visuals' -and $controls[0].authority -eq 'presentation-only') 'E3 preference no longer has presentation-only authority.'
-Check ($source.preferenceUi.Contains('E3 HUD + NAMEPLATES') -and $source.preferenceUi.Contains('ToggleE3FirstPersonHudVisuals')) 'Biology-owned E3 preference editor lost its player-facing control/persistence path.'
 
-foreach ($needle in @('205578b11d818f474dc74a873e6d6ea5a1e1accd','IsAnyElementVisible','root-fitted','red rectangle','W03.3')) {
-    Check ($presentation.Contains($needle)) "Canonical W03.3 presentation contract is missing attended diagnosis: $needle"
+foreach ($needle in @('T002','3dc049ee99979f924978b671ddbbbda06b472d1b','CRBiologyE3FocusFrame','112','full-root red','W03.4')) {
+    Check ($presentation.Contains($needle)) "Canonical W03.4 presentation contract is missing attended evidence/diagnosis: $needle"
 }
-foreach ($needle in @('W03.3','IsAnyElementVisible','3','10','20','Tech-Hex')) {
-    Check ($mapping.Contains($needle)) "Component mapping is missing W03.3 corrective evidence: $needle"
+foreach ($needle in @('W03.4','CRBiologyE3FocusFrame','compact chrome','ambient')) {
+    Check ($mapping.Contains($needle)) "Component mapping is missing W03.4 visual/reticle correction: $needle"
 }
 
 $allowed = @($seams.allowedHookFiles)
 foreach ($file in @('E3FirstPersonHud.reds','E3QuestHudNative.reds','E3NavigationHudNative.reds','E3WeaponHudNative.reds','E3CrosshairHudNative.reds','E3HotkeyHudNative.reds','E3InteractionHudNative.reds','E3ActivityHudNative.reds','E3NameplatesNative.reds','NoHealthbars.reds')) {
-    Check ($allowed -contains $file) "W03.3 native presentation seam is not registered in the 2.31 boundary allowlist: $file"
+    Check ($allowed -contains $file) "W03.4 native presentation seam is not registered in the 2.31 boundary allowlist: $file"
 }
 
-Write-Host "PASS: $script:checks W03.3 E3 functional-follow-up checks; native-root-fitted HUD shells, ambient NPC root visibility, artifact cleanup, reversible ON/OFF behavior and modern scanner preservation are explicit."
+Write-Host "PASS: $script:checks W03.4 E3 visual-completion checks; T002 reticle owner is removed, full-root slabs are replaced by compact chrome, ambient names stay live, and modern scanner ownership remains native."

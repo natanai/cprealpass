@@ -1,8 +1,8 @@
-// Biology-owned E3-inspired ordinary interaction-prompt treatment.
+// Biology-owned E3-inspired ordinary interaction treatment.
 //
-// Native InteractionChoiceHubData, timing, option spawning, input and visibility remain
-// authoritative. W03.3 makes the owned treatment root-sized so it follows the actual
-// prompt layout instead of relying on a large translated child canvas.
+// Native choices, timers, spawn lifecycle and input remain authoritative. W03.4 removes
+// the full-root wash and keeps only compact chrome, so prompts participate in the same
+// visual language without becoming another large opaque red panel.
 module CyberpunkRealism.Presentation
 
 import CyberpunkRealism.Settings.*
@@ -21,11 +21,7 @@ private final func CRCreateBiologyE3InteractionFrame() -> Void {
   }
 
   this.crBiologyE3InteractionFrame = CRBiologyE3Primitives.CreateFillShell(root, n"CRBiologyE3InteractionFrame");
-  CRBiologyE3Primitives.AddFillWash(this.crBiologyE3InteractionFrame, n"CRBiologyE3InteractionWash", 0.075);
-  CRBiologyE3Primitives.AddRect(this.crBiologyE3InteractionFrame, n"CRBiologyE3InteractionTop", 0.0, 0.0, 210.0, 4.0, 0.96);
-  CRBiologyE3Primitives.AddRect(this.crBiologyE3InteractionFrame, n"CRBiologyE3InteractionLeft", 0.0, 0.0, 4.0, 58.0, 0.88);
-  CRBiologyE3Primitives.AddRect(this.crBiologyE3InteractionFrame, n"CRBiologyE3InteractionAccent", 0.0, 0.0, 24.0, 9.0, 1.00);
-  CRBiologyE3Primitives.AddLabel(this.crBiologyE3InteractionFrame, n"CRBiologyE3InteractionLabel", "INTERACTION // ACTION", 32.0, 8.0, 13, 0.84);
+  CRBiologyE3Primitives.AddPanelChrome(this.crBiologyE3InteractionFrame, "INTERACTION", 168.0);
 }
 
 @addMethod(interactionWidgetGameController)

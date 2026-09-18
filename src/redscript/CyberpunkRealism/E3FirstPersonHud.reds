@@ -1,8 +1,8 @@
 // Biology-owned lower-left E3-inspired presentation.
 //
-// The player health controller root remains alive under Biology; NoHealthbars hides only
-// health-specific children. W03.3 therefore mounts a root-sized owned shell rather than
-// a guessed 520x112 child canvas that could be clipped by the native local layout.
+// W03.4 keeps this surface deliberately sparse. The attended W03.3 root wash produced
+// a large red slab behind the native hotkey/biomonitor area; compact chrome now carries
+// the same presentation language without pretending the whole controller is a panel.
 module CyberpunkRealism.Presentation
 
 import CyberpunkRealism.Settings.*
@@ -22,11 +22,7 @@ private final func CRCreateBiologyE3Hud() -> Void {
   }
 
   this.crBiologyE3HudFrame = CRBiologyE3Primitives.CreateFillShell(root, n"CRBiologyE3HudFrame");
-  CRBiologyE3Primitives.AddFillWash(this.crBiologyE3HudFrame, n"CRBiologyE3HudWash", 0.025);
-  CRBiologyE3Primitives.AddRect(this.crBiologyE3HudFrame, n"CRBiologyE3HudTopRail", 0.0, 0.0, 190.0, 3.0, 0.94);
-  CRBiologyE3Primitives.AddRect(this.crBiologyE3HudFrame, n"CRBiologyE3HudLeftRail", 0.0, 0.0, 3.0, 46.0, 0.94);
-  CRBiologyE3Primitives.AddRect(this.crBiologyE3HudFrame, n"CRBiologyE3HudAccent", 0.0, 0.0, 22.0, 7.0, 1.00);
-  CRBiologyE3Primitives.AddLabel(this.crBiologyE3HudFrame, n"CRBiologyE3HudLabel", "BIOLOGY // STATUS", 30.0, 7.0, 13, 0.84);
+  CRBiologyE3Primitives.AddPanelChrome(this.crBiologyE3HudFrame, "BIOLOGY", 146.0);
 }
 
 @addMethod(healthbarWidgetGameController)

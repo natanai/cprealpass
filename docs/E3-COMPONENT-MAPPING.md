@@ -1,7 +1,7 @@
 # Biology E3 component mapping
 
-Status: W03.2 live-presentation design-archaeology contract  
-Last updated: 2026-09-16  
+Status: W03.4 live-presentation design-archaeology contract  
+Last updated: 2026-09-17  
 Issues: #78 / #40
 
 ## Evidence boundary
@@ -76,3 +76,22 @@ The corrective mapping is:
 | Hook proof | Static/native compile proved signatures, not that each controller fires in the attended ordinary path. | Emit narrow [Biology:E3] trace markers so parent integration can correlate live hook execution with visible results. |
 
 Modern scanner/quickhack remains deliberately unhooked. The trace and nameplate corrections are presentation evidence/behavior only and do not reopen W13 startup or scanner architecture.
+
+
+## W03.4 visual-completion mapping
+
+T002 on exact integrated source `3dc049ee99979f924978b671ddbbbda06b472d1b` changes the mapping again. Ambient names are now a live KEEP; the remaining defects are visual hierarchy and the reticle artifact.
+
+| Responsibility | T002 evidence | W03.4 decision |
+|---|---|---|
+| Reticle / ordinary focus | A red top-left and bottom-right corner pair remains beside the native reticle in both supplied captures. | Concrete owner is W03.3 `CRBiologyE3FocusFrame`: centered 112 x 112 canvas with exactly those two corner pairs. Delete it. Do not add replacement reticle geometry. Use captured/restored tint on native `gameuiCrosshairBaseGameController`; native Scanning state keeps the root hidden. |
+| Quest / minimap / weapon / hotkeys / lower-left / prompt | Hooks visibly execute, but full-root red washes create large generic red blocks. | Keep the same proven current controllers, remove every full-root wash, and use shared compact chrome: short top/left rules, accent cell, small label band, faint lower-right corner. |
+| Ambient identity lifecycle | Ordinary names are now visibly live. | **KEEP unchanged.** Preserve `SetVisualData` enrichment, `SetElementVisibility` refresh, `IsAnyElementVisible` ambient-name gate, native projection and 10 / 20 ordinary range. |
+| Nameplate visual design | Name text is visible but still reads as plain red text rather than the intended E3 identity card. | Keep native `m_nameTextMain` + `m_nameFrame`, add a compact 340 x 46 Biology-owned segmented identity chrome behind native text, and capture/restore native text/frame tint on OFF. No health bar/number. |
+| Project E3 nameplate archaeology | Reference source uses name text plus name frame and optional background/level framing. | Treat that as visual responsibility evidence only. Biology recreates compact framing in original code and does not copy/ship archive widgets, tweaks, source, levels, health UI or identity derivation. |
+| Modern scanner / quickhack | T002 still requires the current scanner to remain native. | No scanner controller/resource hook. Crosshair repair relies on native crosshair state ownership; scanner presentation remains out of scope. |
+| Activity log | Existing red/uppercase treatment is lightweight and not implicated in T002 blocks. | Keep current reversible native-entry styling. |
+
+### W03.4 acceptance
+
+The parent-integrated E3 ON capture should show compact, repeated chrome rather than opaque slabs; the ambient nameplate should have a real framed identity treatment; the two-corner reticle artifact must be absent; and the native scanner/quickhack UI must remain unchanged. E3 OFF must hide Biology-owned chrome and restore captured native tint/range state.
