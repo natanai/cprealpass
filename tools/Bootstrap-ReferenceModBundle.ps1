@@ -120,7 +120,7 @@ try{
     $wt=Git @('-C',$seed,'worktree','add','--detach',$worktree,$ExpectedHead)
     if($wt.ExitCode -ne 0){throw "Could not create detached exact-head checkout. $($wt.StdErr.Trim())"}
 
-    $args=@('-NoLogo','-NoProfile','-File',(Join-Path $worktree 'tools\New-ReferenceModBundle.ps1'),'-LibraryPath',$LibraryPath,'-OutputRoot',$OutputRoot,'-WorkflowSourceRevision',$ExpectedHead)
+    $args=@('-NoLogo','-NoProfile','-File',(Join-Path $worktree 'tools\New-ReferenceModBundle.ps1'),'-LibraryPath',$LibraryPath,'-OutputRoot',$OutputRoot,'-WorkflowSourceRevision',$ExpectedHead,'-SuppressHandoffMarker')
     if($ReferenceName -and $ReferenceName.Count -gt 0){$args += '-ReferenceNameJson';$args += ($ReferenceName | ConvertTo-Json -Compress)}
     if($IncludeBiologyNativeUi){$args += '-IncludeBiologyNativeUi';$args += '-GamePath';$args += $GamePath}
     $child=Native 'pwsh' $args
