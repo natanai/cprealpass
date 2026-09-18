@@ -39,11 +39,13 @@ Check ($followup.Contains('if !this.CRBiologyDirectParentOwnsWidget(nativeParent
 Check ($followup.Contains('public final func CRBiologyDetailMountStatus() -> String')) 'W02.5 does not expose the bounded live mount result to the shell.'
 
 # T003 proved the stock selector remains visible even when Biology detail disappears.
-# Use that existing native label only when a mount fails; successful UI remains clean.
+# Use that existing native label as a bounded attended breadcrumb for BOTH successful
+# and failed native mounts, so a blank MOUNTED screen proves the failure moved later.
 Check ($sync.Contains('public final func CRSetBiologyLayoutDiagnostic(status: String) -> Void')) 'W02.5 lacks bounded native-selector mount diagnostics.'
 Check ($sync.Contains('[BIOLOGY LAYOUT: ')) 'W02.5 failure diagnostic does not identify the Biology layout boundary.'
-Check ($shell.Contains('this.m_selector.CRSetBiologyLayoutDiagnostic(this.m_inventoryView.CRBiologyDetailMountStatus());')) 'W02.5 does not surface the exact inventory mount failure in attended UI evidence.'
-Check ($shell.Contains('this.m_selector.CRSetBiologyLayoutDiagnostic("");')) 'W02.5 does not clear the diagnostic on a successful mount.'
+Check ($shell.Contains('this.m_selector.CRSetBiologyLayoutDiagnostic(this.m_inventoryView.CRBiologyDetailMountStatus());')) 'W02.5 does not surface the exact live inventory mount result in attended UI evidence.'
+Check ($sync.Contains('INCLUDING') -and $sync.Contains('MOUNTED')) 'W02.5 does not preserve positive MOUNTED evidence for a still-blank attended detail screen.'
+Check (-not $sync.Contains('Equals(status, "MOUNTED")')) 'W02.5 still hides the successful MOUNTED breadcrumb instead of distinguishing post-mount failures.'
 Check ($shell.Contains('this.m_selector.CRSetBiologyLayoutDiagnostic("INVENTORY_MISSING");')) 'W02.5 cannot distinguish a missing inventory controller from deeper mount failures.'
 
 # Preserve the actual selected-system/runtime path and native navigation. Invisible UI
