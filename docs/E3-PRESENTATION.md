@@ -1,121 +1,93 @@
 # Biology E3-inspired presentation target
 
-Status: canonical visual target / implementation contract  
-Last updated: 2026-09-16  
-Current worker: W03.2 / issue #78 (continuing issue #40)
+Status: canonical visual target / W03.3 functional-follow-up contract
+Last updated: 2026-09-17
+Current worker: W03.3 / issue #40
 
 ## Product decision
 
-Biology targets the red/minimal 2018/E3-inspired **ordinary first-person HUD** and **NPC nameplates** while keeping Cyberpunk 2077's modern scanner/quickhack behavior.
+Biology targets a coherent red/minimal 2018/E3-inspired ordinary first-person HUD and ambient NPC identity/nameplates while preserving Cyberpunk 2077's modern scanner/quickhack presentation.
 
-Project E3 is design/reference material only. Biology does not execute or redistribute its archive, scripts, tweaks, settings implementation, old scanner, or gameplay authority. Current installed Cyberpunk 2.31 / REDmod source is the preferred authority for native controller ownership; Project E3 tells us which presentation responsibilities materially created the historical look.
+Project E3 remains archaeology/reference material only. Biology does not execute or redistribute its archive, scripts, tweaks, old scanner, settings implementation, or gameplay logic. Current Cyberpunk 2077 2.31 native/REDmod controller behavior remains authoritative unless attended evidence proves a narrow presentation lifecycle correction is required.
 
-## W03.2 attended boundary
+## W03.3 attended boundary
 
-The W13 attended startup candidate at `f643bbc1c50a69d223c2cf54e9fc7f68215e33fd` proved the supported mods-ON launch regenerated the configured REDscript output and compiled all Biology REDscript on actual game startup without REDscript errors. W03.2 therefore treats the missing E3 result as a **presentation/hook behavior problem**, not as stale REDscript startup.
+W13 already proved that the supported live game compiles and executes current Biology REDscript. The later integrated candidate 205578b11d818f474dc74a873e6d6ea5a1e1accd therefore gives a stronger presentation-specific result:
 
-The same live candidate still read overwhelmingly as retail/current Cyberpunk in ordinary play: quest/objective tracker, minimap/navigation, weapon/ammo, ordinary interaction/control prompts, crosshair/focus, and surrounding HUD composition remained insufficiently transformed. Civilian ordinary-look nameplates remained absent and police/combatants did not yet have a complete ambient identity treatment.
+- ordinary gameplay still read substantially as the current/retail HUD;
+- minimap, quest/objective stack, weapon/ammo presentation and ordinary prompts showed no convincing E3 transformation;
+- ambient civilian and police/combatant nameplates were absent;
+- after scanning an NPC, a small strange red rectangle appeared near the lower-right of the reticle;
+- the modern scanner itself remained current/native and must stay that way.
 
-## In-scope ordinary presentation
+This proves that source presence, exact compilation and controller-name matching are not sufficient. W03.3 must fix the live presentation lifecycle and geometry.
 
-W03.2 owns the visually persistent or materially recurring first-person surfaces that determine whether ordinary play reads as E3-inspired:
+## W03.3 root-fitted HUD correction
 
-- quest/objective tracker;
-- minimap/navigation framing, while preserving current native route/mappin semantics;
-- weapon/ammo presentation;
-- quick-slot/D-pad presentation;
-- ordinary crosshair/focus presentation across normal weapon types;
-- ordinary interaction prompts where they materially dominate moment-to-moment play;
-- lightweight activity-log treatment because transient retail activity text is visually recurrent;
-- Biology's existing lower-left non-health E3 presentation;
-- civilian and police/combatant ordinary-look NPC nameplates.
+W03.2 created large fixed-size/translated Biology canvases as children of several native controller roots. Those roots are controller-local layouts, not guaranteed full-screen canvases. A 530x286 or 552x312 child can therefore be clipped, translated outside the useful local bounds, or otherwise fail to produce the intended visible result even though the hook executes.
 
-Dialogue has been audited because Project E3 changed it, but W03.2 does **not** replace the conversation-choice system: it is a contextual conversation surface with a large behavior/choice-layout footprint, not necessary to establish the ordinary neutral HUD target. Phone UI is likewise not part of this lane.
+W03.3 changes persistent HUD treatment to root-fitted Biology-owned shells:
 
-## Required player-facing result
+- the owned shell uses inkEAnchor.Fill against the actual native controller root;
+- a low-opacity red wash, short local rail/accent and compact label live inside that fitted shell;
+- quest, minimap/navigation, weapon/ammo, quick-slot, lower-left Biology presentation and ordinary interaction prompts all use the same layout rule;
+- native controller data, visibility, input and update logic run first and remain authoritative;
+- E3 OFF hides the Biology-owned shell rather than repainting native roots.
 
-With Biology active and **E3-inspired HUD + nameplates = On**:
+The crosshair is intentionally different: it stays a compact centered frame under the current gameuiCrosshairContainerController. The separate W03.2 CrosshairGameController_Tech_Hex inner frame is removed because it can outlive the generic focus treatment and is a plausible contributor to the attended post-scan artifact.
 
-- ordinary gameplay must read as a coherent red/minimal E3-inspired presentation rather than retail Cyberpunk plus one small red widget;
-- quest, navigation, weapon/ammo, hotkeys, applicable crosshair/focus, ordinary prompts, recurrent activity feedback and nameplates must belong to a common visual language while native information/interaction remains authoritative;
-- relevant NPCs can receive an ambient E3-style identity treatment during ordinary look/focus without requiring scanner mode;
-- scanner-acquired native identity may enrich the ordinary nameplate afterward;
-- the modern scanner/quickhack UI remains current/native;
-- traditional actor HP bars remain suppressed because that is a Biology-wide rule, not an E3 success criterion.
+## W03.3 nameplate diagnosis
 
-With E3 presentation **Off** while Biology remains active:
+The current 2.31 native nameplate flow explains the live failure precisely.
 
-- Biology-owned E3 overlay widgets yield cleanly;
-- Biology does not try to reconstruct native colors by painting native roots white;
-- native quest/navigation/weapon/input/interaction data and behavior are unchanged;
-- Biology simulation and Biology-wide actor-healthbar suppression are unchanged;
-- the modern scanner remains unchanged.
+NameplateVisualsLogicController.SetElementVisibility(...) starts by hiding the native name text. For ordinary non-aggressive NPCs it may leave both name text and level presentation absent. Its public IsAnyElementVisible() then returns only whether native name text or level presentation is visible.
 
-## Implementation rule: owned overlays, native authority
+NpcNameplateGameController.OnScreenProjectionUpdate(...) subsequently performs the projection/distance/dialog/hide checks and then applies an additional gate: if the candidate nameplate is otherwise visible, m_visualController.IsAnyElementVisible() must also be true before the projected root is shown.
 
-W03.1 relied heavily on thin red rails plus `SetTintColor` on native controller roots. Live evidence showed that was too weak visually, and root tinting was also a poor OFF contract because child widgets may carry their own styles and "white" is not proof of native restoration.
+W03.2 acted too late. It attempted to reveal m_displayName after native projection processing, but for an ordinary civilian the entire projected nameplate root could already have been hidden by IsAnyElementVisible() == false. After scanning, native state could make the root visible, which explains why a Biology red child could suddenly appear as the observed small reticle-adjacent rectangle.
 
-W03.2 therefore uses **Biology-owned reversible INK overlays/labels** attached to narrow current native controllers. E3 OFF hides those owned widgets rather than guessing the original state of native roots. Native controller logic runs first and remains authoritative.
+## W03.3 ambient nameplate correction
 
-The intended seams are:
+W03.3 keeps native projection authority but fixes that one presentation bottleneck:
 
-- `QuestTrackerGameController` for quest/objective presentation;
-- current `MinimapContainerController` for navigation/minimap framing;
-- `WeaponRosterGameController` for weapon/ammo framing;
-- `HotkeysWidgetController` for quick-slot/D-pad presentation;
-- current `gameuiCrosshairContainerController` for cross-weapon ordinary focus framing, plus the existing Tech-Hex specialization;
-- `interactionWidgetGameController` for an ordinary interaction-prompt shell without replacing InteractionChoiceHubData/timer/input logic;
-- `activityLogEntryLogicController` for a lightweight per-entry red/uppercase skin without taking over queue/animation authority;
-- `NameplateVisualsLogicController` plus `NpcNameplateGameController` for projected ambient identity treatment.
+1. Native NPCNextToTheCrosshair.name remains first priority.
+2. If native name is empty, Biology may use the entity's existing public GameObject.GetDisplayName() for an attached ordinary NPC—civilian, police or combatant—when quest, hidden-name, alternative-identity and explicitly disabled-nameplate policy do not block it.
+3. Biology enriches only a local copy before the native visual controller runs.
+4. Biology wraps IsAnyElementVisible() so a legitimate E3 ambient identity counts as visible. This allows the native projected root to survive its normal visibility calculation without replacing projection, dialog, mount or hide-name logic.
+5. Biology uses the native m_nameTextMain / m_nameFrame as the actual identity surface. The W03.2 oversized custom projected CRBiologyE3NameplateFrame is removed.
+6. While E3 is ON, native name text/frame receive the red/minimal treatment; their captured native tint is restored when E3 is OFF.
+7. Non-aggressive nameplate range is raised from the current native ordinary 3 / 10 display/max envelope to 10 / 20 while E3 is ON. E3 OFF restores the native SNameplateRangesData values.
 
-## Nameplate lifecycle and knowledge boundary
+This remains a presentation rule, not a scanner knowledge database. Biology does not derive FullDisplayName, archetype, affiliation or scanner-only hidden identity.
 
-Biology does not invent a second NPC identity database.
+## Hook execution evidence
 
-Identity precedence is:
+The next integrated attended session needs to answer a question W03.2 could not: which mapped presentation hooks actually execute in live ordinary play?
 
-1. native `NPCNextToTheCrosshair.name` wins whenever the game already supplies identity;
-2. if that is empty, an ordinary public civilian may use the entity's existing `GameObject.GetDisplayName()` when hidden/alternative/quest policy does not block it and a defined native nameplate record is not explicitly disabled;
-3. Biology does **not** derive `FullDisplayName`, archetype, affiliation, scanner-only records, or another hidden identity;
-4. scanning can later supply richer native `NPCNextToTheCrosshair.name`, which automatically supersedes the fallback.
+W03.3 therefore emits narrow [Biology:E3] FTLog trace markers at persistent controller initialization and the first relevant nameplate projection/data events. These markers are diagnostics for the parent-integrated attended run; they do not change release/startup architecture and they do not ask the owner to play a worker branch.
 
-W03.2 also addresses a concrete lifecycle defect in W03.1: native `NameplateVisualsLogicController.SetElementVisibility(...)` runs during `SetVisualData` and may hide the name text after earlier styling. Biology therefore reapplies its **owned projected nameplate widget after native `SetElementVisibility`**, rather than replacing native visibility logic wholesale.
+If a visible surface still remains retail while its hook trace is present, the fault is presentation geometry/state inside that proven controller. If its trace is absent, the parent can route the next repair to the actual live controller instead of guessing.
 
 ## Modern scanner is a hard preserve
 
-Biology E3 presentation must not hook or replace scanner/quickhack controllers, load Project E3 scanner resources, recreate the 2018 scanner, or recolor the current scanner into an old composition. The modern scanner/quickhack surface is a previously attended PASS and remains outside W03.2 ownership.
+Biology E3 presentation must not hook or replace scanner/quickhack controllers, load Project E3 scanner resources, recreate the 2018 scanner, or recolor the current scanner.
 
-The generic crosshair-container seam is specifically useful because current native crosshair-container vision logic owns whether that container is visible in default vision. Biology's child frame therefore follows native visibility rather than requiring a scanner hook.
+The W03.3 crosshair cleanup is specifically intended to reduce scanner-adjacent residue: one generic current crosshair-container child remains, and native vision ownership decides whether that container is visible. Nameplate presentation continues through native projected-nameplate controllers, not scanner controllers.
 
-## Ownership / provenance
+## E3 ON/OFF contract
 
-The full Project E3 inventory and per-area decisions are recorded in `E3-COMPONENT-MAPPING.md` and `config/realpass-e3.json`. The user-supplied Project E3 2.31.p2 source/archive may be inspected outside Git for archaeology, but none of that third-party runtime is shipped by Biology.
+With E3 ON, an ordinary gameplay capture must be unmistakably different from retail through the combined quest, navigation, weapon/ammo, quick-slot, prompt/focus and ambient-nameplate language. A single bar, tiny rectangle or healthbar suppression is not acceptance.
 
-## Patch-resilience rule
+With E3 OFF:
 
-For every W03.2 presentation seam:
+- root-fitted Biology HUD shells are hidden;
+- ambient-nameplate range returns to native defaults;
+- captured native name/frame tint is restored;
+- Biology simulation and Biology-wide healthbar suppression are unchanged;
+- modern scanner/quickhack remains unchanged.
 
-1. prefer installed official REDmod decompiled source when it can establish current 2.31 class/lifecycle ownership;
-2. use Project E3 only to understand visual responsibility/history;
-3. keep current native gameplay/data/visibility authority unless the accepted presentation requires a narrowly proven post-native correction;
-4. prefer post-native Biology-owned overlays to copied controller bodies;
-5. register hook-bearing Biology files in `manifest/native-seams.json`;
-6. preserve scanner/quickhack ownership by deliberate absence of scanner hooks;
-7. let the parent exact-build and attend the integrated candidate before merge.
+## Parent attended acceptance
 
-## Parent attended acceptance contract
+Parent P01.2 should integrate and test the release-shaped candidate rather than this worker branch directly. Capture the same state/location with E3 ON and OFF, including quest/objective, minimap/navigation, weapon/ammo/hotkeys, one interaction prompt, civilian focus, police/combatant focus, post-scan identity where applicable, and the modern scanner. Also inspect the captured game/functional trace output for the [Biology:E3] markers so missing visuals can be tied to hooks that did or did not execute.
 
-The parent should test the integrated candidate, not this worker branch directly:
-
-1. ordinary gameplay — E3 ON;
-2. same location/view — E3 OFF;
-3. quest/objective tracker — matched ON/OFF;
-4. minimap/navigation plus ordinary weapon/ammo/hotkey composition;
-5. at least one ordinary interaction prompt and one activity-log event;
-6. random civilian direct look/focus — E3 ON before scanner;
-7. police/combatant direct focus — E3 ON;
-8. same relevant NPC after scanning/identity acquisition where applicable;
-9. modern scanner/quickhack — E3 ON;
-10. ordinary combat/navigation/interaction gameplay to catch stale or overlapping widgets.
-
-A reviewer must be able to identify the E3-ON ordinary-gameplay screenshot without looking at the setting state. A tiny Biology frame, a narrow strip over cops, or hidden HP bars is insufficient.
+The strange post-scan red rectangle must be absent. If any red artifact remains, identify its owner before accepting #40.

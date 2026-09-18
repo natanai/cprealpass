@@ -57,3 +57,22 @@ W03.2 production presentation files must contain no scanner/quickhack controller
 ## Parent acceptance
 
 Parent P01.2 should integrate and attend: E3 ON/OFF same view; quest; minimap/navigation; weapon/ammo/hotkeys; ordinary interaction prompt and activity entry; random civilian; police/combatant; after-scan enrichment where applicable; modern scanner/quickhack; ordinary combat/navigation/interaction for stale/overlap checks.
+
+
+## W03.3 attended functional correction
+
+Integrated main 205578b11d818f474dc74a873e6d6ea5a1e1accd disproved W03.2's assumption that source-valid fixed-size child overlays were sufficient. Ordinary HUD remained retail-looking, ambient names remained absent, and scanning could produce a small red rectangle near the reticle.
+
+The corrective mapping is:
+
+| Responsibility | W03.2 live failure | W03.3 seam |
+|---|---|---|
+| Quest / minimap / weapon / hotkeys / lower-left / prompt | Large fixed-size translated canvases were children of controller-local roots and could be clipped or misplaced. | Use a root-fitted inkEAnchor.Fill Biology shell plus local wash/rails/label; hide only the owned shell on OFF. |
+| Ordinary focus | Generic plus Tech-Hex nested treatments created two potential lifecycle owners near reticle/scanner transitions. | Keep only gameuiCrosshairContainerController; remove the Tech-Hex Biology child. |
+| Ambient identity | Helper was civilian-only, so police/combatants could never use the public fallback. | Allow attached ordinary NPCs, including civilian/police/combatant, while retaining quest/hidden/alternative/disabled-record gates. |
+| Projected nameplate root | Native IsAnyElementVisible() can return false before W03.2's post-projection m_displayName reveal, hiding the whole root. | Wrap NameplateVisualsLogicController.IsAnyElementVisible() so legitimate ambient Biology identity counts as visible; preserve the rest of native projection authority. |
+| Nameplate drawing | W03.2 added a fixed 440x82 custom child inside the projected root; after scan it could appear as a clipped red artifact. | Remove custom projected canvas and style native m_nameTextMain / m_nameFrame instead. |
+| Non-aggressive range | Current native ordinary nameplate range is 3 with max 10, too narrow for the intended ambient E3 identity role. | E3 ON uses 10 / 20; OFF restores SNameplateRangesData 3 / 10 values. |
+| Hook proof | Static/native compile proved signatures, not that each controller fires in the attended ordinary path. | Emit narrow [Biology:E3] trace markers so parent integration can correlate live hook execution with visible results. |
+
+Modern scanner/quickhack remains deliberately unhooked. The trace and nameplate corrections are presentation evidence/behavior only and do not reopen W13 startup or scanner architecture.
