@@ -208,10 +208,13 @@ public final func CRBiologyDetailPostMountStatus(target: ref<inkWidget>) -> Stri
 
     let targetMargin: inkMargin = target.GetMargin();
     let nativeMargin: inkMargin = nativeRegion.GetMargin();
+    let targetAnchorPoint: Vector2 = target.GetAnchorPoint();
+    let nativeAnchorPoint: Vector2 = nativeRegion.GetAnchorPoint();
     let targetTranslation: Vector2 = target.GetTranslation();
     let nativeTranslation: Vector2 = nativeRegion.GetTranslation();
     let layoutMatch: Bool = Equals(target.GetAnchor(), nativeRegion.GetAnchor())
-      && Equals(target.GetAnchorPoint(), nativeRegion.GetAnchorPoint())
+      && targetAnchorPoint.X == nativeAnchorPoint.X
+      && targetAnchorPoint.Y == nativeAnchorPoint.Y
       && Equals(target.GetHAlign(), nativeRegion.GetHAlign())
       && Equals(target.GetVAlign(), nativeRegion.GetVAlign())
       && targetMargin.left == nativeMargin.left
