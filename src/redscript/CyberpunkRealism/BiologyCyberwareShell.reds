@@ -166,6 +166,9 @@ private let crBiologyDetailTitle: ref<inkText>;
 private let crBiologyDetailSummary: ref<inkText>;
 
 @addField(RipperDocGameController)
+private let crBiologyDetailContentStatus: String;
+
+@addField(RipperDocGameController)
 private let crBiologyMetricRows: array<ref<inkCanvas>>;
 
 @addField(RipperDocGameController)
@@ -308,6 +311,7 @@ private final func CRCreateBiologyShell() -> Void {
   this.crBiologyNativeContent = new inkVerticalPanel();
   this.crBiologyNativeContent.SetName(n"CRBiologyNativeContent");
   this.crBiologyNativeContent.SetChildMargin(inkMargin(0.0, 4.0, 0.0, 4.0));
+  this.crBiologyNativeContent.SetFitToContent(true);
   this.crBiologyNativeContent.SetVisible(false);
   this.crBiologyNativeContent.SetAffectsLayoutWhenHidden(true);
 
@@ -502,6 +506,42 @@ private final func CRSyncBiologyNativeContentLayout() -> Bool {
 }
 
 @addMethod(RipperDocGameController)
+private final func CRBiologyDetailPostMountStatus(layoutReady: Bool) -> String {
+  if !layoutReady {
+    if IsDefined(this.m_inventoryView) {
+      return this.m_inventoryView.CRBiologyDetailMountStatus() + " " + this.crBiologyDetailContentStatus;
+    }
+    return "INVENTORY_MISSING " + this.crBiologyDetailContentStatus;
+  }
+
+  let result: String;
+  if IsDefined(this.m_inventoryView) && IsDefined(this.crBiologyNativeContent) {
+    result = this.m_inventoryView.CRBiologyDetailPostMountStatus(this.crBiologyNativeContent);
+  } else {
+    result = "POST_MOUNT_MISSING";
+  }
+  result += " " + this.crBiologyDetailContentStatus;
+
+  if IsDefined(this.crBiologyDetailTitle) {
+    let headingDesired: Vector2 = this.crBiologyDetailTitle.GetDesiredSize();
+    result += this.crBiologyDetailTitle.IsVisible() ? " H1/" : " H0/";
+    result += FloatToStringPrec(this.crBiologyDetailTitle.GetOpacity(), 1);
+    result += ":" + FloatToStringPrec(headingDesired.X, 0) + "x" + FloatToStringPrec(headingDesired.Y, 0);
+  } else {
+    result += " H?";
+  }
+
+  if ArraySize(this.crBiologyMetricRows) > 0 && IsDefined(this.crBiologyMetricRows[0]) {
+    let rowDesired: Vector2 = this.crBiologyMetricRows[0].GetDesiredSize();
+    result += this.crBiologyMetricRows[0].IsVisible() ? " M1:" : " M0:";
+    result += FloatToStringPrec(rowDesired.X, 0) + "x" + FloatToStringPrec(rowDesired.Y, 0);
+  } else {
+    result += " M?";
+  }
+  return result;
+}
+
+@addMethod(RipperDocGameController)
 private final func CRSyncBiologyContentVisibility() -> Void {
   let detail: Bool = this.CRBiologyInDetail();
   if IsDefined(this.crBiologyOverview) {
@@ -528,11 +568,7 @@ private final func CRSyncBiologyContentVisibility() -> Void {
   }
 
   if detail && IsDefined(this.m_selector) {
-    if IsDefined(this.m_inventoryView) {
-      this.m_selector.CRSetBiologyLayoutDiagnostic(this.m_inventoryView.CRBiologyDetailMountStatus());
-    } else {
-      this.m_selector.CRSetBiologyLayoutDiagnostic("INVENTORY_MISSING");
-    }
+    this.m_selector.CRSetBiologyLayoutDiagnostic(this.CRBiologyDetailPostMountStatus(detailLayoutReady));
   }
 
   this.CRSyncBiologyModeSwitcher();
@@ -579,6 +615,7 @@ private final func CRHideMetricRows() -> Void {
 @addMethod(RipperDocGameController)
 private final func CRRefreshBiologyDetail() -> Void {
   if !this.CRBiologyInDetail() || !IsDefined(this.crBiologyNativeContent) {
+    this.crBiologyDetailContentStatus = "CONTENT_NOT_READY";
     return;
   }
 
@@ -587,12 +624,14 @@ private final func CRRefreshBiologyDetail() -> Void {
   if !IsDefined(player) {
     this.crBiologyDetailTitle.SetText(CRBiologyDetailPresentation.Label(this.crBiologySelectedArea));
     this.crBiologyDetailSummary.SetText("[ BIOLOGY ERROR ] BODY RUNTIME PLAYER UNAVAILABLE");
+    this.crBiologyDetailContentStatus = "PLAYER_ERROR";
     return;
   }
   let detail: ref<CRBiologyDetailViewModel> = CRBiologySessionPresentation.Detail(player.GetGame(), this.crBiologySelectedArea);
   if !IsDefined(detail) || !detail.valid {
     this.crBiologyDetailTitle.SetText(CRBiologyDetailPresentation.Label(this.crBiologySelectedArea));
     this.crBiologyDetailSummary.SetText("[ BIOLOGY ERROR ] BODY DETAIL UNAVAILABLE");
+    this.crBiologyDetailContentStatus = "DETAIL_ERROR";
     return;
   }
 
@@ -606,6 +645,7 @@ private final func CRRefreshBiologyDetail() -> Void {
     this.crBiologyMetricRows[i].SetVisible(true);
     i += 1;
   }
+  this.crBiologyDetailContentStatus = "DATA" + IntToString(i);
 }
 
 @addMethod(RipperDocGameController)
@@ -831,6 +871,7 @@ protected cb func OnUninitialize() -> Bool {
   this.crBiologyNativeContent = null;
   this.crBiologyDetailTitle = null;
   this.crBiologyDetailSummary = null;
+  this.crBiologyDetailContentStatus = "";
   this.crBiologySelectedArea = gamedataEquipmentArea.Invalid;
   this.crBiologyShellMode = false;
   return wrappedMethod();
