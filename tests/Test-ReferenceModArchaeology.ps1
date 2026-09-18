@@ -45,6 +45,8 @@ Require $builder 'skipped-duplicate-payload' 'Builder must suppress duplicate se
 Require $builder 'opaque-no-safe-listing-tool|opaque-tool-could-not-list' 'Builder must represent uninspectable resource containers explicitly.'
 Require $builder 'PRIVATE-THIRD-PARTY-REFERENCE' 'Bundle must carry a prominent private-analysis marker.'
 Require $builder 'WorkflowSourceRevision' 'Bundle must bind evidence to exact workflow source.'
+Require $builder 'SuppressHandoffMarker' 'Inner builder must allow the canonical bootstrap to own the single attach marker.'
+Require $bootstrap "'SuppressHandoffMarker'" 'Bootstrap must suppress the child attach marker before printing its one owner-facing handoff path.'
 Require $builder 'IncludeBiologyNativeUi' 'Builder must expose the optional current-game Biology/Cyberware UI companion.'
 Require $builder 'ripperdoc\.script' 'Native companion must capture the installed official ripperdoc.script.'
 Require $builder 'ripperdocInventoryController\.script' 'Native companion must capture the installed official ripperdocInventoryController.script.'
