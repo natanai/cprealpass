@@ -240,7 +240,19 @@ function HashZipEntry($entry){
 }
 
 try{
-    if($IncludeBiologyNativeUi){CollectBiologyNativeUi}
+    if($IncludeBiologyNativeUi){
+        try{CollectBiologyNativeUi}
+        catch{
+            $nativeFailRoot=Join-Path $stage 'native-game-evidence'
+            New-Item -ItemType Directory -Force -Path $nativeFailRoot|Out-Null
+            @(
+              'BIOLOGY/CYBERWARE NATIVE UI REFERENCE SUB-CAPABILITY FAILED',
+              ('Error: '+$_.Exception.Message),
+              'The third-party reference bundle continues. No native hierarchy interpretation is invented.'
+            )|Set-Content -LiteralPath (Join-Path $nativeFailRoot 'collection-failure.txt') -Encoding utf8
+            $nativeUi=[ordered]@{requested=$true;status='failed-transparent';error=$_.Exception.Message}
+        }
+    }
     $folders=@($selected|Where-Object PSIsContainer|ForEach-Object Name)
     foreach($item in $selected){
         $dup=$null
