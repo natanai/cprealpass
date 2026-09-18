@@ -205,6 +205,9 @@ A reference request must state:
 
 The persistent owner library is `C:\Games\Cyberpunk-ReferenceMods`. Use the catalogued `tools/Bootstrap-ReferenceModBundle.ps1` workflow; do not ask the owner to install a reference mod merely for inspection. The returned ZIP is private third-party analysis material and **must not be committed or redistributed**.
 
+When the reference-mod question also depends on the **current installed native resource hierarchy** (for example, whether a Cyberware grid parent is a reusable authored content host), request the same bundle with `-IncludeBiologyNativeUi` instead of opening a separate broad native probe cycle. That optional companion is read-only and may privately include current official scripts plus serialized native UI evidence; those proprietary game materials remain outside Git just like third-party payload.
+
+
 After inspection, commit only redistribution-safe derived knowledge under `docs/reference-mods/`: source/version/provenance, selected path/hash identities, dependency/framework roles, derived native controller/widget/resource mappings, Biology-owned seams, validation, and explicitly opaque areas. Never commit third-party implementation bodies or proprietary game payload.
 
 ## Evidence hierarchy for Cyberpunk internals
