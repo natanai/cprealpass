@@ -1,7 +1,7 @@
 # Canonical agent and operator workflow patterns
 
 Status: **mandatory operating convention**  
-Last updated: **2026-09-16**
+Last updated: **2026-09-17**
 
 This file records project-owner workflow conventions that future parent and worker agents must preserve. It exists so these rules do not depend on chat memory.
 
@@ -187,3 +187,34 @@ Future agents should read these together:
 - `docs/test-runs/` — durable attended evidence.
 
 When any of these conflict with an older historical handoff or chat transcript, update the canonical docs rather than propagating the stale pattern.
+
+
+## 15. Attended PC tests are numbered and repository-recoverable
+
+Owner-run live attended sessions use a monotonic parent-owned `T###` identity. The canonical index is `docs/test-runs/TEST-LEDGER.md`.
+
+Rules:
+
+- every new owner-run live session receives the next `T###`, including reruns;
+- acceptance checks use `T###-A##`;
+- attended findings use `T###-F##`;
+- worker fixture tests, CI, and read-only audits keep their own IDs and are referenced rather than consuming `T###`;
+- before launch, record the in-flight test in GitHub without moving the exact candidate SHA merely for bookkeeping;
+- after evidence returns, commit a completed `T###-...` record and update the test ledger;
+- record what changed since the predecessor, exact source/artifact/evidence identity, PASS/FAIL/PARTIAL observations, routes, lessons, what remains unaccepted, and the next intended boundary;
+- screenshots may remain outside Git when binary retention is undesirable, but their hashes and grounded visual observations belong in the completed record;
+- the machine/session result (for example listener PASS) is distinct from gameplay acceptance.
+
+Fresh-parent recovery order is:
+
+```text
+exact current main
+-> docs/test-runs/TEST-LEDGER.md
+-> any open [T###] attended tracking issue
+-> latest completed numbered test record
+-> docs/THREAD-LEDGER.md
+-> current GitHub issues/PRs/CI
+-> older chat only as supplemental context
+```
+
+Repository/GitHub state wins over chat recollection when chat history is missing, truncated, or contradictory.

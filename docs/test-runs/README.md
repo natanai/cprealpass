@@ -4,11 +4,37 @@ This directory stores durable records of meaningful local in-game tests coordina
 
 Each record should be tied to an exact canonical `main` SHA and exact release-shaped artifact. Do not write vague notes such as “latest build worked.”
 
-Recommended filename:
+## Numbered attended-session identity
+
+Owner-run live attended sessions use a monotonic parent-owned ID:
 
 ```text
-YYYY-MM-DD-<short-main-sha>-<slug>.md
+T001
+T002
+T003
+...
 ```
+
+Every new live session consumes a new number, including a rerun of the same feature boundary. Cloud CI runs, worker fixture tests, and read-only audits keep their own native IDs and are referenced from the attended record; they do not consume `T###` numbers.
+
+Acceptance checks and findings inherit the session ID:
+
+```text
+T002-A01  acceptance check
+T002-F01  attended finding
+```
+
+Before launch, the parent records the allocated `T###`, exact canonical main SHA, test mode, included work, acceptance checklist, and expected evidence in a GitHub tracking issue/comment. Do **not** move canonical `main` just to create a planned test record after the exact test candidate has already been approved.
+
+After evidence returns, parent commits the completed record here and updates `TEST-LEDGER.md`.
+
+Recommended completed filename:
+
+```text
+T###-YYYY-MM-DD-<short-main-sha>-<slug>.md
+```
+
+Older pre-numbering files remain valid historical evidence. Do not invent retroactive T numbers when chronology or boundaries are uncertain.
 
 ## Template
 

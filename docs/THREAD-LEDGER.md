@@ -1,11 +1,27 @@
 # Biology parent/worker thread ledger
 
 Status: **canonical active conversation/lane registry**  
-Last updated: **2026-09-16**
+Last updated: **2026-09-17**
 
 > **MANDATORY:** Read this file together with `docs/AGENT-OPERATING-PATTERNS.md` before creating a new worker conversation, routing another assignment into an existing worker conversation, replacing a conversation that has become too long, or handing parent/orchestrator responsibility to a new conversation.
 
 The repository is the durable source of truth. Git issues/branches/PRs track implementation state; ChatGPT conversations carry temporary working context. Conversation identity and Git issue/branch identity are intentionally separate.
+
+
+## Parent recovery snapshot — 2026-09-17
+
+This snapshot exists because a substantial recent parent-chat segment disappeared from the visible conversation. Treat GitHub and durable test records as the continuity source.
+
+- Parent: **P01.2**, active integration/orchestration.
+- Latest completed numbered attended session: **T002**, exact source `3dc049ee99979f924978b671ddbbbda06b472d1b`; see `docs/test-runs/TEST-LEDGER.md` and the completed T002 record.
+- T002 operational listener/session path: PASS; W15.5 direct process polling is attended-accepted.
+- T002 Biology layout: still fails; telemetry is at/extreme top-left -> issue #39, next W02 sequential follow-up.
+- T002 E3 presentation: ambient names now appear, proving live nameplate lifecycle progress, but the overall HUD is still not unmistakably E3 and the reticle-adjacent red artifact persists -> issue #40, next W03 sequential follow-up.
+- Body-runtime implementation audit W04.2 merged, but live wait/save-reload/sleep continuity was not exercised in T002; issue #41 is open for future attended acceptance.
+- W02.3 / PR #87, W15.5 / PR #88, W04.2 / PR #90, and W03.3 / PR #89 are represented in the T002 source boundary.
+- The next live session ID is allocated from `docs/test-runs/TEST-LEDGER.md`, not from chat memory.
+
+Do not rerun T001/T002 merely because their chat messages are missing. Read their durable records and route only unresolved findings.
 
 ## Core rule
 

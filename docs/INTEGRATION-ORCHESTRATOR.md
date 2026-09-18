@@ -1,9 +1,9 @@
 # Biology integration/orchestrator workflow
 
 Status: **canonical parent-thread policy**  
-Last updated: **2026-09-16**
+Last updated: **2026-09-17**
 
-> **MANDATORY CURRENT-THREAD LOOKUP:** Before opening, reusing, replacing, or routing work to any ChatGPT conversation, read `AGENT-OPERATING-PATTERNS.md` and `THREAD-LEDGER.md`. The parent owns the ledger and must keep it current.
+> **MANDATORY CURRENT-THREAD LOOKUP:** Before opening, reusing, replacing, or routing work to any ChatGPT conversation, read `AGENT-OPERATING-PATTERNS.md`, `docs/test-runs/TEST-LEDGER.md`, the latest completed numbered attended record, and `THREAD-LEDGER.md`. Also inspect any open `[T###]` attended tracking issue. The parent owns these continuity records and must keep them current.
 
 The long-lived parent integration conversation keeps Biology workers coherent, mergeable and testable. It is not primarily a feature-development lane and must not quietly become a fourth broad implementation lane.
 
@@ -181,3 +181,16 @@ The orchestration model is working when:
 - screenshots/logs become durable repository evidence;
 - every regression has a named route/owner;
 - a replacement parent can recover current state without the previous chat transcript.
+
+
+## Numbered attended-test continuity
+
+Live owner sessions are parent-owned `T###` records. The parent allocates a number before launch, binds it to the exact source SHA and acceptance checklist in GitHub without moving that source SHA, then commits the completed record after evidence returns.
+
+A fresh parent must never infer "what test are we on?" from chat ordering. Read `docs/test-runs/TEST-LEDGER.md` and current `[T###]` GitHub tracking first.
+
+A test may have:
+- an operational session result, such as listener/install/startup PASS;
+- separate gameplay/UI acceptance results, which may be PARTIAL or FAIL.
+
+Do not let an operational PASS overwrite observed gameplay failures.
