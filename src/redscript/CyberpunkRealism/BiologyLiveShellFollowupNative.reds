@@ -67,14 +67,19 @@ public final func CRBiologyDetailSurfaceActive() -> Bool {
 
 // T002 plus the attended 2.31 INK probe proved the inventory controller root is only
 // a zero-margin Fill lifecycle container. m_virtualGridContainer is nested below an
-// additional native parent. Its layout values are therefore LOCAL to that parent.
-// Copying those values onto a widget mounted directly under the controller root loses
-// the authored ancestor transform and reproduces the extreme top-left failure.
+// additional native parent, so the grid's layout values are LOCAL to that parent.
+// Copying them onto a widget mounted directly under the controller root loses authored
+// ancestor geometry and reproduces the extreme top-left failure.
+//
+// W17.1 adds an important ownership limit: native controller source identifies
+// m_virtualGridContainer as the virtualized Cyberware item-list child. Its direct parent
+// is therefore proven here only as the grid's local geometry parent, NOT as the generic
+// selected-detail/content authority. Keep the T004-proven sibling mount and diagnostics
+// while reference archaeology classifies the current-2.31 INK wrapper chain; do not
+// derive a new screenshot offset from this provisional seam.
 //
 // Vanilla redscript does not expose inkWidget.GetParentWidget(). Walk DOWN from the
-// known inventory root instead, find the compound that directly owns the native virtual
-// grid, and mount Biology beside it. Only then is copying the native child's local
-// geometry valid.
+// known inventory root to locate the compound that directly owns the native virtual grid.
 @addMethod(RipperdocInventoryController)
 private final func CRFindBiologyDetailRegionParent(parent: ref<inkCompoundWidget>, nativeRegion: ref<inkWidget>) -> ref<inkCompoundWidget> {
   if !IsDefined(parent) || !IsDefined(nativeRegion) {
