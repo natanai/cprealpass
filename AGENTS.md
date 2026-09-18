@@ -188,6 +188,25 @@ Do not keep a dependency because the old build already has it. The finished pack
 
 Do not claim Biology can universally overpower every possible third-party mod. Biology should be authoritative for the systems it owns, use deterministic REDmod precedence where applicable, and leave unrelated systems alone.
 
+## REFERENCE-MOD ARCHAEOLOGY GATE — ask for working examples before speculative native probing
+
+Third-party mods remain **reference evidence, not Biology runtime dependencies**. When an established mod plausibly changes the same Cyberpunk subsystem a worker is investigating, explicitly consider whether a private reference bundle can identify the real native seam faster than another screenshot-derived guess, speculative hook, or attended cycle.
+
+Before another speculative probe, ask:
+
+1. Is there a mature reference mod that already modifies this subsystem?
+2. Could its scripts/config/resource provenance and dependency chain identify the native controller, widget, resource, record, or hook involved?
+3. If yes, request a private reference bundle from the owner before guessing.
+
+A reference request must state:
+- the mod and any dependencies wanted;
+- why the reference is relevant;
+- the exact uncertainty expected to be resolved.
+
+The persistent owner library is `C:\Games\Cyberpunk-ReferenceMods`. Use the catalogued `tools/Bootstrap-ReferenceModBundle.ps1` workflow; do not ask the owner to install a reference mod merely for inspection. The returned ZIP is private third-party analysis material and **must not be committed or redistributed**.
+
+After inspection, commit only redistribution-safe derived knowledge under `docs/reference-mods/`: source/version/provenance, selected path/hash identities, dependency/framework roles, derived native controller/widget/resource mappings, Biology-owned seams, validation, and explicitly opaque areas. Never commit third-party implementation bodies or proprietary game payload.
+
 ## Evidence hierarchy for Cyberpunk internals
 
 For questions about what the supported game build actually contains, exposes, names, calls, stores, or does, use this order:
