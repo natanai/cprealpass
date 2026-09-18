@@ -528,14 +528,10 @@ private final func CRSyncBiologyContentVisibility() -> Void {
   }
 
   if detail && IsDefined(this.m_selector) {
-    if detailLayoutReady {
-      this.m_selector.CRSetBiologyLayoutDiagnostic("");
+    if IsDefined(this.m_inventoryView) {
+      this.m_selector.CRSetBiologyLayoutDiagnostic(this.m_inventoryView.CRBiologyDetailMountStatus());
     } else {
-      if IsDefined(this.m_inventoryView) {
-        this.m_selector.CRSetBiologyLayoutDiagnostic(this.m_inventoryView.CRBiologyDetailMountStatus());
-      } else {
-        this.m_selector.CRSetBiologyLayoutDiagnostic("INVENTORY_MISSING");
-      }
+      this.m_selector.CRSetBiologyLayoutDiagnostic("INVENTORY_MISSING");
     }
   }
 
