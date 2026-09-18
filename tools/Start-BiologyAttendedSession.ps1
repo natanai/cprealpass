@@ -234,7 +234,14 @@ function Get-BiologySessionReport(
     if ($null -ne $ListenerResult) {
         $lines.Add('=== PROCESS LISTENER ===')
         $lines.Add('Launch classification: ' + [string]$ListenerResult.classification)
+        if ($ListenerResult.PSObject.Properties.Name -contains 'classificationBasis') {
+            $lines.Add('Classification basis: ' + [string]$ListenerResult.classificationBasis)
+        }
         foreach ($event in @($ListenerResult.events)) { $lines.Add(($event | ConvertTo-Json -Compress -Depth 6)) }
+        if ($ListenerResult.PSObject.Properties.Name -contains 'startupEvidence' -and $null -ne $ListenerResult.startupEvidence) {
+            $lines.Add('Bounded startup-evidence assessment:')
+            $lines.Add(($ListenerResult.startupEvidence | ConvertTo-Json -Compress -Depth 8))
+        }
         $lines.Add('')
     }
 
@@ -425,10 +432,12 @@ try {
     if ($null -eq $before.installedReceipt -or $before.installedReceipt.PSObject.Properties.Name -contains 'parseError') { throw 'Installed Biology ownership receipt is unavailable or malformed after preparation.' }
     if (([string]$before.installedReceipt.sourceRevision).ToLowerInvariant() -ne $MainSha) { throw 'Installed Biology receipt does not match the exact requested canonical source after preparation.' }
 
-    $listener = Invoke-BiologyAttendedQuietListener
+    $rawListener = Invoke-BiologyAttendedQuietListener
     $after = Get-BiologyAttendedSnapshot $GameRoot
     $startupDiagnostics = Get-BiologyAttendedStartupDiagnostics -GameRoot $GameRoot -SinceUtc ([DateTime]::Parse([string]$before.capturedUtc))
-    $result = if ([string]$listener.classification -eq 'STARTED-AND-EXITED') { 'PASS' } else { 'PARTIAL' }
+    $listener = Resolve-BiologyAttendedLaunchResult -ListenerResult $rawListener -Before $before -After $after -StartupDiagnostics $startupDiagnostics
+    $passClassifications = @('STARTED-AND-EXITED','STARTED-AND-EXITED-EVIDENCE-RECONCILED')
+    $result = if ($passClassifications -contains [string]$listener.classification) { 'PASS' } else { 'PARTIAL' }
     Finalize-BiologySession -Result $result -Phase 'POST-END-EVIDENCE-FINALIZED' -Preparation $preparation -PreparationModeResolved $resolvedPreparationMode
     Complete-BiologySessionAfterEvidence 0
 } catch {

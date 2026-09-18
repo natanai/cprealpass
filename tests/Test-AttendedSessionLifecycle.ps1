@@ -31,7 +31,14 @@ $cleanRoom = Get-Content -Raw -LiteralPath $cleanRoomPath
 $contract = Get-Content -Raw -LiteralPath $contractPath
 
 Require $core 'READY TO LAUNCH CYBERPUNK' 'Session listener must expose the canonical READY state.'
-Require $core 'ReadLineAsync' 'Quiet listener must watch process state while the same console waits for END.'
+Reject $core '\[Console\]::In\.ReadLineAsync' 'Listener must not call Console.In.ReadLineAsync because standard-input ReadLineAsync can execute synchronously and starve polling.'
+Require $core 'BiologyAttendedConsoleLineReader' 'Quiet listener must use the dedicated CLR line-reader boundary.'
+Require $core 'ReadLineOffThread' 'Quiet listener must move the blocking console read off the polling runspace.'
+Require $core 'ProcessProvider' 'Listener polling must expose a deterministic process-provider seam for regression coverage.'
+Reject $core '\$pid\s*=' 'Listener must not assign to PowerShell automatic variable $PID while observing a game process.'
+Require $core 'STARTED-AND-EXITED-EVIDENCE-RECONCILED' 'Listener must support bounded startup-evidence reconciliation when direct polling was missed.'
+Require $session 'Resolve-BiologyAttendedLaunchResult' 'Session engine must reconcile direct listener events with bounded post-READY startup evidence.'
+Require $session 'STARTED-AND-EXITED-EVIDENCE-RECONCILED' 'Evidence-reconciled live launches must not be downgraded solely because process polling missed them.'
 Require $core "Equals\('END'" 'Quiet listener must use END as the finalization command.'
 Require $session "Equals\('SENT'" 'Cleanup must be gated on explicit SENT confirmation.'
 Require $session 'SESSION ENDED CLEANLY' 'Successful confirmed cleanup must expose the canonical clean-ended state.'
@@ -76,6 +83,37 @@ Require $cleanRoom '\bSENT\b' 'Clean-room policy must document confirmation-gate
 Require $contract 'ONE COMMAND OR ONE \.CMD LAUNCHER' 'Canonical attended-test contract must retain one-action entry.'
 
 . $corePath
+
+if (-not ('BiologyAttendedBlockingReaderFixture' -as [type])) {
+    Add-Type -TypeDefinition @'
+using System.IO;
+using System.Threading;
+
+public sealed class BiologyAttendedBlockingReaderFixture : TextReader
+{
+    private readonly ManualResetEventSlim _started = new ManualResetEventSlim(false);
+    private readonly ManualResetEventSlim _released = new ManualResetEventSlim(false);
+    private string _line;
+
+    public bool ReadStarted { get { return _started.IsSet; } }
+    public bool Released { get { return _released.IsSet; } }
+
+    public void Release(string line)
+    {
+        _line = line;
+        _released.Set();
+    }
+
+    public override string ReadLine()
+    {
+        _started.Set();
+        _released.Wait();
+        return _line;
+    }
+}
+'@
+}
+
 $temp = Join-Path ([IO.Path]::GetTempPath()) ('biology-attended-session-test-' + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Force -Path $temp | Out-Null
 try {
@@ -87,7 +125,7 @@ try {
     Write-FixtureFile $game 'mods\Biology\info.json' '{"name":"Biology"}'.Replace('\"','"') | Out-Null
     Write-FixtureFile $game 'engine\config\base\scripts.ini' '[Scripts]' | Out-Null
     Write-FixtureFile $game 'r6\config\cybercmd\scc.toml' 'scriptsBlobPath = "{game_dir}\r6\cache\modded\scripts.bin"'.Replace('\"','"') | Out-Null
-    Write-FixtureFile $game 'r6\cache\modded\scripts.bin' 'compiled-v1' | Out-Null
+    $blobPath = Write-FixtureFile $game 'r6\cache\modded\scripts.bin' 'compiled-v1'
     Write-FixtureFile $game 'r6\cache\modded\scripts.bin.ts' 'timestamp-v1' | Out-Null
     $logPath = Write-FixtureFile $game 'r6\logs\redscript_rCURRENT.log' "baseline`r`n"
     $modsPath = Write-FixtureFile $game 'r6\cache\modded\mods.json' '{"mods":["Biology"]}'.Replace('\"','"')
@@ -97,6 +135,8 @@ try {
     $before = Get-BiologyAttendedSnapshot $game
     Assert-True ([string]$before.installedReceipt.sourceRevision -eq ('1'*40)) 'Snapshot did not retain exact installed source revision.'
     Assert-True ($null -ne $before.configuredRedscriptOutput) 'Snapshot did not resolve configured REDscript output.'
+    Start-Sleep -Milliseconds 20
+    [IO.File]::WriteAllText($blobPath,'compiled-v2',[Text.UTF8Encoding]::new($false))
     Add-Content -LiteralPath $logPath -Value 'startup failure signal fixture' -Encoding utf8
     [IO.File]::WriteAllText($modsPath,'{"mods":["Biology"],"session":2}'.Replace('\"','"'),[Text.UTF8Encoding]::new($false))
     $after = Get-BiologyAttendedSnapshot $game
@@ -118,6 +158,33 @@ try {
     Assert-True ($quick -eq 'STARTED-AND-EXITED-QUICKLY') 'Immediate-exit lifecycle classification regressed.'
     Assert-True ($missing -eq 'NOT-OBSERVED') 'Never-launched lifecycle classification regressed.'
 
+    $missingListener = [pscustomobject]@{ endedUtc=[DateTime]::UtcNow.ToString('o'); classification='NOT-OBSERVED'; events=@() }
+    $reconciled = Resolve-BiologyAttendedLaunchResult -ListenerResult $missingListener -Before $before -After $after -StartupDiagnostics ([pscustomobject]@{logs=@()})
+    Assert-True ([string]$reconciled.classification -eq 'STARTED-AND-EXITED-EVIDENCE-RECONCILED') 'Bounded post-READY REDscript evidence did not reconcile a missed direct process observation.'
+    Assert-True ([string]$reconciled.classificationBasis -eq 'bounded-post-ready-startup-evidence') 'Reconciled launch did not record its bounded-evidence basis.'
+    Assert-True ([bool]$reconciled.startupEvidence.provesStartup) 'Reconciled launch did not retain the startup-evidence proof assessment.'
+
+    $unreconciled = Resolve-BiologyAttendedLaunchResult -ListenerResult $missingListener -Before $after -After $after -StartupDiagnostics ([pscustomobject]@{logs=@()})
+    Assert-True ([string]$unreconciled.classification -eq 'NOT-OBSERVED') 'Listener inferred a launch without bounded post-READY startup evidence.'
+
+    # Regression for the attended failure: input remains pending while the game process
+    # appears and disappears. The listener must continue polling during the blocked read.
+    $blockingReader = [BiologyAttendedBlockingReaderFixture]::new()
+    $pollState = [pscustomobject]@{ polls=0; sawPending=$false }
+    $processProvider = {
+        $pollState.polls = [int]$pollState.polls + 1
+        if ($blockingReader.ReadStarted -and -not $blockingReader.Released) { $pollState.sawPending = $true }
+        if ([int]$pollState.polls -eq 6 -and -not $blockingReader.Released) { $blockingReader.Release('END') }
+        if ([int]$pollState.polls -in @(2,3)) { return [pscustomobject]@{ Id=4242 } }
+        return @()
+    }
+    $observedWhilePending = Invoke-BiologyAttendedQuietListener -PollMilliseconds 5 -InputReader $blockingReader -ProcessProvider $processProvider
+    Assert-True ([bool]$pollState.sawPending) 'Regression fixture never proved that console input was still pending during process polling.'
+    Assert-True (@($observedWhilePending.events | Where-Object event -eq 'START-OBSERVED').Count -eq 1) 'Listener missed process appearance while console input remained pending.'
+    Assert-True (@($observedWhilePending.events | Where-Object event -eq 'EXIT-OBSERVED').Count -eq 1) 'Listener missed process disappearance while console input remained pending.'
+    Assert-True ([int](@($observedWhilePending.events | Where-Object event -eq 'START-OBSERVED')[0].pid) -eq 4242) 'Listener recorded the wrong process id in the pending-input regression.'
+    Assert-True ([string]$observedWhilePending.classification -eq 'STARTED-AND-EXITED-QUICKLY') 'Pending-input regression did not classify the simulated short process lifecycle.'
+
     $bundle = Join-Path $temp 'Biology-Operator-Evidence-attended-fixture.zip'
     $recordData = [pscustomobject]@{
         game=[ordered]@{productVersion='fixture';redmodProductVersion='fixture';gameRoot=$game}
@@ -136,4 +203,4 @@ try {
     if (Test-Path -LiteralPath $temp) { Remove-Item -LiteralPath $temp -Recurse -Force }
 }
 
-Write-Host 'PASS: W15.3 one-command attended session is exact-source-aware, listener-driven, startup-failure-durable, one-bundle, SENT-gated, W15.2-cleanup-reusing, and CMD-thin.'
+Write-Host 'PASS: attended session is exact-source-aware, nonblocking-listener-driven, process-observation-regressed, bounded-evidence-reconciling, startup-failure-durable, one-bundle, SENT-gated, W15.2-cleanup-reusing, and CMD-thin.'

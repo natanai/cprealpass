@@ -1,6 +1,31 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+# Console.In is a synchronized TextReader. Its ReadLineAsync implementation may execute
+# synchronously, which would block this runspace and starve the process polling loop.
+# Keep the blocking line read on a CLR worker thread so the listener can continue polling.
+if (-not ('BiologyAttendedConsoleLineReader' -as [type])) {
+    Add-Type -TypeDefinition @'
+using System;
+using System.IO;
+using System.Threading.Tasks;
+
+public static class BiologyAttendedConsoleLineReader
+{
+    public static Task<string> ReadLineOffThread(TextReader reader)
+    {
+        if (reader == null) throw new ArgumentNullException(nameof(reader));
+        return Task.Run(() => reader.ReadLine());
+    }
+}
+'@
+}
+
+function Start-BiologyAttendedConsoleLineRead([IO.TextReader]$Reader) {
+    if ($null -eq $Reader) { throw 'Attended listener input reader is unavailable.' }
+    return [BiologyAttendedConsoleLineReader]::ReadLineOffThread($Reader)
+}
+
 function Get-BiologyAttendedSha256([string]$Path) {
     return (Get-FileHash -Algorithm SHA256 -LiteralPath $Path).Hash.ToUpperInvariant()
 }
@@ -227,26 +252,46 @@ function Compare-BiologyAttendedSnapshots($Before,$After) {
     }
 }
 
-function Add-BiologyAttendedProcessObservation([Collections.Generic.List[object]]$Events,[hashtable]$Seen,[hashtable]$Active) {
+function Get-BiologyAttendedObservedProcesses([scriptblock]$ProcessProvider = $null) {
+    if ($null -ne $ProcessProvider) { return @(& $ProcessProvider) }
+    return @(Get-Process -Name 'Cyberpunk2077' -ErrorAction SilentlyContinue)
+}
+
+function Add-BiologyAttendedProcessObservation(
+    [Collections.Generic.List[object]]$Events,
+    [hashtable]$Seen,
+    [hashtable]$Active,
+    [scriptblock]$ProcessProvider = $null
+) {
     $now = [DateTime]::UtcNow
     $current = @{}
-    foreach ($process in @(Get-Process -Name 'Cyberpunk2077' -ErrorAction SilentlyContinue)) {
-        $pid = [int]$process.Id
-        $current[$pid] = $true
-        if (-not $Seen.ContainsKey($pid)) {
-            $Seen[$pid] = $now
-            $Active[$pid] = $now
-            $Events.Add([pscustomobject]@{ event='START-OBSERVED'; pid=$pid; observedUtc=$now.ToString('o') })
-        } elseif (-not $Active.ContainsKey($pid)) {
-            $Active[$pid] = $now
+    foreach ($process in @(Get-BiologyAttendedObservedProcesses -ProcessProvider $ProcessProvider)) {
+        if ($null -eq $process) { continue }
+        if ($process -is [int] -or $process -is [long]) {
+            $processId = [int]$process
+        } elseif ($process.PSObject.Properties.Name -contains 'Id') {
+            $processId = [int]$process.Id
+        } elseif ($process.PSObject.Properties.Name -contains 'pid') {
+            $processId = [int]$process.pid
+        } else {
+            throw 'Attended process provider returned an item without a process id.'
+        }
+
+        $current[$processId] = $true
+        if (-not $Seen.ContainsKey($processId)) {
+            $Seen[$processId] = $now
+            $Active[$processId] = $now
+            $Events.Add([pscustomobject]@{ event='START-OBSERVED'; pid=$processId; observedUtc=$now.ToString('o') })
+        } elseif (-not $Active.ContainsKey($processId)) {
+            $Active[$processId] = $now
         }
     }
-    foreach ($pid in @($Active.Keys)) {
-        if (-not $current.ContainsKey($pid)) {
-            $started = [DateTime]$Active[$pid]
+    foreach ($activeProcessId in @($Active.Keys)) {
+        if (-not $current.ContainsKey($activeProcessId)) {
+            $started = [DateTime]$Active[$activeProcessId]
             $duration = [Math]::Round(($now - $started).TotalSeconds,3)
-            $Events.Add([pscustomobject]@{ event='EXIT-OBSERVED'; pid=[int]$pid; observedUtc=$now.ToString('o'); observedDurationSeconds=$duration })
-            $Active.Remove($pid)
+            $Events.Add([pscustomobject]@{ event='EXIT-OBSERVED'; pid=[int]$activeProcessId; observedUtc=$now.ToString('o'); observedDurationSeconds=$duration })
+            $Active.Remove($activeProcessId)
         }
     }
 }
@@ -261,35 +306,136 @@ function Get-BiologyAttendedLaunchClassification([object[]]$Events) {
     return 'STARTED-AND-EXITED'
 }
 
-function Invoke-BiologyAttendedQuietListener([int]$PollMilliseconds = 250) {
+function Test-BiologyAttendedFileAdvancedAfterReady($BeforeState,$AfterState,[datetime]$ReadyUtc) {
+    if ($null -eq $AfterState -or -not [bool]$AfterState.exists) { return $false }
+
+    $afterWriteUtc = $null
+    try { $afterWriteUtc = [DateTime]::Parse([string]$AfterState.lastWriteUtc).ToUniversalTime() } catch { return $false }
+    if ($afterWriteUtc -lt $ReadyUtc.ToUniversalTime()) { return $false }
+
+    if ($null -eq $BeforeState -or -not [bool]$BeforeState.exists) { return $true }
+    if ([string]$BeforeState.sha256 -ne [string]$AfterState.sha256) { return $true }
+    if ($BeforeState.bytes -ne $AfterState.bytes) { return $true }
+    if ([string]$BeforeState.lastWriteUtc -ne [string]$AfterState.lastWriteUtc) { return $true }
+    return $false
+}
+
+function Get-BiologyAttendedStartupEvidenceAssessment($Before,$After,$StartupDiagnostics,$ReadyUtc = $null) {
+    $signals = [Collections.Generic.List[string]]::new()
+    if ($null -eq $Before -or $null -eq $After) {
+        return [pscustomobject]@{
+            provesStartup = $false
+            configuredOutputAdvanced = $false
+            redscriptLogAdvanced = $false
+            freshRuntimeLogCount = 0
+            signals = @()
+        }
+    }
+
+    $readyUtc = if ($null -ne $ReadyUtc) {
+        ([DateTime]$ReadyUtc).ToUniversalTime()
+    } else {
+        [DateTime]::Parse([string]$Before.capturedUtc).ToUniversalTime()
+    }
+    $configuredOutputAdvanced =
+        (Test-BiologyAttendedFileAdvancedAfterReady -BeforeState $Before.files.configuredBlob -AfterState $After.files.configuredBlob -ReadyUtc $readyUtc) -or
+        (Test-BiologyAttendedFileAdvancedAfterReady -BeforeState $Before.files.configuredBlobTimestamp -AfterState $After.files.configuredBlobTimestamp -ReadyUtc $readyUtc)
+    $redscriptLogAdvanced = Test-BiologyAttendedFileAdvancedAfterReady -BeforeState $Before.files.redscriptCurrentLog -AfterState $After.files.redscriptCurrentLog -ReadyUtc $readyUtc
+
+    $freshRuntimeLogCount = 0
+    if ($null -ne $StartupDiagnostics) {
+        foreach ($entry in @($StartupDiagnostics.logs)) {
+            if ($null -eq $entry -or $null -eq $entry.state -or [string]::IsNullOrWhiteSpace([string]$entry.state.lastWriteUtc)) { continue }
+            try {
+                if ([DateTime]::Parse([string]$entry.state.lastWriteUtc).ToUniversalTime() -ge $readyUtc) { $freshRuntimeLogCount++ }
+            } catch {}
+        }
+    }
+
+    if ($configuredOutputAdvanced) { $signals.Add('configured-redscript-output-advanced-after-ready') }
+    if ($redscriptLogAdvanced) { $signals.Add('redscript-current-log-advanced-after-ready') }
+    if ($freshRuntimeLogCount -gt 0) { $signals.Add('fresh-runtime-log-after-ready') }
+
+    # Do not infer launch from a lone timestamp/log mutation. Reconciliation requires the
+    # configured REDscript output to advance after READY plus an independent runtime-log signal.
+    $provesStartup = $configuredOutputAdvanced -and ($redscriptLogAdvanced -or $freshRuntimeLogCount -gt 0)
+    return [pscustomobject]@{
+        provesStartup = [bool]$provesStartup
+        configuredOutputAdvanced = [bool]$configuredOutputAdvanced
+        redscriptLogAdvanced = [bool]$redscriptLogAdvanced
+        freshRuntimeLogCount = [int]$freshRuntimeLogCount
+        signals = @($signals)
+    }
+}
+
+function Resolve-BiologyAttendedLaunchResult($ListenerResult,$Before,$After,$StartupDiagnostics) {
+    if ($null -eq $ListenerResult) { throw 'Attended listener result is unavailable.' }
+
+    $events = @($ListenerResult.events)
+    $classification = Get-BiologyAttendedLaunchClassification -Events $events
+    $basis = if ($classification -eq 'NOT-OBSERVED') { 'no-direct-process-observation' } else { 'direct-process-polling' }
+    $readyUtc = if ($ListenerResult.PSObject.Properties.Name -contains 'readyUtc' -and -not [string]::IsNullOrWhiteSpace([string]$ListenerResult.readyUtc)) {
+        [DateTime]::Parse([string]$ListenerResult.readyUtc).ToUniversalTime()
+    } else {
+        [DateTime]::Parse([string]$Before.capturedUtc).ToUniversalTime()
+    }
+    $startupEvidence = Get-BiologyAttendedStartupEvidenceAssessment -Before $Before -After $After -StartupDiagnostics $StartupDiagnostics -ReadyUtc $readyUtc
+    $endedWithoutProcess = $null -ne $After -and @($After.processes).Count -eq 0
+
+    if ($classification -eq 'NOT-OBSERVED' -and $endedWithoutProcess -and [bool]$startupEvidence.provesStartup) {
+        $classification = 'STARTED-AND-EXITED-EVIDENCE-RECONCILED'
+        $basis = 'bounded-post-ready-startup-evidence'
+    }
+
+    return [pscustomobject]@{
+        readyUtc = $readyUtc.ToString('o')
+        endedUtc = [string]$ListenerResult.endedUtc
+        classification = $classification
+        classificationBasis = $basis
+        events = $events
+        startupEvidence = $startupEvidence
+    }
+}
+
+function Invoke-BiologyAttendedQuietListener(
+    [int]$PollMilliseconds = 250,
+    [IO.TextReader]$InputReader = [Console]::In,
+    [scriptblock]$ProcessProvider = $null
+) {
+    if ($PollMilliseconds -lt 1) { throw 'Attended listener poll interval must be at least 1 millisecond.' }
+
     $events = [Collections.Generic.List[object]]::new()
     $seen = @{}
     $active = @{}
+    $readyUtc = [DateTime]::UtcNow
     Write-Host 'READY TO LAUNCH CYBERPUNK' -ForegroundColor Green
     Write-Host 'Listener active. Leave this window open.'
     Write-Host 'After you have exited the game, return here and type END.'
 
     while ($true) {
-        $inputTask = [Console]::In.ReadLineAsync()
+        # Console.In.ReadLineAsync is synchronous for standard input on supported .NET.
+        # Move the blocking read itself off this runspace; the main thread stays free to poll.
+        $inputTask = Start-BiologyAttendedConsoleLineRead -Reader $InputReader
         while (-not $inputTask.IsCompleted) {
-            Add-BiologyAttendedProcessObservation -Events $events -Seen $seen -Active $active
+            Add-BiologyAttendedProcessObservation -Events $events -Seen $seen -Active $active -ProcessProvider $ProcessProvider
             Start-Sleep -Milliseconds $PollMilliseconds
         }
-        Add-BiologyAttendedProcessObservation -Events $events -Seen $seen -Active $active
+        Add-BiologyAttendedProcessObservation -Events $events -Seen $seen -Active $active -ProcessProvider $ProcessProvider
         $command = [string]$inputTask.Result
         if (-not $command.Trim().Equals('END',[StringComparison]::OrdinalIgnoreCase)) {
             Write-Host 'Listener still active. Type END only after Cyberpunk has exited.'
             continue
         }
-        if (@(Get-Process -Name 'Cyberpunk2077' -ErrorAction SilentlyContinue).Count -gt 0) {
+        if (@(Get-BiologyAttendedObservedProcesses -ProcessProvider $ProcessProvider).Count -gt 0) {
             Write-Host 'Cyberpunk is still running. Close it, then type END again.' -ForegroundColor Yellow
             continue
         }
         break
     }
 
-    Add-BiologyAttendedProcessObservation -Events $events -Seen $seen -Active $active
+    Add-BiologyAttendedProcessObservation -Events $events -Seen $seen -Active $active -ProcessProvider $ProcessProvider
     return [pscustomobject]@{
+        readyUtc = $readyUtc.ToString('o')
         endedUtc = [DateTime]::UtcNow.ToString('o')
         classification = Get-BiologyAttendedLaunchClassification @($events)
         events = @($events)
