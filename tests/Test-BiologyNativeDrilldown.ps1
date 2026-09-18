@@ -30,7 +30,7 @@ foreach ($needle in @(
     'this.SetButtonHints(true, false);')) {
     Check ($shell.Contains($needle)) "Biology native drill-down entry contract missing: $needle"
 }
-Check ($shell.Contains('this.m_inventoryView.CRMountBiologyDetailInNativeRegion(nativeContent)')) 'Biology detail content is not injected into the native inventory-controller content subtree.'
+Check ($shell.Contains('this.crBiologyNativeContent = new inkVerticalPanel();')) 'Biology detail content is not retained for live native-region retry.'
 Check ($shell.Contains('this.m_inventoryView.CRMountBiologyDetailInNativeRegion(this.crBiologyNativeContent);')) 'Biology detail does not preserve its native content-region coordinate space at detail depth.'
 Check (-not $shell.Contains('this.m_inventoryView.GetRootWidget() as inkCompoundWidget')) 'Biology detail still mounts directly under the zero-margin inventory controller root.'
 Check (-not $shell.Contains('let nativeContentParent: ref<inkCompoundWidget> = inkCompoundRef.Get(this.m_inventoryViewAnchor) as inkCompoundWidget;')) 'Biology detail still uses the obsolete sibling mount under the inventory anchor.'

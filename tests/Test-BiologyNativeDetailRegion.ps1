@@ -62,14 +62,14 @@ Check ($followup.Contains('while i < parent.GetNumChildren()')) 'W02.4 native-pa
 Check ($followup.Contains('let child: wref<inkWidget> = parent.GetWidgetByIndex(i);')) 'W02.4 native-parent search does not use vanilla child traversal.'
 Check ($followup.Contains('if child == nativeRegion')) 'W02.4 native-parent search does not identify the actual virtual-grid child.'
 Check ($followup.Contains('target.Reparent(nativeParent, -1);')) 'W02.4 does not mount Biology beside the native virtual grid.'
-Check ($shell.Contains('this.m_inventoryView.CRMountBiologyDetailInNativeRegion(nativeContent)')) 'Biology creation does not use the native-parent mount.'
+Check ($shell.Contains('this.crBiologyNativeContent = new inkVerticalPanel();')) 'Biology detail panel is not retained independently of the initialization-time mount.'
 Check ($shell.Contains('this.m_inventoryView.CRMountBiologyDetailInNativeRegion(this.crBiologyNativeContent);')) 'Biology detail-time sync does not revalidate the native-parent mount.'
 Check (-not $shell.Contains('nativeContentParent = this.m_inventoryView.GetRootWidget() as inkCompoundWidget;')) 'Biology still mounts detail directly under the zero-margin inventory root.'
 
 # Re-read geometry at detail depth. If the native child cannot be resolved, fail closed
 # instead of making the telemetry visible at root/screen origin.
 Check ($shell.Contains('private final func CRSyncBiologyNativeContentLayout() -> Bool')) 'Biology lacks a detail-time native geometry refresh.'
-Check ($shell.Contains('let detailLayoutReady: Bool = !detail || this.CRSyncBiologyNativeContentLayout();')) 'Biology detail visibility is not gated on native geometry resolution.'
+Check ($shell.Contains('detailLayoutReady = this.CRSyncBiologyNativeContentLayout();')) 'Biology detail visibility is not retried/gated on native geometry resolution at detail depth.'
 Check ($shell.Contains('this.crBiologyNativeContent.SetVisible(detail && detailLayoutReady);')) 'Biology can still display detail when native layout resolution fails.'
 
 # Preserve W02.2 selected-system identity, native focus, Back, and stock Cyberware.

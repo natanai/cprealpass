@@ -14,7 +14,7 @@ $sync = Text 'BiologyModeSyncNative.reds'
 # zero-margin Fill lifecycle container while m_virtualGridContainer is nested under an
 # additional authored parent. Biology must mount beside that native child before copying
 # its LOCAL layout values; direct root parenting is the exact failure being repaired.
-Check ($shell.Contains('this.m_inventoryView.CRMountBiologyDetailInNativeRegion(nativeContent)')) 'Biology detail creation does not mount into the discovered native content parent.'
+Check ($shell.Contains('this.crBiologyNativeContent = new inkVerticalPanel();')) 'Biology detail creation does not retain a retryable native-content panel.'
 Check ($shell.Contains('this.m_inventoryView.CRMountBiologyDetailInNativeRegion(this.crBiologyNativeContent);')) 'Biology detail does not revalidate native-region placement at detail depth.'
 Check ($followup.Contains('target.Reparent(nativeParent, -1);')) 'Biology detail is not mounted as a sibling of the native virtual grid.'
 Check (-not $shell.Contains('nativeContentParent = this.m_inventoryView.GetRootWidget() as inkCompoundWidget;')) 'Biology detail still mounts directly under the zero-margin inventory root.'

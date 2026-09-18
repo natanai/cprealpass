@@ -48,7 +48,7 @@ Check ($followup.Contains('this.DisplayInventory(true);')) 'Biology detail does 
 Check ($followup.Contains('this.m_inventoryView.CRSetBiologyDetailSurface(true);')) 'Biology detail does not switch the native content controller into Biology presentation mode.'
 Check ($followup.Contains('this.AnimateMinigrids();')) 'Biology detail does not reuse native minigrid/detail positioning after the selected area is committed.'
 Check ($followup.Contains('inkVirtualCompoundRef.Get(this.m_virtualGridContainer)')) 'Biology is not suppressing the stock Cyberware item grid at its native controller boundary.'
-Check ($followup.Contains('virtualGrid.SetVisible(!active);')) 'Native Cyberware item-grid visibility is not restored symmetrically.'
+Check ($followup.Contains('virtualGrid.SetVisible(false);') -and $followup.Contains('virtualGrid.SetVisible(true);')) 'Native Cyberware item-grid visibility is not restored symmetrically.'
 Check ($followup.Contains('inkTextRef.SetVisible(this.m_labelPrefix, !active);') -and $followup.Contains('inkTextRef.SetVisible(this.m_labelSuffix, !active);')) 'Stock Cyberware filter labels are not restored symmetrically.'
 
 # The original Biology transition calls DollSelect before refreshing selected-system
