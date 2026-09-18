@@ -35,7 +35,15 @@ That serialized resource proved:
 
 Source: https://github.com/natanai/cprealpass/pull/93
 
-What PR #93 did **not** preserve as redistribution-safe durable evidence is the semantic role/name/path of the direct parent that owns `m_virtualGridContainer`. That is the remaining resource-level question for W17.1.
+The owner's retained W02.4 probe report was recovered from their File Library during W17.1. It adds a concrete handle-level chain that PR #93 did not preserve:
+
+- `inventoryViewAnchor -> HandleRefId 141` in the library instance (package copy `632`);
+- that widget is named `Inventory` and carries `RipperdocInventoryController`;
+- controller refs are label prefix/suffix `208/210`, scrollbar `215`, and virtual grid `221` (package copy `727/730/737/746`);
+- the actual `virtualGridContainer` widget `221` declares `parentWidget -> HandleRefId 219`; package copy `746 -> 743`;
+- `Inventory` itself is attached to the larger Ripperdoc root (`parentWidget 4`; package copy `412`).
+
+The retained report is still intentionally insufficient to classify the missing wrapper: its bounded needle windows do not include the object definitions for handles `219/743`. W17.1 therefore narrows the remaining resource-level question to the type/name/layout/clip/child-order semantics of those exact nodes rather than guessing from nearby widgets or handle numbering.
 
 ### B. Native controller behavior — authoritative for ownership/lifecycle, cross-checked against installed 2.31 symbols
 
@@ -165,11 +173,13 @@ RipperDocGameController                         [PROVEN screen/orchestration aut
    │  └─ RipperdocSelectorController            [PROVEN detail category navigation]
    └─ inventoryViewAnchor
       └─ RipperdocInventoryController root      [PROVEN selected-detail lifecycle/opacity]
-         └─ authored nested layout subtree      [CURRENT 2.31 exact path not yet durable]
-            ├─ m_virtualGridContainer            [PROVEN virtualized item-list child]
-            ├─ m_scrollBarContainer              [PROVEN inventory chrome]
-            ├─ m_labelPrefix / m_labelSuffix     [PROVEN inventory chrome]
-            └─ actual parent/clip/layout chain   [REFERENCE PACKAGE REQUIRED]
+         └─ authored nested layout subtree      [PARTIALLY RECOVERED]
+            ├─ Handle 219 / 743                  [PROVEN direct grid parent; type/role unresolved]
+            │  └─ m_virtualGridContainer 221/746 [PROVEN virtualized item-list child]
+            ├─ m_scrollBarContainer 215/737      [PROVEN inventory chrome]
+            ├─ m_labelPrefix 208/727              [PROVEN inventory chrome]
+            ├─ m_labelSuffix 210/730              [PROVEN inventory chrome]
+            └─ 219/743 ancestor/clip/layout role [REFERENCE PACKAGE REQUIRED]
 ```
 
 The unresolved line is intentionally not filled with a guessed wrapper name.
@@ -202,16 +212,15 @@ W17.1 requested on #105 a targeted Biology/Cyberware UI bundle containing the cu
 Request comment:
 https://github.com/natanai/cprealpass/issues/105#issuecomment-5736788293
 
-The decisive derived result needed back is:
+The retained W02.4 report already supplies the handle chain through `virtualGridContainer`, so the decisive derived result needed back is now narrowly:
 
 ```text
-inventoryViewAnchor
--> RipperdocInventoryController root
--> each ancestor between root and virtualGridContainer
--> direct parent of virtualGridContainer
+Handle 219 / package-copy 743
+-> exact widget type and authored name
+-> own parent(s) back to Inventory
 -> sibling set and child order
--> per-ancestor clipping / size rule / desired size / visibility / opacity
--> direct-parent semantic role
+-> clipping / fit-to-content / size rule / size / visibility / opacity
+-> whether this node is item-grid/scroll-specific or a reusable content host
 ```
 
 Private game/mod payload remains outside Git. Only this derived mapping should be committed.
@@ -229,7 +238,7 @@ Already source/live-proven before T005:
 - virtual-grid sizing must not be copied onto an ordinary Biology panel.
 
 Must be source-proven before T005:
-- exact current-2.31 wrapper chain from inventory root to virtual grid;
+- exact current-2.31 definition and ancestor chain for the proven grid parent handles `219/743`;
 - which node is the authored reusable content/layout host, if any;
 - relevant clip/mask/child-order constraints;
 - the minimal Biology-owned mount seam derived from that host.
