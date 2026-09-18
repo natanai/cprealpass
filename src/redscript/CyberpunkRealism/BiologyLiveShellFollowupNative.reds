@@ -11,6 +11,15 @@ import CyberpunkRealism.Settings.*
 @addField(RipperdocInventoryController)
 private let crBiologyDetailSurfaceActive: Bool;
 
+@addField(RipperdocInventoryController)
+private let crBiologyVirtualGridLayoutPolicyCaptured: Bool;
+
+@addField(RipperdocInventoryController)
+private let crBiologyVirtualGridAffectsLayoutWhenHidden: Bool;
+
+@addField(RipperdocInventoryController)
+private let crBiologyDetailMountStatus: String;
+
 // Biology reuses the native Ripperdoc inventory/detail surface, but its detail view
 // must not expose the Cyberware item grid underneath Biology telemetry/actions.
 // Keep the stock controller/root authoritative and suppress only its item-list chrome
@@ -21,7 +30,24 @@ public final func CRSetBiologyDetailSurface(active: Bool) -> Void {
   this.crBiologyDetailSurfaceActive = active;
   let virtualGrid: ref<inkWidget> = inkVirtualCompoundRef.Get(this.m_virtualGridContainer);
   if IsDefined(virtualGrid) {
-    virtualGrid.SetVisible(!active);
+    // W02.5: Biology is mounted beside this native child and borrows its local
+    // geometry. Keep the hidden stock grid participating in layout while Biology
+    // detail is active so hiding Cyberware chrome cannot collapse the native region
+    // that Biology itself depends on. Restore the stock policy exactly on exit.
+    if active {
+      if !this.crBiologyVirtualGridLayoutPolicyCaptured {
+        this.crBiologyVirtualGridAffectsLayoutWhenHidden = virtualGrid.GetAffectsLayoutWhenHidden();
+        this.crBiologyVirtualGridLayoutPolicyCaptured = true;
+      }
+      virtualGrid.SetAffectsLayoutWhenHidden(true);
+      virtualGrid.SetVisible(false);
+    } else {
+      virtualGrid.SetVisible(true);
+      if this.crBiologyVirtualGridLayoutPolicyCaptured {
+        virtualGrid.SetAffectsLayoutWhenHidden(this.crBiologyVirtualGridAffectsLayoutWhenHidden);
+        this.crBiologyVirtualGridLayoutPolicyCaptured = false;
+      }
+    }
   }
   inkWidgetRef.SetVisible(this.m_scrollBarContainer, !active);
   inkTextRef.SetVisible(this.m_labelPrefix, !active);
@@ -71,23 +97,58 @@ private final func CRFindBiologyDetailRegionParent(parent: ref<inkCompoundWidget
 }
 
 @addMethod(RipperdocInventoryController)
+private final func CRBiologyDirectParentOwnsWidget(parent: ref<inkCompoundWidget>, target: ref<inkWidget>) -> Bool {
+  if !IsDefined(parent) || !IsDefined(target) {
+    return false;
+  }
+
+  let i: Int32 = 0;
+  while i < parent.GetNumChildren() {
+    let child: wref<inkWidget> = parent.GetWidgetByIndex(i);
+    if IsDefined(child) && child == target {
+      return true;
+    }
+    i += 1;
+  }
+  return false;
+}
+
+@addMethod(RipperdocInventoryController)
+public final func CRBiologyDetailMountStatus() -> String {
+  return this.crBiologyDetailMountStatus;
+}
+
+@addMethod(RipperdocInventoryController)
 public final func CRMountBiologyDetailInNativeRegion(target: ref<inkWidget>) -> Bool {
   if !IsDefined(target) {
+    this.crBiologyDetailMountStatus = "TARGET_MISSING";
     return false;
   }
 
   let nativeRegion: ref<inkWidget> = inkVirtualCompoundRef.Get(this.m_virtualGridContainer);
+  if !IsDefined(nativeRegion) {
+    this.crBiologyDetailMountStatus = "GRID_MISSING";
+    return false;
+  }
+
   let inventoryRoot: ref<inkCompoundWidget> = this.GetRootWidget() as inkCompoundWidget;
-  if !IsDefined(nativeRegion) || !IsDefined(inventoryRoot) {
+  if !IsDefined(inventoryRoot) {
+    this.crBiologyDetailMountStatus = "ROOT_MISSING";
     return false;
   }
 
   let nativeParent: ref<inkCompoundWidget> = this.CRFindBiologyDetailRegionParent(inventoryRoot, nativeRegion);
   if !IsDefined(nativeParent) {
+    this.crBiologyDetailMountStatus = "PARENT_MISSING";
     return false;
   }
 
   target.Reparent(nativeParent, -1);
+  if !this.CRBiologyDirectParentOwnsWidget(nativeParent, target) {
+    this.crBiologyDetailMountStatus = "REPARENT_UNCONFIRMED";
+    return false;
+  }
+
   target.SetAnchor(nativeRegion.GetAnchor());
   target.SetAnchorPoint(nativeRegion.GetAnchorPoint());
   target.SetHAlign(nativeRegion.GetHAlign());
@@ -98,6 +159,8 @@ public final func CRMountBiologyDetailInNativeRegion(target: ref<inkWidget>) -> 
   target.SetSizeCoefficient(nativeRegion.GetSizeCoefficient());
   target.SetSize(nativeRegion.GetSize());
   target.SetTranslation(nativeRegion.GetTranslation());
+  target.SetAffectsLayoutWhenHidden(true);
+  this.crBiologyDetailMountStatus = "MOUNTED";
   return true;
 }
 
