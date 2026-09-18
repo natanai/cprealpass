@@ -10,14 +10,17 @@ $shell = Text 'BiologyCyberwareShell.reds'
 $followup = Text 'BiologyLiveShellFollowupNative.reds'
 $sync = Text 'BiologyModeSyncNative.reds'
 
-# W02.3 must compose Biology telemetry inside the native RipperdocInventoryController
-# root. Parenting beside the controller under m_inventoryViewAnchor reproduces the live
-# top-left placement because that sibling does not inherit the authored inventory region.
-Check ($shell.Contains('nativeContentParent = this.m_inventoryView.GetRootWidget() as inkCompoundWidget;')) 'Biology detail is not parented inside the native inventory controller root.'
+# T002 plus the attended 2.31 INK probe proved the inventory-controller root is a
+# zero-margin Fill lifecycle container while m_virtualGridContainer is nested under an
+# additional authored parent. Biology must mount beside that native child before copying
+# its LOCAL layout values; direct root parenting is the exact failure being repaired.
+Check ($shell.Contains('this.m_inventoryView.CRMountBiologyDetailInNativeRegion(nativeContent)')) 'Biology detail creation does not mount into the discovered native content parent.'
+Check ($shell.Contains('this.m_inventoryView.CRMountBiologyDetailInNativeRegion(this.crBiologyNativeContent);')) 'Biology detail does not revalidate native-region placement at detail depth.'
+Check ($followup.Contains('target.Reparent(nativeParent, -1);')) 'Biology detail is not mounted as a sibling of the native virtual grid.'
+Check (-not $shell.Contains('nativeContentParent = this.m_inventoryView.GetRootWidget() as inkCompoundWidget;')) 'Biology detail still mounts directly under the zero-margin inventory root.'
 Check (-not $shell.Contains('let nativeContentParent: ref<inkCompoundWidget> = inkCompoundRef.Get(this.m_inventoryViewAnchor) as inkCompoundWidget;')) 'Biology detail still mounts beside the native inventory controller under m_inventoryViewAnchor.'
-Check ($shell.Contains('this.crBiologyNativeContent.Reparent(nativeContentParent, -1);')) 'Biology detail is not attached to the resolved native content root.'
-Check ($shell.Contains('this.crBiologyNativeContent.SetAnchor(inkEAnchor.TopLeft);')) 'Biology detail lacks an explicit anchor inside the native content region.'
-Check ($shell.Contains('this.crBiologyNativeContent.SetHAlign(inkEHorizontalAlign.Left);') -and $shell.Contains('this.crBiologyNativeContent.SetVAlign(inkEVerticalAlign.Top);')) 'Biology detail alignment is not deterministic inside the native content region.'
+Check (-not $shell.Contains('this.crBiologyNativeContent.SetAnchor(inkEAnchor.TopLeft);')) 'Biology detail still forces a screen-origin TopLeft anchor.'
+Check (-not $shell.Contains('this.crBiologyNativeContent.SetMargin(inkMargin(0.0, 42.0, 0.0, 0.0));')) 'Biology detail still uses the disproven W02.3 fixed root-relative offset.'
 
 # Functional hierarchy only: title, summary, metric rows, then contextual actions.
 # Broad visual redesign remains deliberately deferred.
@@ -39,4 +42,4 @@ Check ($followup.Contains('CRSetBiologyDetailSurface(false);') -and $followup.Co
 Check ($shell.Contains('inkWidgetRef.SetVisible(this.m_gridContainer, true);') -and $shell.Contains('this.UpdateTitle(this.GetAreaHeader(area));')) 'Stock Cyberware category contents/titles are no longer restorable.'
 Check (-not $shell.Contains('CRBodyRuntime.Get().')) 'W02.3 layout work absorbed body-runtime authority.'
 
-Write-Host "PASS: $script:checks W02.3 Biology native detail layout checks."
+Write-Host "PASS: $script:checks W02.4 Biology native detail layout checks."

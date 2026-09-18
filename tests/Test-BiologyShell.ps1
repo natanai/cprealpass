@@ -49,9 +49,12 @@ Check ($shell.Contains('this.UpdateTitle(this.GetAreaHeader(area))')) 'Cyberware
 Check ($shell.Contains('this.DollHover(evt.area)')) 'Biology overview hover does not reuse native doll hover.'
 
 # Drill-down must adopt native Cyberware depth/state rather than a parallel custom
-# detail mode. W02.3 mounts custom content inside the RipperdocInventoryController
-# root so it inherits the native detail region's authored geometry and opacity.
-Check ($shell.Contains('this.m_inventoryView.GetRootWidget() as inkCompoundWidget')) 'Biology detail is not mounted inside the native Cyberware inventory controller root.'
+# detail mode. W02.4 keeps content inside RipperdocInventoryController's subtree, but
+# mounts it beside m_virtualGridContainer so native local geometry retains its authored
+# parent coordinate space instead of being reinterpreted at the controller root.
+Check ($shell.Contains('this.m_inventoryView.CRMountBiologyDetailInNativeRegion(nativeContent)')) 'Biology detail is not mounted in the native Cyberware inventory content subtree.'
+Check ($shell.Contains('this.m_inventoryView.CRMountBiologyDetailInNativeRegion(this.crBiologyNativeContent);')) 'Biology detail does not revalidate its native content-region mount.'
+Check (-not $shell.Contains('this.m_inventoryView.GetRootWidget() as inkCompoundWidget')) 'Biology detail still mounts directly under the zero-margin native inventory controller root.'
 Check (-not $shell.Contains('let nativeContentParent: ref<inkCompoundWidget> = inkCompoundRef.Get(this.m_inventoryViewAnchor) as inkCompoundWidget;')) 'Biology detail still mounts beside the native inventory controller.'
 Check ($shell.Contains('this.m_filterMode = RipperdocModes.Item;')) 'Biology detail does not adopt native Ripperdoc Item depth.'
 Check ($shell.Contains('this.m_isInventoryOpen = true;')) 'Biology detail does not adopt the native detail-open marker.'

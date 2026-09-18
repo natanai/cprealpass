@@ -1,0 +1,84 @@
+$ErrorActionPreference = 'Stop'
+. "$PSScriptRoot\..\tools\Common.ps1"
+$project = Get-ProjectRoot
+$source = Join-Path $project 'src\redscript\CyberpunkRealism'
+$script:checks = 0
+function Check($condition,[string]$message) { if (-not $condition) { throw $message }; $script:checks++ }
+function Text([string]$name) { return Get-Content -Raw -LiteralPath (Join-Path $source $name) }
+
+$shell = Text 'BiologyCyberwareShell.reds'
+$followup = Text 'BiologyLiveShellFollowupNative.reds'
+$sync = Text 'BiologyModeSyncNative.reds'
+
+$probe = Get-Content -Raw -LiteralPath (Join-Path $project 'tools\Probe-BiologyDetailNativeRegion.ps1')
+
+# T002 and the attended local probes disproved a guessed static INK path. Discover the
+# installed 2.31 resource and identify it by its native controller/widget-ref contract.
+Check ($probe.Contains("Get-ChildItem -LiteralPath `$archiveRoot -Recurse -File -Filter '*.archive'")) 'W02.4 probe does not enumerate installed archives recursively.'
+Check ($probe.Contains("`$candidateRegex = '(?i)\.inkwidget$'")) 'W02.4 probe does not discover installed INK resources generically.'
+Check ($probe.Contains('Sort-Object Priority, Path, RelativeArchive')) 'W02.4 probe does not prioritize likely Ripperdoc/Cyberware/fullscreen candidates.'
+Check ($probe.Contains("'RipperDocGameController'")) 'W02.4 probe does not identify the live target by RipperDocGameController.'
+Check ($probe.Contains("'RipperdocInventoryController'")) 'W02.4 probe does not identify the live target by RipperdocInventoryController.'
+Check ($probe.Contains("'inventoryViewAnchor'")) 'W02.4 probe does not require the native inventory anchor contract.'
+Check ($probe.Contains("'virtualGridContainer'")) 'W02.4 probe does not require the native virtual-grid contract.'
+Check ($probe.Contains('TARGET_RESOURCE_DISCOVERED=')) 'W02.4 probe does not report the discovered live target resource.'
+Check (-not $probe.Contains("`$targetResource = 'gameplay\gui\fullscreen\ripperdoc\ripperdoc.inkwidget'")) 'W02.4 probe still hard-codes the disproven legacy Ripperdoc resource path.'
+Check (-not $probe.Contains("`$targetResourceHash = '13533725445430520621'")) 'W02.4 probe still hard-codes the disproven legacy Ripperdoc resource hash.'
+Check (-not $probe.Contains("`$cli,'archive',`$archiveRoot,'--list'")) 'W02.4 probe still passes the non-recursive archive root to WolvenKit archive.'
+Check (-not $probe.Contains("`$cli,'unbundle',`$archiveRoot")) 'W02.4 probe still passes the non-recursive archive root to WolvenKit unbundle.'
+
+# T002 disproved the W02.3 assumption that RipperdocInventoryController's root owns
+# authored content placement. The stock item region is the editable virtual-grid child.
+Check ($followup.Contains('inkVirtualCompoundRef.Get(this.m_virtualGridContainer)')) 'W02.4 does not resolve the native Cyberware item-region widget.'
+Check ($followup.Contains('public final func CRMountBiologyDetailInNativeRegion(target: ref<inkWidget>) -> Bool')) 'W02.4 native detail-region mount adapter is missing.'
+
+# Biology placement must be copied from native authored geometry, not reconstructed
+# from a new absolute screen offset. Cover every layout property that can materially
+# move/size the panel inside the native controller root.
+foreach ($needle in @(
+    'target.SetAnchor(nativeRegion.GetAnchor());',
+    'target.SetAnchorPoint(nativeRegion.GetAnchorPoint());',
+    'target.SetHAlign(nativeRegion.GetHAlign());',
+    'target.SetVAlign(nativeRegion.GetVAlign());',
+    'target.SetMargin(nativeRegion.GetMargin());',
+    'target.SetPadding(nativeRegion.GetPadding());',
+    'target.SetSizeRule(nativeRegion.GetSizeRule());',
+    'target.SetSizeCoefficient(nativeRegion.GetSizeCoefficient());',
+    'target.SetSize(nativeRegion.GetSize());',
+    'target.SetTranslation(nativeRegion.GetTranslation());')) {
+    Check ($followup.Contains($needle)) "Native detail-region geometry copy missing: $needle"
+}
+
+Check (-not $shell.Contains('this.crBiologyNativeContent.SetAnchor(inkEAnchor.TopLeft);')) 'Biology detail still forces the screen-origin TopLeft anchor.'
+Check (-not $shell.Contains('this.crBiologyNativeContent.SetMargin(inkMargin(0.0, 42.0, 0.0, 0.0));')) 'Biology detail still carries the disproven W02.3 fixed top-left margin.'
+Check (-not $shell.Contains('this.crBiologyNativeContent.SetSize(Vector2(720.0, 0.0));')) 'Biology detail still overrides the native content-region size with the W02.3 fixed width.'
+
+# The attended 2.31 INK proves m_virtualGridContainer is nested. Biology must locate
+# the compound that directly owns that widget and become its sibling, so copied local
+# geometry is interpreted in the same native coordinate space while the inventory root
+# still remains the visibility/opacity ancestor.
+Check ($followup.Contains('private final func CRFindBiologyDetailRegionParent(parent: ref<inkCompoundWidget>, nativeRegion: ref<inkWidget>) -> ref<inkCompoundWidget>')) 'W02.4 does not search the native inventory subtree for the virtual-grid parent.'
+Check ($followup.Contains('while i < parent.GetNumChildren()')) 'W02.4 native-parent search does not traverse compound children.'
+Check ($followup.Contains('let child: wref<inkWidget> = parent.GetWidgetByIndex(i);')) 'W02.4 native-parent search does not use vanilla child traversal.'
+Check ($followup.Contains('if child == nativeRegion')) 'W02.4 native-parent search does not identify the actual virtual-grid child.'
+Check ($followup.Contains('target.Reparent(nativeParent, -1);')) 'W02.4 does not mount Biology beside the native virtual grid.'
+Check ($shell.Contains('this.m_inventoryView.CRMountBiologyDetailInNativeRegion(nativeContent)')) 'Biology creation does not use the native-parent mount.'
+Check ($shell.Contains('this.m_inventoryView.CRMountBiologyDetailInNativeRegion(this.crBiologyNativeContent);')) 'Biology detail-time sync does not revalidate the native-parent mount.'
+Check (-not $shell.Contains('nativeContentParent = this.m_inventoryView.GetRootWidget() as inkCompoundWidget;')) 'Biology still mounts detail directly under the zero-margin inventory root.'
+
+# Re-read geometry at detail depth. If the native child cannot be resolved, fail closed
+# instead of making the telemetry visible at root/screen origin.
+Check ($shell.Contains('private final func CRSyncBiologyNativeContentLayout() -> Bool')) 'Biology lacks a detail-time native geometry refresh.'
+Check ($shell.Contains('let detailLayoutReady: Bool = !detail || this.CRSyncBiologyNativeContentLayout();')) 'Biology detail visibility is not gated on native geometry resolution.'
+Check ($shell.Contains('this.crBiologyNativeContent.SetVisible(detail && detailLayoutReady);')) 'Biology can still display detail when native layout resolution fails.'
+
+# Preserve W02.2 selected-system identity, native focus, Back, and stock Cyberware.
+Check ($shell.Contains('this.crBiologySelectedArea = area;') -and $shell.Contains('this.m_filterArea = area;')) 'W02.4 disturbed selected-system identity.'
+Check ($followup.Contains('Equals(area, this.crBiologySelectedArea)') -and $followup.Contains('this.DisplayInventory(true);')) 'W02.4 disturbed correct-anatomy native detail entry.'
+Check ($shell.Contains('CRBiologySessionPresentation.Detail(player.GetGame(), this.crBiologySelectedArea)')) 'W02.4 disturbed authoritative detail binding.'
+Check ($sync.Contains('if this.CRHandleBiologyBack()')) 'W02.4 disturbed native Back routing.'
+Check ($followup.Contains('CRSetBiologyDetailSurface(false);') -and $followup.Contains('this.DisplayInventory(false);')) 'W02.4 disturbed native detail close/restoration.'
+Check ($shell.Contains('inkWidgetRef.SetVisible(this.m_gridContainer, true);')) 'W02.4 disturbed stock Cyberware restoration.'
+Check (-not $followup.Contains('CRBodyRuntime')) 'W02.4 layout adapter absorbed runtime authority.'
+
+Write-Host "PASS: $script:checks W02.4 native-detail-region geometry checks."

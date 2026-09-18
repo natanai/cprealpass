@@ -153,9 +153,9 @@ private let crBiologyOverview: ref<inkVerticalPanel>;
 @addField(RipperDocGameController)
 private let crBiologyOverviewText: ref<inkText>;
 
-// Biology detail is mounted inside the stock inventory/content anchor. This is the
-// same spatial region Cyberware uses after selecting a body category; Biology swaps
-// the contents, not the shell/navigation state.
+// Biology detail stays inside the stock inventory-controller subtree for native
+// visibility/depth lifecycle. W02.4 mounts it beside m_virtualGridContainer so its
+// local geometry is interpreted in the exact same authored native coordinate space.
 @addField(RipperDocGameController)
 private let crBiologyNativeContent: ref<inkVerticalPanel>;
 
@@ -300,26 +300,21 @@ private final func CRCreateBiologyShell() -> Void {
   this.crBiologyOverviewText = this.CRShellWrappedText("", n"CRBiologyOverviewText", 18, 760.0);
   this.crBiologyOverviewText.Reparent(this.crBiologyOverview, -1);
 
-  // Mount Biology inside RipperdocInventoryController's own root, not beside that
-  // controller under m_inventoryViewAnchor. The native root carries the stock detail
-  // region's authored position/size and opacity transition; inheriting that geometry
-  // keeps Biology telemetry in the same composed content area as Cyberware.
-  let nativeContentParent: ref<inkCompoundWidget>;
+  // Keep Biology inside RipperdocInventoryController's native subtree so stock
+  // visibility/opacity remains authoritative. The attended 2.31 INK evidence showed
+  // m_virtualGridContainer is nested below an additional native parent. Mount beside
+  // that child rather than under the controller root, then copy its LOCAL geometry.
   if IsDefined(this.m_inventoryView) {
-    nativeContentParent = this.m_inventoryView.GetRootWidget() as inkCompoundWidget;
-  }
-  if IsDefined(nativeContentParent) {
-    this.crBiologyNativeContent = new inkVerticalPanel();
-    this.crBiologyNativeContent.SetName(n"CRBiologyNativeContent");
-    this.crBiologyNativeContent.SetAnchor(inkEAnchor.TopLeft);
-    this.crBiologyNativeContent.SetHAlign(inkEHorizontalAlign.Left);
-    this.crBiologyNativeContent.SetVAlign(inkEVerticalAlign.Top);
-    this.crBiologyNativeContent.SetMargin(inkMargin(0.0, 42.0, 0.0, 0.0));
-    this.crBiologyNativeContent.SetChildMargin(inkMargin(0.0, 4.0, 0.0, 4.0));
-    this.crBiologyNativeContent.SetSize(Vector2(720.0, 0.0));
-    this.crBiologyNativeContent.SetVisible(false);
-    this.crBiologyNativeContent.Reparent(nativeContentParent, -1);
+    let nativeContent: ref<inkVerticalPanel> = new inkVerticalPanel();
+    nativeContent.SetName(n"CRBiologyNativeContent");
+    nativeContent.SetChildMargin(inkMargin(0.0, 4.0, 0.0, 4.0));
+    nativeContent.SetVisible(false);
 
+    if this.m_inventoryView.CRMountBiologyDetailInNativeRegion(nativeContent) {
+      this.crBiologyNativeContent = nativeContent;
+    }
+  }
+  if IsDefined(this.crBiologyNativeContent) {
     this.crBiologyDetailTitle = this.CRShellText("", n"CRBiologyDetailHeading", 30);
     this.crBiologyDetailTitle.SetMargin(inkMargin(0.0, 0.0, 0.0, 2.0));
     this.crBiologyDetailTitle.Reparent(this.crBiologyNativeContent, -1);
@@ -497,13 +492,24 @@ public final func CRSyncBiologyModeSwitcher() -> Void {
 }
 
 @addMethod(RipperDocGameController)
+private final func CRSyncBiologyNativeContentLayout() -> Bool {
+  return IsDefined(this.m_inventoryView)
+    && IsDefined(this.crBiologyNativeContent)
+    && this.m_inventoryView.CRMountBiologyDetailInNativeRegion(this.crBiologyNativeContent);
+}
+
+@addMethod(RipperDocGameController)
 private final func CRSyncBiologyContentVisibility() -> Void {
   let detail: Bool = this.CRBiologyInDetail();
   if IsDefined(this.crBiologyOverview) {
     this.crBiologyOverview.SetVisible(this.crBiologyShellMode && !detail);
   }
   if IsDefined(this.crBiologyNativeContent) {
-    this.crBiologyNativeContent.SetVisible(detail);
+    // Re-read the native child geometry at detail depth. This catches authored layout
+    // changes that settle after initialization and fails closed instead of falling
+    // back to the inventory-controller/screen origin.
+    let detailLayoutReady: Bool = !detail || this.CRSyncBiologyNativeContentLayout();
+    this.crBiologyNativeContent.SetVisible(detail && detailLayoutReady);
   }
   if this.crBiologyShellMode {
     inkCompoundRef.SetVisible(this.m_selectorAnchor, detail);
