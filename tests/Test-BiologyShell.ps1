@@ -52,7 +52,7 @@ Check ($shell.Contains('this.DollHover(evt.area)')) 'Biology overview hover does
 # detail mode. W02.4 keeps content inside RipperdocInventoryController's subtree, but
 # mounts it beside m_virtualGridContainer so native local geometry retains its authored
 # parent coordinate space instead of being reinterpreted at the controller root.
-Check ($shell.Contains('this.m_inventoryView.CRMountBiologyDetailInNativeRegion(nativeContent)')) 'Biology detail is not mounted in the native Cyberware inventory content subtree.'
+Check ($shell.Contains('this.crBiologyNativeContent = new inkVerticalPanel();')) 'Biology detail does not retain its native-content subtree across an initialization-time mount miss.'
 Check ($shell.Contains('this.m_inventoryView.CRMountBiologyDetailInNativeRegion(this.crBiologyNativeContent);')) 'Biology detail does not revalidate its native content-region mount.'
 Check (-not $shell.Contains('this.m_inventoryView.GetRootWidget() as inkCompoundWidget')) 'Biology detail still mounts directly under the zero-margin native inventory controller root.'
 Check (-not $shell.Contains('let nativeContentParent: ref<inkCompoundWidget> = inkCompoundRef.Get(this.m_inventoryViewAnchor) as inkCompoundWidget;')) 'Biology detail still mounts beside the native inventory controller.'
