@@ -175,7 +175,7 @@ The current quest tracker script exposes semantic editable regions rather than o
 - `m_QuestTitle : inkTextRef` — the native visible quest title;
 - `m_ObjectiveContainer : inkCompoundRef` — the native compound where objective rows are removed, enumerated and spawned.
 
-W03.5 therefore resolves the Biology quest host from `m_questTrackerContainer`, with `m_ObjectiveContainer` as a fail-closed semantic fallback. Chrome is created as a child of that region. Biology no longer composes quest chrome against `QuestTrackerGameController.GetRootCompoundWidget()`.
+W03.5 resolves the Biology quest host from `m_questTrackerContainer` only. `m_ObjectiveContainer` remains important structural evidence, but it is deliberately **not** used as a mount fallback because vanilla enumerates that child list and assumes its entries are `QuestTrackerObjectiveLogicController` instances. If the tracker container cannot be resolved as a compound widget, Biology fails closed and records that fact in the bounded trace rather than inserting a foreign child into the objective list. Biology no longer composes quest chrome against `QuestTrackerGameController.GetRootCompoundWidget()`.
 
 The native quest title is tinted through its own `m_QuestTitle` widget while E3 is ON and its captured native tint is restored when E3 is OFF. Journal data, objective spawning/state, visibility, timers and animations remain native.
 

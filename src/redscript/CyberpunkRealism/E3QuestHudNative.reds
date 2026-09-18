@@ -2,9 +2,10 @@
 //
 // W03.5 stops assuming QuestTrackerGameController.GetRootCompoundWidget() shares the
 // authored coordinate space of the visible right-hand tracker. Current 2.31 script
-// authority identifies m_questTrackerContainer as the semantic quest-stack container
-// and m_ObjectiveContainer as its objective-list fallback. Biology mounts only inside
-// those native content regions; no guessed global translation is used.
+// authority identifies m_questTrackerContainer as the semantic quest-stack container.
+// m_ObjectiveContainer is deliberately NOT a mount fallback: vanilla iterates that list
+// and assumes every child is a QuestTrackerObjectiveLogicController. Biology mounts only
+// in the tracker container and fails closed if that host cannot be resolved.
 module CyberpunkRealism.Presentation
 
 import CyberpunkRealism.Settings.*
@@ -35,12 +36,6 @@ private final func CRResolveBiologyE3QuestHost() -> ref<inkCompoundWidget> {
   let host: ref<inkCompoundWidget> = inkWidgetRef.Get(this.m_questTrackerContainer) as inkCompoundWidget;
   if IsDefined(host) {
     this.crBiologyE3QuestHostName = "m_questTrackerContainer";
-    return host;
-  }
-
-  host = inkCompoundRef.Get(this.m_ObjectiveContainer);
-  if IsDefined(host) {
-    this.crBiologyE3QuestHostName = "m_ObjectiveContainer";
     return host;
   }
 
