@@ -15,8 +15,8 @@ This snapshot exists because a substantial recent parent-chat segment disappeare
 - Parent: **P01.2**, active integration/orchestration.
 - Latest completed numbered attended session: **T003**, exact tested source `67593bfbb12b4a6ebcec7042066d48b4f5fac427`; see `docs/test-runs/TEST-LEDGER.md` and the completed T003 record.
 - T003 operational listener/session path: PASS; direct process start/exit observation remains healthy.
-- T003 Biology: selected anatomy drill-down still works, but W02.4 detail telemetry disappears entirely -> **W02.5 / issue #96**.
-- T003 E3: old reticle-corner artifact appears fixed and framed ambient nameplate is live; however `WEAPON // AMMO` chrome is detached and the right-hand quest tracker remains untreated -> **W03.5 / issue #97**.
+- T003 Biology: selected anatomy drill-down still works, but W02.4 detail telemetry disappears entirely -> **W02.5 / issue #96**, `agent/biology-detail-live-visibility-followup`, handoff `docs/handoffs/W02.5-BIOLOGY-DETAIL-LIVE-VISIBILITY.md`, initial handoff head `4eb5dd21f774f8a3c948e3035566f40f00931935`.
+- T003 E3: old reticle-corner artifact appears fixed and framed ambient nameplate is live; however `WEAPON // AMMO` chrome is detached and the right-hand quest tracker remains untreated -> **W03.5 / issue #97**, `agent/e3-native-content-region-followup`, handoff `docs/handoffs/W03.5-E3-NATIVE-CONTENT-REGIONS.md`, initial handoff head `6513b62b9d5278927e0e5eee57e887b8d14913ef`.
 - Body-runtime persistence issue #41 remains open for a separate live WAIT/save-reload/SLEEP acceptance boundary; T003 intentionally did not exercise it.
 - The next unallocated live test ID is **T004**.
 - Reuse the existing W02 and W03 worker conversations for W02.5 and W03.5 unless either conversation has become too long/unusable. Do not recreate T003 because of missing chat history.
