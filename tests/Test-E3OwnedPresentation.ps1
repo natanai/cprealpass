@@ -55,8 +55,8 @@ Check (-not $source.interaction.Contains('@replaceMethod') -and -not $source.int
 
 # T002 reticle artifact: exact owner identified and deleted.
 Check ($source.crosshair.Contains('T002 conclusively identified the previous CRBiologyE3FocusFrame as the reticle artifact')) 'W03.4 source does not preserve the concrete reticle-artifact diagnosis.'
-Check (-not $source.crosshair.Contains('CRBiologyE3FocusFrame')) 'The centered 112x112 reticle artifact canvas still exists.'
-Check (-not $source.crosshair.Contains('CRBiologyE3FocusTLH') -and -not $source.crosshair.Contains('CRBiologyE3FocusBRH')) 'Reticle corner geometry survived W03.4.'
+Check (-not $source.crosshair.Contains('private let crBiologyE3FocusFrame') -and -not $source.crosshair.Contains('SetName(n"CRBiologyE3FocusFrame")')) 'The centered 112x112 reticle artifact canvas still exists as runtime geometry.'
+Check (-not $source.crosshair.Contains('n"CRBiologyE3FocusTLH"') -and -not $source.crosshair.Contains('n"CRBiologyE3FocusBRH"')) 'Reticle corner widget geometry survived W03.4.'
 Check ($source.crosshair.Contains('@wrapMethod(gameuiCrosshairBaseGameController)')) 'W03.4 crosshair treatment is not attached to the native crosshair hierarchy.'
 Check ($source.crosshair.Contains('crBiologyE3NativeCrosshairTint') -and $source.crosshair.Contains('GetTintColor()')) 'W03.4 crosshair treatment cannot restore the native tint on E3 OFF.'
 Check ($source.crosshair.Contains('OnCrosshairStateChange')) 'W03.4 crosshair tint is not refreshed through native crosshair state changes.'
