@@ -15,8 +15,8 @@ This snapshot exists because a substantial recent parent-chat segment disappeare
 - Parent: **P01.2**, active integration/orchestration.
 - Latest completed numbered attended session: **T004**, exact tested source `ffa6f64d6c837146d032aaab565d671c932453a2`; see `docs/test-runs/TEST-LEDGER.md` and the completed T004 record.
 - T004 operational listener/session: PASS; direct polling handled two observed launch/exit cycles during the same attended hold.
-- T004 Biology: selector breadcrumb proves `BIOLOGY LAYOUT: MOUNTED`, but title/summary/metrics remain invisible. Diagnosis is now post-mount -> next **W02.6** under parent issue #39.
-- T004 E3: quest semantic host is reached but treatment remains tiny/partial; weapon detached-center regression is repaired; lower-left hotkey/quickslot chrome is visibly mis-composed -> next **W03.6** under parent issue #40.
+- T004 Biology: selector breadcrumb proves `BIOLOGY LAYOUT: MOUNTED`, but title/summary/metrics remain invisible. Diagnosis is now post-mount -> **W02.6 / issue #101**, `agent/biology-detail-post-mount-visibility`, handoff `docs/handoffs/W02.6-BIOLOGY-DETAIL-POST-MOUNT.md`, initial handoff head `0a4b1f65e3e09fce097235981a8b10030c3e1018`.
+- T004 E3: quest semantic host is reached but treatment remains tiny/partial; weapon detached-center regression is repaired; lower-left hotkey/quickslot chrome is visibly mis-composed -> **W03.6 / issue #102**, `agent/e3-quest-hotkey-content-region`, handoff `docs/handoffs/W03.6-E3-QUEST-HOTKEY-CONTENT-REGIONS.md`, initial handoff head `25a4cf6ffea73779f66fdee6daee334f88e3278b`.
 - Ambient framed nameplates remain live and the old two-corner reticle artifact remains absent; KEEP both.
 - Body-runtime persistence issue #41 remains open for a separate live WAIT/save-reload/SLEEP acceptance boundary; T004 intentionally did not exercise it.
 - The next unallocated live test ID is **T005**.
