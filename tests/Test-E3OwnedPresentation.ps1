@@ -74,6 +74,7 @@ Check (-not $source.quest.Contains('return NULL;') -and -not $source.weapon.Cont
 Check (-not $source.quest.Contains('crBiologyE3QuestLastEnabled != enabled') -and -not $source.weapon.Contains('crBiologyE3WeaponLastEnabled != enabled')) 'W03.5 reintroduced Bool inequality syntax that the exact redscript 0.5.31 compile rejects.'
 Check ($source.hotkey.Contains('@wrapMethod(HotkeysWidgetController)')) 'Quick-slot/D-pad lost its native controller seam.'
 Check ($source.hotkey.Contains('CRResolveBiologyE3HotkeyHost') -and $source.hotkey.Contains('this.m_dpadHintsPanel')) 'W03.6 hotkey chrome is not bound to the native m_dpadHintsPanel semantic content host.'
+Check ($source.hotkey.Contains('inkCompoundRef.Get(this.m_dpadHintsPanel) as inkCompoundWidget')) 'W03.6 hotkey semantic host must explicitly narrow inkCompoundRef.Get() from wref<inkWidget> to inkCompoundWidget for redscript 0.5.31.'
 Check ($source.hotkey.Contains('CreateFillShell(this.crBiologyE3HotkeyHost')) 'W03.6 hotkey chrome still mounts against the controller root instead of the semantic content host.'
 Check (-not $source.hotkey.Contains('this.GetRootCompoundWidget()')) 'W03.6 hotkey repair regressed to controller-root composition.'
 Check (-not $source.hotkey.Contains('SetTranslation(')) 'W03.6 hotkey repair introduced an arbitrary screenshot-derived/global translation.'

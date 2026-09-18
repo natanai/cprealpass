@@ -26,7 +26,7 @@ private let crBiologyE3HotkeyLastEnabled: Bool;
 
 @addMethod(HotkeysWidgetController)
 private final func CRResolveBiologyE3HotkeyHost() -> ref<inkCompoundWidget> {
-  let host: ref<inkCompoundWidget> = inkCompoundRef.Get(this.m_dpadHintsPanel);
+  let host: ref<inkCompoundWidget> = inkCompoundRef.Get(this.m_dpadHintsPanel) as inkCompoundWidget;
   if IsDefined(host) {
     this.crBiologyE3HotkeyHostName = "m_dpadHintsPanel";
     return host;
