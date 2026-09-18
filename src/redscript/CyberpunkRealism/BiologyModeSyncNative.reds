@@ -110,6 +110,29 @@ public final func CRSetBiologyDetailMode(active: Bool) -> Void {
 }
 
 @addMethod(RipperdocSelectorController)
+public final func CRSetBiologyLayoutDiagnostic(status: String) -> Void {
+  if !this.crBiologyDetailMode {
+    return;
+  }
+
+  let index: Int32 = this.m_indicatorIndex;
+  if index < 0 || index >= ArraySize(this.m_names) {
+    return;
+  }
+
+  if Equals(status, "") || Equals(status, "MOUNTED") {
+    inkTextRef.SetText(this.m_label, this.m_names[index]);
+    return;
+  }
+
+  // Bounded attended evidence: T003 proved this native selector remains visible even
+  // when Biology detail disappears. Use that existing label only on layout failure so
+  // the next integrated capture distinguishes mount-resolution failure from a panel
+  // that mounted successfully but is still clipped/hidden. No new overlay is created.
+  inkTextRef.SetText(this.m_label, this.m_names[index] + "  [BIOLOGY LAYOUT: " + status + "]");
+}
+
+@addMethod(RipperdocSelectorController)
 private final func CRNextBiologySelectorIndex(current: Int32, toNext: Bool) -> Int32 {
   let count: Int32 = ArraySize(this.m_indicatorAnchors);
   if count <= 0 {
