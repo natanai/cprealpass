@@ -1,112 +1,169 @@
 // Biology-owned E3-inspired ambient NPC nameplate treatment.
 //
-// Native identity, projection, distance and root visibility remain authoritative.
-// Biology renders the resolved identity inside the native nameplate projection root so
-// it can use a clean red/minimal treatment without permanently mutating CDPR widget
-// tint/state. Scanner mode is not required for the baseline; richer native identity
-// acquired later by scanning still wins through NPCNextToTheCrosshair.name.
+// W03.3 fixes the actual native visibility bottleneck proven by the attended result and
+// the 2.31 controller source: NpcNameplateGameController hides the entire projected
+// root when NameplateVisualsLogicController.IsAnyElementVisible() is false. W03.2 only
+// tried to reveal m_displayName after that decision, so ordinary civilians stayed
+// hidden; after scan the native root could become visible and expose the oversized
+// Biology child as the observed small red reticle-adjacent rectangle.
+//
+// This implementation reuses native name text/frame instead of an oversized custom
+// projected canvas, counts legitimate Biology ambient identity as a visible element,
+// and preserves native projection/dialog/distance/hide-name authority.
 module CyberpunkRealism.Presentation
 
 import CyberpunkRealism.Settings.*
 
 @addField(NameplateVisualsLogicController)
-private let crBiologyE3NameplateFrame: ref<inkCanvas>;
-
-@addField(NameplateVisualsLogicController)
-private let crBiologyE3NameText: ref<inkText>;
-
-@addField(NameplateVisualsLogicController)
 private let crBiologyE3LastPuppet: wref<GameObject>;
 
+@addField(NameplateVisualsLogicController)
+private let crBiologyE3LastData: NPCNextToTheCrosshair;
+
+@addField(NameplateVisualsLogicController)
+private let crBiologyE3NativeNameTint: HDRColor;
+
+@addField(NameplateVisualsLogicController)
+private let crBiologyE3NativeFrameTint: HDRColor;
+
+@addField(NameplateVisualsLogicController)
+private let crBiologyE3HasNativeNameTint: Bool;
+
+@addField(NameplateVisualsLogicController)
+private let crBiologyE3HasNativeFrameTint: Bool;
+
+@addField(NameplateVisualsLogicController)
+private let crBiologyE3LoggedVisualData: Bool;
+
+@addField(NpcNameplateGameController)
+private let crBiologyE3LoggedProjection: Bool;
+
 @addMethod(NameplateVisualsLogicController)
-private final func CRCreateBiologyE3Nameplate() -> Void {
-  if IsDefined(this.crBiologyE3NameplateFrame) {
-    return;
-  }
-
-  let root: ref<inkCompoundWidget> = this.GetRootCompoundWidget();
-  if !IsDefined(root) {
-    return;
-  }
-
-  this.crBiologyE3NameplateFrame = new inkCanvas();
-  this.crBiologyE3NameplateFrame.SetName(n"CRBiologyE3NameplateFrame");
-  this.crBiologyE3NameplateFrame.SetAnchor(inkEAnchor.Centered);
-  this.crBiologyE3NameplateFrame.SetHAlign(inkEHorizontalAlign.Center);
-  this.crBiologyE3NameplateFrame.SetVAlign(inkEVerticalAlign.Center);
-  this.crBiologyE3NameplateFrame.SetSize(Vector2(440.0, 82.0));
-  this.crBiologyE3NameplateFrame.Reparent(root, -1);
-
-  CRBiologyE3Primitives.AddPlate(this.crBiologyE3NameplateFrame, n"CRBiologyE3NameplateWash", 0.0, 0.0, 392.0, 60.0, 0.065);
-  CRBiologyE3Primitives.AddRect(this.crBiologyE3NameplateFrame, n"CRBiologyE3NameplateTop", 0.0, 0.0, 328.0, 3.0, 0.98);
-  CRBiologyE3Primitives.AddRect(this.crBiologyE3NameplateFrame, n"CRBiologyE3NameplateLeft", 0.0, 0.0, 3.0, 60.0, 0.98);
-  CRBiologyE3Primitives.AddRect(this.crBiologyE3NameplateFrame, n"CRBiologyE3NameplateBottom", 22.0, 57.0, 224.0, 3.0, 0.78);
-  CRBiologyE3Primitives.AddRect(this.crBiologyE3NameplateFrame, n"CRBiologyE3NameplateAccent", 340.0, 0.0, 26.0, 8.0, 1.00);
-  CRBiologyE3Primitives.AddRect(this.crBiologyE3NameplateFrame, n"CRBiologyE3NameplateTick", 378.0, 0.0, 14.0, 3.0, 0.58);
-
-  this.crBiologyE3NameText = CRBiologyE3Primitives.AddLabel(this.crBiologyE3NameplateFrame, n"CRBiologyE3NameText", "", 18.0, 12.0, 18, 0.98);
-  this.crBiologyE3NameText.SetLetterCase(textLetterCase.UpperCase);
+private final func CRBiologyE3ShouldShowAmbientName(puppet: wref<GameObject>, data: NPCNextToTheCrosshair) -> Bool {
+  return IsDefined(puppet)
+    && CRRealpassSettings.UseE3FirstPersonHudVisuals(puppet.GetGame())
+    && IsStringValid(this.CRResolveBiologyAmbientName(puppet, data));
 }
 
 @addMethod(NameplateVisualsLogicController)
-public final func CRRefreshBiologyE3Nameplate(puppet: wref<GameObject>, data: NPCNextToTheCrosshair) -> Void {
+private final func CRCaptureBiologyE3NativeNameStyle() -> Void {
+  let nativeNameText: ref<inkText> = inkWidgetRef.Get(this.m_nameTextMain) as inkText;
+  let nativeNameFrame: ref<inkWidget> = inkWidgetRef.Get(this.m_nameFrame);
+
+  if IsDefined(nativeNameText) {
+    this.crBiologyE3NativeNameTint = nativeNameText.GetTintColor();
+    this.crBiologyE3HasNativeNameTint = true;
+  }
+  if IsDefined(nativeNameFrame) {
+    this.crBiologyE3NativeFrameTint = nativeNameFrame.GetTintColor();
+    this.crBiologyE3HasNativeFrameTint = true;
+  }
+}
+
+@addMethod(NameplateVisualsLogicController)
+private final func CRRefreshBiologyE3Nameplate(puppet: wref<GameObject>, data: NPCNextToTheCrosshair) -> Void {
   let e3Enabled: Bool = IsDefined(puppet) && CRRealpassSettings.UseE3FirstPersonHudVisuals(puppet.GetGame());
   let name: String = this.CRResolveBiologyAmbientName(puppet, data);
   let showName: Bool = e3Enabled && IsStringValid(name);
-  let nativeNameText: ref<inkText>;
-  let nativeNameFrame: ref<inkBorder>;
+  let nativeNameText: ref<inkText> = inkWidgetRef.Get(this.m_nameTextMain) as inkText;
+  let nativeNameFrame: ref<inkWidget> = inkWidgetRef.Get(this.m_nameFrame);
 
-  this.CRCreateBiologyE3Nameplate();
-  if IsDefined(this.crBiologyE3NameplateFrame) {
-    this.crBiologyE3NameplateFrame.SetVisible(showName);
-  }
-  if IsDefined(this.crBiologyE3NameText) && showName {
-    this.crBiologyE3NameText.SetText(name);
+  if !e3Enabled {
+    if IsDefined(nativeNameText) && this.crBiologyE3HasNativeNameTint {
+      nativeNameText.SetTintColor(this.crBiologyE3NativeNameTint);
+    }
+    if IsDefined(nativeNameFrame) && this.crBiologyE3HasNativeFrameTint {
+      nativeNameFrame.SetTintColor(this.crBiologyE3NativeFrameTint);
+    }
+    return;
   }
 
-  // While E3 is ON, suppress only the native identity text/frame that would duplicate
-  // our Biology-owned treatment. When E3 is OFF we do not touch them; wrapped native
-  // visibility/state logic has already run and therefore restores the retail surface.
-  if showName {
-    nativeNameText = inkWidgetRef.Get(this.m_nameTextMain) as inkText;
-    if IsDefined(nativeNameText) {
-      nativeNameText.SetVisible(false);
-    }
-    nativeNameFrame = inkWidgetRef.Get(this.m_nameFrame) as inkBorder;
-    if IsDefined(nativeNameFrame) {
-      nativeNameFrame.SetVisible(false);
-    }
+  if showName && IsDefined(nativeNameText) {
+    nativeNameText.SetText(name);
+    nativeNameText.SetLetterCase(textLetterCase.UpperCase);
+    nativeNameText.SetFontStyle(n"Medium");
+    nativeNameText.SetTintColor(CRBiologyE3Primitives.Red());
+    nativeNameText.SetVisible(true);
+  }
+
+  if showName && IsDefined(nativeNameFrame) {
+    nativeNameFrame.SetTintColor(CRBiologyE3Primitives.Red());
+    nativeNameFrame.SetOpacity(0.82);
+    nativeNameFrame.SetVisible(true);
   }
 }
 
 @wrapMethod(NameplateVisualsLogicController)
 public final func SetVisualData(puppet: ref<GameObject>, const incomingData: script_ref<NPCNextToTheCrosshair>, opt isNewNpc: Bool) -> Void {
   let data: NPCNextToTheCrosshair = Deref(incomingData);
+  let ambientName: String = this.CRResolveBiologyAmbientName(puppet, data);
+
+  if !IsStringValid(data.name) && IsStringValid(ambientName) {
+    data.name = ambientName;
+  }
+
   this.crBiologyE3LastPuppet = puppet;
-  wrappedMethod(puppet, incomingData, isNewNpc);
-  this.CRRefreshBiologyE3Nameplate(puppet, data);
+  this.crBiologyE3LastData = data;
+
+  if !this.crBiologyE3LoggedVisualData {
+    CRBiologyE3Primitives.Trace("NameplateVisualsLogicController.SetVisualData");
+    this.crBiologyE3LoggedVisualData = true;
+  }
+
+  wrappedMethod(puppet, data, isNewNpc);
 }
 
-// Native SetVisualData calls SetElementVisibility after it applies text/state. W03.1
-// refreshed too early, so native visibility logic could hide the civilian name again.
-// Refresh once more after that exact 2.31 lifecycle seam without replacing its logic.
 @wrapMethod(NameplateVisualsLogicController)
 private func SetElementVisibility(const incomingData: script_ref<NPCNextToTheCrosshair>) -> Void {
-  let data: NPCNextToTheCrosshair = Deref(incomingData);
+  this.crBiologyE3LastData = Deref(incomingData);
   wrappedMethod(incomingData);
-  this.CRRefreshBiologyE3Nameplate(this.crBiologyE3LastPuppet, data);
+  this.CRCaptureBiologyE3NativeNameStyle();
+  this.CRRefreshBiologyE3Nameplate(this.crBiologyE3LastPuppet, this.crBiologyE3LastData);
+}
+
+@wrapMethod(NameplateVisualsLogicController)
+public final func IsAnyElementVisible() -> Bool {
+  if wrappedMethod() {
+    return true;
+  }
+  return this.CRBiologyE3ShouldShowAmbientName(this.crBiologyE3LastPuppet, this.crBiologyE3LastData);
+}
+
+@addMethod(NpcNameplateGameController)
+private final func CRRefreshBiologyE3NameplateRange() -> Void {
+  if CRRealpassSettings.UseE3FirstPersonHudVisuals(GetGameInstance()) {
+    this.c_DisplayRangeNotAggressive = 10.0;
+    this.c_MaxDisplayRangeNotAggressive = 20.0;
+  } else {
+    this.c_DisplayRangeNotAggressive = SNameplateRangesData.GetDisplayRangeNotAggressive();
+    this.c_MaxDisplayRangeNotAggressive = SNameplateRangesData.GetMaxDisplayRangeNotAggressive();
+  }
+}
+
+@wrapMethod(NpcNameplateGameController)
+protected cb func OnInitialize() -> Bool {
+  let result: Bool = wrappedMethod();
+  CRBiologyE3Primitives.Trace("NpcNameplateGameController.OnInitialize");
+  this.CRRefreshBiologyE3NameplateRange();
+  return result;
 }
 
 @wrapMethod(NpcNameplateGameController)
 protected cb func OnScreenProjectionUpdate(projections: ref<gameuiScreenProjectionsData>) -> Void {
+  this.CRRefreshBiologyE3NameplateRange();
   wrappedMethod(projections);
+
+  if !this.crBiologyE3LoggedProjection {
+    CRBiologyE3Primitives.Trace("NpcNameplateGameController.OnScreenProjectionUpdate");
+    this.crBiologyE3LoggedProjection = true;
+  }
 
   if !CRRealpassSettings.UseE3FirstPersonHudVisuals(GetGameInstance()) {
     return;
   }
 
   if this.GetNameplateVisible() {
-    if IsDefined(this.m_bufferedCharacterNamePlateRecord) && this.m_bufferedCharacterNamePlateRecord.Enabled() {
+    if !IsDefined(this.m_bufferedCharacterNamePlateRecord) || this.m_bufferedCharacterNamePlateRecord.Enabled() {
       inkWidgetRef.SetVisible(this.m_displayName, true);
     }
   }

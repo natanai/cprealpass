@@ -1,13 +1,42 @@
 // Shared project-original INK primitives for Biology's E3-inspired presentation.
 //
-// These helpers create Biology-owned, reversible widgets only. They deliberately do
-// not mutate the tint/state of native HUD roots: E3 OFF is therefore a clean yield
-// rather than an attempted reconstruction of CDPR-authored widget state.
+// W03.3 deliberately sizes owned presentation from the native controller root instead
+// of guessing large fixed canvases inside controller-local layouts. This keeps the
+// treatment visible without replacing CDPR controller logic and makes E3 OFF a clean
+// yield: owned shells are hidden rather than native roots being repainted.
 module CyberpunkRealism.Presentation
 
 public class CRBiologyE3Primitives extends IScriptable {
   public static func Red() -> HDRColor {
     return new HDRColor(1.1761, 0.1400, 0.1200, 1.0);
+  }
+
+  public static func Trace(hook: String) -> Void {
+    LogChannel(n"DEBUG", "[Biology:E3] " + hook);
+  }
+
+  public static func CreateFillShell(parent: ref<inkCompoundWidget>, name: CName) -> ref<inkCanvas> {
+    let shell: ref<inkCanvas> = new inkCanvas();
+    if !IsDefined(parent) {
+      return shell;
+    }
+    shell.SetName(name);
+    shell.SetAnchor(inkEAnchor.Fill);
+    shell.Reparent(parent, -1);
+    return shell;
+  }
+
+  public static func AddFillWash(parent: ref<inkCompoundWidget>, name: CName, opacity: Float) -> ref<inkRectangle> {
+    let widget: ref<inkRectangle> = new inkRectangle();
+    if !IsDefined(parent) {
+      return widget;
+    }
+    widget.SetName(name);
+    widget.SetAnchor(inkEAnchor.Fill);
+    widget.SetTintColor(CRBiologyE3Primitives.Red());
+    widget.SetOpacity(opacity);
+    widget.Reparent(parent, 0);
+    return widget;
   }
 
   public static func AddRect(parent: ref<inkCompoundWidget>, name: CName, x: Float, y: Float, width: Float, height: Float, opacity: Float) -> ref<inkRectangle> {
@@ -22,10 +51,6 @@ public class CRBiologyE3Primitives extends IScriptable {
     widget.SetOpacity(opacity);
     widget.Reparent(parent, -1);
     return widget;
-  }
-
-  public static func AddPlate(parent: ref<inkCompoundWidget>, name: CName, x: Float, y: Float, width: Float, height: Float, opacity: Float) -> ref<inkRectangle> {
-    return CRBiologyE3Primitives.AddRect(parent, name, x, y, width, height, opacity);
   }
 
   public static func AddLabel(parent: ref<inkCompoundWidget>, name: CName, text: String, x: Float, y: Float, size: Int32, opacity: Float) -> ref<inkText> {
