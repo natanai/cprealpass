@@ -20,6 +20,12 @@ private let crBiologyVirtualGridAffectsLayoutWhenHidden: Bool;
 @addField(RipperdocInventoryController)
 private let crBiologyDetailMountStatus: String;
 
+@addField(RipperdocInventoryController)
+private let crBiologyDetailNativeParent: wref<inkCompoundWidget>;
+
+@addField(RipperdocInventoryController)
+private let crBiologyDetailNativeRegion: wref<inkWidget>;
+
 // Biology reuses the native Ripperdoc inventory/detail surface, but its detail view
 // must not expose the Cyberware item grid underneath Biology telemetry/actions.
 // Keep the stock controller/root authoritative and suppress only its item-list chrome
@@ -119,6 +125,116 @@ public final func CRBiologyDetailMountStatus() -> String {
 }
 
 @addMethod(RipperdocInventoryController)
+private final func CRBiologyChildIndex(parent: ref<inkCompoundWidget>, target: ref<inkWidget>) -> Int32 {
+  if !IsDefined(parent) || !IsDefined(target) {
+    return -1;
+  }
+
+  let i: Int32 = 0;
+  while i < parent.GetNumChildren() {
+    let child: wref<inkWidget> = parent.GetWidgetByIndex(i);
+    if IsDefined(child) && child == target {
+      return i;
+    }
+    i += 1;
+  }
+  return -1;
+}
+
+@addMethod(RipperdocInventoryController)
+public final func CRBiologyDetailPostMountStatus(target: ref<inkWidget>) -> String {
+  if !IsDefined(target) {
+    return this.crBiologyDetailMountStatus + " T?";
+  }
+
+  let inventoryRoot: ref<inkWidget> = this.GetRootWidget();
+  let nativeRegion: ref<inkWidget> = this.crBiologyDetailNativeRegion;
+  let nativeParent: ref<inkCompoundWidget> = this.crBiologyDetailNativeParent;
+  if !IsDefined(nativeRegion) {
+    nativeRegion = inkVirtualCompoundRef.Get(this.m_virtualGridContainer);
+  }
+  if !IsDefined(nativeParent) && IsDefined(inventoryRoot) && IsDefined(nativeRegion) {
+    nativeParent = this.CRFindBiologyDetailRegionParent(inventoryRoot as inkCompoundWidget, nativeRegion);
+  }
+
+  let result: String = this.crBiologyDetailMountStatus;
+  if IsDefined(inventoryRoot) {
+    result += " R" + FloatToStringPrec(inventoryRoot.GetOpacity(), 1);
+  } else {
+    result += " R?";
+  }
+
+  if target.IsVisible() {
+    result += " T1/";
+  } else {
+    result += " T0/";
+  }
+  result += FloatToStringPrec(target.GetOpacity(), 1);
+
+  let stored: Vector2 = target.GetSize();
+  let desired: Vector2 = target.GetDesiredSize();
+  result += " S" + FloatToStringPrec(stored.X, 0) + "x" + FloatToStringPrec(stored.Y, 0);
+  result += " D" + FloatToStringPrec(desired.X, 0) + "x" + FloatToStringPrec(desired.Y, 0);
+  result += " K" + FloatToStringPrec(target.GetSizeCoefficient(), 1);
+  if Equals(target.GetSizeRule(), inkESizeRule.Stretch) {
+    result += " QS";
+  } else {
+    result += " QF";
+  }
+
+  let targetCompound: ref<inkCompoundWidget> = target as inkCompoundWidget;
+  if IsDefined(targetCompound) {
+    result += " N" + IntToString(targetCompound.GetNumChildren());
+  } else {
+    result += " N?";
+  }
+
+  if IsDefined(nativeParent) && IsDefined(nativeRegion) {
+    let childSize: Vector2 = nativeParent.GetChildSize(target);
+    let childPosition: Vector2 = nativeParent.GetChildPosition(target);
+    let parentDesired: Vector2 = nativeParent.GetDesiredSize();
+    let targetIndex: Int32 = this.CRBiologyChildIndex(nativeParent, target);
+    let nativeIndex: Int32 = this.CRBiologyChildIndex(nativeParent, nativeRegion);
+
+    result += " C" + FloatToStringPrec(childSize.X, 0) + "x" + FloatToStringPrec(childSize.Y, 0);
+    result += " P" + FloatToStringPrec(parentDesired.X, 0) + "x" + FloatToStringPrec(parentDesired.Y, 0);
+    result += " X" + FloatToStringPrec(childPosition.X, 0) + "," + FloatToStringPrec(childPosition.Y, 0);
+    result += " I" + IntToString(targetIndex) + "/" + IntToString(nativeIndex);
+    if Equals(nativeParent.GetChildOrder(), inkEChildOrder.Backward) {
+      result += "B";
+    } else {
+      result += "F";
+    }
+
+    let targetMargin: inkMargin = target.GetMargin();
+    let nativeMargin: inkMargin = nativeRegion.GetMargin();
+    let targetAnchorPoint: Vector2 = target.GetAnchorPoint();
+    let nativeAnchorPoint: Vector2 = nativeRegion.GetAnchorPoint();
+    let targetTranslation: Vector2 = target.GetTranslation();
+    let nativeTranslation: Vector2 = nativeRegion.GetTranslation();
+    let layoutMatch: Bool = Equals(target.GetAnchor(), nativeRegion.GetAnchor())
+      && targetAnchorPoint.X == nativeAnchorPoint.X
+      && targetAnchorPoint.Y == nativeAnchorPoint.Y
+      && Equals(target.GetHAlign(), nativeRegion.GetHAlign())
+      && Equals(target.GetVAlign(), nativeRegion.GetVAlign())
+      && targetMargin.left == nativeMargin.left
+      && targetMargin.top == nativeMargin.top
+      && targetMargin.right == nativeMargin.right
+      && targetMargin.bottom == nativeMargin.bottom
+      && targetTranslation.X == nativeTranslation.X
+      && targetTranslation.Y == nativeTranslation.Y;
+    if layoutMatch {
+      result += " L1";
+    } else {
+      result += " L0";
+    }
+  } else {
+    result += " P?";
+  }
+  return result;
+}
+
+@addMethod(RipperdocInventoryController)
 public final func CRMountBiologyDetailInNativeRegion(target: ref<inkWidget>) -> Bool {
   if !IsDefined(target) {
     this.crBiologyDetailMountStatus = "TARGET_MISSING";
@@ -149,16 +265,24 @@ public final func CRMountBiologyDetailInNativeRegion(target: ref<inkWidget>) -> 
     return false;
   }
 
+  this.crBiologyDetailNativeParent = nativeParent;
+  this.crBiologyDetailNativeRegion = nativeRegion;
+
+  // T004 proved the reparent succeeds live but the Biology subtree remains invisible.
+  // The W02.4 adapter also copied the virtualized grid's FIXED size contract onto an
+  // ordinary inkVerticalPanel. Those widget types do not share content-sizing
+  // semantics: the native grid's controller supplies virtualized content, while the
+  // Biology panel must size from its real title/summary/metric children. Preserve the
+  // native region's POSITIONING geometry, but let Biology own its content extent.
   target.SetAnchor(nativeRegion.GetAnchor());
   target.SetAnchorPoint(nativeRegion.GetAnchorPoint());
   target.SetHAlign(nativeRegion.GetHAlign());
   target.SetVAlign(nativeRegion.GetVAlign());
   target.SetMargin(nativeRegion.GetMargin());
   target.SetPadding(nativeRegion.GetPadding());
-  target.SetSizeRule(nativeRegion.GetSizeRule());
-  target.SetSizeCoefficient(nativeRegion.GetSizeCoefficient());
-  target.SetSize(nativeRegion.GetSize());
   target.SetTranslation(nativeRegion.GetTranslation());
+  target.SetFitToContent(true);
+  target.SetOpacity(1.0);
   target.SetAffectsLayoutWhenHidden(true);
   this.crBiologyDetailMountStatus = "MOUNTED";
   return true;
