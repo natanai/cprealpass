@@ -4,26 +4,64 @@
   "title": "Biology redistribution-safe reference-mod archaeology record",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "source", "dependencies", "mappings", "opaqueAreas", "conclusions"],
+  "required": [
+    "schemaVersion",
+    "source",
+    "dependencies",
+    "mappings",
+    "opaqueAreas",
+    "conclusions"
+  ],
   "properties": {
-    "schemaVersion": { "const": 1 },
+    "schemaVersion": {
+      "const": 1
+    },
     "source": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["name", "version", "provenance", "selectedIdentities"],
+      "required": [
+        "name",
+        "version",
+        "provenance",
+        "selectedIdentities"
+      ],
       "properties": {
-        "name": { "type": "string", "minLength": 1 },
-        "version": { "type": ["string", "null"] },
-        "provenance": { "type": ["string", "null"], "description": "Public source/home/version provenance only; never a private local path." },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "provenance": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Public source/home/version provenance only; never a private local path."
+        },
         "selectedIdentities": {
           "type": "array",
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["path", "sha256"],
+            "required": [
+              "path",
+              "sha256"
+            ],
             "properties": {
-              "path": { "type": "string", "minLength": 1, "description": "Relative identity path only." },
-              "sha256": { "type": "string", "pattern": "^[0-9A-Fa-f]{64}$" }
+              "path": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Relative identity path only."
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[0-9A-Fa-f]{64}$"
+              }
             }
           }
         }
@@ -34,11 +72,24 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["name", "role", "evidence"],
+        "required": [
+          "name",
+          "role",
+          "evidence"
+        ],
         "properties": {
-          "name": { "type": "string", "minLength": 1 },
-          "role": { "type": "string", "minLength": 1 },
-          "evidence": { "type": "string", "minLength": 1 }
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "role": {
+            "type": "string",
+            "minLength": 1
+          },
+          "evidence": {
+            "type": "string",
+            "minLength": 1
+          }
         }
       }
     },
@@ -47,26 +98,133 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["referenceArea", "mechanism", "nativeContract", "biologyOwnedSeam", "validation"],
+        "required": [
+          "referenceArea",
+          "mechanism",
+          "nativeContract",
+          "biologyOwnedSeam",
+          "validation"
+        ],
         "properties": {
-          "referenceArea": { "type": "string", "minLength": 1 },
+          "referenceArea": {
+            "type": "string",
+            "minLength": 1
+          },
           "mechanism": {
             "type": "string",
-            "enum": ["redscript-hook-wrap", "redscript-hook-replace", "redscript-additive", "tweakxl", "redmod-tweak", "archive-resource-replacement", "framework-native-extension", "other-derived", "unknown"]
+            "enum": [
+              "redscript-hook-wrap",
+              "redscript-hook-replace",
+              "redscript-additive",
+              "tweakxl",
+              "redmod-tweak",
+              "archive-resource-replacement",
+              "framework-native-extension",
+              "other-derived",
+              "unknown"
+            ]
           },
-          "referencePathIdentity": { "type": ["string", "null"], "description": "Relative path plus hash reference; no copied implementation body." },
+          "referencePathIdentity": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Relative path plus hash reference; no copied implementation body."
+          },
           "nativeContract": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["gameVersion", "controllerOrSystem", "widgetOrResource"],
+            "required": [
+              "gameVersion",
+              "controllerOrSystem",
+              "widgetOrResource"
+            ],
             "properties": {
-              "gameVersion": { "type": "string", "minLength": 1 },
-              "controllerOrSystem": { "type": ["string", "null"] },
-              "widgetOrResource": { "type": ["string", "null"] }
+              "gameVersion": {
+                "type": "string",
+                "minLength": 1
+              },
+              "controllerOrSystem": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "widgetOrResource": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
             }
           },
-          "biologyOwnedSeam": { "type": "string", "minLength": 1 },
-          "validation": { "type": "string", "minLength": 1 }
+          "biologyOwnedSeam": {
+            "type": "string",
+            "minLength": 1
+          },
+          "validation": {
+            "type": "string",
+            "minLength": 1
+          },
+          "widgetAncestry": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "description": "Redistribution-safe derived authored-widget ancestry. No proprietary serialized object bodies.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "path",
+                "widgetType",
+                "parent",
+                "childOrder",
+                "constraints",
+                "evidenceIdentity"
+              ],
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "widgetType": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "parent": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "childOrder": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "constraints": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "Derived clipping/fit/layout/size/anchor/alignment/margin/translation/opacity/visibility facts only."
+                },
+                "evidenceIdentity": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "Relative private-evidence identity/hash or probe line identity; never copied proprietary object bodies."
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -75,17 +233,33 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["pathIdentity", "reason", "nextEvidence"],
+        "required": [
+          "pathIdentity",
+          "reason",
+          "nextEvidence"
+        ],
         "properties": {
-          "pathIdentity": { "type": "string", "minLength": 1 },
-          "reason": { "type": "string", "minLength": 1 },
-          "nextEvidence": { "type": "string", "minLength": 1 }
+          "pathIdentity": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          },
+          "nextEvidence": {
+            "type": "string",
+            "minLength": 1
+          }
         }
       }
     },
     "conclusions": {
       "type": "array",
-      "items": { "type": "string", "minLength": 1 }
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
     }
   }
 }
