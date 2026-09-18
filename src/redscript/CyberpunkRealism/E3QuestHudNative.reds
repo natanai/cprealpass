@@ -45,7 +45,7 @@ private final func CRResolveBiologyE3QuestHost() -> ref<inkCompoundWidget> {
   }
 
   this.crBiologyE3QuestHostName = "UNRESOLVED";
-  return null;
+  return NULL;
 }
 
 @addMethod(QuestTrackerGameController)

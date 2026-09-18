@@ -51,7 +51,7 @@ private final func CRResolveBiologyE3WeaponHost() -> ref<inkCompoundWidget> {
   }
 
   this.crBiologyE3WeaponHostName = "UNRESOLVED";
-  return null;
+  return NULL;
 }
 
 @addMethod(WeaponRosterGameController)
