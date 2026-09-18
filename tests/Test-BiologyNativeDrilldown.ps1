@@ -30,7 +30,8 @@ foreach ($needle in @(
     'this.SetButtonHints(true, false);')) {
     Check ($shell.Contains($needle)) "Biology native drill-down entry contract missing: $needle"
 }
-Check ($shell.Contains('inkCompoundRef.Get(this.m_inventoryViewAnchor)')) 'Biology detail content is not injected into the native content anchor.'
+Check ($shell.Contains('this.m_inventoryView.GetRootWidget() as inkCompoundWidget')) 'Biology detail content is not injected inside the native inventory controller root.'
+Check (-not $shell.Contains('let nativeContentParent: ref<inkCompoundWidget> = inkCompoundRef.Get(this.m_inventoryViewAnchor) as inkCompoundWidget;')) 'Biology detail still uses the obsolete sibling mount under the inventory anchor.'
 Check (-not $shell.Contains('crBiologyDetailBack')) 'Parallel Biology detail Back widget still exists.'
 
 # Native selector owns left/right arrows and option-switch input. Biology changes names
