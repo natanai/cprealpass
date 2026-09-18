@@ -21,6 +21,9 @@ Check (-not $shell.Contains('nativeContentParent = this.m_inventoryView.GetRootW
 Check (-not $shell.Contains('let nativeContentParent: ref<inkCompoundWidget> = inkCompoundRef.Get(this.m_inventoryViewAnchor) as inkCompoundWidget;')) 'Biology detail still mounts beside the native inventory controller under m_inventoryViewAnchor.'
 Check (-not $shell.Contains('this.crBiologyNativeContent.SetAnchor(inkEAnchor.TopLeft);')) 'Biology detail still forces a screen-origin TopLeft anchor.'
 Check (-not $shell.Contains('this.crBiologyNativeContent.SetMargin(inkMargin(0.0, 42.0, 0.0, 0.0));')) 'Biology detail still uses the disproven W02.3 fixed root-relative offset.'
+Check ($shell.Contains('this.crBiologyNativeContent.SetFitToContent(true);')) 'Biology detail container does not size itself from its title/summary/metric children.'
+Check ($followup.Contains('target.SetFitToContent(true);')) 'Native-region sync does not preserve Biology-owned fit-to-content sizing.'
+Check (-not $followup.Contains('target.SetSize(nativeRegion.GetSize());')) 'Virtual-grid fixed extent still overrides Biology content sizing.'
 
 # Functional hierarchy only: title, summary, metric rows, then contextual actions.
 # Broad visual redesign remains deliberately deferred.
