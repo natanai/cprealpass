@@ -4,6 +4,8 @@ param(
     [string[]]$ReferenceName,
     [string]$ReferenceNameJson = '',
     [string]$OutputRoot = 'C:\Games\Biology-Reference-Bundles',
+    [switch]$IncludeBiologyNativeUi,
+    [string]$GamePath = 'C:\Games\Steam\steamapps\common\Cyberpunk 2077',
     [ValidatePattern('^$|^[0-9a-fA-F]{40}$')][string]$WorkflowSourceRevision = '',
     [ValidateRange(1,20)][int]$MaxTextFileMiB = 2,
     [ValidateRange(1,200)][int]$MaxCopiedTextMiB = 40
@@ -107,6 +109,7 @@ $archives=[Collections.Generic.List[object]]::new()
 $notes=[Collections.Generic.List[string]]::new()
 $copied=[int64]0; $oneLimit=[int64]$MaxTextFileMiB*1MB; $allLimit=[int64]$MaxCopiedTextMiB*1MB
 $seven=Get-Command 7z,7zz -ErrorAction SilentlyContinue|Select-Object -First 1
+$nativeUi=[ordered]@{requested=[bool]$IncludeBiologyNativeUi;status='not-requested'}
 
 function AnalyzeText([string]$ref,[string]$rel,[string]$text){
     $lineNo=0
@@ -172,6 +175,410 @@ function AddDiskFile([string]$ref,[string]$rel,[string]$path){
     $copy='not-text'
     if($class -eq 'text/source/config'){$copy=CopyText $ref $rel ([IO.File]::ReadAllBytes($path))}
     $index.Add([pscustomobject]@{reference=$ref;path=$rel.Replace('\','/');bytes=$info.Length;sha256=Sha $path;classification=$class;inspectability=$inspect;privatePayload=$copy})
+}
+
+function CollectBiologyNativeUi {
+    $nativeRoot=Join-Path $stage 'native-game-evidence'
+    New-Item -ItemType Directory -Force -Path $nativeRoot|Out-Null
+    $resolvedGame=Full $GamePath
+    $exe=Join-Path $resolvedGame 'bin\x64\Cyberpunk2077.exe'
+    $scriptRoot=Join-Path $resolvedGame 'tools\redmod\scripts'
+    if(-not (Test-Path -LiteralPath $exe -PathType Leaf)){throw "Cyberpunk executable missing for native UI evidence: $exe"}
+    if(-not (Test-Path -LiteralPath $scriptRoot -PathType Container)){throw "Installed official REDmod script tree missing: $scriptRoot"}
+
+    $scriptMatches=@(Get-ChildItem -LiteralPath $scriptRoot -Recurse -File -ErrorAction Stop|Where-Object {$_.Name -ieq 'ripperdoc.script' -or $_.Name -ieq 'ripperdocInventoryController.script'}|Sort-Object FullName)
+    foreach($required in @('ripperdoc.script','ripperdocInventoryController.script')){
+        if(@($scriptMatches|Where-Object Name -ieq $required).Count -lt 1){throw "Required installed 2.31 native script not found: $required"}
+    }
+
+    $scriptRecords=[Collections.Generic.List[object]]::new()
+    foreach($script in $scriptMatches){
+        $relative=[IO.Path]::GetRelativePath($resolvedGame,$script.FullName)
+        AddDiskFile 'CP2077-installed-official-scripts' $relative $script.FullName
+        $record=[pscustomobject]@{path=$relative.Replace('\','/');bytes=[int64]$script.Length;sha256=Sha $script.FullName}
+        $scriptRecords.Add($record)
+        $notes.Add("CP2077 installed official script :: $($record.path) :: sha256=$($record.sha256)")
+    }
+
+    $probeReport=Join-Path $nativeRoot 'biology-detail-native-region.txt'
+    $targetJson=Join-Path $nativeRoot 'ripperdoc-target.inkwidget.json'
+    $processReport=Join-Path $nativeRoot 'probe-process.txt'
+    $probe=Native 'pwsh' @(
+        '-NoLogo','-NoProfile','-File',(Join-Path $PSScriptRoot 'Probe-BiologyDetailNativeRegion.ps1'),
+        '-GamePath',$resolvedGame,
+        '-ReportPath',$probeReport,
+        '-PrivateTargetJsonPath',$targetJson
+    )
+    @(
+      ('ExitCode: '+$probe.ExitCode),
+      '--- STDOUT ---',
+      $probe.StdOut,
+      '--- STDERR ---',
+      $probe.StdErr
+    )|Set-Content -LiteralPath $processReport -Encoding utf8
+
+    $probeText=if(Test-Path -LiteralPath $probeReport -PathType Leaf){Get-Content -Raw -LiteralPath $probeReport}else{''}
+    $targetPath=$null;$sourceArchive=$null;$resourceSha=$null
+    foreach($pair in @(
+        @{Name='targetPath';Pattern='(?m)^TARGET_RESOURCE_DISCOVERED=(?<v>.+)
+    try{
+        $z=[IO.Compression.ZipFile]::OpenRead($path)
+        try{
+            $roots=@($z.Entries|ForEach-Object{
+                $p=$_.FullName.Replace('\','/').TrimStart('/')
+                if($p){$p.Split('/')[0]}
+            }|Where-Object{$_}|Select-Object -Unique)
+            if($roots.Count -eq 1){return [string]$roots[0]}
+        }finally{$z.Dispose()}
+    }catch{}
+    $null
+}
+function HashZipEntry($entry){
+    $s=$entry.Open()
+    $sha=[Security.Cryptography.SHA256]::Create()
+    try{[Convert]::ToHexString($sha.ComputeHash($s))}finally{$sha.Dispose();$s.Dispose()}
+}
+
+try{
+    if($IncludeBiologyNativeUi){CollectBiologyNativeUi}
+    $folders=@($selected|Where-Object PSIsContainer|ForEach-Object Name)
+    foreach($item in $selected){
+        $dup=$null
+        if(-not $item.PSIsContainer -and $item.Extension -ieq '.zip'){
+            $base=[IO.Path]::GetFileNameWithoutExtension($item.Name)
+            $zipRoot=ZipSingleRoot $item.FullName
+            $dup=[string]($folders|Where-Object {$_ -ieq $base -or ($zipRoot -and $_ -ieq $zipRoot)}|Select-Object -First 1)
+        }
+        if($dup){
+            $refs.Add([pscustomobject]@{name=$item.Name;type='zip';status='skipped-duplicate-payload';duplicateOf=$dup;sourceBytes=[int64]$item.Length;sourceSha256=Sha $item.FullName})
+            continue
+        }
+        $start=$index.Count
+        if($item.PSIsContainer){
+            foreach($f in FolderFiles ([IO.DirectoryInfo]$item)){AddDiskFile $item.Name ([IO.Path]::GetRelativePath($item.FullName,$f.FullName)) $f.FullName}
+            $refs.Add([pscustomobject]@{name=$item.Name;type='folder';status='included';indexedFiles=($index.Count-$start)})
+        }elseif($item.Extension -ieq '.zip'){
+            $z=[IO.Compression.ZipFile]::OpenRead($item.FullName)
+            try{
+                foreach($e in @($z.Entries|Sort-Object FullName)){
+                    if(-not $e.Name){continue}
+                    $rel=$e.FullName.Replace('/','\')
+                    if([IO.Path]::IsPathRooted($rel)-or$rel.Contains('..\')){$index.Add([pscustomobject]@{reference=$item.Name;path=$e.FullName;bytes=$e.Length;classification='unsafe-archive-entry';inspectability='not-extracted'});continue}
+                    $class=Classify $rel
+                    $hash=HashZipEntry $e
+                    $copy='not-text'
+                    if($class -eq 'text/source/config'){
+                        if($e.Length -gt $oneLimit){$copy='skipped-per-file-limit'}
+                        elseif($script:copied+$e.Length -gt $allLimit){$copy='skipped-total-text-limit'}
+                        else{
+                            $ms=[IO.MemoryStream]::new()
+                            try{$s=$e.Open();try{$s.CopyTo($ms)}finally{$s.Dispose()};$copy=CopyText $item.Name $rel $ms.ToArray()}finally{$ms.Dispose()}
+                        }
+                    }
+                    $index.Add([pscustomobject]@{reference=$item.Name;path=$e.FullName;bytes=$e.Length;sha256=$hash;classification=$class;inspectability=if($class -eq 'text/source/config'){'private-text-copy-eligible'}else{'zip-entry-hash-only'};privatePayload=$copy})
+                }
+            }finally{$z.Dispose()}
+            $inspect=ArchiveInventory $item.Name $item.Name $item.FullName
+            $refs.Add([pscustomobject]@{name=$item.Name;type='zip';status='included';sourceBytes=[int64]$item.Length;sourceSha256=Sha $item.FullName;indexedFiles=($index.Count-$start);archiveInspectability=$inspect})
+        }else{AddDiskFile $item.Name $item.Name $item.FullName;$refs.Add([pscustomobject]@{name=$item.Name;type='file';status='included';sourceBytes=[int64]$item.Length;sourceSha256=Sha $item.FullName;indexedFiles=1})}
+    }
+
+    @(
+      'PRIVATE THIRD-PARTY REFERENCE MATERIAL - ANALYSIS ONLY',
+      '',
+      'Do not commit or redistribute third-party payload from this bundle.',
+      'Reference mods are engineering evidence only. Biology must implement its own code against current Cyberpunk/REDmod contracts.',
+      'The source reference library was read only and no reference mod was installed into Cyberpunk.'
+    )|Set-Content -LiteralPath (Join-Path $stage 'PRIVATE-THIRD-PARTY-REFERENCE.txt') -Encoding utf8
+    @($index)|ConvertTo-Json -Depth 8|Set-Content -LiteralPath (Join-Path $stage 'file-index.json') -Encoding utf8
+    @($signals)|ConvertTo-Json -Depth 8|Set-Content -LiteralPath (Join-Path $stage 'signals.json') -Encoding utf8
+    $manifest=[ordered]@{
+      schemaVersion=1;kind='private-reference-mod-archaeology-bundle';createdUtc=[DateTime]::UtcNow.ToString('o')
+      analysisOnly=$true;redistributionAllowed=$false;workflowSourceRevision=$WorkflowSourceRevision;sourceLibrary=$LibraryPath;referenceSelections=@($refs)
+      provenanceVersionNotes=@($notes|Select-Object -Unique);fileCount=$index.Count;copiedTextBytes=$copied
+      archiveInventory=@($archives);nativeBiologyUi=$nativeUi;sourceMutation='none';gameInstallation=$(if($IncludeBiologyNativeUi){'read-only native UI inspection requested; no installation or mutation'}else{'not accessed or modified'})
+      duplicatePolicy='Selected ZIPs whose basename or sole top-level root matches a selected extracted sibling folder are hash-recorded but their duplicate payload is skipped.'
+      archivePolicy='ZIP contents are listed natively. Other archive/resource containers use safe 7z/7zz listing only when already available and successful; otherwise internals are explicitly opaque.'
+    }
+    $manifest|ConvertTo-Json -Depth 12|Set-Content -LiteralPath (Join-Path $stage 'manifest.json') -Encoding utf8
+    $opaque=@($archives|Where-Object{$_.status -like 'opaque*' -or $_.status -eq 'tool-could-not-list'})
+    @(
+      'BIOLOGY PRIVATE REFERENCE-MOD ARCHAEOLOGY BUNDLE',
+      ('Created UTC: '+$manifest.createdUtc),
+      ('Source library: '+$LibraryPath),
+      'Source-library mutation: NONE',
+      'Cyberpunk install access/mutation: NONE',
+      ('Selected references: '+$refs.Count),
+      ('Indexed files: '+$index.Count),
+      ('Copied private text/source/config bytes: '+$copied),
+      ('Extracted signals: '+$signals.Count),
+      ('Opaque archive/resource containers: '+$opaque.Count),
+      ('Native Biology/Cyberware UI evidence: '+$nativeUi.status),
+      '',
+      'PRIVATE ANALYSIS ONLY. Commit only redistribution-safe derived conclusions using docs/reference-mods/reference-record.schema.json.'
+    )|Set-Content -LiteralPath (Join-Path $stage 'report.txt') -Encoding utf8
+
+    Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $zipPath -CompressionLevel Optimal
+    if(-not (Test-Path -LiteralPath $zipPath -PathType Leaf)){throw 'Reference bundle ZIP was not created.'}
+    Write-Host ''
+    Write-Host 'ATTACH THIS ONE REFERENCE BUNDLE TO CHATGPT:' -ForegroundColor Cyan
+    Write-Host $zipPath -ForegroundColor Yellow
+    return $zipPath
+}finally{
+    if(Test-Path -LiteralPath $stage -PathType Container){Remove-Item -LiteralPath $stage -Recurse -Force}
+}
+},
+        @{Name='sourceArchive';Pattern='(?m)^TARGET_SOURCE_ARCHIVE=(?<v>.+)
+    try{
+        $z=[IO.Compression.ZipFile]::OpenRead($path)
+        try{
+            $roots=@($z.Entries|ForEach-Object{
+                $p=$_.FullName.Replace('\','/').TrimStart('/')
+                if($p){$p.Split('/')[0]}
+            }|Where-Object{$_}|Select-Object -Unique)
+            if($roots.Count -eq 1){return [string]$roots[0]}
+        }finally{$z.Dispose()}
+    }catch{}
+    $null
+}
+function HashZipEntry($entry){
+    $s=$entry.Open()
+    $sha=[Security.Cryptography.SHA256]::Create()
+    try{[Convert]::ToHexString($sha.ComputeHash($s))}finally{$sha.Dispose();$s.Dispose()}
+}
+
+try{
+    $folders=@($selected|Where-Object PSIsContainer|ForEach-Object Name)
+    foreach($item in $selected){
+        $dup=$null
+        if(-not $item.PSIsContainer -and $item.Extension -ieq '.zip'){
+            $base=[IO.Path]::GetFileNameWithoutExtension($item.Name)
+            $zipRoot=ZipSingleRoot $item.FullName
+            $dup=[string]($folders|Where-Object {$_ -ieq $base -or ($zipRoot -and $_ -ieq $zipRoot)}|Select-Object -First 1)
+        }
+        if($dup){
+            $refs.Add([pscustomobject]@{name=$item.Name;type='zip';status='skipped-duplicate-payload';duplicateOf=$dup;sourceBytes=[int64]$item.Length;sourceSha256=Sha $item.FullName})
+            continue
+        }
+        $start=$index.Count
+        if($item.PSIsContainer){
+            foreach($f in FolderFiles ([IO.DirectoryInfo]$item)){AddDiskFile $item.Name ([IO.Path]::GetRelativePath($item.FullName,$f.FullName)) $f.FullName}
+            $refs.Add([pscustomobject]@{name=$item.Name;type='folder';status='included';indexedFiles=($index.Count-$start)})
+        }elseif($item.Extension -ieq '.zip'){
+            $z=[IO.Compression.ZipFile]::OpenRead($item.FullName)
+            try{
+                foreach($e in @($z.Entries|Sort-Object FullName)){
+                    if(-not $e.Name){continue}
+                    $rel=$e.FullName.Replace('/','\')
+                    if([IO.Path]::IsPathRooted($rel)-or$rel.Contains('..\')){$index.Add([pscustomobject]@{reference=$item.Name;path=$e.FullName;bytes=$e.Length;classification='unsafe-archive-entry';inspectability='not-extracted'});continue}
+                    $class=Classify $rel
+                    $hash=HashZipEntry $e
+                    $copy='not-text'
+                    if($class -eq 'text/source/config'){
+                        if($e.Length -gt $oneLimit){$copy='skipped-per-file-limit'}
+                        elseif($script:copied+$e.Length -gt $allLimit){$copy='skipped-total-text-limit'}
+                        else{
+                            $ms=[IO.MemoryStream]::new()
+                            try{$s=$e.Open();try{$s.CopyTo($ms)}finally{$s.Dispose()};$copy=CopyText $item.Name $rel $ms.ToArray()}finally{$ms.Dispose()}
+                        }
+                    }
+                    $index.Add([pscustomobject]@{reference=$item.Name;path=$e.FullName;bytes=$e.Length;sha256=$hash;classification=$class;inspectability=if($class -eq 'text/source/config'){'private-text-copy-eligible'}else{'zip-entry-hash-only'};privatePayload=$copy})
+                }
+            }finally{$z.Dispose()}
+            $inspect=ArchiveInventory $item.Name $item.Name $item.FullName
+            $refs.Add([pscustomobject]@{name=$item.Name;type='zip';status='included';sourceBytes=[int64]$item.Length;sourceSha256=Sha $item.FullName;indexedFiles=($index.Count-$start);archiveInspectability=$inspect})
+        }else{AddDiskFile $item.Name $item.Name $item.FullName;$refs.Add([pscustomobject]@{name=$item.Name;type='file';status='included';sourceBytes=[int64]$item.Length;sourceSha256=Sha $item.FullName;indexedFiles=1})}
+    }
+
+    @(
+      'PRIVATE THIRD-PARTY REFERENCE MATERIAL - ANALYSIS ONLY',
+      '',
+      'Do not commit or redistribute third-party payload from this bundle.',
+      'Reference mods are engineering evidence only. Biology must implement its own code against current Cyberpunk/REDmod contracts.',
+      'The source reference library was read only and no reference mod was installed into Cyberpunk.'
+    )|Set-Content -LiteralPath (Join-Path $stage 'PRIVATE-THIRD-PARTY-REFERENCE.txt') -Encoding utf8
+    @($index)|ConvertTo-Json -Depth 8|Set-Content -LiteralPath (Join-Path $stage 'file-index.json') -Encoding utf8
+    @($signals)|ConvertTo-Json -Depth 8|Set-Content -LiteralPath (Join-Path $stage 'signals.json') -Encoding utf8
+    $manifest=[ordered]@{
+      schemaVersion=1;kind='private-reference-mod-archaeology-bundle';createdUtc=[DateTime]::UtcNow.ToString('o')
+      analysisOnly=$true;redistributionAllowed=$false;workflowSourceRevision=$WorkflowSourceRevision;sourceLibrary=$LibraryPath;referenceSelections=@($refs)
+      provenanceVersionNotes=@($notes|Select-Object -Unique);fileCount=$index.Count;copiedTextBytes=$copied
+      archiveInventory=@($archives);sourceMutation='none';gameInstallation='not accessed or modified'
+      duplicatePolicy='Selected ZIPs whose basename or sole top-level root matches a selected extracted sibling folder are hash-recorded but their duplicate payload is skipped.'
+      archivePolicy='ZIP contents are listed natively. Other archive/resource containers use safe 7z/7zz listing only when already available and successful; otherwise internals are explicitly opaque.'
+    }
+    $manifest|ConvertTo-Json -Depth 12|Set-Content -LiteralPath (Join-Path $stage 'manifest.json') -Encoding utf8
+    $opaque=@($archives|Where-Object{$_.status -like 'opaque*' -or $_.status -eq 'tool-could-not-list'})
+    @(
+      'BIOLOGY PRIVATE REFERENCE-MOD ARCHAEOLOGY BUNDLE',
+      ('Created UTC: '+$manifest.createdUtc),
+      ('Source library: '+$LibraryPath),
+      'Source-library mutation: NONE',
+      'Cyberpunk install access/mutation: NONE',
+      ('Selected references: '+$refs.Count),
+      ('Indexed files: '+$index.Count),
+      ('Copied private text/source/config bytes: '+$copied),
+      ('Extracted signals: '+$signals.Count),
+      ('Opaque archive/resource containers: '+$opaque.Count),
+      '',
+      'PRIVATE ANALYSIS ONLY. Commit only redistribution-safe derived conclusions using docs/reference-mods/reference-record.schema.json.'
+    )|Set-Content -LiteralPath (Join-Path $stage 'report.txt') -Encoding utf8
+
+    Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $zipPath -CompressionLevel Optimal
+    if(-not (Test-Path -LiteralPath $zipPath -PathType Leaf)){throw 'Reference bundle ZIP was not created.'}
+    Write-Host ''
+    Write-Host 'ATTACH THIS ONE REFERENCE BUNDLE TO CHATGPT:' -ForegroundColor Cyan
+    Write-Host $zipPath -ForegroundColor Yellow
+    return $zipPath
+}finally{
+    if(Test-Path -LiteralPath $stage -PathType Container){Remove-Item -LiteralPath $stage -Recurse -Force}
+}
+},
+        @{Name='resourceSha';Pattern='(?m)^TARGET_RESOURCE_SHA256=(?<v>[0-9A-Fa-f]{64})
+    try{
+        $z=[IO.Compression.ZipFile]::OpenRead($path)
+        try{
+            $roots=@($z.Entries|ForEach-Object{
+                $p=$_.FullName.Replace('\','/').TrimStart('/')
+                if($p){$p.Split('/')[0]}
+            }|Where-Object{$_}|Select-Object -Unique)
+            if($roots.Count -eq 1){return [string]$roots[0]}
+        }finally{$z.Dispose()}
+    }catch{}
+    $null
+}
+function HashZipEntry($entry){
+    $s=$entry.Open()
+    $sha=[Security.Cryptography.SHA256]::Create()
+    try{[Convert]::ToHexString($sha.ComputeHash($s))}finally{$sha.Dispose();$s.Dispose()}
+}
+
+try{
+    $folders=@($selected|Where-Object PSIsContainer|ForEach-Object Name)
+    foreach($item in $selected){
+        $dup=$null
+        if(-not $item.PSIsContainer -and $item.Extension -ieq '.zip'){
+            $base=[IO.Path]::GetFileNameWithoutExtension($item.Name)
+            $zipRoot=ZipSingleRoot $item.FullName
+            $dup=[string]($folders|Where-Object {$_ -ieq $base -or ($zipRoot -and $_ -ieq $zipRoot)}|Select-Object -First 1)
+        }
+        if($dup){
+            $refs.Add([pscustomobject]@{name=$item.Name;type='zip';status='skipped-duplicate-payload';duplicateOf=$dup;sourceBytes=[int64]$item.Length;sourceSha256=Sha $item.FullName})
+            continue
+        }
+        $start=$index.Count
+        if($item.PSIsContainer){
+            foreach($f in FolderFiles ([IO.DirectoryInfo]$item)){AddDiskFile $item.Name ([IO.Path]::GetRelativePath($item.FullName,$f.FullName)) $f.FullName}
+            $refs.Add([pscustomobject]@{name=$item.Name;type='folder';status='included';indexedFiles=($index.Count-$start)})
+        }elseif($item.Extension -ieq '.zip'){
+            $z=[IO.Compression.ZipFile]::OpenRead($item.FullName)
+            try{
+                foreach($e in @($z.Entries|Sort-Object FullName)){
+                    if(-not $e.Name){continue}
+                    $rel=$e.FullName.Replace('/','\')
+                    if([IO.Path]::IsPathRooted($rel)-or$rel.Contains('..\')){$index.Add([pscustomobject]@{reference=$item.Name;path=$e.FullName;bytes=$e.Length;classification='unsafe-archive-entry';inspectability='not-extracted'});continue}
+                    $class=Classify $rel
+                    $hash=HashZipEntry $e
+                    $copy='not-text'
+                    if($class -eq 'text/source/config'){
+                        if($e.Length -gt $oneLimit){$copy='skipped-per-file-limit'}
+                        elseif($script:copied+$e.Length -gt $allLimit){$copy='skipped-total-text-limit'}
+                        else{
+                            $ms=[IO.MemoryStream]::new()
+                            try{$s=$e.Open();try{$s.CopyTo($ms)}finally{$s.Dispose()};$copy=CopyText $item.Name $rel $ms.ToArray()}finally{$ms.Dispose()}
+                        }
+                    }
+                    $index.Add([pscustomobject]@{reference=$item.Name;path=$e.FullName;bytes=$e.Length;sha256=$hash;classification=$class;inspectability=if($class -eq 'text/source/config'){'private-text-copy-eligible'}else{'zip-entry-hash-only'};privatePayload=$copy})
+                }
+            }finally{$z.Dispose()}
+            $inspect=ArchiveInventory $item.Name $item.Name $item.FullName
+            $refs.Add([pscustomobject]@{name=$item.Name;type='zip';status='included';sourceBytes=[int64]$item.Length;sourceSha256=Sha $item.FullName;indexedFiles=($index.Count-$start);archiveInspectability=$inspect})
+        }else{AddDiskFile $item.Name $item.Name $item.FullName;$refs.Add([pscustomobject]@{name=$item.Name;type='file';status='included';sourceBytes=[int64]$item.Length;sourceSha256=Sha $item.FullName;indexedFiles=1})}
+    }
+
+    @(
+      'PRIVATE THIRD-PARTY REFERENCE MATERIAL - ANALYSIS ONLY',
+      '',
+      'Do not commit or redistribute third-party payload from this bundle.',
+      'Reference mods are engineering evidence only. Biology must implement its own code against current Cyberpunk/REDmod contracts.',
+      'The source reference library was read only and no reference mod was installed into Cyberpunk.'
+    )|Set-Content -LiteralPath (Join-Path $stage 'PRIVATE-THIRD-PARTY-REFERENCE.txt') -Encoding utf8
+    @($index)|ConvertTo-Json -Depth 8|Set-Content -LiteralPath (Join-Path $stage 'file-index.json') -Encoding utf8
+    @($signals)|ConvertTo-Json -Depth 8|Set-Content -LiteralPath (Join-Path $stage 'signals.json') -Encoding utf8
+    $manifest=[ordered]@{
+      schemaVersion=1;kind='private-reference-mod-archaeology-bundle';createdUtc=[DateTime]::UtcNow.ToString('o')
+      analysisOnly=$true;redistributionAllowed=$false;workflowSourceRevision=$WorkflowSourceRevision;sourceLibrary=$LibraryPath;referenceSelections=@($refs)
+      provenanceVersionNotes=@($notes|Select-Object -Unique);fileCount=$index.Count;copiedTextBytes=$copied
+      archiveInventory=@($archives);sourceMutation='none';gameInstallation='not accessed or modified'
+      duplicatePolicy='Selected ZIPs whose basename or sole top-level root matches a selected extracted sibling folder are hash-recorded but their duplicate payload is skipped.'
+      archivePolicy='ZIP contents are listed natively. Other archive/resource containers use safe 7z/7zz listing only when already available and successful; otherwise internals are explicitly opaque.'
+    }
+    $manifest|ConvertTo-Json -Depth 12|Set-Content -LiteralPath (Join-Path $stage 'manifest.json') -Encoding utf8
+    $opaque=@($archives|Where-Object{$_.status -like 'opaque*' -or $_.status -eq 'tool-could-not-list'})
+    @(
+      'BIOLOGY PRIVATE REFERENCE-MOD ARCHAEOLOGY BUNDLE',
+      ('Created UTC: '+$manifest.createdUtc),
+      ('Source library: '+$LibraryPath),
+      'Source-library mutation: NONE',
+      'Cyberpunk install access/mutation: NONE',
+      ('Selected references: '+$refs.Count),
+      ('Indexed files: '+$index.Count),
+      ('Copied private text/source/config bytes: '+$copied),
+      ('Extracted signals: '+$signals.Count),
+      ('Opaque archive/resource containers: '+$opaque.Count),
+      '',
+      'PRIVATE ANALYSIS ONLY. Commit only redistribution-safe derived conclusions using docs/reference-mods/reference-record.schema.json.'
+    )|Set-Content -LiteralPath (Join-Path $stage 'report.txt') -Encoding utf8
+
+    Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $zipPath -CompressionLevel Optimal
+    if(-not (Test-Path -LiteralPath $zipPath -PathType Leaf)){throw 'Reference bundle ZIP was not created.'}
+    Write-Host ''
+    Write-Host 'ATTACH THIS ONE REFERENCE BUNDLE TO CHATGPT:' -ForegroundColor Cyan
+    Write-Host $zipPath -ForegroundColor Yellow
+    return $zipPath
+}finally{
+    if(Test-Path -LiteralPath $stage -PathType Container){Remove-Item -LiteralPath $stage -Recurse -Force}
+}
+}
+    )){
+        $m=[regex]::Match($probeText,$pair.Pattern)
+        if($m.Success){Set-Variable -Name $pair.Name -Value $m.Groups['v'].Value.Trim()}
+    }
+
+    $targetJsonRecord=$null
+    if(Test-Path -LiteralPath $targetJson -PathType Leaf){
+        $info=Get-Item -LiteralPath $targetJson
+        $targetJsonRecord=[ordered]@{path='native-game-evidence/ripperdoc-target.inkwidget.json';bytes=[int64]$info.Length;sha256=Sha $targetJson}
+        $index.Add([pscustomobject]@{
+            reference='CP2077-installed-native-INK'
+            path=$targetJsonRecord.path
+            bytes=$targetJsonRecord.bytes
+            sha256=$targetJsonRecord.sha256
+            classification='text/source/config'
+            inspectability='serialized-by-repository-native-region-probe'
+            privatePayload='copied-private-proprietary-game-json'
+        })
+        $notes.Add("CP2077 installed native INK :: $targetPath :: sha256=$resourceSha :: serializedJsonSha256=$($targetJsonRecord.sha256)")
+    }
+
+    $gameVersion=(Get-Item -LiteralPath $exe).VersionInfo.ProductVersion
+    $summary=[ordered]@{
+        requested=$true
+        status=if($probe.ExitCode -eq 0 -and $targetJsonRecord){'captured'}elseif($probe.ExitCode -eq 0){'probe-passed-json-missing'}else{'probe-failed-transparent'}
+        gameVersion=$gameVersion
+        gameExecutableSha256=Sha $exe
+        officialScripts=@($scriptRecords)
+        nativeInk=[ordered]@{
+            resourcePath=$targetPath
+            sourceArchive=$sourceArchive
+            resourceSha256=$resourceSha
+            serializedJson=$targetJsonRecord
+            focus='RipperDocGameController/inventoryViewAnchor -> RipperdocInventoryController -> virtualGridContainer; preserve HandleId 219 / package-copy 743 direct-parent object and ancestry evidence.'
+        }
+        probe=[ordered]@{exitCode=$probe.ExitCode;report='native-game-evidence/biology-detail-native-region.txt';process='native-game-evidence/probe-process.txt'}
+    }
+    $summary|ConvertTo-Json -Depth 10|Set-Content -LiteralPath (Join-Path $nativeRoot 'summary.json') -Encoding utf8
+    $script:nativeUi=$summary
 }
 
 function ZipSingleRoot([string]$path){
