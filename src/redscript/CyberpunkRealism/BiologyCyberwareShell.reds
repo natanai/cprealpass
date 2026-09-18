@@ -153,9 +153,9 @@ private let crBiologyOverview: ref<inkVerticalPanel>;
 @addField(RipperDocGameController)
 private let crBiologyOverviewText: ref<inkText>;
 
-// Biology detail stays under the stock inventory controller for native visibility
-// and depth lifecycle. Its actual placement is synchronized from that controller's
-// m_virtualGridContainer, the child that owns stock Cyberware content geometry.
+// Biology detail stays inside the stock inventory-controller subtree for native
+// visibility/depth lifecycle. W02.4 mounts it beside m_virtualGridContainer so its
+// local geometry is interpreted in the exact same authored native coordinate space.
 @addField(RipperDocGameController)
 private let crBiologyNativeContent: ref<inkVerticalPanel>;
 
@@ -300,22 +300,21 @@ private final func CRCreateBiologyShell() -> Void {
   this.crBiologyOverviewText = this.CRShellWrappedText("", n"CRBiologyOverviewText", 18, 760.0);
   this.crBiologyOverviewText.Reparent(this.crBiologyOverview, -1);
 
-  // Keep Biology under RipperdocInventoryController so the stock controller remains
-  // authoritative for show/hide opacity. Do not use the controller root as a layout
-  // coordinate space: T002 proved that root resolves at screen origin. W02.4 derives
-  // the panel layout from the native m_virtualGridContainer child instead.
-  let nativeContentParent: ref<inkCompoundWidget>;
+  // Keep Biology inside RipperdocInventoryController's native subtree so stock
+  // visibility/opacity remains authoritative. The attended 2.31 INK evidence showed
+  // m_virtualGridContainer is nested below an additional native parent. Mount beside
+  // that child rather than under the controller root, then copy its LOCAL geometry.
   if IsDefined(this.m_inventoryView) {
-    nativeContentParent = this.m_inventoryView.GetRootWidget() as inkCompoundWidget;
-  }
-  if IsDefined(nativeContentParent) {
-    this.crBiologyNativeContent = new inkVerticalPanel();
-    this.crBiologyNativeContent.SetName(n"CRBiologyNativeContent");
-    this.crBiologyNativeContent.SetChildMargin(inkMargin(0.0, 4.0, 0.0, 4.0));
-    this.crBiologyNativeContent.SetVisible(false);
-    this.crBiologyNativeContent.Reparent(nativeContentParent, -1);
-    this.m_inventoryView.CRApplyBiologyDetailRegionLayout(this.crBiologyNativeContent);
+    let nativeContent: ref<inkVerticalPanel> = new inkVerticalPanel();
+    nativeContent.SetName(n"CRBiologyNativeContent");
+    nativeContent.SetChildMargin(inkMargin(0.0, 4.0, 0.0, 4.0));
+    nativeContent.SetVisible(false);
 
+    if this.m_inventoryView.CRMountBiologyDetailInNativeRegion(nativeContent) {
+      this.crBiologyNativeContent = nativeContent;
+    }
+  }
+  if IsDefined(this.crBiologyNativeContent) {
     this.crBiologyDetailTitle = this.CRShellText("", n"CRBiologyDetailHeading", 30);
     this.crBiologyDetailTitle.SetMargin(inkMargin(0.0, 0.0, 0.0, 2.0));
     this.crBiologyDetailTitle.Reparent(this.crBiologyNativeContent, -1);
@@ -496,7 +495,7 @@ public final func CRSyncBiologyModeSwitcher() -> Void {
 private final func CRSyncBiologyNativeContentLayout() -> Bool {
   return IsDefined(this.m_inventoryView)
     && IsDefined(this.crBiologyNativeContent)
-    && this.m_inventoryView.CRApplyBiologyDetailRegionLayout(this.crBiologyNativeContent);
+    && this.m_inventoryView.CRMountBiologyDetailInNativeRegion(this.crBiologyNativeContent);
 }
 
 @addMethod(RipperDocGameController)
