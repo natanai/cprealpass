@@ -21,6 +21,7 @@ function Fingerprint([string]$root){
 
 $builder=Read 'tools/New-ReferenceModBundle.ps1'
 $bootstrap=Read 'tools/Bootstrap-ReferenceModBundle.ps1'
+$nativeProbe=Read 'tools/Probe-BiologyDetailNativeRegion.ps1'
 $agents=Read 'AGENTS.md'
 $catalog=Read 'docs/LOCAL-OPERATOR-COMMANDS.md'
 $readme=Read 'docs/reference-mods/README.md'
@@ -43,6 +44,14 @@ Require $builder 'skipped-duplicate-payload' 'Builder must suppress duplicate se
 Require $builder 'opaque-no-safe-listing-tool|opaque-tool-could-not-list' 'Builder must represent uninspectable resource containers explicitly.'
 Require $builder 'PRIVATE-THIRD-PARTY-REFERENCE' 'Bundle must carry a prominent private-analysis marker.'
 Require $builder 'WorkflowSourceRevision' 'Bundle must bind evidence to exact workflow source.'
+Require $builder 'IncludeBiologyNativeUi' 'Builder must expose the optional current-game Biology/Cyberware UI companion.'
+Require $builder 'ripperdoc\.script' 'Native companion must capture the installed official ripperdoc.script.'
+Require $builder 'ripperdocInventoryController\.script' 'Native companion must capture the installed official ripperdocInventoryController.script.'
+Require $builder 'Probe-BiologyDetailNativeRegion\.ps1' 'Native companion must reuse the established read-only installed-resource probe.'
+Require $bootstrap 'IncludeBiologyNativeUi' 'Bootstrap must forward the optional native UI evidence request.'
+Require $nativeProbe 'PrivateTargetJsonPath' 'Native-region probe must support preserving the serialized target JSON privately outside Git.'
+Require $nativeProbe 'HANDLE_ID_219_OR_743' 'Native-region probe must preserve targeted object context for the decisive HandleId 219/743 parent evidence.'
+Require $nativeProbe 'Full serialized target JSON may be preserved privately' 'Native-region probe must document its private serialized-resource handoff.'
 Require $bootstrap 'ReferenceNameJson' 'Bootstrap must forward multiple selected reference names losslessly as one JSON argument.'
 Require $builder 'ZipSingleRoot' 'Builder must recognize ZIP/extracted-folder duplicates by the ZIP sole top-level root as well as basename.'
 
@@ -59,6 +68,8 @@ if($schema.title -notmatch 'redistribution-safe'){throw 'Reference record schema
 if($schema.properties.source.properties.selectedIdentities.items.properties.sha256.pattern -ne '^[0-9A-Fa-f]{64}$'){throw 'Reference record schema must require SHA-256 identities.'}
 $template=$templateText|ConvertFrom-Json -Depth 30
 if($template.schemaVersion -ne 1){throw 'Reference record template schemaVersion mismatch.'}
+if(-not $schema.properties.mappings.items.properties.widgetAncestry){throw 'Reference record schema must support redistribution-safe derived widget ancestry.'}
+if(-not $template.mappings[0].widgetAncestry){throw 'Reference record template must demonstrate derived widget ancestry without proprietary object bodies.'}
 
 $temp=Join-Path ([IO.Path]::GetTempPath()) ('biology-reference-test-'+[guid]::NewGuid().ToString('N'))
 $library=Join-Path $temp 'library'
@@ -115,6 +126,20 @@ try{
     $sig=@(Get-Content -Raw -LiteralPath (Join-Path $expanded 'signals.json')|ConvertFrom-Json -Depth 30)
     if(@($sig|Where-Object kind -eq 'redscript-hook').Count -lt 1){throw 'redscript hook signal was not extracted.'}
     if(@($sig|Where-Object kind -eq 'framework').Count -lt 1){throw 'dependency/framework signal was not extracted.'}
+
+    # The native-game companion is optional and must fail transparently without
+    # suppressing the third-party reference bundle when current game evidence is unavailable.
+    $nativeOut=Join-Path $temp 'native-out'
+    New-Item -ItemType Directory -Path $nativeOut|Out-Null
+    $nativeBundle=& (Join-Path $project 'tools\New-ReferenceModBundle.ps1') -LibraryPath $library -ReferenceName @('Project E3') -OutputRoot $nativeOut -WorkflowSourceRevision $sourceRevision -IncludeBiologyNativeUi -GamePath (Join-Path $temp 'missing-game')
+    $nativeBundlePath=[string](@($nativeBundle)[-1])
+    if(-not (Test-Path -LiteralPath $nativeBundlePath -PathType Leaf)){throw 'Native-companion transparent-failure bundle was not produced.'}
+    $nativeExpanded=Join-Path $temp 'native-expanded'
+    Expand-Archive -LiteralPath $nativeBundlePath -DestinationPath $nativeExpanded
+    $nativeManifest=Get-Content -Raw -LiteralPath (Join-Path $nativeExpanded 'manifest.json')|ConvertFrom-Json -Depth 30
+    if($nativeManifest.nativeBiologyUi.status -ne 'failed-transparent'){throw 'Unavailable native UI sub-capability did not fail transparently inside the private bundle.'}
+    if($nativeManifest.gameInstallation -notmatch '^read-only native UI inspection requested'){throw 'Native companion manifest did not preserve its read-only game boundary.'}
+    if(-not (Test-Path -LiteralPath (Join-Path $nativeExpanded 'native-game-evidence\collection-failure.txt') -PathType Leaf)){throw 'Transparent native companion failure report is missing.'}
 }finally{
     if(Test-Path -LiteralPath $temp){Remove-Item -LiteralPath $temp -Recurse -Force}
 }
