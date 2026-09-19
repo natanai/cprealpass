@@ -105,7 +105,7 @@ try{
     $before=Fingerprint $library
     $sourceRevision='aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
     $bundle=& (Join-Path $project 'tools\New-ReferenceModBundle.ps1') -LibraryPath $library -ReferenceName @('Project E3','Downloaded E3 Package.zip') -OutputRoot $out -WorkflowSourceRevision $sourceRevision
-    if($LASTEXITCODE -and $LASTEXITCODE -ne 0){throw "Reference builder returned exit $LASTEXITCODE"}
+    if(-not $?){throw 'Reference builder invocation failed.'}
     $bundlePath=[string](@($bundle)[-1])
     if(-not (Test-Path -LiteralPath $bundlePath -PathType Leaf)){throw "Reference bundle missing: $bundlePath"}
     $after=Fingerprint $library
