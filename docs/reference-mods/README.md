@@ -25,7 +25,9 @@ For Cyberware/Ripperdoc archaeology, the same command can add `-IncludeBiologyNa
 
 If that native resource sub-capability cannot resolve or serialize the target, the reference bundle still completes and records the native portion as failed/opaque rather than inventing hierarchy.
 
-The bundle is intentionally written outside both the repository and the source reference library, by default under `C:\Games\Biology-Reference-Bundles`. The source library is read-only and reference mods are not installed into Cyberpunk for this workflow.
+The bundle is intentionally written outside both the repository and the source reference payload folders, by default under `C:\Games\Biology-Reference-Bundles`. Selected reference-mod folders are read-only and reference mods are not installed into Cyberpunk for this workflow.
+
+Command 18 may maintain an owner-authorized reusable dependency cache at `C:\Games\Cyberpunk-ReferenceMods\_tooling`. That reserved folder is not a reference mod and is excluded from selection. Pinned WolvenKit CLI / portable .NET assets may be downloaded there once, then checksum/inventory-verified and reused on later probes instead of being downloaded into every disposable checkout. A cache mismatch still fails closed rather than silently replacing or trusting an unverified tool.
 
 ## Worker request convention
 
