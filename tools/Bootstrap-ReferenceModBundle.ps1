@@ -69,7 +69,7 @@ function NativeLive([string]$exe,[string[]]$arguments){
         [pscustomobject]@{ExitCode=$p.ExitCode;StdOut=$stdout.ToString();StdErr=$stderr.ToString()}
     }finally{$p.Dispose()}
 }
-function Git([string[]]$args){Native 'git' $args}
+function Git([string[]]$arguments){Native 'git' $arguments}
 function SeedRepo {
     foreach($d in @(Get-ChildItem -LiteralPath $GamesRoot -Directory -ErrorAction SilentlyContinue)){
         $top=Git @('-C',$d.FullName,'rev-parse','--show-toplevel')
@@ -213,12 +213,12 @@ try{
         }
     }
 
-    $args=@('-NoLogo','-NoProfile','-File',(Join-Path $worktree 'tools\New-ReferenceModBundle.ps1'),'-LibraryPath',$LibraryPath,'-OutputRoot',$OutputRoot,'-WorkflowSourceRevision',$ExpectedHead,'-SuppressHandoffMarker')
-    if($ReferenceName -and $ReferenceName.Count -gt 0){$args += '-ReferenceNameJson';$args += ($ReferenceName | ConvertTo-Json -Compress)}
-    if($IncludeBiologyNativeUi){$args += '-IncludeBiologyNativeUi';$args += '-GamePath';$args += $GamePath}
+    $childArgs=@('-NoLogo','-NoProfile','-File',(Join-Path $worktree 'tools\New-ReferenceModBundle.ps1'),'-LibraryPath',$LibraryPath,'-OutputRoot',$OutputRoot,'-WorkflowSourceRevision',$ExpectedHead,'-SuppressHandoffMarker')
+    if($ReferenceName -and $ReferenceName.Count -gt 0){$childArgs += '-ReferenceNameJson';$childArgs += ($ReferenceName | ConvertTo-Json -Compress)}
+    if($IncludeBiologyNativeUi){$childArgs += '-IncludeBiologyNativeUi';$childArgs += '-GamePath';$childArgs += $GamePath}
     Write-Host ''
     Write-Host 'REFERENCE BUNDLE WORK STARTING — progress will stream below.' -ForegroundColor Cyan
-    $child=NativeLive 'pwsh' $args
+    $child=NativeLive 'pwsh' $childArgs
     if($child.ExitCode -ne 0){throw "Reference bundle builder failed with exit $($child.ExitCode). $($child.StdErr.Trim())"}
     $m=[regex]::Match($child.StdOut,'(?im)^([A-Za-z]:\\[^\r\n]+Biology-Private-ReferenceBundle-[^\r\n]+\.zip)\s*$')
     if(-not $m.Success){throw 'Builder succeeded but did not return an attachable bundle path.'}
