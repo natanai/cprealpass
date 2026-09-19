@@ -15,6 +15,7 @@ $tests = @(
     'Test-IntegrationOrchestrator.ps1',
     'Test-LocalOperatorCommands.ps1',
     'Test-OperatorBootstrapHardening.ps1',
+    'Test-ReferenceModArchaeology.ps1',
     'Test-ModuleContract.ps1',
     'Test-SettingsContract.ps1',
     'Test-SettingsRuntimeSurface.ps1',

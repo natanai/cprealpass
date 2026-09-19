@@ -2,7 +2,9 @@
 [CmdletBinding()]
 param(
     [string]$GamePath = 'C:\Games\Steam\steamapps\common\Cyberpunk 2077',
-    [string]$ReportPath
+    [string]$ReportPath,
+    [string]$PrivateTargetJsonPath,
+    [string]$PrivateWidgetAncestryJsonPath
 )
 
 $ErrorActionPreference = 'Stop'
@@ -71,6 +73,150 @@ function Add-NeedleSnippets([string]$Raw,[string]$Needle,[int]$MaxOccurrences = 
         Add-Report ("NEEDLE[$Needle]#$occurrence OFFSET=$index")
         Add-Report $snippet
         $cursor = $index + $Needle.Length
+    }
+}
+
+function Add-RegexSnippets([string]$Raw,[string]$Label,[string]$Pattern,[int]$MaxOccurrences = 12) {
+    $matches = [regex]::Matches($Raw,$Pattern,[Text.RegularExpressions.RegexOptions]::IgnoreCase)
+    $take = [Math]::Min($MaxOccurrences,$matches.Count)
+    for ($i=0; $i -lt $take; $i++) {
+        $match = $matches[$i]
+        $start = [Math]::Max(0,$match.Index-6000)
+        $length = [Math]::Min(14000,$Raw.Length-$start)
+        $snippet = $Raw.Substring($start,$length) -replace '[\r\n]+',' '
+        Add-Report ("TARGETED[$Label]#$($i+1) OFFSET=$($match.Index)")
+        Add-Report $snippet
+    }
+}
+
+function Has-Property($Object,[string]$Name) {
+    return $null -ne $Object -and @($Object.PSObject.Properties.Name) -contains $Name
+}
+function Get-CNameValue($Value) {
+    if ($null -eq $Value) { return $null }
+    if ($Value -is [string]) { return [string]$Value }
+    if (Has-Property $Value '$value') { return [string]$Value.'$value' }
+    return $null
+}
+function Get-HandleRefIds($Value) {
+    $found = [Collections.Generic.List[string]]::new()
+    function Walk-Refs($Node) {
+        if ($null -eq $Node) { return }
+        if ($Node -is [string] -or $Node.GetType().IsPrimitive -or $Node -is [decimal]) { return }
+        if ($Node -is [System.Collections.IEnumerable] -and -not ($Node -is [pscustomobject])) {
+            foreach ($item in $Node) { Walk-Refs $item }
+            return
+        }
+        if (Has-Property $Node 'HandleRefId') {
+            $id = [string]$Node.HandleRefId
+            if ($id -and -not $found.Contains($id)) { $found.Add($id) }
+        }
+        foreach ($property in @($Node.PSObject.Properties)) { Walk-Refs $property.Value }
+    }
+    Walk-Refs $Value
+    @($found)
+}
+function Get-WidgetAncestryEvidence([string]$Raw) {
+    $document = $Raw | ConvertFrom-Json -Depth 100
+    $handles = [Collections.Generic.Dictionary[string,object]]::new([StringComparer]::OrdinalIgnoreCase)
+    $order = [Collections.Generic.List[string]]::new()
+    function Walk-Handles($Node) {
+        if ($null -eq $Node) { return }
+        if ($Node -is [string] -or $Node.GetType().IsPrimitive -or $Node -is [decimal]) { return }
+        if ($Node -is [System.Collections.IEnumerable] -and -not ($Node -is [pscustomobject])) {
+            foreach ($item in $Node) { Walk-Handles $item }
+            return
+        }
+        if (Has-Property $Node 'HandleId') {
+            $id = [string]$Node.HandleId
+            if ($id -and -not $handles.ContainsKey($id)) {
+                $handles.Add($id,$Node)
+                $order.Add($id)
+            }
+        }
+        foreach ($property in @($Node.PSObject.Properties)) { Walk-Handles $property.Value }
+    }
+    Walk-Handles $document
+
+    $summaries = [Collections.Generic.Dictionary[string,object]]::new([StringComparer]::OrdinalIgnoreCase)
+    foreach ($id in $order) {
+        $wrapper = $handles[$id]
+        $data = if ((Has-Property $wrapper 'Data') -and $null -ne $wrapper.Data) { $wrapper.Data } else { $wrapper }
+        $parent = if (Has-Property $data 'parentWidget') { @((Get-HandleRefIds $data.parentWidget))[0] } else { $null }
+        $declaredChildren = if (Has-Property $data 'children') { @(Get-HandleRefIds $data.children) } else { @() }
+        $clip = [ordered]@{}
+        foreach ($property in @($data.PSObject.Properties | Where-Object Name -Match '(?i)clip')) { $clip[$property.Name]=$property.Value }
+        $summaries.Add($id,[ordered]@{
+            handleId=$id
+            type=if(Has-Property $data '$type'){[string]$data.'$type'}else{$null}
+            name=if(Has-Property $data 'name'){Get-CNameValue $data.name}else{$null}
+            parentHandleId=$parent
+            declaredChildren=$declaredChildren
+            clipping=$clip
+            fitToContent=if(Has-Property $data 'fitToContent'){$data.fitToContent}else{$null}
+            layout=if(Has-Property $data 'layout'){$data.layout}else{$null}
+            size=if(Has-Property $data 'size'){$data.size}else{$null}
+            opacity=if(Has-Property $data 'opacity'){$data.opacity}else{$null}
+            visible=if(Has-Property $data 'visible'){$data.visible}else{$null}
+            renderTranslation=if((Has-Property $data 'renderTransform') -and $null -ne $data.renderTransform -and (Has-Property $data.renderTransform 'translation')){$data.renderTransform.translation}else{$null}
+        })
+    }
+
+    # Fill children/order from explicit parent references when the resource does not
+    # expose a direct children array. This is derived from the same serialized graph,
+    # not from screenshot geometry.
+    foreach ($id in $order) {
+        $summary=$summaries[$id]
+        $parent=[string]$summary.parentHandleId
+        if($parent -and $summaries.ContainsKey($parent)){
+            $parentSummary=$summaries[$parent]
+            if(@($parentSummary.declaredChildren).Count -eq 0){
+                $inverse=@($order|Where-Object {$summaries[$_].parentHandleId -eq $parent})
+                $parentSummary.declaredChildren=$inverse
+            }
+        }
+    }
+
+    $starts=[Collections.Generic.List[string]]::new()
+    foreach($candidate in @('221','746','219','743')){
+        if($summaries.ContainsKey($candidate) -and -not $starts.Contains($candidate)){$starts.Add($candidate)}
+    }
+    foreach($id in $order){
+        if($summaries[$id].name -ieq 'virtualGridContainer' -and -not $starts.Contains($id)){$starts.Add($id)}
+    }
+
+    $chains=[Collections.Generic.List[object]]::new()
+    foreach($start in $starts){
+        $chain=[Collections.Generic.List[object]]::new()
+        $seen=[Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+        $current=$start
+        while($current -and $summaries.ContainsKey($current) -and $seen.Add($current)){
+            $summary=$summaries[$current]
+            $parent=[string]$summary.parentHandleId
+            $siblingOrder=$null
+            if($parent -and $summaries.ContainsKey($parent)){
+                $siblings=@($summaries[$parent].declaredChildren)
+                for($i=0;$i -lt $siblings.Count;$i++){if([string]$siblings[$i] -eq $current){$siblingOrder=$i;break}}
+            }
+            $chain.Add([ordered]@{
+                handleId=$summary.handleId;type=$summary.type;name=$summary.name;parentHandleId=$summary.parentHandleId
+                childOrder=$siblingOrder;children=@($summary.declaredChildren);clipping=$summary.clipping;fitToContent=$summary.fitToContent
+                layout=$summary.layout;size=$summary.size;opacity=$summary.opacity;visible=$summary.visible;renderTranslation=$summary.renderTranslation
+            })
+            $current=$parent
+        }
+        $chains.Add([ordered]@{startHandleId=$start;widgets=@($chain)})
+    }
+
+    [ordered]@{
+        schemaVersion=1
+        generatedUtc=[DateTime]::UtcNow.ToString('o')
+        handleCount=$handles.Count
+        focus='virtualGridContainer direct parent and authored ancestor chain; specifically HandleId 219 / package-copy 743 when present.'
+        chains=@($chains)
+        exactFocusHandles=@(
+            foreach($id in @('219','743')){if($summaries.ContainsKey($id)){$summaries[$id]}}
+        )
     }
 }
 
@@ -242,6 +388,21 @@ try {
     Add-Report ("TARGET_RESOURCE_SHA256=" + (Get-Sha256 $target.ResourceFile.FullName))
     Add-Report ("TARGET_JSON=" + [IO.Path]::GetRelativePath($jsonRoot,$target.JsonFile.FullName))
 
+    if (-not [string]::IsNullOrWhiteSpace($PrivateTargetJsonPath)) {
+        if (-not [IO.Path]::IsPathRooted($PrivateTargetJsonPath)) {
+            throw 'PrivateTargetJsonPath must be an absolute path outside the checkout.'
+        }
+        $privateJson = [IO.Path]::GetFullPath($PrivateTargetJsonPath)
+        $projectBoundary = [IO.Path]::GetFullPath($project).TrimEnd('\') + '\'
+        if (($privateJson + '\').StartsWith($projectBoundary,[StringComparison]::OrdinalIgnoreCase)) {
+            throw 'PrivateTargetJsonPath must remain outside the cprealpass checkout because it contains proprietary serialized game resource data.'
+        }
+        New-Item -ItemType Directory -Force -Path (Split-Path -Parent $privateJson) | Out-Null
+        Copy-Item -LiteralPath $target.JsonFile.FullName -Destination $privateJson -Force
+        Add-Report ("PRIVATE_TARGET_JSON=" + $privateJson)
+        Add-Report ("PRIVATE_TARGET_JSON_SHA256=" + (Get-Sha256 $privateJson))
+    }
+
     $needles = @(
         'RipperDocGameController',
         'RipperdocInventoryController',
@@ -258,6 +419,42 @@ try {
     Add-Report '=== TARGET NATIVE INK EVIDENCE ==='
     foreach ($needle in $needles) {
         Add-NeedleSnippets $target.Raw $needle
+    }
+
+    Add-Report ''
+    Add-Report '=== TARGETED HANDLE/ANCESTRY EVIDENCE ==='
+    Add-Report 'Focus: preserve exact serialized object context for W17.1 around virtualGridContainer parent HandleId 219 (package-copy 743) and its direct references.'
+    Add-RegexSnippets $target.Raw 'HANDLE_ID_219_OR_743' '"HandleId"\s*:\s*"?(219|743)"?\b'
+    Add-RegexSnippets $target.Raw 'HANDLE_REF_219_OR_743' '"HandleRefId"\s*:\s*"?(219|743)"?\b'
+    Add-RegexSnippets $target.Raw 'HANDLE_ID_GRID_LABEL_SCROLL' '"HandleId"\s*:\s*"?(208|210|215|221|727|730|737|746)"?\b'
+    Add-RegexSnippets $target.Raw 'PARENT_WIDGET' '"parentWidget"\s*:'
+    Add-Report 'Full serialized target JSON may be preserved privately by the caller with -PrivateTargetJsonPath for exact ancestry reconstruction without broad needle re-probing.'
+
+    Add-Report ''
+    Add-Report '=== DERIVED WIDGET ANCESTRY ==='
+    try {
+        $ancestry = Get-WidgetAncestryEvidence $target.Raw
+        Add-Report ("ANCESTRY_HANDLE_COUNT=" + $ancestry.handleCount)
+        foreach($chain in @($ancestry.chains)){
+            Add-Report ("ANCESTRY_CHAIN_START=" + $chain.startHandleId)
+            foreach($widget in @($chain.widgets)){
+                Add-Report ("WIDGET=" + ($widget | ConvertTo-Json -Depth 20 -Compress))
+            }
+        }
+        if (-not [string]::IsNullOrWhiteSpace($PrivateWidgetAncestryJsonPath)) {
+            if (-not [IO.Path]::IsPathRooted($PrivateWidgetAncestryJsonPath)) { throw 'PrivateWidgetAncestryJsonPath must be absolute.' }
+            $ancestryPath=[IO.Path]::GetFullPath($PrivateWidgetAncestryJsonPath)
+            $projectBoundary=[IO.Path]::GetFullPath($project).TrimEnd('\')+'\'
+            if (($ancestryPath+'\').StartsWith($projectBoundary,[StringComparison]::OrdinalIgnoreCase)) {
+                throw 'PrivateWidgetAncestryJsonPath must remain outside the cprealpass checkout.'
+            }
+            New-Item -ItemType Directory -Force -Path (Split-Path -Parent $ancestryPath)|Out-Null
+            $ancestry|ConvertTo-Json -Depth 30|Set-Content -LiteralPath $ancestryPath -Encoding utf8
+            Add-Report ("PRIVATE_WIDGET_ANCESTRY_JSON=" + $ancestryPath)
+            Add-Report ("PRIVATE_WIDGET_ANCESTRY_JSON_SHA256=" + (Get-Sha256 $ancestryPath))
+        }
+    } catch {
+        Add-Report ("ANCESTRY_DERIVATION_FAILED=" + $_.Exception.Message)
     }
 
     Add-Report ''
@@ -298,7 +495,7 @@ finally {
     $report | Set-Content -LiteralPath $ReportPath -Encoding utf8
     Write-Host ''
     Write-Host "LOCAL EVIDENCE REPORT: $ReportPath" -ForegroundColor Cyan
-    Write-Host 'Attach that .txt file to the W02 worker conversation.' -ForegroundColor DarkGray
+    Write-Host 'Return that report to the requesting worker/parent; private callers may also preserve the serialized target and derived ancestry outside Git.' -ForegroundColor DarkGray
 }
 
 if (-not $probeSucceeded) {
