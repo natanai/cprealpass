@@ -12,10 +12,13 @@ import CyberpunkRealism.Settings.*
 private let crBiologyDetailSurfaceActive: Bool;
 
 @addField(RipperdocInventoryController)
-private let crBiologyVirtualGridLayoutPolicyCaptured: Bool;
+private let crBiologyContentHostVisibilityCaptured: Bool;
 
 @addField(RipperdocInventoryController)
-private let crBiologyVirtualGridAffectsLayoutWhenHidden: Bool;
+private let crBiologyContentHostWasVisible: Bool;
+
+@addField(RipperdocInventoryController)
+private let crBiologyCyberwareContentHost: wref<inkWidget>;
 
 @addField(RipperdocInventoryController)
 private let crBiologyDetailMountStatus: String;
@@ -26,38 +29,45 @@ private let crBiologyDetailNativeParent: wref<inkCompoundWidget>;
 @addField(RipperdocInventoryController)
 private let crBiologyDetailNativeRegion: wref<inkWidget>;
 
-// Biology reuses the native Ripperdoc inventory/detail surface, but its detail view
-// must not expose the Cyberware item grid underneath Biology telemetry/actions.
-// Keep the stock controller/root authoritative and suppress only its item-list chrome
-// while Biology detail is active. Returning to overview restores the stock surface so
-// Cyberware can use it unchanged.
+// Current CP2077 2.31 resource archaeology proves the stock inventory subtree is:
+//
+// Inventory (RipperdocInventoryController root)
+// -> cyberwareContainer
+// -> GridAndSlider -> grid -> scrollRect -> virtualGridContainer
+//
+// Biology must not live inside that scrolling item-grid subtree. Keep Inventory as the
+// native selected-detail lifecycle/opacity authority, but hide the authored
+// cyberwareContainer as one stock content unit while Biology occupies a sibling panel
+// under the same Inventory root. Restore the container's exact prior visibility on exit.
 @addMethod(RipperdocInventoryController)
 public final func CRSetBiologyDetailSurface(active: Bool) -> Void {
   this.crBiologyDetailSurfaceActive = active;
-  let virtualGrid: ref<inkWidget> = inkVirtualCompoundRef.Get(this.m_virtualGridContainer);
-  if IsDefined(virtualGrid) {
-    // W02.5: Biology is mounted beside this native child and borrows its local
-    // geometry. Keep the hidden stock grid participating in layout while Biology
-    // detail is active so hiding Cyberware chrome cannot collapse the native region
-    // that Biology itself depends on. Restore the stock policy exactly on exit.
-    if active {
-      if !this.crBiologyVirtualGridLayoutPolicyCaptured {
-        this.crBiologyVirtualGridAffectsLayoutWhenHidden = virtualGrid.GetAffectsLayoutWhenHidden();
-        this.crBiologyVirtualGridLayoutPolicyCaptured = true;
-      }
-      virtualGrid.SetAffectsLayoutWhenHidden(true);
-      virtualGrid.SetVisible(false);
-    } else {
-      virtualGrid.SetVisible(true);
-      if this.crBiologyVirtualGridLayoutPolicyCaptured {
-        virtualGrid.SetAffectsLayoutWhenHidden(this.crBiologyVirtualGridAffectsLayoutWhenHidden);
-        this.crBiologyVirtualGridLayoutPolicyCaptured = false;
-      }
+
+  let inventoryRoot: ref<inkCompoundWidget> = this.GetRootWidget() as inkCompoundWidget;
+  let contentHost: ref<inkWidget> = this.crBiologyCyberwareContentHost;
+  if !IsDefined(contentHost) && IsDefined(inventoryRoot) {
+    contentHost = this.CRFindBiologyAuthoredContentHost(inventoryRoot);
+    if IsDefined(contentHost) {
+      this.crBiologyCyberwareContentHost = contentHost;
     }
   }
-  inkWidgetRef.SetVisible(this.m_scrollBarContainer, !active);
-  inkTextRef.SetVisible(this.m_labelPrefix, !active);
-  inkTextRef.SetVisible(this.m_labelSuffix, !active);
+
+  if !IsDefined(contentHost) || !IsDefined(contentHost as inkVerticalPanel) {
+    return;
+  }
+
+  if active {
+    if !this.crBiologyContentHostVisibilityCaptured {
+      this.crBiologyContentHostWasVisible = contentHost.IsVisible();
+      this.crBiologyContentHostVisibilityCaptured = true;
+    }
+    contentHost.SetVisible(false);
+  } else {
+    if this.crBiologyContentHostVisibilityCaptured {
+      contentHost.SetVisible(this.crBiologyContentHostWasVisible);
+      this.crBiologyContentHostVisibilityCaptured = false;
+    }
+  }
 }
 
 @addMethod(RipperdocInventoryController)
@@ -65,37 +75,23 @@ public final func CRBiologyDetailSurfaceActive() -> Bool {
   return this.crBiologyDetailSurfaceActive;
 }
 
-// T002 plus the attended 2.31 INK probe proved the inventory controller root is only
-// a zero-margin Fill lifecycle container. m_virtualGridContainer is nested below an
-// additional native parent. Its layout values are therefore LOCAL to that parent.
-// Copying those values onto a widget mounted directly under the controller root loses
-// the authored ancestor transform and reproduces the extreme top-left failure.
-//
-// Vanilla redscript does not expose inkWidget.GetParentWidget(). Walk DOWN from the
-// known inventory root instead, find the compound that directly owns the native virtual
-// grid, and mount Biology beside it. Only then is copying the native child's local
-// geometry valid.
+// P02's current-2.31 serialized INK evidence closes the old W02.4/W02.6 host
+// uncertainty. cyberwareContainer is the direct authored child of the Inventory root,
+// while GridAndSlider -> grid -> scrollRect -> virtualGridContainer is only its internal
+// Cyberware item-list implementation. Resolve that exact direct child by authored name;
+// fail closed if a future game patch changes the contract rather than falling back to
+// screen coordinates or a convenient descendant.
 @addMethod(RipperdocInventoryController)
-private final func CRFindBiologyDetailRegionParent(parent: ref<inkCompoundWidget>, nativeRegion: ref<inkWidget>) -> ref<inkCompoundWidget> {
-  if !IsDefined(parent) || !IsDefined(nativeRegion) {
+private final func CRFindBiologyAuthoredContentHost(inventoryRoot: ref<inkCompoundWidget>) -> ref<inkWidget> {
+  if !IsDefined(inventoryRoot) {
     return null;
   }
 
   let i: Int32 = 0;
-  while i < parent.GetNumChildren() {
-    let child: wref<inkWidget> = parent.GetWidgetByIndex(i);
-    if IsDefined(child) {
-      if child == nativeRegion {
-        return parent;
-      }
-
-      let childCompound: ref<inkCompoundWidget> = child as inkCompoundWidget;
-      if IsDefined(childCompound) {
-        let found: ref<inkCompoundWidget> = this.CRFindBiologyDetailRegionParent(childCompound, nativeRegion);
-        if IsDefined(found) {
-          return found;
-        }
-      }
+  while i < inventoryRoot.GetNumChildren() {
+    let child: wref<inkWidget> = inventoryRoot.GetWidgetByIndex(i);
+    if IsDefined(child) && Equals(child.GetName(), n"cyberwareContainer") {
+      return child;
     }
     i += 1;
   }
@@ -150,11 +146,11 @@ public final func CRBiologyDetailPostMountStatus(target: ref<inkWidget>) -> Stri
   let inventoryRoot: ref<inkWidget> = this.GetRootWidget();
   let nativeRegion: ref<inkWidget> = this.crBiologyDetailNativeRegion;
   let nativeParent: ref<inkCompoundWidget> = this.crBiologyDetailNativeParent;
-  if !IsDefined(nativeRegion) {
-    nativeRegion = inkVirtualCompoundRef.Get(this.m_virtualGridContainer);
+  if !IsDefined(nativeParent) {
+    nativeParent = inventoryRoot as inkCompoundWidget;
   }
-  if !IsDefined(nativeParent) && IsDefined(inventoryRoot) && IsDefined(nativeRegion) {
-    nativeParent = this.CRFindBiologyDetailRegionParent(inventoryRoot as inkCompoundWidget, nativeRegion);
+  if !IsDefined(nativeRegion) && IsDefined(nativeParent) {
+    nativeRegion = this.CRFindBiologyAuthoredContentHost(nativeParent);
   }
 
   let result: String = this.crBiologyDetailMountStatus;
@@ -235,15 +231,9 @@ public final func CRBiologyDetailPostMountStatus(target: ref<inkWidget>) -> Stri
 }
 
 @addMethod(RipperdocInventoryController)
-public final func CRMountBiologyDetailInNativeRegion(target: ref<inkWidget>) -> Bool {
+public final func CRMountBiologyDetailInAuthoredContentHost(target: ref<inkWidget>) -> Bool {
   if !IsDefined(target) {
     this.crBiologyDetailMountStatus = "TARGET_MISSING";
-    return false;
-  }
-
-  let nativeRegion: ref<inkWidget> = inkVirtualCompoundRef.Get(this.m_virtualGridContainer);
-  if !IsDefined(nativeRegion) {
-    this.crBiologyDetailMountStatus = "GRID_MISSING";
     return false;
   }
 
@@ -253,38 +243,46 @@ public final func CRMountBiologyDetailInNativeRegion(target: ref<inkWidget>) -> 
     return false;
   }
 
-  let nativeParent: ref<inkCompoundWidget> = this.CRFindBiologyDetailRegionParent(inventoryRoot, nativeRegion);
-  if !IsDefined(nativeParent) {
-    this.crBiologyDetailMountStatus = "PARENT_MISSING";
+  let contentHost: ref<inkWidget> = this.CRFindBiologyAuthoredContentHost(inventoryRoot);
+  if !IsDefined(contentHost) {
+    this.crBiologyDetailMountStatus = "CONTENT_HOST_MISSING";
     return false;
   }
 
-  target.Reparent(nativeParent, -1);
-  if !this.CRBiologyDirectParentOwnsWidget(nativeParent, target) {
+  // The serialized 2.31 resource identifies cyberwareContainer as an
+  // inkVerticalPanelWidget. Biology is intentionally the same layout family so we can
+  // borrow the authored selected-content placement without inheriting scroll/grid
+  // virtualization semantics.
+  let contentPanel: ref<inkVerticalPanel> = contentHost as inkVerticalPanel;
+  if !IsDefined(contentPanel) {
+    this.crBiologyDetailMountStatus = "CONTENT_HOST_TYPE_MISMATCH";
+    return false;
+  }
+
+  target.Reparent(inventoryRoot, -1);
+  if !this.CRBiologyDirectParentOwnsWidget(inventoryRoot, target) {
     this.crBiologyDetailMountStatus = "REPARENT_UNCONFIRMED";
     return false;
   }
 
-  this.crBiologyDetailNativeParent = nativeParent;
-  this.crBiologyDetailNativeRegion = nativeRegion;
+  this.crBiologyCyberwareContentHost = contentHost;
+  this.crBiologyDetailNativeParent = inventoryRoot;
+  this.crBiologyDetailNativeRegion = contentHost;
 
-  // T004 proved the reparent succeeds live but the Biology subtree remains invisible.
-  // The W02.4 adapter also copied the virtualized grid's FIXED size contract onto an
-  // ordinary inkVerticalPanel. Those widget types do not share content-sizing
-  // semantics: the native grid's controller supplies virtualized content, while the
-  // Biology panel must size from its real title/summary/metric children. Preserve the
-  // native region's POSITIONING geometry, but let Biology own its content extent.
-  target.SetAnchor(nativeRegion.GetAnchor());
-  target.SetAnchorPoint(nativeRegion.GetAnchorPoint());
-  target.SetHAlign(nativeRegion.GetHAlign());
-  target.SetVAlign(nativeRegion.GetVAlign());
-  target.SetMargin(nativeRegion.GetMargin());
-  target.SetPadding(nativeRegion.GetPadding());
-  target.SetTranslation(nativeRegion.GetTranslation());
+  // Copy only the authored container's placement contract. Biology owns the extent of
+  // its actual title/summary/metrics/actions, so content sizing remains fit-to-content.
+  // No screen-space offsets are reconstructed here.
+  target.SetAnchor(contentHost.GetAnchor());
+  target.SetAnchorPoint(contentHost.GetAnchorPoint());
+  target.SetHAlign(contentHost.GetHAlign());
+  target.SetVAlign(contentHost.GetVAlign());
+  target.SetMargin(contentHost.GetMargin());
+  target.SetPadding(contentHost.GetPadding());
+  target.SetTranslation(contentHost.GetTranslation());
   target.SetFitToContent(true);
   target.SetOpacity(1.0);
   target.SetAffectsLayoutWhenHidden(true);
-  this.crBiologyDetailMountStatus = "MOUNTED";
+  this.crBiologyDetailMountStatus = "CONTENT_HOST_MOUNTED";
   return true;
 }
 

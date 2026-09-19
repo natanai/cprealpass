@@ -153,9 +153,10 @@ private let crBiologyOverview: ref<inkVerticalPanel>;
 @addField(RipperDocGameController)
 private let crBiologyOverviewText: ref<inkText>;
 
-// Biology detail stays inside the stock inventory-controller subtree for native
-// visibility/depth lifecycle. W02.4 mounts it beside m_virtualGridContainer so its
-// local geometry is interpreted in the exact same authored native coordinate space.
+// Biology detail stays under the stock RipperdocInventoryController lifecycle root,
+// but current-2.31 archaeology no longer mounts it inside the Cyberware scroll/grid.
+// It becomes a sibling of the authored cyberwareContainer and derives placement from
+// that same-type native vertical panel.
 @addField(RipperDocGameController)
 private let crBiologyNativeContent: ref<inkVerticalPanel>;
 
@@ -318,7 +319,7 @@ private final func CRCreateBiologyShell() -> Void {
   // Best-effort early mount only. Failure here is not terminal; the panel remains
   // retained and CRSyncBiologyNativeContentLayout retries against the live native tree.
   if IsDefined(this.m_inventoryView) {
-    this.m_inventoryView.CRMountBiologyDetailInNativeRegion(this.crBiologyNativeContent);
+    this.m_inventoryView.CRMountBiologyDetailInAuthoredContentHost(this.crBiologyNativeContent);
   }
 
   if IsDefined(this.crBiologyNativeContent) {
@@ -500,9 +501,11 @@ public final func CRSyncBiologyModeSwitcher() -> Void {
 
 @addMethod(RipperDocGameController)
 private final func CRSyncBiologyNativeContentLayout() -> Bool {
+  // Re-resolve the authored Inventory -> cyberwareContainer seam at detail depth.
+  // This deliberately fails closed if a future game patch changes that native contract.
   return IsDefined(this.m_inventoryView)
     && IsDefined(this.crBiologyNativeContent)
-    && this.m_inventoryView.CRMountBiologyDetailInNativeRegion(this.crBiologyNativeContent);
+    && this.m_inventoryView.CRMountBiologyDetailInAuthoredContentHost(this.crBiologyNativeContent);
 }
 
 @addMethod(RipperDocGameController)
@@ -561,10 +564,9 @@ private final func CRSyncBiologyContentVisibility() -> Void {
     detailLayoutReady = this.CRSyncBiologyNativeContentLayout();
   }
   if IsDefined(this.crBiologyNativeContent) {
-    // Re-read the native child geometry at detail depth. Keep the W02.4 fail-closed
-    // safety rule, but unlike W02.4 the retained panel can now recover from an early
-    // mount miss. A failed live mount is exposed through the already-native selector
-    // label rather than silently presenting an empty drill-down.
+    // Re-read the authored content-host geometry at detail depth. The retained panel
+    // can recover from an early lifecycle miss, while a changed/missing native host
+    // fails closed and remains visible in the existing selector diagnostic.
     this.crBiologyNativeContent.SetVisible(detail && detailLayoutReady);
   }
 

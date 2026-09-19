@@ -40,16 +40,19 @@ Check ($followup.Contains('this.m_dollHoverArea = gamedataEquipmentArea.Invalid;
 Check ($followup.Contains('this.m_dollSelected = false;')) 'First-open native doll selected state is not normalized.'
 Check ($followup.Contains('this.m_animationController.SetOutside();')) 'First-open animation depth is not normalized to overview before stock selection.'
 
-# Biology opens the real native detail/content transition from native DollSelect.
-# It suppresses only stock Cyberware list/filter chrome, leaving the native controller,
-# anchor, depth state, animation, and Back grammar intact.
+# Biology opens the real native detail transition from native DollSelect. Current
+# 2.31 archaeology proves the stock content hierarchy is Inventory -> cyberwareContainer
+# -> GridAndSlider -> grid -> scrollRect -> virtualGridContainer. Biology suppresses the
+# authored cyberwareContainer as a unit, not descendants of the scrolling item list.
 Check ($followup.Contains('private func DollSelect(select: Bool) -> Void')) 'W02.2 does not wrap native DollSelect.'
-Check ($followup.Contains('this.DisplayInventory(true);')) 'Biology detail does not open the native Ripperdoc inventory/detail surface.'
+Check ($followup.Contains('this.DisplayInventory(true);')) 'Biology detail does not open the native Ripperdoc inventory/detail lifecycle.'
 Check ($followup.Contains('this.m_inventoryView.CRSetBiologyDetailSurface(true);')) 'Biology detail does not switch the native content controller into Biology presentation mode.'
 Check ($followup.Contains('this.AnimateMinigrids();')) 'Biology detail does not reuse native minigrid/detail positioning after the selected area is committed.'
-Check ($followup.Contains('inkVirtualCompoundRef.Get(this.m_virtualGridContainer)')) 'Biology is not suppressing the stock Cyberware item grid at its native controller boundary.'
-Check ($followup.Contains('virtualGrid.SetVisible(false);') -and $followup.Contains('virtualGrid.SetVisible(true);')) 'Native Cyberware item-grid visibility is not restored symmetrically.'
-Check ($followup.Contains('inkTextRef.SetVisible(this.m_labelPrefix, !active);') -and $followup.Contains('inkTextRef.SetVisible(this.m_labelSuffix, !active);')) 'Stock Cyberware filter labels are not restored symmetrically.'
+Check ($followup.Contains('Equals(child.GetName(), n"cyberwareContainer")')) 'Biology does not resolve the authored 2.31 Cyberware content container.'
+Check ($followup.Contains('this.crBiologyContentHostWasVisible = contentHost.IsVisible();')) 'Biology does not capture the stock content-container visibility before suppression.'
+Check ($followup.Contains('contentHost.SetVisible(false);')) 'Biology detail does not suppress the stock authored content container.'
+Check ($followup.Contains('contentHost.SetVisible(this.crBiologyContentHostWasVisible);')) 'Native Cyberware content-container visibility is not restored exactly.'
+Check (-not $followup.Contains('inkVirtualCompoundRef.Get(this.m_virtualGridContainer)')) 'Biology still treats the virtualized item-list child as its presentation host.'
 
 # The original Biology transition calls DollSelect before refreshing selected-system
 # presentation. Because DollSelect is now the native content-open seam, supplied detail
@@ -62,7 +65,7 @@ Check ($detail.Contains('result.valid = true;')) 'Session detail contract never 
 
 # Existing Biology Back clears selected area and calls native DollHover(Invalid).
 # W02.2 detects only an active Biology detail surface at that native boundary, restores
-# Cyberware chrome, and invokes the stock DisplayInventory(false) inverse transition.
+# the authored Cyberware content container, and invokes the stock DisplayInventory(false) inverse transition.
 Check ($followup.Contains('this.m_inventoryView.CRBiologyDetailSurfaceActive();') -or $followup.Contains('inventoryView.CRBiologyDetailSurfaceActive();')) 'Back cleanup is not scoped to an active Biology detail surface.'
 Check ($followup.Contains('CRSetBiologyDetailSurface(false);')) 'Back does not restore native Cyberware content chrome.'
 Check ($followup.Contains('this.DisplayInventory(false);')) 'Back does not close the native Ripperdoc detail/content surface.'
