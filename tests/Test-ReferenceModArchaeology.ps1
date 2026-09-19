@@ -32,7 +32,7 @@ Require $bootstrap "'rev-parse','--show-toplevel'" 'Reference bootstrap must val
 Require $bootstrap "'remote','get-url','origin'" 'Reference bootstrap must validate cprealpass origin.'
 Require $bootstrap "'clone','--no-checkout'" 'Reference bootstrap must support zero local repo.'
 Require $bootstrap 'exact-sha-archive' 'Reference bootstrap must expose an immutable exact-SHA archive acquisition mode.'
-Require $bootstrap [regex]::Escape("https://github.com/natanai/cprealpass/archive/{0}.zip") 'Reference bootstrap must use an immutable commit-SHA archive URL for fallback acquisition.'
+Require $bootstrap ([regex]::Escape("https://github.com/natanai/cprealpass/archive/{0}.zip")) 'Reference bootstrap must use an immutable commit-SHA archive URL for fallback acquisition.'
 Require $bootstrap 'Invoke-WebRequest -Uri $archiveUrl -OutFile $archiveZip' 'Reference bootstrap must download the exact-SHA archive only through the pinned URL.'
 Require $bootstrap 'Expand-Archive -LiteralPath $archiveZip' 'Reference bootstrap must expand the exact-SHA source archive before invoking repository tooling.'
 Require $bootstrap 'Exact-SHA archive does not contain the expected Command 18 repository files' 'Reference bootstrap must validate expected repository-owned files after archive extraction.'
