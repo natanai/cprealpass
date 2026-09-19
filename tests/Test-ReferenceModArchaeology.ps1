@@ -179,32 +179,7 @@ try{
     if(Test-Path -LiteralPath (Join-Path $expanded 'payload\Project_E3\archive\pc\mod\e3.archive')){throw 'Binary archive payload must not be copied into private text payload.'}
 
     $idx=@(Get-Content -Raw -LiteralPath (Join-Path $expanded 'file-index.json')|ConvertFrom-Json -Depth 30)
-    if(@($idx|Where-Object path -match '(?i)(^|/)desktop\.ini    if($resource.Count -ne 1 -or $resource[0].classification -ne 'archive/resource-container'){throw 'Resource archive was not hash/inventory classified.'}
-    if(-not $resource[0].sha256 -or $resource[0].sha256.Length -ne 64){throw 'Resource archive SHA-256 missing.'}
-
-    $sig=@(Get-Content -Raw -LiteralPath (Join-Path $expanded 'signals.json')|ConvertFrom-Json -Depth 30)
-    if(@($sig|Where-Object kind -eq 'redscript-hook').Count -lt 1){throw 'redscript hook signal was not extracted.'}
-    if(@($sig|Where-Object kind -eq 'framework').Count -lt 1){throw 'dependency/framework signal was not extracted.'}
-
-    # The native-game companion is optional and must fail transparently without
-    # suppressing the third-party reference bundle when current game evidence is unavailable.
-    $nativeOut=Join-Path $temp 'native-out'
-    New-Item -ItemType Directory -Path $nativeOut|Out-Null
-    $nativeBundle=& (Join-Path $project 'tools\New-ReferenceModBundle.ps1') -LibraryPath $library -ReferenceName @('Project E3') -OutputRoot $nativeOut -WorkflowSourceRevision $sourceRevision -IncludeBiologyNativeUi -GamePath (Join-Path $temp 'missing-game')
-    $nativeBundlePath=[string](@($nativeBundle)[-1])
-    if(-not (Test-Path -LiteralPath $nativeBundlePath -PathType Leaf)){throw 'Native-companion transparent-failure bundle was not produced.'}
-    $nativeExpanded=Join-Path $temp 'native-expanded'
-    Expand-Archive -LiteralPath $nativeBundlePath -DestinationPath $nativeExpanded
-    $nativeManifest=Get-Content -Raw -LiteralPath (Join-Path $nativeExpanded 'manifest.json')|ConvertFrom-Json -Depth 30
-    if($nativeManifest.nativeBiologyUi.status -ne 'failed-transparent'){throw 'Unavailable native UI sub-capability did not fail transparently inside the private bundle.'}
-    if($nativeManifest.gameInstallation -notmatch '^read-only native UI inspection requested'){throw 'Native companion manifest did not preserve its read-only game boundary.'}
-    if(-not (Test-Path -LiteralPath (Join-Path $nativeExpanded 'native-game-evidence\collection-failure.txt') -PathType Leaf)){throw 'Transparent native companion failure report is missing.'}
-}finally{
-    if(Test-Path -LiteralPath $temp){Remove-Item -LiteralPath $temp -Recurse -Force}
-}
-
-Write-Host 'PASS: private reference-mod archaeology is exact-source, read-only, duplicate-aware, private-payload bounded, hash-inventoried, opaque-safe, and constrained to redistribution-safe derived Git records.'
-).Count -ne 0){throw 'Known OS metadata should not be indexed as reference evidence.'}
+    if(@($idx|Where-Object path -match '(?i)(^|/)desktop\.ini$').Count -ne 0){throw 'Known OS metadata should not be indexed as reference evidence.'}
     $resource=@($idx|Where-Object path -eq 'archive/pc/mod/e3.archive')
     if($resource.Count -ne 1 -or $resource[0].classification -ne 'archive/resource-container'){throw 'Resource archive was not hash/inventory classified.'}
     if(-not $resource[0].sha256 -or $resource[0].sha256.Length -ne 64){throw 'Resource archive SHA-256 missing.'}
