@@ -4,11 +4,19 @@ Status: canonical visual target / W18.1 engineering-reference continuation
 Last updated: 2026-09-17
 Current worker: W18.1 / issue #106 / parent issue #40
 
+## W18.1 verified resource-composition rule
+
+P02's accepted private Project E3 bundle records a WolvenKit-verified inventory of the exact HUD archive. Quest/list, D-pad/input hints, compass, weapon/ammo, player health, NPC nameplates, minimap, scanner HUD, activity log, interaction/dialog and other HUD families all have authored archive/resource participation.
+
+Therefore Biology's E3 preference must not evolve by stacking more runtime-created red geometry around controller roots. Current native widgets/resources own layout and gameplay semantics. Biology runtime geometry is limited to reversible accent chrome on already-proven semantic hosts. If T005 shows a structural mismatch that native child styling cannot solve, the next step is a Biology-owned REDmod/INK resource authored independently for the current 2.31 seam.
+
+This rule preserves the W03.5/W03.6 live wins and does not reintroduce Project E3 as a dependency.
+
 ## W18.1 engineering-reference rule
 
 The exact Project E3 2.31.p2 private reference was traced by the predecessor archaeology and is now owned by the W18.1 continuation as a layered implementation: authored archive/INK resources + redscript controller logic + TweakXL record policy, with Mod Settings only as an optional settings surface.
 
-See `E3-REFERENCE-ARCHAEOLOGY.md` for the durable mapping. W03.7 does **not** change the product boundary to “copy Project E3.” It uses Project E3 to identify the real responsibilities and then chooses the smallest current Cyberpunk 2.31 / Biology-owned seam. In particular, W03.5/W03.6 native content-region binding remains intentional, while Project E3 archive bytes/scripts/tweaks remain forbidden from the player artifact.
+See `E3-REFERENCE-ARCHAEOLOGY.md` for the durable mapping. W18.1 does **not** change the product boundary to “copy Project E3.” It uses Project E3 to identify the real responsibilities and then chooses the smallest current Cyberpunk 2.31 / Biology-owned seam. In particular, W03.5/W03.6 native content-region binding remains intentional, while Project E3 archive bytes/scripts/tweaks remain forbidden from the player artifact.
 
 ## Product decision
 
@@ -287,3 +295,17 @@ Parent-integrated attended evidence must show:
 - the old reticle artifact stays absent;
 - E3 OFF restores native quest/hotkey styling;
 - the modern scanner/quickhack presentation remains current/native.
+
+
+## W18.1 T005 acceptance boundary
+
+Parent P02 owns T005 on an integrated canonical candidate. W18.1 requires T005 to verify, without rediscovering architecture:
+
+- quest title/objective rows remain composed in the right-hand native tracker and the existing W03.6 treatment is visually coherent;
+- quickslot/D-pad treatment follows `m_dpadHintsPanel` without the T004 overlap;
+- weapon/ammo remains bound to the lower-right native region;
+- ambient framed names remain live, including the already-recorded police/combat scan-enrichment follow-up;
+- the old two-corner reticle artifact remains absent;
+- scanner and quickhack remain the current native 2.31 presentation;
+- E3 OFF yields reversible accent styling while Biology-wide health suppression remains independent;
+- any remaining **structural** HUD mismatch is routed to a Biology-owned authored-resource follow-up rather than another screen-space/runtime-rectangle iteration.
