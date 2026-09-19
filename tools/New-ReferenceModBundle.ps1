@@ -54,6 +54,43 @@ function Native([string]$exe,[string[]]$args) {
         [pscustomobject]@{ExitCode=$p.ExitCode;StdOut=$o;StdErr=$e}
     } finally {$p.Dispose()}
 }
+function NativeLive([string]$exe,[string[]]$args) {
+    $psi=[Diagnostics.ProcessStartInfo]::new()
+    $psi.FileName=$exe
+    $psi.UseShellExecute=$false
+    $psi.RedirectStandardOutput=$true
+    $psi.RedirectStandardError=$true
+    $psi.CreateNoWindow=$true
+    foreach($a in $args){[void]$psi.ArgumentList.Add($a)}
+    $p=[Diagnostics.Process]::new(); $p.StartInfo=$psi
+    try {
+        if(-not $p.Start()){throw "Could not start $exe"}
+        $stdout=[Text.StringBuilder]::new(); $stderr=[Text.StringBuilder]::new()
+        $outDone=$false; $errDone=$false
+        $outTask=$p.StandardOutput.ReadLineAsync(); $errTask=$p.StandardError.ReadLineAsync()
+        while(-not ($p.HasExited -and $outDone -and $errDone)){
+            if(-not $outDone -and $outTask.IsCompleted){
+                $line=$outTask.GetAwaiter().GetResult()
+                if($null -eq $line){$outDone=$true}else{
+                    Write-Host $line
+                    [void]$stdout.AppendLine($line)
+                    $outTask=$p.StandardOutput.ReadLineAsync()
+                }
+            }
+            if(-not $errDone -and $errTask.IsCompleted){
+                $line=$errTask.GetAwaiter().GetResult()
+                if($null -eq $line){$errDone=$true}else{
+                    Write-Host $line -ForegroundColor DarkYellow
+                    [void]$stderr.AppendLine($line)
+                    $errTask=$p.StandardError.ReadLineAsync()
+                }
+            }
+            if(-not ($p.HasExited -and $outDone -and $errDone)){Start-Sleep -Milliseconds 50}
+        }
+        $p.WaitForExit()
+        [pscustomobject]@{ExitCode=$p.ExitCode;StdOut=$stdout.ToString();StdErr=$stderr.ToString()}
+    } finally {$p.Dispose()}
+}
 function FolderFiles([IO.DirectoryInfo]$root) {
     $out=[Collections.Generic.List[IO.FileInfo]]::new()
     $stack=[Collections.Generic.Stack[IO.DirectoryInfo]]::new(); $stack.Push($root)
@@ -188,6 +225,7 @@ function AddDiskFile([string]$ref,[string]$rel,[string]$path){
 }
 
 function CollectBiologyNativeUi {
+    Write-Host '[NATIVE 1/4] Validating installed Cyberpunk 2077 and REDmod evidence roots...' -ForegroundColor Cyan
     $nativeRoot=Join-Path $stage 'native-game-evidence'
     New-Item -ItemType Directory -Force -Path $nativeRoot|Out-Null
     $resolvedGame=Full $GamePath
@@ -196,6 +234,7 @@ function CollectBiologyNativeUi {
     if(-not (Test-Path -LiteralPath $exe -PathType Leaf)){throw "Cyberpunk executable missing for native UI evidence: $exe"}
     if(-not (Test-Path -LiteralPath $scriptRoot -PathType Container)){throw "Installed official REDmod script tree missing: $scriptRoot"}
 
+    Write-Host '[NATIVE 2/4] Locating and hashing official Ripperdoc scripts...' -ForegroundColor Cyan
     $scriptMatches=@(
         Get-ChildItem -LiteralPath $scriptRoot -Recurse -File -ErrorAction Stop |
         Where-Object {$_.Name -ieq 'ripperdoc.script' -or $_.Name -ieq 'ripperdocInventoryController.script'} |
@@ -214,11 +253,13 @@ function CollectBiologyNativeUi {
         $notes.Add("CP2077 installed official script :: $($record.path) :: sha256=$($record.sha256)")
     }
 
+    Write-Host ("[NATIVE 2/4] Found {0} matching official script file(s)." -f $scriptMatches.Count) -ForegroundColor Cyan
+    Write-Host '[NATIVE 3/4] Running read-only INK/resource hierarchy probe. Archive scanning may take several minutes; probe output will stream live.' -ForegroundColor Cyan
     $probeReport=Join-Path $nativeRoot 'biology-detail-native-region.txt'
     $targetJson=Join-Path $nativeRoot 'ripperdoc-target.inkwidget.json'
     $ancestryJson=Join-Path $nativeRoot 'ripperdoc-widget-ancestry.json'
     $processReport=Join-Path $nativeRoot 'probe-process.txt'
-    $probe=Native 'pwsh' @(
+    $probe=NativeLive 'pwsh' @(
         '-NoLogo','-NoProfile','-File',(Join-Path $PSScriptRoot 'Probe-BiologyDetailNativeRegion.ps1'),
         '-GamePath',$resolvedGame,
         '-ReportPath',$probeReport,
@@ -233,6 +274,7 @@ function CollectBiologyNativeUi {
       $probe.StdErr
     )|Set-Content -LiteralPath $processReport -Encoding utf8
 
+    Write-Host ("[NATIVE 3/4] INK/resource probe finished with exit code {0}." -f $probe.ExitCode) -ForegroundColor Cyan
     $probeText=if(Test-Path -LiteralPath $probeReport -PathType Leaf){Get-Content -Raw -LiteralPath $probeReport}else{''}
     $targetPath=$null
     $sourceArchive=$null
@@ -301,6 +343,7 @@ function CollectBiologyNativeUi {
     }
     $summary|ConvertTo-Json -Depth 12|Set-Content -LiteralPath (Join-Path $nativeRoot 'summary.json') -Encoding utf8
     $script:nativeUi=$summary
+    Write-Host ("[NATIVE 4/4] Native UI evidence status: {0}" -f $captureStatus) -ForegroundColor Cyan
 }
 
 function ZipSingleRoot([string]$path){
@@ -323,7 +366,9 @@ function HashZipEntry($entry){
 }
 
 try{
+    Write-Host ("REFERENCE BUNDLE START — {0} selected reference(s)." -f $selected.Count) -ForegroundColor Cyan
     if($IncludeBiologyNativeUi){
+        Write-Host 'PHASE 1/4 — Current installed Biology/Cyberware native UI evidence.' -ForegroundColor Cyan
         try{CollectBiologyNativeUi}
         catch{
             $nativeFailRoot=Join-Path $stage 'native-game-evidence'
@@ -335,9 +380,13 @@ try{
             )|Set-Content -LiteralPath (Join-Path $nativeFailRoot 'collection-failure.txt') -Encoding utf8
             $nativeUi=[ordered]@{requested=$true;status='failed-transparent';error=$_.Exception.Message}
         }
+    } else {
+        Write-Host 'PHASE 1/4 — Native Biology/Cyberware companion not requested.' -ForegroundColor DarkGray
     }
+    Write-Host 'PHASE 2/4 — Indexing, hashing, and extracting bounded private reference text.' -ForegroundColor Cyan
     $folders=@($selected|Where-Object PSIsContainer|ForEach-Object Name)
     foreach($item in $selected){
+        Write-Host ("[REFERENCE] Starting {0}" -f $item.Name) -ForegroundColor Cyan
         $dup=$null
         if(-not $item.PSIsContainer -and $item.Extension -ieq '.zip'){
             $base=[IO.Path]::GetFileNameWithoutExtension($item.Name)
@@ -346,12 +395,14 @@ try{
         }
         if($dup){
             $refs.Add([pscustomobject]@{name=$item.Name;type='zip';status='skipped-duplicate-payload';duplicateOf=$dup;sourceBytes=[int64]$item.Length;sourceSha256=Sha $item.FullName})
+            Write-Host ("[REFERENCE] Duplicate payload skipped: {0} -> {1}" -f $item.Name,$dup) -ForegroundColor DarkGray
             continue
         }
         $start=$index.Count
         if($item.PSIsContainer){
             foreach($f in FolderFiles ([IO.DirectoryInfo]$item)){AddDiskFile $item.Name ([IO.Path]::GetRelativePath($item.FullName,$f.FullName)) $f.FullName}
             $refs.Add([pscustomobject]@{name=$item.Name;type='folder';status='included';indexedFiles=($index.Count-$start)})
+            Write-Host ("[REFERENCE] Completed {0}: {1} indexed file(s)." -f $item.Name,($index.Count-$start)) -ForegroundColor Cyan
         }elseif($item.Extension -ieq '.zip'){
             $z=[IO.Compression.ZipFile]::OpenRead($item.FullName)
             try{
@@ -375,9 +426,11 @@ try{
             }finally{$z.Dispose()}
             $inspect=ArchiveInventory $item.Name $item.Name $item.FullName
             $refs.Add([pscustomobject]@{name=$item.Name;type='zip';status='included';sourceBytes=[int64]$item.Length;sourceSha256=Sha $item.FullName;indexedFiles=($index.Count-$start);archiveInspectability=$inspect})
+            Write-Host ("[REFERENCE] Completed {0}: {1} indexed file(s)." -f $item.Name,($index.Count-$start)) -ForegroundColor Cyan
         }else{AddDiskFile $item.Name $item.Name $item.FullName;$refs.Add([pscustomobject]@{name=$item.Name;type='file';status='included';sourceBytes=[int64]$item.Length;sourceSha256=Sha $item.FullName;indexedFiles=1})}
     }
 
+    Write-Host 'PHASE 3/4 — Writing manifest, hashes, signals, and provenance summaries.' -ForegroundColor Cyan
     @(
       'PRIVATE THIRD-PARTY REFERENCE MATERIAL - ANALYSIS ONLY',
       '',
@@ -414,7 +467,9 @@ try{
       'PRIVATE ANALYSIS ONLY. Commit only redistribution-safe derived conclusions using docs/reference-mods/reference-record.schema.json.'
     )|Set-Content -LiteralPath (Join-Path $stage 'report.txt') -Encoding utf8
 
+    Write-Host 'PHASE 4/4 — Compressing the final private reference bundle.' -ForegroundColor Cyan
     Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $zipPath -CompressionLevel Optimal
+    Write-Host ("REFERENCE BUNDLE COMPLETE: {0}" -f $zipPath) -ForegroundColor Green
     if(-not (Test-Path -LiteralPath $zipPath -PathType Leaf)){throw 'Reference bundle ZIP was not created.'}
     if(-not $SuppressHandoffMarker){
         Write-Host ''
