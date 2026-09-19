@@ -105,10 +105,10 @@ Require $bootstrap ([regex]::Escape("Where-Object Name -ne '_tooling'")) 'Bootst
 Require $builder ([regex]::Escape("@('desktop.ini','Thumbs.db','.DS_Store')")) 'Builder must ignore known OS metadata instead of failing private archaeology on transient shell files.'
 Require $builder ([regex]::Escape("'-ToolCacheRoot',(Join-Path $LibraryPath '_tooling')")) 'Native UI companion must place reusable pinned tooling in the reference-library managed cache.'
 Require $nativeProbe 'ToolCacheRoot' 'Native-region probe must accept a persistent pinned tool-cache root.'
+Require $nativeProbe 'ConvertFrom-Json -Depth 100 -AsHashtable' 'Native ancestry must preserve case-distinct WolvenKit JSON keys.'
 Require $toolchain 'CacheRoot' 'Archive toolchain acquisition must support a persistent explicit cache root.'
 Require $toolchain 'persistent-external' 'Archive toolchain report must distinguish persistent external cache mode.'
 Require $toolchain 'Cached tool ZIP checksum/length differs' 'Persistent cached tool ZIPs must be reverified against pins before use.'
-Require $nativeProbe 'ConvertFrom-Json -Depth 100 -AsHashtable' 'Native ancestry must preserve case-distinct WolvenKit JSON keys.'
 
 Require $agents 'REFERENCE-MOD ARCHAEOLOGY GATE' 'AGENTS must require reference archaeology before speculative probing when relevant.'
 Require $agents 'mod and any dependencies wanted' 'Worker request convention must name desired mod/dependencies.'
@@ -166,7 +166,8 @@ try{
     }
     $manifest=Get-Content -Raw -LiteralPath (Join-Path $expanded 'manifest.json')|ConvertFrom-Json -Depth 30
     if($manifest.workflowSourceRevision -ne $sourceRevision){throw 'Bundle did not record exact workflow source revision.'}
-    if($manifest.sourceMutation -ne 'none'){throw 'Bundle does not prove source mutation boundary.'}
+    if($manifest.sourceMutation -ne 'none'){throw 'Bundle does not prove selected reference-payload mutation boundary.'}
+    if(-not $manifest.managedToolCache -or $manifest.managedToolCache.referencePayloadMutation -ne 'none'){throw 'Bundle does not describe managed tool-cache vs reference-payload mutation boundary.'}
     if($manifest.gameInstallation -ne 'not accessed or modified'){throw 'Bundle does not prove game-install boundary.'}
     if(@($manifest.provenanceVersionNotes|Where-Object {$_ -match 'version=2\.31\.2'}).Count -lt 1){throw 'Discoverable reference version metadata was not recorded.'}
     if(@($manifest.provenanceVersionNotes|Where-Object {$_ -match 'dependency=TweakXL'}).Count -lt 1){throw 'Discoverable dependency metadata was not recorded.'}
