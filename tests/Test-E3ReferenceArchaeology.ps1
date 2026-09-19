@@ -76,7 +76,8 @@ foreach ($excludedResource in @($scannerPatch.excludedResources)) {
     Check ([string]$excludedResource.sha256 -match '^[0-9A-F]{64}$') "Project E3 scanner-family exclusion hash is invalid for $($excludedResource.path)."
 }
 Check (@($record.opaqueAreas).Count -eq 0) 'W18.1 still marks the Project E3 archive opaque after the P02-accepted WolvenKit inventory.'
-Check (-not (@($record.opaqueAreas.pathIdentity) -contains 'Project E3 dependency package/readme metadata')) 'W18.1 left dependency metadata opaque after the public Project E3 2.31 distribution cross-check.'
+$opaquePathIdentities = @($record.opaqueAreas | ForEach-Object { $_.pathIdentity })
+Check (-not ($opaquePathIdentities -contains 'Project E3 dependency package/readme metadata')) 'W18.1 left dependency metadata opaque after the public Project E3 2.31 distribution cross-check.'
 Check ($archaeology.Contains('config/patches/realpass-modern-scanner.json')) 'W18.1 archaeology doc does not point to the exact 34-resource scanner exclusion evidence.'
 foreach ($archiveArea in @('NPC nameplate authored resource','Minimap authored resource','Activity-log authored resource','Interaction/dialog authored resources')) {
     Check ($areas -contains $archiveArea) "W18.1 derived mapping is missing verified archive-backed area: $archiveArea"
