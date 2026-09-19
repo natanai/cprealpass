@@ -3,7 +3,7 @@
   "source": {
     "name": "Project E3 - HUD",
     "version": "2.31.p2",
-    "provenance": "Nexus Mods 8800; author Virtuoso75; exact private reference identities are pinned by config/realpass-e3.json; W18.1 public-distribution cross-check on 2026-09-18 confirms Project E3 2.31 dependency roles; P02-accepted private bundle Biology-Private-ReferenceBundle-20260919-000857-87b38671.zip supplied a verified WolvenKit archive inventory",
+    "provenance": "Nexus Mods 8800; author Virtuoso75; exact private reference identities are pinned by config/realpass-e3.json; directly inspected private bundle Biology-Private-ReferenceBundle-20260919-001914-365937cf.zip was produced from canonical revision ffc000ffed2b958f70ce446f43a2fd92132a5f7c and contains the Project E3 source/config plus WolvenKit archive inventory.",
     "selectedIdentities": [
       {
         "path": "archive/pc/mod/basegame_3e_demo_hud.archive",
@@ -77,7 +77,7 @@
     {
       "name": "Cyberpunk archive resource override",
       "role": "Supplies the authored INK/resources that give Project E3 its actual widget hierarchy, styling, atlases, animations and related HUD assets.",
-      "evidence": "Pinned basegame_3e_demo_hud.archive SHA-256 776556B6913C3B6B2FE1E13DA0964732FA917A130EA9C2A43E34AD4F5FEC03B6 is 33,013,760 bytes. Historical Biology round-trip evidence counted 370 resources and preserves the exact 34 scanner-family exclusions. P02's accepted W18 private bundle adds a verified WolvenKit inventory confirming authored Project E3 resources for quest list/tracker, D-pad/input hints, compass, ammo/weapon presentation, player health, NPC nameplates, minimap, scanner HUD, activity log, interactions/dialog, and additional HUD families."
+      "evidence": "Direct inspection of Biology-Private-ReferenceBundle-20260919-001914-365937cf.zip verifies archive/pc/mod/basegame_3e_demo_hud.archive at 33,013,760 bytes and SHA-256 776556B6913C3B6B2FE1E13DA0964732FA917A130EA9C2A43E34AD4F5FEC03B6. Its WolvenKit listing contains 370 resource paths after excluding four WolvenKit long-path warning footer lines. The inventory directly includes quest_tracker.inkwidget, dpad_hint.inkwidget, compass.inkwidget, ammo_counter.inkwidget, playerhealthbar.inkwidget, npcnameplate.inkwidget, minimap.inkwidget, scanner_hud.inkwidget/scandetails.inkwidget/quickhacks.inkwidget, activity_log.inkwidget, and interaction/dialog resources."
     },
     {
       "name": "Mod Settings",
@@ -101,38 +101,38 @@
     {
       "referenceArea": "Quest tracker and objective rows",
       "mechanism": "archive-resource-replacement",
-      "referencePathIdentity": "basegame_3e_demo_hud.archive + quest_tracker.reds SHA-256 EA1DA91C...",
+      "referencePathIdentity": "basegame_3e_demo_hud.archive: base\\gameplay\\gui\\widgets\\quests\\quest_tracker.inkwidget + quest_list.inkwidget + quest_tracker_animations.inkanim; quest_tracker.reds SHA-256 EA1DA91C3584FC182A91730DF9C5AB0841672C17A01E2F91A34571B1BF63DF43",
       "nativeContract": {
         "gameVersion": "2.31",
         "controllerOrSystem": "QuestTrackerGameController + QuestTrackerObjectiveLogicController",
         "widgetOrResource": "m_questTrackerContainer, m_QuestTitle, m_ObjectiveContainer, m_objectiveTitle, m_trackingIcon, m_trackingFrame"
       },
       "biologyOwnedSeam": "W03.6 keeps the native tracker/objective lifecycle and styles the proven native content host/rows. It intentionally does not reproduce Project E3's archive-authored OptionalTracker hierarchy or replace UpdateTrackerData.",
-      "validation": "W03.6 exact 2.31 compile/native probe passed on f186c557...; parent T005 must validate the composed right-hand tracker."
+      "validation": "Direct bundle inspection proves the Project E3 script hard-targets inkVerticalPanelWidget2/OptionalTracker and its Fluff/OptionalList/Title children while the exact archive contains quest_tracker.inkwidget; W03.6 exact 2.31 compile/native probe passed and T005 validates Biology's independent native tracker/row composition."
     },
     {
       "referenceArea": "Weapon/ammo HUD",
       "mechanism": "archive-resource-replacement",
-      "referencePathIdentity": "basegame_3e_demo_hud.archive + weaponRoster.reds SHA-256 E73E7EB7...",
+      "referencePathIdentity": "basegame_3e_demo_hud.archive: base\\gameplay\\gui\\widgets\\ammo_counter\\ammo_counter.inkwidget + ammo_counter_animations.inkanim + ammo_counter.inkstyle; weaponRoster.reds SHA-256 E73E7EB7539652EB9F0D0E418BDA736F62FAC0DBAD885F8769FAA5DB8CF7C89C",
       "nativeContract": {
         "gameVersion": "2.31",
         "controllerOrSystem": "WeaponRosterGameController",
         "widgetOrResource": "m_onFootContainer, m_weaponAmmoWrapper, m_weaponName, m_weaponCurrentAmmo, m_weaponTotalAmmo"
       },
       "biologyOwnedSeam": "Preserve W03.5 binding to the native on-foot content region and native weapon/ammo text. Do not copy Project E3's custom decorator hierarchy or replace SetRosterSlotData/GetAmmoText.",
-      "validation": "T004 proved the detached lower-center chrome is gone and weapon presentation follows the lower-right native region; exact 2.31 probe confirms fields."
+      "validation": "Direct bundle inspection proves Project E3 expects weapon_on_foot/ammo_counter/weapon_wrapper/weapon_holder/decorator and the exact archive contains ammo_counter.inkwidget/style/animations. T004 already proved Biology's independent lower-right native binding."
     },
     {
       "referenceArea": "D-pad / quickslots",
       "mechanism": "archive-resource-replacement",
-      "referencePathIdentity": "basegame_3e_demo_hud.archive + dpad_hint.reds SHA-256 E29D8E61...",
+      "referencePathIdentity": "basegame_3e_demo_hud.archive: base\\gameplay\\gui\\widgets\\dpad_hint\\dpad_hint.inkwidget + dpad_hint_consumables.inkwidget + dpad_hint_animations.inkanim; dpad_hint.reds SHA-256 E29D8E6198FBB8972E19E617F6C7B0DE31EB4D02FBD378B94B04A7BED8DB282D",
       "nativeContract": {
         "gameVersion": "2.31",
         "controllerOrSystem": "HotkeysWidgetController",
         "widgetOrResource": "m_dpadHintsPanel plus separate phone/car/radio sibling slots"
       },
       "biologyOwnedSeam": "W03.6 mounts Biology chrome only in m_dpadHintsPanel and leaves phone/car/radio siblings native. It does not depend on Project E3's archive-authored newPhoneSlot child.",
-      "validation": "W03.6 exact compile/probe confirms m_dpadHintsPanel and native spawn usage; T005 must verify overlap is gone."
+      "validation": "Direct bundle inspection proves Project E3 expects mainCanvas/newPhoneSlot while the exact archive contains the D-pad widget family. Biology intentionally keeps the current 2.31 m_dpadHintsPanel semantic host; T005 validates overlap is gone."
     },
     {
       "referenceArea": "Ambient NPC nameplates",
@@ -161,7 +161,7 @@
     {
       "referenceArea": "Modern scanner / quickhack",
       "mechanism": "archive-resource-replacement",
-      "referencePathIdentity": "basegame_3e_demo_hud.archive + scanner_border.reds SHA-256 2544861F...",
+      "referencePathIdentity": "basegame_3e_demo_hud.archive: base\\gameplay\\gui\\widgets\\scanning\\scanner_hud.inkwidget + scandetails.inkwidget + base\\gameplay\\gui\\widgets\\quickhacks\\quickhacks.inkwidget; scanner_border.reds SHA-256 2544861F79F1FB54C0913A32C7B1568578C9896D62AFD9C2B880CD36F12690F1",
       "nativeContract": {
         "gameVersion": "2.31",
         "controllerOrSystem": "native scanner/quickhack/focus controllers",
@@ -185,14 +185,14 @@
     {
       "referenceArea": "Top compass / navigation ribbon",
       "mechanism": "archive-resource-replacement",
-      "referencePathIdentity": "compassController.reds SHA-256 5EA730F5... + compass helper sources + basegame_3e_demo_hud.archive",
+      "referencePathIdentity": "basegame_3e_demo_hud.archive: base\\gameplay\\gui\\widgets\\compass\\compass.inkwidget + quest_mappin.inkwidget + poi_mappin.inkwidget + compass_animations.inkanim; compassController.reds SHA-256 5EA730F5C30583D46C5F8906EC6A8476DCCF761813C07B95DF71934D8EE20851",
       "nativeContract": {
         "gameVersion": "2.31",
         "controllerOrSystem": "IronsightGameController + CompassController (historical/custom compass host); MinimapContainerController is current persistent minimap authority",
         "widgetOrResource": "Project E3 authored Pusula/Fluff hierarchy and compass quest/POI widgets"
       },
       "biologyOwnedSeam": "Do not resurrect Project E3's custom Ironsight-mounted compass merely for fidelity. Biology uses current persistent minimap/navigation authority unless a future product decision explicitly requires a separate top compass.",
-      "validation": "Private source proves Project E3 scripts require authored Pusula/Fluff children and external compass widgets; current 2.31 source separately confirms MinimapContainerController."
+      "validation": "Direct bundle inspection proves Project E3 code hard-targets authored Pusula/mappinContainer and Fluff children and the exact archive contains compass.inkwidget plus quest/POI mappins. Biology intentionally does not resurrect this custom ironsight-mounted compass."
     },
     {
       "referenceArea": "World quest/interaction mappins",
@@ -209,7 +209,7 @@
     {
       "referenceArea": "Interaction prompts",
       "mechanism": "archive-resource-replacement",
-      "referencePathIdentity": "interactionsUI.reds SHA-256 0D882550... + basegame_3e_demo_hud.archive",
+      "referencePathIdentity": "basegame_3e_demo_hud.archive: base\\gameplay\\gui\\widgets\\interactions\\interaction.inkwidget + dialog.inkwidget + base\\gameplay\\gui\\widgets\\root\\interactions_root.inkwidget; interactionsUI.reds SHA-256 0D8825508F8F7E0356CE6CD0B81F65A756B7CAE05726A87F5A8301A7EF240FA9",
       "nativeContract": {
         "gameVersion": "2.31",
         "controllerOrSystem": "interactionWidgetGameController",
@@ -233,7 +233,7 @@
     {
       "referenceArea": "Activity log",
       "mechanism": "redscript-hook-replace",
-      "referencePathIdentity": "activityLogControllers.reds SHA-256 25D50184...",
+      "referencePathIdentity": "basegame_3e_demo_hud.archive: base\\gameplay\\gui\\widgets\\activity_log\\activity_log.inkwidget; activityLogControllers.reds SHA-256 25D501841CF5A6C982043517FC52062C1195F89BD14E782AC83A541B3B6E8059",
       "nativeContract": {
         "gameVersion": "2.31",
         "controllerOrSystem": "activityLogEntryLogicController",
@@ -257,7 +257,7 @@
     {
       "referenceArea": "Player health/RAM lower-left HUD",
       "mechanism": "archive-resource-replacement",
-      "referencePathIdentity": "Player/healthbar.reds SHA-256 C5D41588... + basegame_3e_demo_hud.archive",
+      "referencePathIdentity": "basegame_3e_demo_hud.archive: base\\gameplay\\gui\\widgets\\healthbar\\playerhealthbar.inkwidget + playerhealthbar_style.inkstyle + playerhealthbar_animations.inkanim; Player/healthbar.reds SHA-256 C5D4158851A99CA21EE7ECB2AEABBBA16D80CC74D8D06767912B0DDAD35B3955",
       "nativeContract": {
         "gameVersion": "2.31",
         "controllerOrSystem": "healthbarWidgetGameController",
@@ -281,7 +281,7 @@
     {
       "referenceArea": "NPC nameplate authored resource",
       "mechanism": "archive-resource-replacement",
-      "referencePathIdentity": "archive/pc/mod/basegame_3e_demo_hud.archive + SHA-256 776556B6913C3B6B2FE1E13DA0964732FA917A130EA9C2A43E34AD4F5FEC03B6; verified private WolvenKit inventory recorded by P02 on #106",
+      "referencePathIdentity": "basegame_3e_demo_hud.archive: base\\gameplay\\gui\\widgets\\healthbar\\npcnameplate.inkwidget + nameplatecolors.inkstyle; nameplateVisuals.reds SHA-256 C7EE493781D7DE7D50C61219A9EBD3702F2B414349E86565AFF2C4B833B26BE4",
       "nativeContract": {
         "gameVersion": "2.31",
         "controllerOrSystem": "NameplateVisualsLogicController + NpcNameplateGameController",
@@ -293,7 +293,7 @@
     {
       "referenceArea": "Minimap authored resource",
       "mechanism": "archive-resource-replacement",
-      "referencePathIdentity": "archive/pc/mod/basegame_3e_demo_hud.archive + SHA-256 776556B6913C3B6B2FE1E13DA0964732FA917A130EA9C2A43E34AD4F5FEC03B6; verified private WolvenKit inventory recorded by P02 on #106",
+      "referencePathIdentity": "basegame_3e_demo_hud.archive: base\\gameplay\\gui\\widgets\\minimap\\minimap.inkwidget + minimap.inkstyle + minimap_animations.inkanim; minimapMappins.reds SHA-256 FD5CA045D647788B1F1EFEF2F62071FD6FEF8EC53EE4BE467387A3A56B776E54",
       "nativeContract": {
         "gameVersion": "2.31",
         "controllerOrSystem": "MinimapContainerController",
@@ -305,7 +305,7 @@
     {
       "referenceArea": "Activity-log authored resource",
       "mechanism": "archive-resource-replacement",
-      "referencePathIdentity": "archive/pc/mod/basegame_3e_demo_hud.archive + SHA-256 776556B6913C3B6B2FE1E13DA0964732FA917A130EA9C2A43E34AD4F5FEC03B6; verified private WolvenKit inventory recorded by P02 on #106",
+      "referencePathIdentity": "basegame_3e_demo_hud.archive: base\\gameplay\\gui\\widgets\\activity_log\\activity_log.inkwidget",
       "nativeContract": {
         "gameVersion": "2.31",
         "controllerOrSystem": "activityLogEntryLogicController",
@@ -317,7 +317,7 @@
     {
       "referenceArea": "Interaction/dialog authored resources",
       "mechanism": "archive-resource-replacement",
-      "referencePathIdentity": "archive/pc/mod/basegame_3e_demo_hud.archive + SHA-256 776556B6913C3B6B2FE1E13DA0964732FA917A130EA9C2A43E34AD4F5FEC03B6; verified private WolvenKit inventory recorded by P02 on #106",
+      "referencePathIdentity": "basegame_3e_demo_hud.archive: base\\gameplay\\gui\\widgets\\interactions\\interaction.inkwidget + dialog.inkwidget + dialog_animations.inkanim + dialogchoicesstyle.inkstyle + base\\gameplay\\gui\\widgets\\root\\interactions_root.inkwidget",
       "nativeContract": {
         "gameVersion": "2.31",
         "controllerOrSystem": "interactionWidgetGameController + native dialogue controller family",
@@ -336,7 +336,8 @@
     "Biology's ambient nameplate policy intentionally differs from Project E3: native hidden/alternative/quest/disabled policy remains authoritative, and actor level/health presentation is not imported.",
     "Modern scanner/quickhack preservation is an explicit divergence from Project E3 and remains a hard boundary.",
     "Future visual-fidelity work may use Biology-owned REDmod archive resources where a static authored INK resource is demonstrably safer/cleaner, but Project E3 resource bytes and implementation bodies must never become a runtime dependency or redistribution payload.",
-    "P02's accepted W18 private bundle closes the Project E3 archive-inventory gate: a verified WolvenKit listing confirms authored resource participation across the principal ordinary-HUD families. No Project E3 bytes or private inventory listing are committed.",
-    "No additional W18 runtime source correction is warranted before T005: the W03.5/W03.6 live-proven semantic hosts already bind Biology to current 2.31 authored content. Existing generated chrome is accent-only; a future structural fidelity fix must use a Biology-owned REDmod/INK resource rather than more guessed runtime geometry."
+    "Direct inspection of Biology-Private-ReferenceBundle-20260919-001914-365937cf.zip closes the Project E3 archive gate independently of parent summaries: the exact pinned archive lists 370 resource paths, and the Project E3 source hard-targets authored child hierarchies that correspond to those archive resource families.",
+    "The bundle does not serialize the Project E3 INK trees to JSON, but no further owner probe is needed for W18.1: hard-coded Project E3 widget paths plus the verified exact archive resource inventory are sufficient to distinguish authored resource composition from runtime-created geometry.",
+    "No additional W18 runtime source correction is warranted before T005: W03.5/W03.6 already moved Biology onto live-proven current-2.31 semantic hosts. Existing generated chrome is accent-only; any future structural fidelity correction must use a Biology-owned REDmod/INK resource authored from scratch rather than more guessed runtime geometry."
   ]
 }
