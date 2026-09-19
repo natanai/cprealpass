@@ -103,7 +103,7 @@ Require $builder 'ZipSingleRoot' 'Builder must recognize ZIP/extracted-folder du
 Require $builder ([regex]::Escape("Where-Object Name -ne '_tooling'")) 'Builder must exclude the managed reusable tool cache from selectable references.'
 Require $bootstrap ([regex]::Escape("Where-Object Name -ne '_tooling'")) 'Bootstrap must exclude the managed reusable tool cache from owner reference selection.'
 Require $builder ([regex]::Escape("@('desktop.ini','Thumbs.db','.DS_Store')")) 'Builder must ignore known OS metadata instead of failing private archaeology on transient shell files.'
-Require $builder ([regex]::Escape("'-ToolCacheRoot',(Join-Path $LibraryPath '_tooling')")) 'Native UI companion must place reusable pinned tooling in the reference-library managed cache.'
+Require $builder ([regex]::Escape('''-ToolCacheRoot'',(Join-Path $LibraryPath ''_tooling'')')) 'Native UI companion must place reusable pinned tooling in the reference-library managed cache.'
 Require $nativeProbe 'ToolCacheRoot' 'Native-region probe must accept a persistent pinned tool-cache root.'
 Require $nativeProbe 'ConvertFrom-Json -Depth 100 -AsHashtable' 'Native ancestry must preserve case-distinct WolvenKit JSON keys.'
 Require $toolchain 'CacheRoot' 'Archive toolchain acquisition must support a persistent explicit cache root.'
