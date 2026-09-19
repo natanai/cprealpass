@@ -1,12 +1,22 @@
 # Project E3 2.31.p2 — engineering-reference archaeology
 
-Status: **W03.7 durable derived evidence**  
+Status: **W18.1 continuation — durable derived evidence; predecessor W03 archaeology retained**  
 Issue: **#106** / parent presentation issue **#40**  
 Game target: **Cyberpunk 2077 2.31**
 
 This document records redistribution-safe conclusions from the owner's exact private Project E3 HUD/UI reference. It does **not** reproduce Project E3 source bodies or archive payloads.
 
 The exact private reference matches the long-lived `config/realpass-e3.json` inventory, including the 33,013,760-byte HUD archive with SHA-256 `776556B6913C3B6B2FE1E13DA0964732FA917A130EA9C2A43E34AD4F5FEC03B6`.
+
+## W18.1 evidence reconciliation
+
+The predecessor archaeology established the implementation architecture before this worker-conversation transfer. W18.1 has independently reconciled that evidence against current repository history, T004, issue #40, and the public Project E3 2.31 distribution metadata.
+
+The current Project E3 distribution page for Nexus mod 8800 identifies **redscript** and **TweakXL** as hard requirements and **Mod Settings** as optional customization. It also describes the mod as replacing/reworking a broad HUD family (including quest list, world/minimap mappins, input hints, ammo counters, crosshairs, notifications, dialog/interaction, scanner surfaces and other HUD/menu widgets). This independently supports the private-source mechanism mapping; it is not used as authority for current Cyberpunk 2.31 native controller contracts.
+
+Historical Biology evidence is stronger than a count-only claim for the scanner split. `config/patches/realpass-modern-scanner.json` pins the same archive hash, `expectedResourceCount: 370`, and **all 34 omitted scanner/quickhack/focus/connected-device resource paths with SHA-256**. Therefore the scanner-family exclusion is path-by-path durable evidence, while the other 336 resource identities remain a separate archive-inventory question.
+
+W18.1 requested that remaining exact `.archive` inventory through process gate #105 rather than interpreting a Cyberpunk archive with a generic ZIP/7-Zip assumption. Until that inventory returns, the 336-resource internal path list remains explicitly opaque.
 
 ## Architectural finding
 
@@ -48,13 +58,13 @@ The private 2.31.p2 scripts independently prove that many Project E3 controllers
 
 Therefore the archive is **material implementation**, not decorative residue.
 
-The current private ZIP does not by itself expose a complete decoded 370-resource path/ancestry inventory. #105/W16.1 is the durable private-bundle route for that evidence. Until a safe inventory is attached, W03.7 records the remaining archive-internal detail as opaque rather than inventing it.
+The predecessor private ZIP does not by itself expose a complete decoded 370-resource path/ancestry inventory. The tracked modern-scanner patch does preserve the exact 34-resource exclusion set, but not the full other-336 path list. #105/W16.1 is the durable private-bundle route for that remaining evidence. Until a WolvenKit-capable safe inventory is attached, W18.1 records those archive internals as opaque rather than inventing them.
 
 ## Dependency roles
 
-**redscript** is Project E3's controller-hook mechanism. The reference uses broad `replaceMethod` as well as `wrapMethod` / additive fields and helpers across generic HUD fades, player HUD, activity log, scanner border, interactions/dialogue, minimap/mappins, quest tracker, Tech-Hex crosshair, weapon roster, compass, D-pad and nameplates.
+**redscript** is Project E3's controller-hook mechanism and is identified as a hard requirement by the current Project E3 2.31 distribution metadata. The reference uses broad `replaceMethod` as well as `wrapMethod` / additive fields and helpers across generic HUD fades, player HUD, activity log, scanner border, interactions/dialogue, minimap/mappins, quest tracker, Tech-Hex crosshair, weapon roster, compass, D-pad and nameplates.
 
-**TweakXL** is materially involved, not incidental. The reference YAMLs alter:
+**TweakXL** is materially involved, not incidental, and is likewise identified as a hard requirement by the current Project E3 2.31 distribution metadata. The reference YAMLs alter:
 - nameplate display policy records;
 - mappin definitions and visibility range;
 - world-mappin UI profiles;
@@ -63,7 +73,7 @@ The current private ZIP does not by itself expose a complete decoded 370-resourc
 
 **Archive/resource override** supplies the authored visual/widget layer. Project E3 2.31.p2 no longer needs REDmod merely to load that legacy archive layout; Biology nevertheless remains REDmod-first and can own project-original resources through its official package when that is the smallest robust route.
 
-**Mod Settings** only exposes Project E3 options. Biology intentionally does not retain it as a production dependency.
+**Mod Settings** only exposes Project E3 options. The current Project E3 distribution explicitly describes it as optional for customization rather than required for the HUD to work. Biology intentionally does not retain it as a production dependency.
 
 No Project E3 evidence establishes a need for Biology to add ArchiveXL, Codeware, CET or RED4ext.
 
@@ -167,7 +177,7 @@ Biology now takes the stronger approach: **no Project E3 runtime archive at all*
 
 ## Validation contract
 
-W03.7 validation must prove:
+W18.1 validation must prove:
 
 - current canonical main is reconciled without discarding W03.6;
 - Project E3 remains reference-only in runtime/package policy;

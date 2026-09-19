@@ -3,7 +3,7 @@
   "source": {
     "name": "Project E3 - HUD",
     "version": "2.31.p2",
-    "provenance": "Nexus Mods 8800; author Virtuoso75; exact private reference identities are pinned by config/realpass-e3.json",
+    "provenance": "Nexus Mods 8800; author Virtuoso75; exact private reference identities are pinned by config/realpass-e3.json; W18.1 public-distribution cross-check on 2026-09-18 confirms Project E3 2.31 dependency roles",
     "selectedIdentities": [
       {
         "path": "archive/pc/mod/basegame_3e_demo_hud.archive",
@@ -67,12 +67,12 @@
     {
       "name": "redscript",
       "role": "Runtime hook/additive/replace mechanism for Project E3 controller behavior.",
-      "evidence": "The exact private 2.31.p2 reference contains @wrapMethod/@replaceMethod/@addMethod/@addField sources across HUD, quest, interaction, mappin, crosshair, weapon, hotkey and nameplate controllers."
+      "evidence": "The exact private 2.31.p2 reference contains @wrapMethod/@replaceMethod/@addMethod/@addField sources across HUD, quest, interaction, mappin, crosshair, weapon, hotkey and nameplate controllers. Public Project E3 2.31 distribution metadata labels redscript HARD REQUIRED."
     },
     {
       "name": "TweakXL",
       "role": "Loads Project E3 YAML TweakDB record changes for nameplate policy, world/minimap mappin definitions and profiles, clamping, and interaction choice-icon mappings.",
-      "evidence": "The exact reference contains r6/tweaks/Project E3 - HUD/*.yaml records including UINameplate, MappinClampingSettings, WorldMappinUIProfile and ChoiceIcons mappings; current Project E3 distribution identifies TweakXL as required."
+      "evidence": "The exact reference contains r6/tweaks/Project E3 - HUD/*.yaml records including UINameplate, MappinClampingSettings, WorldMappinUIProfile and ChoiceIcons mappings; current Project E3 distribution identifies TweakXL as required. Public Project E3 2.31 distribution metadata labels TweakXL HARD REQUIRED."
     },
     {
       "name": "Cyberpunk archive resource override",
@@ -82,7 +82,7 @@
     {
       "name": "Mod Settings",
       "role": "Optional settings-editor surface for ProjectE3HUDSettings only; not required for the underlying HUD hooks/resources.",
-      "evidence": "Exact reference ModSettings.reds consists of ModSettings runtime properties for compass/nameplate/mappin/crosshair options; current Project E3 distribution describes Mod Settings as optional."
+      "evidence": "Exact reference ModSettings.reds consists of ModSettings runtime properties for compass/nameplate/mappin/crosshair options; current Project E3 distribution describes Mod Settings as optional. Public Project E3 2.31 distribution metadata says Mod Settings is not required for the mod to work and is used for customization."
     }
   ],
   "mappings": [
@@ -282,18 +282,13 @@
   "opaqueAreas": [
     {
       "pathIdentity": "archive/pc/mod/basegame_3e_demo_hud.archive + SHA-256 776556B6913C3B6B2FE1E13DA0964732FA917A130EA9C2A43E34AD4F5FEC03B6",
-      "reason": "The exact private archive is available and historically round-tripped, but the current W03.7 private ZIP does not itself carry a complete decoded 370-resource inventory/widget ancestry. Historical safe evidence proves 370 total resources, 34 scanner-family exclusions and selected retained HUD resource paths.",
-      "nextEvidence": "Consume the #105/W16.1 private reference bundle/archive inventory when produced; if the container remains opaque, use an already-available safe WolvenKit inventory locally and commit only derived paths/hashes."
-    },
-    {
-      "pathIdentity": "Project E3 dependency package/readme metadata",
-      "reason": "The exact HUD payload has no bundled dependency README/package metadata beyond its source/tweak structure; dependency role is derived from the payload plus public Project E3 distribution metadata.",
-      "nextEvidence": "Use #105 bundle provenance notes for any locally stored dependency packages; do not copy framework binaries into Biology."
+      "reason": "The exact private archive is available and historically round-tripped. Safe tracked evidence proves 370 total resources, and config/patches/realpass-modern-scanner.json preserves all 34 scanner/quickhack/focus/connected-device exclusions path-by-path with SHA-256; historical round-trip evidence proves the other 336 resources were retained byte-identically. The complete decoded path/widget-ancestry inventory for those 336 resources is not yet present in Git-safe evidence.",
+      "nextEvidence": "W18.1 requested a targeted WolvenKit-capable private archive inventory through #105/W16.1 (issue comment 5738828334). Commit only redistribution-safe paths/hashes/derived hierarchy findings; never Project E3 payload bytes."
     }
   ],
   "conclusions": [
     "Project E3 2.31.p2 is a three-layer implementation: redscript controller logic, TweakXL/TweakDB policy records, and a large authored archive/resource layer. Its visual fidelity is not primarily explained by REDscript-created rectangles.",
-    "The Project E3 archive is architecturally material. Historical Biology round-trip evidence proves 370 resources; removing only 34 scanner/quickhack/focus resources preserved 336 other E3 resources byte-for-byte and kept key HUD/nameplate/minimap/interaction resources.",
+    "The Project E3 archive is architecturally material. Historical Biology round-trip evidence proves 370 resources; config/patches/realpass-modern-scanner.json preserves the exact 34 scanner/quickhack/focus/connected-device exclusions with per-resource SHA-256, while the other 336 E3 resources were retained byte-for-byte.",
     "Biology intentionally does not copy that architecture wholesale. Whole stock-resource replacement and broad replaceMethod/TweakXL policy changes would expand patch/conflict surface compared with the narrower current native-content-region wrappers.",
     "W03.5/W03.6 weapon, quest and hotkey semantic-host work remains architecturally sound: it uses current 2.31 native authority rather than Project E3's custom archive hierarchy.",
     "Biology's ambient nameplate policy intentionally differs from Project E3: native hidden/alternative/quest/disabled policy remains authoritative, and actor level/health presentation is not imported.",

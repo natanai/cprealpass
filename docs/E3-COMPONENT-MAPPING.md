@@ -1,17 +1,19 @@
 # Biology E3 component mapping
 
-Status: **W03.7 engineering-reference mapping; historical W03.2-W03.6 detail retained below**  
+Status: **W18.1 continuation engineering-reference mapping; historical W03.2-W03.6 detail retained below**  
 Last updated: 2026-09-18  
 Issues: #106 / #40
 
-## W03.7 authority notice
+## W18.1 authority notice
 
 Project E3 is now an **engineering reference implementation**, not merely a visual target. The durable redistribution-safe mechanism/dependency/resource mapping is:
 
 - [Project E3 engineering-reference archaeology](E3-REFERENCE-ARCHAEOLOGY.md)
 - [machine-readable derived record](reference-mods/project-e3-hud-2.31-p2.json)
 
-Those W03.7 records supersede the older assumption in this file that the ~33 MB archive can be treated as generic historical assets while Biology reproduces the look with runtime INK. The older attended chronology below remains useful for explaining why each W03 fix was made, but W03.7 is authoritative for what Project E3 actually owns through archive resources, redscript and TweakXL.
+Those continuation records supersede the older assumption in this file that the ~33 MB archive can be treated as generic historical assets while Biology reproduces the look with runtime INK. The predecessor W03 archaeology remains part of the evidence trail, while W18.1 is the current worker authority for what Project E3 actually owns through archive resources, redscript and TweakXL.
+
+W18.1 also cross-checked the Project E3 2.31 public distribution metadata against the exact private-source inventory: redscript and TweakXL are hard requirements, Mod Settings is optional, and the published widget scope is substantially broader than runtime-created overlay geometry. The exact historical scanner split is now explicitly grounded in `config/patches/realpass-modern-scanner.json`, which pins all 34 excluded scanner-family resource paths/hashes from the 370-resource archive. The remaining 336-resource path inventory is intentionally pending #105 rather than inferred.
 
 ## Evidence boundary
 
