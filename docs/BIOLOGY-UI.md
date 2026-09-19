@@ -200,6 +200,45 @@ Those findings are routed separately:
 
 Source/CI fixes in either PR are not live acceptance until the parent integration thread exact-compiles the combined candidate and records a new attended result.
 
+## Current 2.31 authored Ripperdoc detail architecture
+
+W17.1 / issue #107 closed the remaining native layout uncertainty before T005. The
+redistribution-safe evidence map is in `docs/BIOLOGY-UI-REFERENCE-ARCHAEOLOGY.md`.
+
+Current installed CP2077 2.31 evidence establishes:
+
+```text
+wrapper
+├─ paperDollWrapper                         body/anatomy composition
+├─ category/minigrid anchors               overview + selected anatomy
+├─ selectorAnchor                          native detail category navigation
+└─ Inventory                               RipperdocInventoryController lifecycle root
+   ├─ cyberwareContainer                   authored stock selected-content container
+   │  └─ GridAndSlider
+   │     └─ grid
+   │        └─ scrollRect                  item-scroll implementation
+   │           └─ virtualGridContainer     virtualized item-list implementation
+   └─ CRBiologyNativeContent               Biology sibling replacement surface
+```
+
+The earlier W02.6 sibling mount beside `m_virtualGridContainer` is retired as a final
+layout seam. Its direct parent is the native `scrollRect` (`inkScrollAreaWidget`),
+inside Cyberware's inventory-grid implementation. Biology must not inherit that
+scroll/mask/virtualization hierarchy.
+
+Biology detail therefore keeps `RipperdocInventoryController` as native
+show/hide/opacity authority but mounts its own `inkVerticalPanel` as a sibling of the
+authored `cyberwareContainer` under `Inventory`. Placement is copied from the live
+`cyberwareContainer` widget at runtime; the serialized native margins are evidence,
+not hard-coded screen offsets. If that named direct child or expected vertical-panel
+contract changes in a future game patch, Biology fails closed instead of guessing.
+
+Entering detail continues to reuse native selected-area identity, DollHover/DollSelect,
+DisplayInventory, minigrid animation, selector/category cycling and Back. Biology hides
+the stock `cyberwareContainer` as one unit while its detail is active and restores the
+container's exact previous visibility when leaving detail, so ordinary Cyberware remains
+authoritative and restorable.
+
 ## Acceptance criteria
 
 Biology UI is accepted only when an attended integrated build demonstrates all of the following:
