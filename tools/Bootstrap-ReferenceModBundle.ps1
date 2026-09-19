@@ -107,6 +107,22 @@ try{
     New-Item -ItemType Directory -Force -Path $OutputRoot|Out-Null
     if(-not (Get-Command pwsh -ErrorAction SilentlyContinue)){throw 'pwsh is not available on PATH.'}
 
+    if(-not $ReferenceName -or $ReferenceName.Count -eq 0){
+        $children=@(Get-ChildItem -LiteralPath $LibraryPath -Force | Sort-Object Name)
+        if($children.Count -eq 0){throw 'Reference library is empty.'}
+        Write-Host 'Available private references:' -ForegroundColor Cyan
+        for($i=0;$i -lt $children.Count;$i++){Write-Host ("[{0}] {1}" -f ($i+1),$children[$i].Name)}
+        $tokens=@((Read-Host 'Enter numbers separated by commas') -split ',' | ForEach-Object {$_.Trim()} | Where-Object {$_})
+        if($tokens.Count -eq 0){throw 'No references selected.'}
+        $picked=[Collections.Generic.List[string]]::new()
+        foreach($t in $tokens){
+            $n=0
+            if(-not [int]::TryParse($t,[ref]$n) -or $n -lt 1 -or $n -gt $children.Count){throw "Invalid selection: $t"}
+            $picked.Add($children[$n-1].Name)
+        }
+        $ReferenceName=@($picked)
+    }
+
     $gitAvailable=[bool](Get-Command git -ErrorAction SilentlyContinue)
     if($gitAvailable){$seed=SeedRepo}
 
