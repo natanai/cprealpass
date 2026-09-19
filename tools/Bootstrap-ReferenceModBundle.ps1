@@ -36,6 +36,39 @@ function Native([string]$exe,[string[]]$args){
         [pscustomobject]@{ExitCode=$p.ExitCode;StdOut=$o;StdErr=$e}
     }finally{$p.Dispose()}
 }
+function NativeLive([string]$exe,[string[]]$args){
+    $psi=[Diagnostics.ProcessStartInfo]::new()
+    $psi.FileName=$exe;$psi.UseShellExecute=$false;$psi.RedirectStandardOutput=$true;$psi.RedirectStandardError=$true;$psi.CreateNoWindow=$true
+    foreach($a in $args){[void]$psi.ArgumentList.Add($a)}
+    $p=[Diagnostics.Process]::new();$p.StartInfo=$psi
+    try{
+        if(-not $p.Start()){throw "Could not start $exe"}
+        $stdout=[Text.StringBuilder]::new();$stderr=[Text.StringBuilder]::new()
+        $outDone=$false;$errDone=$false
+        $outTask=$p.StandardOutput.ReadLineAsync();$errTask=$p.StandardError.ReadLineAsync()
+        while(-not ($p.HasExited -and $outDone -and $errDone)){
+            if(-not $outDone -and $outTask.IsCompleted){
+                $line=$outTask.GetAwaiter().GetResult()
+                if($null -eq $line){$outDone=$true}else{
+                    Write-Host $line
+                    [void]$stdout.AppendLine($line)
+                    $outTask=$p.StandardOutput.ReadLineAsync()
+                }
+            }
+            if(-not $errDone -and $errTask.IsCompleted){
+                $line=$errTask.GetAwaiter().GetResult()
+                if($null -eq $line){$errDone=$true}else{
+                    Write-Host $line -ForegroundColor DarkYellow
+                    [void]$stderr.AppendLine($line)
+                    $errTask=$p.StandardError.ReadLineAsync()
+                }
+            }
+            if(-not ($p.HasExited -and $outDone -and $errDone)){Start-Sleep -Milliseconds 50}
+        }
+        $p.WaitForExit()
+        [pscustomobject]@{ExitCode=$p.ExitCode;StdOut=$stdout.ToString();StdErr=$stderr.ToString()}
+    }finally{$p.Dispose()}
+}
 function Git([string[]]$args){Native 'git' $args}
 function SeedRepo {
     foreach($d in @(Get-ChildItem -LiteralPath $GamesRoot -Directory -ErrorAction SilentlyContinue)){
@@ -183,8 +216,9 @@ try{
     $args=@('-NoLogo','-NoProfile','-File',(Join-Path $worktree 'tools\New-ReferenceModBundle.ps1'),'-LibraryPath',$LibraryPath,'-OutputRoot',$OutputRoot,'-WorkflowSourceRevision',$ExpectedHead,'-SuppressHandoffMarker')
     if($ReferenceName -and $ReferenceName.Count -gt 0){$args += '-ReferenceNameJson';$args += ($ReferenceName | ConvertTo-Json -Compress)}
     if($IncludeBiologyNativeUi){$args += '-IncludeBiologyNativeUi';$args += '-GamePath';$args += $GamePath}
-    $child=Native 'pwsh' $args
-    if($child.StdOut){Write-Host $child.StdOut.TrimEnd()}
+    Write-Host ''
+    Write-Host 'REFERENCE BUNDLE WORK STARTING — progress will stream below.' -ForegroundColor Cyan
+    $child=NativeLive 'pwsh' $args
     if($child.ExitCode -ne 0){throw "Reference bundle builder failed with exit $($child.ExitCode). $($child.StdErr.Trim())"}
     $m=[regex]::Match($child.StdOut,'(?im)^([A-Za-z]:\\[^\r\n]+Biology-Private-ReferenceBundle-[^\r\n]+\.zip)\s*$')
     if(-not $m.Success){throw 'Builder succeeded but did not return an attachable bundle path.'}
