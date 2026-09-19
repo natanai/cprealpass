@@ -131,7 +131,8 @@ Existing conversations do not need retroactive renaming; this ledger maps their 
 | **W01.1** | `Thread 1 — REDmod foundation` | Original REDmod package/deployment foundation | **USABLE** | **MERGED** | Issue #28; PR #31; historical branch `agent/redmod-foundation` | Foundation work is already on main. |
 | **W02.6** | existing W02 worker conversation | Biology post-mount detail visibility | **USABLE** | **MERGED** | Issue #101; PR #103 merged; `agent/biology-detail-post-mount-visibility` | Implementation is on current main. Remaining acceptance is live T005; W17.1 now performs fresh reference/native archaeology before another layout iteration. |
 | **W03.6** | existing W03 worker conversation | E3 quest/hotkey native content-region completion | **USABLE** | **READY-PARENT** | Issue #102; PR #104 open/draft; `agent/e3-quest-hotkey-content-region` | Do not merge yet. W03.7 supersedes the immediate parent gate by reconciling current main and completing full Project E3 archaeology first. |
-| **W03.7** | existing W03 worker conversation | Project E3 full archaeology + W03.6/current-main reconciliation | **ACTIVE** | **IN-PROGRESS** | Issue #106; `agent/e3-reference-archaeology-integration`; handoff `docs/handoffs/W03.7-E3-REFERENCE-ARCHAEOLOGY.md` | Sequential W03 assignment. Consume the private Project E3 bundle from W16.1; return a current-main-reconciled PR for P02. |
+| **W03.7** | existing W03 worker conversation | Project E3 full archaeology + W03.6/current-main reconciliation | **TOO-LONG** | **SUPERSEDED** | Issue #106; `agent/e3-reference-archaeology-integration`; predecessor handoff `docs/handoffs/W03.7-E3-REFERENCE-ARCHAEOLOGY.md` | W03 began the assignment, reconciled current main, and added initial Project E3 architecture mapping, then became too long. Do not continue substantial work in that chat. |
+| **W18.1** | new W18 worker conversation | Project E3 full archaeology + current-main reconciliation continuation | **ACTIVE** | **IN-PROGRESS** | Issue #106; `agent/e3-reference-archaeology-integration`; successor handoff `docs/handoffs/W18.1-E3-REFERENCE-ARCHAEOLOGY-CONTINUATION.md` | Continue the existing branch from W03's completed commits; consume W16.1 private reference evidence; do not restart the archaeology. |
 | **W04.2** | existing W04 worker conversation | Body runtime persistence / authority proof | **USABLE** | **MERGED** | Issue #41; PR #90 merged | Source authority/persistence audit is merged; live WAIT/save-reload/SLEEP acceptance remains for T005. |
 | **W15.3-W15.5** | existing W15 worker conversation | One-command attended session, prior-install transition, listener observation repair | **USABLE** | **MERGED** | Issues #79/#83/#86; PRs #82/#85/#88 merged | Command 17 owner lifecycle and listener fixes are on main and have passed subsequent attended sessions. |
 | **W16.1** | new W16 worker conversation | Private reference-mod archaeology handoff tooling | **ACTIVE** | **IN-PROGRESS** | Issue #105; `agent/reference-mod-archaeology-workflow`; handoff `docs/handoffs/W16.1-REFERENCE-MOD-ARCHAEOLOGY.md` | Build one read-only private handoff bundle from `C:\Games\Cyberpunk-ReferenceMods`; no third-party payload committed to Git. |
@@ -153,7 +154,7 @@ P02 parent
   |
   +-- pre-T005 process gate #105
         +-- W16.1 private reference-bundle tooling
-        +-- W03.7 full Project E3 archaeology + current-main reconciliation
+        +-- W18.1 full Project E3 archaeology + current-main reconciliation (successor to TOO-LONG W03)
         +-- W17.1 Biology Cyberware/native-screen archaeology
 ```
 
