@@ -55,12 +55,12 @@ foreach ($needle in @(
     'Player health/RAM lower-left HUD',
     'Phone waveform / holocall presentation'
 )) {
-    Check ($areas -contains $needle) "W03.7 derived mapping is missing reference area: $needle"
+    Check ($areas -contains $needle) "W18.1 derived mapping is missing reference area: $needle"
 }
 
 $mechanisms = @($record.mappings.mechanism | Select-Object -Unique)
 foreach ($mechanism in @('redscript-hook-replace','tweakxl','archive-resource-replacement')) {
-    Check ($mechanisms -contains $mechanism) "W03.7 does not preserve a material Project E3 mechanism: $mechanism"
+    Check ($mechanisms -contains $mechanism) "W18.1 does not preserve a material Project E3 mechanism: $mechanism"
 }
 
 foreach ($needle in @('370','34','336','authored INK','OptionalTracker','m_dpadHintsPanel','Pusula','blanket Always','MinimapContainerController','Biology-owned REDmod archive resource')) {
@@ -72,7 +72,47 @@ Check ($scannerPatch.expectedResourceCount -eq 370) 'Historical Project E3 archi
 Check (@($scannerPatch.excludedResources).Count -eq 34) 'Historical Project E3 scanner-family exclusion set must preserve exactly 34 resources.'
 Check ($scannerPatch.expectedArchiveSha256 -eq $archiveIdentity[0].sha256) 'Historical scanner-split evidence is not pinned to the exact Project E3 archive.'
 Check (@($scannerPatch.excludedResources.path | Sort-Object -Unique).Count -eq 34) 'Project E3 scanner-family exclusion paths are not unique.'
-Check (@($scannerPatch.excludedResources.sha256 | Where-Object { $_ -match '^[0-9A-F]{64}$' }).Count -eq 34) 'Project E3 scanner-family exclusion hashes are incomplete.'
+foreach ($excludedResource in @($scannerPatch.excludedResources)) {
+    Check ([string]$excludedResource.sha256 -match '^[0-9A-F]{64}
+Check (@($record.opaqueAreas).Count -ge 1) 'W18.1 record must represent incomplete archive internals as opaque rather than inventing them.'
+Check (-not (@($record.opaqueAreas.pathIdentity) -contains 'Project E3 dependency package/readme metadata')) 'W18.1 left dependency metadata opaque after the public Project E3 2.31 distribution cross-check.'
+Check ($archaeology.Contains('config/patches/realpass-modern-scanner.json')) 'W18.1 archaeology doc does not point to the exact 34-resource scanner exclusion evidence.'
+foreach ($publishedSurface in @('Action buttons','Wanted stars','Vehicle ammo counter','Quest / area / message / contact / item / level-up / warning / vehicle / radio notifications','Hacking minigame','Speedometer','archive-only coverage gate')) {
+    Check ($archaeology.Contains($publishedSurface)) "W18.1 lost published Project E3 surface coverage: $publishedSurface"
+}
+
+# The architecture conclusion is intentionally not "copy Project E3". Preserve the
+# narrower native-content seams that attended evidence already proved useful.
+$quest = ReadText 'src/redscript/CyberpunkRealism/E3QuestHudNative.reds'
+$weapon = ReadText 'src/redscript/CyberpunkRealism/E3WeaponHudNative.reds'
+$hotkey = ReadText 'src/redscript/CyberpunkRealism/E3HotkeyHudNative.reds'
+$crosshair = ReadText 'src/redscript/CyberpunkRealism/E3CrosshairHudNative.reds'
+$nameplate = ReadText 'src/redscript/CyberpunkRealism/E3NameplatesNative.reds'
+$identity = ReadText 'src/redscript/CyberpunkRealism/NameplatesNative.reds'
+
+Check ($quest.Contains('this.m_questTrackerContainer') -and $quest.Contains('QuestTrackerObjectiveLogicController')) 'W18.1 discarded the W03.6 native quest/content-row seam.'
+Check ($weapon.Contains('this.m_onFootContainer') -and $weapon.Contains('this.m_weaponAmmoWrapper')) 'W18.1 discarded the W03.5 native lower-right weapon binding.'
+Check ($hotkey.Contains('this.m_dpadHintsPanel') -and -not $hotkey.Contains('this.GetRootCompoundWidget()')) 'W18.1 discarded the W03.6 hotkey semantic-host seam.'
+Check (-not $crosshair.Contains('private let crBiologyE3FocusFrame') -and -not $crosshair.Contains('SetName(n"CRBiologyE3FocusFrame")')) 'W18.1 reintroduced the attended reticle artifact owner.'
+Check ($nameplate.Contains('CRBiologyE3IdentityChrome') -and $identity.Contains('CRPublicAmbientNameAllowed')) 'W18.1 discarded the live framed ambient-name lifecycle.'
+
+$combined = @($quest,$weapon,$hotkey,$crosshair,$nameplate,$identity) -join [Environment]::NewLine
+foreach ($forbidden in @('module ProjectE3','import ProjectE3','basegame_3e_demo_hud.archive','r6/tweaks/Project E3 - HUD')) {
+    Check (-not $combined.Contains($forbidden)) "Project E3 reference content leaked into Biology runtime source: $forbidden"
+}
+Check ($distribution.Contains('Project E3 scripts, archives and tweaks remain forbidden from player runtime artifacts')) 'Distribution contract no longer states the Project E3 runtime exclusion.'
+
+# Scanner/quickhack remains a hard preserve after the full archaeology pass.
+foreach ($forbidden in @('ScannerGameController','scannerGameController','ScannerDetailsGameController','ScannerNPCHeaderGameController','quickhackWidgetGameController','QuickHackGameController','scanner.inkwidget','scandetails.inkwidget','quickhacks.inkwidget')) {
+    Check (-not $combined.Contains($forbidden)) "W18.1 crossed the native modern scanner/quickhack boundary: $forbidden"
+}
+
+Check ($mapping.Contains('E3-REFERENCE-ARCHAEOLOGY.md') -and $mapping.Contains('W18.1')) 'Component mapping does not route future workers to the W18.1 continuation authority.'
+Check ($presentation.Contains('W18.1')) 'Canonical E3 presentation contract does not identify the W18.1 engineering-reference continuation.'
+
+Write-Host "PASS: $script:checks W18.1 Project E3 archaeology checks; archive/redscript/TweakXL responsibilities are durable, W03.6 live wins are preserved, third-party runtime content remains excluded, and opaque archive details are not invented."
+) "Project E3 scanner-family exclusion hash is invalid for $($excludedResource.path)."
+}
 Check (@($record.opaqueAreas).Count -ge 1) 'W18.1 record must represent incomplete archive internals as opaque rather than inventing them.'
 Check (-not (@($record.opaqueAreas.pathIdentity) -contains 'Project E3 dependency package/readme metadata')) 'W18.1 left dependency metadata opaque after the public Project E3 2.31 distribution cross-check.'
 Check ($archaeology.Contains('config/patches/realpass-modern-scanner.json')) 'W18.1 archaeology doc does not point to the exact 34-resource scanner exclusion evidence.'
@@ -110,38 +150,3 @@ Check ($mapping.Contains('E3-REFERENCE-ARCHAEOLOGY.md')) 'Legacy component mappi
 Check ($presentation.Contains('W03.7')) 'Canonical E3 presentation contract does not identify the W03.7 engineering-reference update.'
 
 Write-Host "PASS: $script:checks W18.1 Project E3 archaeology checks; archive/redscript/TweakXL responsibilities are durable, W03.6 live wins are preserved, third-party runtime content remains excluded, and opaque archive details are not invented."
- }).Count -eq 34) 'Project E3 scanner-family exclusion hashes are incomplete.'
-Check (@($record.opaqueAreas).Count -ge 1) 'W18.1 record must represent incomplete archive internals as opaque rather than inventing them.'
-Check (-not (@($record.opaqueAreas.pathIdentity) -contains 'Project E3 dependency package/readme metadata')) 'W18.1 left dependency metadata opaque after the public Project E3 2.31 distribution cross-check.'
-Check ($archaeology.Contains('config/patches/realpass-modern-scanner.json')) 'W18.1 archaeology doc does not point to the exact 34-resource scanner exclusion evidence.'
-
-# The architecture conclusion is intentionally not "copy Project E3". Preserve the
-# narrower native-content seams that attended evidence already proved useful.
-$quest = ReadText 'src/redscript/CyberpunkRealism/E3QuestHudNative.reds'
-$weapon = ReadText 'src/redscript/CyberpunkRealism/E3WeaponHudNative.reds'
-$hotkey = ReadText 'src/redscript/CyberpunkRealism/E3HotkeyHudNative.reds'
-$crosshair = ReadText 'src/redscript/CyberpunkRealism/E3CrosshairHudNative.reds'
-$nameplate = ReadText 'src/redscript/CyberpunkRealism/E3NameplatesNative.reds'
-$identity = ReadText 'src/redscript/CyberpunkRealism/NameplatesNative.reds'
-
-Check ($quest.Contains('this.m_questTrackerContainer') -and $quest.Contains('QuestTrackerObjectiveLogicController')) 'W18.1 discarded the W03.6 native quest/content-row seam.'
-Check ($weapon.Contains('this.m_onFootContainer') -and $weapon.Contains('this.m_weaponAmmoWrapper')) 'W18.1 discarded the W03.5 native lower-right weapon binding.'
-Check ($hotkey.Contains('this.m_dpadHintsPanel') -and -not $hotkey.Contains('this.GetRootCompoundWidget()')) 'W18.1 discarded the W03.6 hotkey semantic-host seam.'
-Check (-not $crosshair.Contains('private let crBiologyE3FocusFrame') -and -not $crosshair.Contains('SetName(n"CRBiologyE3FocusFrame")')) 'W18.1 reintroduced the attended reticle artifact owner.'
-Check ($nameplate.Contains('CRBiologyE3IdentityChrome') -and $identity.Contains('CRPublicAmbientNameAllowed')) 'W18.1 discarded the live framed ambient-name lifecycle.'
-
-$combined = @($quest,$weapon,$hotkey,$crosshair,$nameplate,$identity) -join [Environment]::NewLine
-foreach ($forbidden in @('module ProjectE3','import ProjectE3','basegame_3e_demo_hud.archive','r6/tweaks/Project E3 - HUD')) {
-    Check (-not $combined.Contains($forbidden)) "Project E3 reference content leaked into Biology runtime source: $forbidden"
-}
-Check ($distribution.Contains('Project E3 scripts, archives and tweaks remain forbidden from player runtime artifacts')) 'Distribution contract no longer states the Project E3 runtime exclusion.'
-
-# Scanner/quickhack remains a hard preserve after the full archaeology pass.
-foreach ($forbidden in @('ScannerGameController','scannerGameController','ScannerDetailsGameController','ScannerNPCHeaderGameController','quickhackWidgetGameController','QuickHackGameController','scanner.inkwidget','scandetails.inkwidget','quickhacks.inkwidget')) {
-    Check (-not $combined.Contains($forbidden)) "W18.1 crossed the native modern scanner/quickhack boundary: $forbidden"
-}
-
-Check ($mapping.Contains('E3-REFERENCE-ARCHAEOLOGY.md')) 'Legacy component mapping does not route future workers to the W03.7 engineering-reference authority.'
-Check ($presentation.Contains('W03.7')) 'Canonical E3 presentation contract does not identify the W03.7 engineering-reference update.'
-
-Write-Host "PASS: $script:checks W03.7 Project E3 archaeology checks; archive/redscript/TweakXL responsibilities are durable, W03.6 live wins are preserved, third-party runtime content remains excluded, and opaque archive details are not invented."
