@@ -14,9 +14,9 @@ The predecessor archaeology established the implementation architecture before t
 
 The current Project E3 distribution page for Nexus mod 8800 identifies **redscript** and **TweakXL** as hard requirements and **Mod Settings** as optional customization. It also describes the mod as replacing/reworking a broad HUD family (including quest list, world/minimap mappins, input hints, ammo counters, crosshairs, notifications, dialog/interaction, scanner surfaces and other HUD/menu widgets). This independently supports the private-source mechanism mapping; it is not used as authority for current Cyberpunk 2.31 native controller contracts.
 
-Historical Biology evidence is stronger than a count-only claim for the scanner split. `config/patches/realpass-modern-scanner.json` pins the same archive hash, `expectedResourceCount: 370`, and **all 34 omitted scanner/quickhack/focus/connected-device resource paths with SHA-256**. Therefore the scanner-family exclusion is path-by-path durable evidence, while the other 336 resource identities remain a separate archive-inventory question.
+Historical Biology evidence is stronger than a count-only claim for the scanner split. `config/patches/realpass-modern-scanner.json` pins the same archive hash, `expectedResourceCount: 370`, and **all 34 omitted scanner/quickhack/focus/connected-device resource paths with SHA-256**. The directly inspected W18 bundle independently verifies the same exact archive and lists 370 resource paths, so the full archive inventory is no longer an unresolved boundary.
 
-P02 has now recorded the successful owner bundle `Biology-Private-ReferenceBundle-20260919-000857-87b38671.zip` on #106. That bundle contains the private Project E3 REDscript/TweakXL material and a **verified WolvenKit listing** of `archive\\pc\\mod\\basegame_3e_demo_hud.archive`. The archive is therefore no longer an opaque architectural unknown. The verified inventory confirms authored Project E3 HUD resources for quest list/tracker, D-pad/input hints, compass, ammo/weapon presentation, player health, NPC nameplates, minimap, scanner HUD, activity log, interactions/dialog, and additional HUD families. The exact third-party payload/listing remains private; this document records only redistribution-safe subsystem conclusions.
+W18.1 directly inspected `Biology-Private-ReferenceBundle-20260919-001914-365937cf.zip`, produced by the #105 workflow from canonical revision `ffc000ffed2b958f70ce446f43a2fd92132a5f7c`. Its manifest includes 36 indexed Project E3 files, 22 REDscript files, 13 TweakXL YAML files, the separately selected Mod Settings reference, and a **verified WolvenKit listing** of `archive\\pc\\mod\\basegame_3e_demo_hud.archive`. The archive identity is exactly 33,013,760 bytes / SHA-256 `776556B6913C3B6B2FE1E13DA0964732FA917A130EA9C2A43E34AD4F5FEC03B6`. The listing contains 370 actual resource paths; four additional lines in the text file are WolvenKit long-path warning footer text, not resources.
 
 ## Architectural finding
 
@@ -58,7 +58,7 @@ The private 2.31.p2 scripts independently prove that many Project E3 controllers
 
 Therefore the archive is **material implementation**, not decorative residue.
 
-The predecessor bundle did not expose the complete archive, but the later P02-accepted bundle did: its WolvenKit listing closes the archive-inventory gate and independently confirms that the non-scanner archive materially owns the ordinary HUD families listed above. W18.1 does **not** copy that listing or Project E3 resource bytes into Git. Precise private resource paths that are not needed to identify a Biology seam stay private rather than being reproduced here.
+The direct W18 bundle closes the archive-inventory gate. Redistribution-safe path evidence now confirms exact authored resources including `quest_tracker.inkwidget`, `dpad_hint.inkwidget`, `compass.inkwidget`, `ammo_counter.inkwidget`, `playerhealthbar.inkwidget`, `npcnameplate.inkwidget`, `minimap.inkwidget`, `scanner_hud.inkwidget`, `scandetails.inkwidget`, `quickhacks.inkwidget`, `activity_log.inkwidget`, `interaction.inkwidget`, `dialog.inkwidget`, and `interactions_root.inkwidget`. W18.1 does **not** copy the private inventory or any Project E3 resource bytes into Git.
 
 ## Dependency roles
 
@@ -105,6 +105,23 @@ The public 2.31.p2 distribution/changelog is a useful completeness check because
 | Warning/progress/damage/loot/boss-health presentation and HUD decorators | **Authored-resource follow-up** — Project E3 2.31.p2 advertises these as new/remade content; Biology must not accidentally import boss HP or old damage/scanner semantics contrary to its own product rules. |
 
 An **authored-resource follow-up** is not a promise to reproduce that Project E3 surface. The verified #105 inventory establishes that Project E3 used authored resource composition there; Biology still chooses between an evidence-backed current-2.31 seam, a future Biology-owned resource, or an explicit native-preserve decision based on product scope rather than copying the reference.
+
+## Direct private-bundle cross-check
+
+The private source and archive inventory correlate at the architecture level:
+
+- **Quest:** `quest_tracker.reds` replaces native tracker logic and hard-targets `inkVerticalPanelWidget2/OptionalTracker`, `Fluff/OptionalList`, and `Fluff/Title/OptionalName`; the exact archive contains `base\\gameplay\\gui\\widgets\\quests\\quest_tracker.inkwidget`, `quest_list.inkwidget`, tracker animations/styles/atlases, and objective textures.
+- **D-pad:** `dpad_hint.reds` expects `mainCanvas/newPhoneSlot`; the archive contains `dpad_hint.inkwidget`, `dpad_hint_consumables.inkwidget`, D-pad animations/styles/atlases and related input resources.
+- **Weapon/ammo:** `weaponRoster.reds` expects `weapon_on_foot/ammo_counter/weapon_wrapper/weapon_holder/decorator` and replaces ammo update/formatting; the archive contains `ammo_counter.inkwidget`, its style/animations and atlas resources.
+- **Compass:** the scripts hard-target `Pusula/mappinContainer` and multiple `Fluff/...` children and spawn quest/POI widgets; the archive contains `compass.inkwidget`, `quest_mappin.inkwidget`, `poi_mappin.inkwidget` and compass animations.
+- **Nameplates:** Project E3 adds/finds `levelValue`, `levelFrame`, `nameBG`, `levelBG` and `level_wrapper`, replaces nameplate behavior/ranges, and its TweakXL record enables/forces broad nameplate display; the archive contains `npcnameplate.inkwidget` and `nameplatecolors.inkstyle`.
+- **Minimap/mappins:** REDscript replaces/wraps minimap mappin behavior while TweakXL changes mappin definitions, runtime profiles and clamping; the archive contains the minimap widget/style/animation family and minimap mappin resources.
+- **Interactions/dialogue:** Project E3 replaces interaction/dialog controller methods and points at authored dialog resources; the archive contains interaction/dialog/root widgets, animations, styles and atlases while TweakXL remaps choice icons.
+- **Activity log:** Project E3 replaces entry initialization and the archive contains `activity_log.inkwidget`.
+- **Player health:** Project E3 wraps/replaces player-health controller behavior and the archive contains `playerhealthbar.inkwidget`, styles/animations, stamina and buff resources.
+- **Scanner/quickhack:** Project E3 ships scanner/quickhack/focus resources and replaces scanner-border behavior. Biology deliberately excludes this entire reference family and preserves current 2.31 native scanner/quickhack.
+
+The bundle does not serialize the Project E3 INK resources to JSON, so W18.1 does not claim private widget properties that are not present in the evidence. Another owner probe is unnecessary: the hard-coded Project E3 widget paths plus the exact WolvenKit resource inventory already answer the architectural question—these surfaces materially depend on authored resource hierarchy rather than REDscript-created geometry alone.
 
 ## W18.1 implementation consequence before T005
 
