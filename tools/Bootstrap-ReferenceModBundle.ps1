@@ -25,10 +25,10 @@ function Under([string]$child,[string]$parent){
     $p=[IO.Path]::GetFullPath($parent).TrimEnd('\')+'\'
     $c.StartsWith($p,[StringComparison]::OrdinalIgnoreCase)
 }
-function Native([string]$exe,[string[]]$args){
+function Native([string]$exe,[string[]]$arguments){
     $psi=[Diagnostics.ProcessStartInfo]::new()
     $psi.FileName=$exe;$psi.UseShellExecute=$false;$psi.RedirectStandardOutput=$true;$psi.RedirectStandardError=$true;$psi.CreateNoWindow=$true
-    foreach($a in $args){[void]$psi.ArgumentList.Add($a)}
+    foreach($a in $arguments){[void]$psi.ArgumentList.Add($a)}
     $p=[Diagnostics.Process]::new();$p.StartInfo=$psi
     try{
         if(-not $p.Start()){throw "Could not start $exe"}
@@ -36,10 +36,10 @@ function Native([string]$exe,[string[]]$args){
         [pscustomobject]@{ExitCode=$p.ExitCode;StdOut=$o;StdErr=$e}
     }finally{$p.Dispose()}
 }
-function NativeLive([string]$exe,[string[]]$args){
+function NativeLive([string]$exe,[string[]]$arguments){
     $psi=[Diagnostics.ProcessStartInfo]::new()
     $psi.FileName=$exe;$psi.UseShellExecute=$false;$psi.RedirectStandardOutput=$true;$psi.RedirectStandardError=$true;$psi.CreateNoWindow=$true
-    foreach($a in $args){[void]$psi.ArgumentList.Add($a)}
+    foreach($a in $arguments){[void]$psi.ArgumentList.Add($a)}
     $p=[Diagnostics.Process]::new();$p.StartInfo=$psi
     try{
         if(-not $p.Start()){throw "Could not start $exe"}
@@ -69,7 +69,7 @@ function NativeLive([string]$exe,[string[]]$args){
         [pscustomobject]@{ExitCode=$p.ExitCode;StdOut=$stdout.ToString();StdErr=$stderr.ToString()}
     }finally{$p.Dispose()}
 }
-function Git([string[]]$args){Native 'git' $args}
+function Git([string[]]$arguments){Native 'git' $arguments}
 function SeedRepo {
     foreach($d in @(Get-ChildItem -LiteralPath $GamesRoot -Directory -ErrorAction SilentlyContinue)){
         $top=Git @('-C',$d.FullName,'rev-parse','--show-toplevel')
@@ -213,12 +213,12 @@ try{
         }
     }
 
-    $args=@('-NoLogo','-NoProfile','-File',(Join-Path $worktree 'tools\New-ReferenceModBundle.ps1'),'-LibraryPath',$LibraryPath,'-OutputRoot',$OutputRoot,'-WorkflowSourceRevision',$ExpectedHead,'-SuppressHandoffMarker')
-    if($ReferenceName -and $ReferenceName.Count -gt 0){$args += '-ReferenceNameJson';$args += ($ReferenceName | ConvertTo-Json -Compress)}
-    if($IncludeBiologyNativeUi){$args += '-IncludeBiologyNativeUi';$args += '-GamePath';$args += $GamePath}
+    $childArgs=@('-NoLogo','-NoProfile','-File',(Join-Path $worktree 'tools\New-ReferenceModBundle.ps1'),'-LibraryPath',$LibraryPath,'-OutputRoot',$OutputRoot,'-WorkflowSourceRevision',$ExpectedHead,'-SuppressHandoffMarker')
+    if($ReferenceName -and $ReferenceName.Count -gt 0){$childArgs += '-ReferenceNameJson';$childArgs += ($ReferenceName | ConvertTo-Json -Compress)}
+    if($IncludeBiologyNativeUi){$childArgs += '-IncludeBiologyNativeUi';$childArgs += '-GamePath';$childArgs += $GamePath}
     Write-Host ''
     Write-Host 'REFERENCE BUNDLE WORK STARTING — progress will stream below.' -ForegroundColor Cyan
-    $child=NativeLive 'pwsh' $args
+    $child=NativeLive 'pwsh' $childArgs
     if($child.ExitCode -ne 0){throw "Reference bundle builder failed with exit $($child.ExitCode). $($child.StdErr.Trim())"}
     $m=[regex]::Match($child.StdOut,'(?im)^([A-Za-z]:\\[^\r\n]+Biology-Private-ReferenceBundle-[^\r\n]+\.zip)\s*$')
     if(-not $m.Success){throw 'Builder succeeded but did not return an attachable bundle path.'}

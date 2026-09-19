@@ -39,14 +39,14 @@ function Classify([string]$p) {
     if ($ext -in @('.dll','.exe','.asi','.red4ext','.bin','.inkwidget','.inkatlas','.xbm','.mesh','.app','.ent','.mi','.wem','.opuspak','.bk2','.streamingsector','.phys','.anim','.anims','.mlsetup','.mt','.world')) { return 'binary/resource' }
     'other'
 }
-function Native([string]$exe,[string[]]$args) {
+function Native([string]$exe,[string[]]$arguments) {
     $psi=[Diagnostics.ProcessStartInfo]::new()
     $psi.FileName=$exe
     $psi.UseShellExecute=$false
     $psi.RedirectStandardOutput=$true
     $psi.RedirectStandardError=$true
     $psi.CreateNoWindow=$true
-    foreach($a in $args){[void]$psi.ArgumentList.Add($a)}
+    foreach($a in $arguments){[void]$psi.ArgumentList.Add($a)}
     $p=[Diagnostics.Process]::new(); $p.StartInfo=$psi
     try {
         if(-not $p.Start()){throw "Could not start $exe"}
@@ -54,14 +54,14 @@ function Native([string]$exe,[string[]]$args) {
         [pscustomobject]@{ExitCode=$p.ExitCode;StdOut=$o;StdErr=$e}
     } finally {$p.Dispose()}
 }
-function NativeLive([string]$exe,[string[]]$args) {
+function NativeLive([string]$exe,[string[]]$arguments) {
     $psi=[Diagnostics.ProcessStartInfo]::new()
     $psi.FileName=$exe
     $psi.UseShellExecute=$false
     $psi.RedirectStandardOutput=$true
     $psi.RedirectStandardError=$true
     $psi.CreateNoWindow=$true
-    foreach($a in $args){[void]$psi.ArgumentList.Add($a)}
+    foreach($a in $arguments){[void]$psi.ArgumentList.Add($a)}
     $p=[Diagnostics.Process]::new(); $p.StartInfo=$psi
     try {
         if(-not $p.Start()){throw "Could not start $exe"}
