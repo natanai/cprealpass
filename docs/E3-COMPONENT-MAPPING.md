@@ -1,8 +1,29 @@
 # Biology E3 component mapping
 
-Status: W03.5 native-content-region design-archaeology contract  
+Status: **W18.1 continuation engineering-reference mapping; historical W03.2-W03.6 detail retained below**  
 Last updated: 2026-09-18  
-Issues: #78 / #40
+Issues: #106 / #40
+
+## W18.1 authority notice
+
+Project E3 is now an **engineering reference implementation**, not merely a visual target. The durable redistribution-safe mechanism/dependency/resource mapping is:
+
+- [Project E3 engineering-reference archaeology](E3-REFERENCE-ARCHAEOLOGY.md)
+- [machine-readable derived record](reference-mods/project-e3-hud-2.31-p2.json)
+
+Those continuation records supersede the older assumption in this file that the ~33 MB archive can be treated as generic historical assets while Biology reproduces the look with runtime INK. The predecessor W03 archaeology remains part of the evidence trail, while W18.1 is the current worker authority for what Project E3 actually owns through archive resources, redscript and TweakXL.
+
+W18.1 directly inspected `Biology-Private-ReferenceBundle-20260919-001914-365937cf.zip` in addition to the public distribution cross-check. The bundle contains 22 Project E3 REDscript files, 13 TweakXL YAML files, the separately selected Mod Settings reference, and a WolvenKit listing of the exact pinned HUD archive. The listing has 370 actual resource paths after excluding four WolvenKit long-path warning footer lines; therefore the former 336-resource archive-opacity gate is closed.
+
+## W18.1 verified archive-inventory closure
+
+The directly inspected private bundle `Biology-Private-ReferenceBundle-20260919-001914-365937cf.zip` includes a WolvenKit-verified listing of the exact Project E3 HUD archive. Representative exact paths include `quest_tracker.inkwidget`, `dpad_hint.inkwidget`, `compass.inkwidget`, `ammo_counter.inkwidget`, `playerhealthbar.inkwidget`, `npcnameplate.inkwidget`, `minimap.inkwidget`, `scanner_hud.inkwidget`, `activity_log.inkwidget`, `interaction.inkwidget` and `dialog.inkwidget`.
+
+This closes the old "archive opaque" assumption. It does **not** mean Biology should copy those resources. The implementation rule is:
+
+`Project E3 authored resource evidence -> current 2.31 authored/native authority -> narrow Biology styling seam -> Biology-owned REDmod resource only if structural fidelity truly requires one`.
+
+Existing W03.5/W03.6 semantic-host fixes remain valid because they moved Biology toward current authored content ownership. Their generated chrome is an accent layer, not the layout authority. A future structural correction must use a Biology-owned resource rather than expanding runtime geometry.
 
 ## Evidence boundary
 
@@ -33,7 +54,7 @@ For each Project E3 area: identify the visual responsibility, the current 2.31 a
 | Project E3 NPC tweak files | Historical nameplate schema/record tuning. | Native `UINameplate_Record` / character records. | **Reference only.** No Project E3 tweak payload. A defined disabled native nameplate remains an explicit no. W03.2 removes the overly specific W03.1 requirement that every public civilian use exactly `UINameplate.CrowdSettings`. | Hidden/disabled/alternative/quest policy remains protected. |
 | Project E3 mappin/UI tweak files | Historical marker/icon/clamping styles. | Native current mappin profiles. | **Reference only.** No Project E3 TweakDB authority copied. | Native navigation semantics remain unchanged. |
 | `cyberpunk/hud/scanner/scanner_border.reds` and scanner resources in `basegame_3e_demo_hud.archive` | Old E3 scanner/focus composition. | Modern native scanner, quickhack list, RAM, scan details, target highlight. | **Hard preserve current/native.** No Biology scanner/quickhack hook/resource. | Modern scanner looks/behaves the same with E3 ON and OFF. |
-| `archive/pc/mod/basegame_3e_demo_hud.archive` | Historical archive-backed HUD layouts/assets across many areas. | Current native UI resources plus Biology-owned runtime INK. | **Reference only; forbidden from player artifact.** W03.2 reproduces only needed visual language in owned code. | Player artifact contains no Project E3 archive/runtime content. |
+| `archive/pc/mod/basegame_3e_demo_hud.archive` | Authored HUD composition/resources across quest, D-pad, compass, weapon/ammo, player health, NPC nameplates, minimap, scanner, activity log, interaction/dialog and other HUD families; verified by the W18 private WolvenKit inventory. | Current 2.31 authored native UI resources/controllers for each surface. | **Reference only; forbidden from player artifact.** Existing Biology code may add reversible accent styling to proven native content regions, but structural fidelity must come from current native resources or a Biology-owned REDmod resource authored from scratch—not progressively more runtime rectangles. | Player artifact contains no Project E3 payload; T005 validates preserved semantic hosts and native scanner. |
 
 ## Why W03.1 could compile yet still look retail
 
@@ -111,3 +132,20 @@ T003 / exact integrated source `67593bfbb12b4a6ebcec7042066d48b4f5fac427` proved
 | Scanner/quickhack | Must remain modern/current. | Native scanner/quickhack controllers/resources. | **KEEP native.** No scanner presentation hook. |
 
 The native content region, not the screenshot's absolute coordinates, is the positioning authority.
+
+
+## W03.6 quest / hotkey content-region correction
+
+T004 / exact integrated source `ffa6f64d6c837146d032aaab565d671c932453a2` accepts W03.5's weapon-region repair but rejects the remaining quest/hotkey composition.
+
+| Responsibility | T004 evidence | Current 2.31 semantic authority | W03.6 decision |
+|---|---|---|---|
+| Quest host | Small Biology chrome reaches the correct right-hand tracker area but does not compose around the visible stack. | `m_questTrackerContainer` remains the safe parent content host. | Keep the W03.5 host. Replace the tiny fixed label/rail with host-relative segmented region chrome. |
+| Quest visible rows | Title/objective text and tracking glyphs remain overwhelmingly native/current. | `QuestTrackerObjectiveLogicController.m_objectiveTitle`, `m_trackingIcon`, and `m_trackingFrame` are the actual spawned native row presentation. | Recolor/restore those native row widgets after native `UpdateTrackerData()`; keep Journal/objective lifecycle native. |
+| Objective child list | Vanilla enumerates/casts every `m_ObjectiveContainer` child as an objective controller. | `m_ObjectiveContainer` is an objective-only managed list. | **Never mount Biology chrome there.** Iterate existing native children only. |
+| Lower-left quickslots | Root-mounted Biology red geometry overlaps/misaligns with cyan quickslot controls. | `HotkeysWidgetController.m_dpadHintsPanel` is where consumable, gadget, cyberware, leeroy and time-bank children are spawned. Phone/car/radio use separate sibling slots. | Mount Biology chrome only inside `m_dpadHintsPanel`; leave sibling phone/car/radio slots outside the custom frame. |
+| Region chrome | Fixed controller-root chrome has repeatedly failed across HUD surfaces. | Native semantic child regions provide authored local coordinates. | Use a shared **segmented region** frame anchored to the semantic host itself; no global translation. |
+| Weapon/ammo | T004 shows the prior lower-center detached chrome is gone. | W03.5 `m_onFootContainer` / ammo fallback. | **KEEP unchanged.** |
+| Nameplate / reticle / scanner | T004 keeps framed ambient names and reticle cleanup; scanner remains a hard preserve. | Existing W03.3–W03.5 native seams. | **KEEP unchanged.** |
+
+The native content host and native row widgets are the positioning/presentation authority. Screenshot coordinates are evidence, not layout inputs.

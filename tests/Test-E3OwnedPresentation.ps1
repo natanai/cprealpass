@@ -26,7 +26,7 @@ $script:checks = 0
 function Check($condition,[string]$message) { if (-not $condition) { throw $message }; $script:checks++ }
 
 foreach ($path in @($paths.Values) + @($mappingPath,$presentationPath)) {
-    Check (Test-Path -LiteralPath $path -PathType Leaf) "Missing W03.5 E3 presentation contract/source: $path"
+    Check (Test-Path -LiteralPath $path -PathType Leaf) "Missing W03.6 E3 presentation contract/source: $path"
 }
 
 $source = @{}
@@ -39,13 +39,18 @@ Check ($source.primitives.Contains('AddPanelChrome')) 'W03.4 shared compact HUD 
 Check ($source.primitives.Contains('AddAnchoredRect')) 'W03.4 compact lower-right chrome primitive is missing.'
 Check (-not $source.primitives.Contains('AddFillWash')) 'Full-root wash primitive survived W03.4 visual cleanup.'
 foreach ($key in @('lowerLeft','quest','navigation','weapon','hotkey','interaction')) {
-    Check ($source[$key].Contains('CreateFillShell')) "$key lost the root-fitted native-controller shell."
-    Check ($source[$key].Contains('AddPanelChrome')) "$key does not use the shared compact W03.4 chrome language."
+    Check ($source[$key].Contains('CreateFillShell')) "$key lost the root-fitted/native-content shell."
     Check (-not $source[$key].Contains('AddFillWash')) "$key still paints an attended full-root red slab."
     Check ($source[$key].Contains('UseE3FirstPersonHudVisuals(GetGameInstance())')) "$key is not gated by the single E3 preference."
 }
+foreach ($key in @('lowerLeft','navigation','weapon','interaction')) {
+    Check ($source[$key].Contains('AddPanelChrome')) "$key lost the shared compact panel chrome language."
+}
+Check ($source.primitives.Contains('AddSegmentedRegionChrome')) 'W03.6 shared native-region segmented chrome primitive is missing.'
+Check ($source.quest.Contains('AddSegmentedRegionChrome')) 'W03.6 quest tracker does not use host-relative segmented region chrome.'
+Check ($source.hotkey.Contains('AddSegmentedRegionChrome')) 'W03.6 hotkey/quickslot panel does not use host-relative segmented region chrome.'
 
-Check ($source.quest.Contains('@wrapMethod(QuestTrackerGameController)') -and $source.quest.Contains('"OBJECTIVES"')) 'Quest/objective tracker lost W03.4 compact chrome.'
+Check ($source.quest.Contains('@wrapMethod(QuestTrackerGameController)')) 'Quest/objective tracker lost its native controller seam.'
 Check ($source.navigation.Contains('@wrapMethod(MinimapContainerController)') -and $source.navigation.Contains('"NAV // ROUTE"')) 'Current minimap host lost W03.4 compact chrome.'
 Check (-not $source.navigation.Contains('@wrapMethod(IronsightGameController)')) 'Navigation styling regressed to historical ironsight ownership.'
 Check ($source.weapon.Contains('@wrapMethod(WeaponRosterGameController)') -and $source.weapon.Contains('"WEAPON // AMMO"')) 'Weapon/ammo roster lost W03.4 compact chrome.'
@@ -53,6 +58,10 @@ Check ($source.quest.Contains('CRResolveBiologyE3QuestHost') -and $source.quest.
 Check ($source.quest.Contains('CreateFillShell(this.crBiologyE3QuestHost')) 'W03.5 quest chrome still mounts against a controller/root coordinate space instead of the resolved content host.'
 Check (-not $source.quest.Contains('inkCompoundRef.Get(this.m_ObjectiveContainer)')) 'W03.5 quest chrome contaminates the native objective child list instead of failing closed on an unresolved tracker host.'
 Check ($source.quest.Contains('this.m_QuestTitle') -and $source.quest.Contains('crBiologyE3NativeQuestTitleTint')) 'W03.5 quest presentation does not transform and reversibly restore the actual native quest title.'
+Check ($source.quest.Contains('QuestTrackerObjectiveLogicController') -and $source.quest.Contains('this.m_objectiveTitle') -and $source.quest.Contains('this.m_trackingIcon') -and $source.quest.Contains('this.m_trackingFrame')) 'W03.6 quest completion does not style the actual native objective-row content.'
+Check ($source.quest.Contains('CRRefreshBiologyE3ObjectiveStyles') -and $source.quest.Contains('inkCompoundRef.GetNumChildren(this.m_ObjectiveContainer)')) 'W03.6 quest controller does not refresh native objective-row styling after tracker data changes.'
+Check ($source.quest.Contains('crBiologyE3NativeObjectiveTitleTint') -and $source.quest.Contains('crBiologyE3NativeTrackingIconTint') -and $source.quest.Contains('crBiologyE3NativeTrackingFrameTint')) 'W03.6 objective presentation cannot restore native row styling when E3 is off.'
+Check (-not $source.quest.Contains('Reparent(this.m_ObjectiveContainer') -and -not $source.quest.Contains('CreateFillShell(inkCompoundRef.Get(this.m_ObjectiveContainer)')) 'W03.6 quest completion contaminates the objective-controller child list.'
 Check (-not $source.quest.Contains('SetTranslation(')) 'W03.5 quest repair introduced an arbitrary local/global translation instead of binding to the native content region.'
 Check ($source.weapon.Contains('CRResolveBiologyE3WeaponHost') -and $source.weapon.Contains('this.m_onFootContainer') -and $source.weapon.Contains('this.m_weaponAmmoWrapper')) 'W03.5 weapon chrome is not bound to the native semantic on-foot/ammo content regions.'
 Check ($source.weapon.Contains('CreateFillShell(this.crBiologyE3WeaponHost')) 'W03.5 weapon chrome still mounts against a controller/root coordinate space instead of the resolved content host.'
@@ -63,7 +72,13 @@ Check ($source.primitives.Contains('TraceMountedRegion') -and $source.primitives
 Check ($source.quest.Contains('TraceMountedRegion') -and $source.weapon.Contains('TraceMountedRegion')) 'W03.5 quest/weapon adapters do not emit bounded content-region mount/state evidence.'
 Check (-not $source.quest.Contains('return NULL;') -and -not $source.weapon.Contains('return NULL;')) 'W03.5 reintroduced a NULL return token that redscript 0.5.31 does not resolve in Biology source.'
 Check (-not $source.quest.Contains('crBiologyE3QuestLastEnabled != enabled') -and -not $source.weapon.Contains('crBiologyE3WeaponLastEnabled != enabled')) 'W03.5 reintroduced Bool inequality syntax that the exact redscript 0.5.31 compile rejects.'
-Check ($source.hotkey.Contains('@wrapMethod(HotkeysWidgetController)') -and $source.hotkey.Contains('"QUICK // INPUT"')) 'Quick-slot/D-pad lost W03.4 compact chrome.'
+Check ($source.hotkey.Contains('@wrapMethod(HotkeysWidgetController)')) 'Quick-slot/D-pad lost its native controller seam.'
+Check ($source.hotkey.Contains('CRResolveBiologyE3HotkeyHost') -and $source.hotkey.Contains('this.m_dpadHintsPanel')) 'W03.6 hotkey chrome is not bound to the native m_dpadHintsPanel semantic content host.'
+Check ($source.hotkey.Contains('inkCompoundRef.Get(this.m_dpadHintsPanel) as inkCompoundWidget')) 'W03.6 hotkey semantic host must explicitly narrow inkCompoundRef.Get() from wref<inkWidget> to inkCompoundWidget for redscript 0.5.31.'
+Check ($source.hotkey.Contains('CreateFillShell(this.crBiologyE3HotkeyHost')) 'W03.6 hotkey chrome still mounts against the controller root instead of the semantic content host.'
+Check (-not $source.hotkey.Contains('this.GetRootCompoundWidget()')) 'W03.6 hotkey repair regressed to controller-root composition.'
+Check (-not $source.hotkey.Contains('SetTranslation(')) 'W03.6 hotkey repair introduced an arbitrary screenshot-derived/global translation.'
+Check ($source.hotkey.Contains('TraceMountedRegion')) 'W03.6 hotkey adapter does not emit bounded native-host/chrome geometry evidence.'
 Check ($source.interaction.Contains('@wrapMethod(interactionWidgetGameController)') -and $source.interaction.Contains('"INTERACTION"')) 'Ordinary interaction prompt lost W03.4 compact chrome.'
 Check (-not $source.interaction.Contains('@replaceMethod') -and -not $source.interaction.Contains('FromVariant<InteractionChoiceHubData>') -and -not $source.interaction.Contains('AsyncSpawnFromLocal')) 'Interaction presentation took over native choice/input behavior.'
 
@@ -133,10 +148,16 @@ foreach ($needle in @('W03.4','CRBiologyE3FocusFrame','compact chrome','ambient'
 foreach ($needle in @('W03.5','T003','m_questTrackerContainer','m_onFootContainer','content region')) {
     Check ($mapping.Contains($needle)) "Component mapping is missing W03.5 native-content-region correction: $needle"
 }
+foreach ($needle in @('T004','ffa6f64d6c837146d032aaab565d671c932453a2','m_dpadHintsPanel','QuestTrackerObjectiveLogicController','W03.6')) {
+    Check ($presentation.Contains($needle)) "Canonical W03.6 presentation contract is missing attended/native-content evidence: $needle"
+}
+foreach ($needle in @('W03.6','T004','m_dpadHintsPanel','m_objectiveTitle','segmented region')) {
+    Check ($mapping.Contains($needle)) "Component mapping is missing W03.6 quest/hotkey content-region correction: $needle"
+}
 
 $allowed = @($seams.allowedHookFiles)
 foreach ($file in @('E3FirstPersonHud.reds','E3QuestHudNative.reds','E3NavigationHudNative.reds','E3WeaponHudNative.reds','E3CrosshairHudNative.reds','E3HotkeyHudNative.reds','E3InteractionHudNative.reds','E3ActivityHudNative.reds','E3NameplatesNative.reds','NoHealthbars.reds')) {
     Check ($allowed -contains $file) "W03.4 native presentation seam is not registered in the 2.31 boundary allowlist: $file"
 }
 
-Write-Host "PASS: $script:checks W03.5 E3 content-region checks; T003 weapon/quest chrome binds to semantic native content hosts without guessed offsets, prior reticle/nameplate wins remain protected, and modern scanner ownership remains native."
+Write-Host "PASS: $script:checks W03.6 E3 quest/hotkey content-region checks; quest native rows and m_dpadHintsPanel own the visible composition, no controller-root/global-offset regression was introduced, and prior weapon/nameplate/reticle/scanner boundaries remain protected."

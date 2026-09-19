@@ -33,6 +33,12 @@ $contracts = @(
             '\bm_questTrackerContainer\b',
             '\bm_QuestTitle\b',
             '\bm_ObjectiveContainer\b',
+            '\bclass\s+QuestTrackerObjectiveLogicController\b',
+            '\bm_objectiveTitle\b',
+            '\bm_trackingIcon\b',
+            '\bm_trackingFrame\b',
+            '\bfunction\s+SetObjectiveState\s*\(',
+            '\bfunction\s+SetData\s*\(',
             '\bevent\s+OnInitialize\s*\(',
             '\bfunction\s+UpdateTrackerData\s*\(',
             'inkWidgetRef\.SetVisible\(\s*m_questTrackerContainer',
@@ -64,7 +70,15 @@ $contracts = @(
         path = 'cyberpunk/UI/widgets/dpad_hint/dpad_hint.script'
         patterns = @(
             '\bclass\s+HotkeysWidgetController\b',
-            '\bevent\s+OnInitialize\s*\('
+            '\bm_phoneSlot\b',
+            '\bm_carSlot\b',
+            '\bm_radioSlot\b',
+            '\bm_dpadHintsPanel\b',
+            '\bm_consumables\b',
+            '\bm_gadgets\b',
+            '\bm_cyberware\b',
+            '\bevent\s+OnInitialize\s*\(',
+            'SpawnFromLocal\(\s*inkCompoundRef\.Get\(\s*m_dpadHintsPanel'
         )
     },
     [pscustomobject]@{
@@ -163,4 +177,4 @@ foreach ($hit in $deduped) {
 }
 
 Write-Host ''
-Write-Host 'PASS: all W03.5 current-controller, native content-region, crosshair-state, and nameplate-lifecycle contracts were found in the installed official REDmod script tree.' -ForegroundColor Green
+Write-Host 'PASS: all W03.6 current-controller, quest/hotkey native content-region, crosshair-state, and nameplate-lifecycle contracts were found in the installed official REDmod script tree.' -ForegroundColor Green
