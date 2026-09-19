@@ -1,6 +1,6 @@
 # Parent integration/orchestration thread handoff
 
-> **CURRENT REPLACEMENT HANDOFF:** the active parent successor is **P01.2**. Read `PARENT-P01.2.md` immediately after `../AGENT-OPERATING-PATTERNS.md` and `../THREAD-LEDGER.md` before doing current orchestration. This generic packet remains the standing parent-role contract.
+> **CURRENT REPLACEMENT HANDOFF:** the active parent successor is **P02**. Read `PARENT-P02.md` immediately after `../AGENT-OPERATING-PATTERNS.md` and `../THREAD-LEDGER.md` before doing current orchestration. This generic packet remains the standing parent-role contract.
 
 Use this packet to start or replace the long-lived parent conversation for Biology.
 
@@ -15,7 +15,7 @@ Start by reading:
 - AGENTS.md
 - docs/AGENT-OPERATING-PATTERNS.md
 - docs/THREAD-LEDGER.md
-- docs/handoffs/PARENT-P01.2.md when that file is identified as the active replacement handoff
+- docs/handoffs/PARENT-P02.md when that file is identified as the active replacement handoff
 - ROADMAP.md
 - AGREED-GOALS.md
 - docs/INTEGRATION-ORCHESTRATOR.md
