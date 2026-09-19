@@ -145,6 +145,7 @@ $index=[Collections.Generic.List[object]]::new()
 $signals=[Collections.Generic.List[object]]::new()
 $refs=[Collections.Generic.List[object]]::new()
 $archives=[Collections.Generic.List[object]]::new()
+$script:referenceArchiveToolchain=$null
 $notes=[Collections.Generic.List[string]]::new()
 $copied=[int64]0; $oneLimit=[int64]$MaxTextFileMiB*1MB; $allLimit=[int64]$MaxCopiedTextMiB*1MB
 $seven=Get-Command 7z,7zz -ErrorAction SilentlyContinue|Select-Object -First 1
