@@ -145,6 +145,7 @@ $index=[Collections.Generic.List[object]]::new()
 $signals=[Collections.Generic.List[object]]::new()
 $refs=[Collections.Generic.List[object]]::new()
 $archives=[Collections.Generic.List[object]]::new()
+$script:referenceArchiveToolchain=$null
 $notes=[Collections.Generic.List[string]]::new()
 $copied=[int64]0; $oneLimit=[int64]$MaxTextFileMiB*1MB; $allLimit=[int64]$MaxCopiedTextMiB*1MB
 $seven=Get-Command 7z,7zz -ErrorAction SilentlyContinue|Select-Object -First 1
@@ -207,6 +208,30 @@ function ArchiveInventory([string]$ref,[string]$rel,[string]$path){
             $archives.Add([pscustomobject]@{reference=$ref;path=$rel;tool='System.IO.Compression.ZipFile';status='listed';inventory=('archive-inventory/'+[IO.Path]::GetFileName($out))})
             return 'listed-native-zip'
         }catch{$archives.Add([pscustomobject]@{reference=$ref;path=$rel;tool='System.IO.Compression.ZipFile';status='list-failed';detail=$_.Exception.Message});return 'zip-list-failed'}
+    }
+    if($ext -eq '.archive' -and $script:referenceArchiveToolchain){
+        $dotnet=[string]$script:referenceArchiveToolchain.dotnetExe
+        $cli=[string]$script:referenceArchiveToolchain.cliDll
+        Write-Host ("  [ARCHIVE] Listing Cyberpunk archive with verified WolvenKit: {0}" -f $rel) -ForegroundColor DarkGray
+        $r=Native $dotnet @($cli,'archive',$path,'--list','--regex','.*')
+        @(
+          ('TOOL: WolvenKit.CLI'),
+          ('CLI_SHA256: '+$script:referenceArchiveToolchain.cliDllSha256),
+          ('DOTNET_SHA256: '+$script:referenceArchiveToolchain.dotnetExeSha256),
+          ('EXIT: '+$r.ExitCode),
+          $r.StdOut,
+          $r.StdErr
+        )|Set-Content -LiteralPath $out -Encoding utf8
+        if($r.ExitCode -eq 0){
+            $archives.Add([pscustomobject]@{
+                reference=$ref;path=$rel;tool='WolvenKit.CLI';status='listed'
+                toolSha256=$script:referenceArchiveToolchain.cliDllSha256
+                inventory=('archive-inventory/'+[IO.Path]::GetFileName($out))
+            })
+            return 'listed-wolvenkit'
+        }
+        $archives.Add([pscustomobject]@{reference=$ref;path=$rel;tool='WolvenKit.CLI';status='tool-could-not-list';detail='Verified WolvenKit could not list this archive; contents remain opaque.'})
+        return 'opaque-tool-could-not-list'
     }
     if($seven){
         $r=Native $seven.Source @('l','-slt','--',$path)
@@ -385,6 +410,11 @@ try{
     } else {
         Write-Host 'PHASE 1/4 — Native Biology/Cyberware companion not requested.' -ForegroundColor DarkGray
     }
+    if($IncludeBiologyNativeUi){
+        Write-Host '[TOOLING] Verifying reusable WolvenKit/.NET cache for reference archive inventory...' -ForegroundColor Cyan
+        $script:referenceArchiveToolchain = & (Join-Path $PSScriptRoot 'Acquire-ArchiveToolchain.ps1') -CacheRoot (Join-Path $LibraryPath '_tooling')
+        Write-Host '[TOOLING] Verified reusable archive toolchain is ready.' -ForegroundColor Cyan
+    }
     Write-Host 'PHASE 2/4 — Indexing, hashing, and extracting bounded private reference text.' -ForegroundColor Cyan
     $folders=@($selected|Where-Object PSIsContainer|ForEach-Object Name)
     foreach($item in $selected){
@@ -450,7 +480,7 @@ try{
       provenanceVersionNotes=@($notes|Select-Object -Unique);fileCount=$index.Count;copiedTextBytes=$copied
       archiveInventory=@($archives);nativeBiologyUi=$nativeUi;sourceMutation='none';gameInstallation=$gameAccess
       duplicatePolicy='Selected ZIPs whose basename or sole top-level root matches a selected extracted sibling folder are hash-recorded but their duplicate payload is skipped.'
-      archivePolicy='ZIP contents are listed natively. Other archive/resource containers use safe 7z/7zz listing only when already available and successful; otherwise internals are explicitly opaque.'
+      archivePolicy='ZIP contents are listed natively. Cyberpunk .archive containers use the verified pinned WolvenKit toolchain when available; other containers may use safe 7z/7zz listing. Failed listings remain explicitly opaque.'
     }
     $manifest|ConvertTo-Json -Depth 12|Set-Content -LiteralPath (Join-Path $stage 'manifest.json') -Encoding utf8
     $opaque=@($archives|Where-Object{$_.status -like 'opaque*' -or $_.status -eq 'tool-could-not-list'})
