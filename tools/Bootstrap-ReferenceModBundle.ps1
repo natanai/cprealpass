@@ -18,7 +18,7 @@ $OutputRoot=[IO.Path]::GetFullPath($OutputRoot)
 $repoUrl='https://github.com/natanai/cprealpass.git'
 $repoPattern='(?i)(?:github\.com[/:])natanai/cprealpass(?:\.git)?$'
 $stamp=[DateTime]::Now.ToString('yyyyMMdd-HHmmss')+'-'+[guid]::NewGuid().ToString('N').Substring(0,8)
-$seed=$null;$worktree=$null;$createdSeed=$false;$child=$null;$finalBundle=$null
+$seed=$null;$worktree=$null;$createdSeed=$false;$child=$null;$finalBundle=$null;$sourceMode=$null;$archiveRoot=$null;$archiveZip=$null;$cloneEvidence=$null
 
 function Under([string]$child,[string]$parent){
     $c=[IO.Path]::GetFullPath($child).TrimEnd('\')+'\'
@@ -78,8 +78,10 @@ function FailureBundle([string]$message){
       ('Expected head: '+$ExpectedHead),
       ('Library: '+$LibraryPath),
       ('Error: '+$message),
+      ('Source acquisition mode: '+$sourceMode),
       ('Seed checkout: '+$seed),
       ('Disposable checkout: '+$worktree),
+      ('Clone evidence: '+$cloneEvidence),
       '',
       'No reference mod was installed into Cyberpunk.',
       'No source reference-library file was intentionally modified.',
@@ -103,22 +105,64 @@ try{
     if(-not (Test-Path -LiteralPath $LibraryPath -PathType Container)){throw "Reference library missing: $LibraryPath"}
     if(Under $OutputRoot $LibraryPath){throw 'OutputRoot must be outside the reference library.'}
     New-Item -ItemType Directory -Force -Path $OutputRoot|Out-Null
-    if(-not (Get-Command git -ErrorAction SilentlyContinue)){throw 'git is not available on PATH.'}
     if(-not (Get-Command pwsh -ErrorAction SilentlyContinue)){throw 'pwsh is not available on PATH.'}
 
-    $seed=SeedRepo
-    if(-not $seed){
-        $seed=Join-Path $GamesRoot ('cprealpass-repo-'+$stamp)
-        Write-Host "No usable local cprealpass checkout found; cloning exact-source seed: $seed" -ForegroundColor Cyan
-        $clone=Git @('clone','--no-checkout',$repoUrl,$seed)
-        if($clone.ExitCode -ne 0){throw "Could not clone cprealpass. $($clone.StdErr.Trim())"}
-        $createdSeed=$true
-    }else{Write-Host "Using Git-validated local seed: $seed"}
+    $gitAvailable=[bool](Get-Command git -ErrorAction SilentlyContinue)
+    if($gitAvailable){$seed=SeedRepo}
 
-    [void](ResolveHead $seed)
-    $worktree=Join-Path $GamesRoot ('cprealpass-reference-bundle-'+$stamp)
-    $wt=Git @('-C',$seed,'worktree','add','--detach',$worktree,$ExpectedHead)
-    if($wt.ExitCode -ne 0){throw "Could not create detached exact-head checkout. $($wt.StdErr.Trim())"}
+    if($seed){
+        $sourceMode='validated-local-git'
+        Write-Host "Using Git-validated local seed: $seed"
+        [void](ResolveHead $seed)
+        $worktree=Join-Path $GamesRoot ('cprealpass-reference-bundle-'+$stamp)
+        $wt=Git @('-C',$seed,'worktree','add','--detach',$worktree,$ExpectedHead)
+        if($wt.ExitCode -ne 0){throw "Could not create detached exact-head checkout. stdout=$($wt.StdOut.Trim()) stderr=$($wt.StdErr.Trim())"}
+    }else{
+        if($gitAvailable){
+            $seed=Join-Path $GamesRoot ('cprealpass-repo-'+$stamp)
+            Write-Host "No usable local cprealpass checkout found; attempting exact-source seed clone: $seed" -ForegroundColor Cyan
+            $clone=Git @('clone','--no-checkout',$repoUrl,$seed)
+            $cloneEvidence=("exit={0}; stdout={1}; stderr={2}" -f $clone.ExitCode,$clone.StdOut.Trim(),$clone.StdErr.Trim())
+            if($clone.ExitCode -eq 0){
+                $createdSeed=$true
+                $sourceMode='fresh-git-clone'
+                [void](ResolveHead $seed)
+                $worktree=Join-Path $GamesRoot ('cprealpass-reference-bundle-'+$stamp)
+                $wt=Git @('-C',$seed,'worktree','add','--detach',$worktree,$ExpectedHead)
+                if($wt.ExitCode -ne 0){throw "Could not create detached exact-head checkout. stdout=$($wt.StdOut.Trim()) stderr=$($wt.StdErr.Trim())"}
+            }else{
+                Write-Host "Git clone was unavailable; falling back to immutable exact-SHA source archive." -ForegroundColor Yellow
+                if(Test-Path -LiteralPath $seed){Remove-Item -LiteralPath $seed -Recurse -Force -ErrorAction SilentlyContinue}
+                $seed=$null
+            }
+        }else{
+            $cloneEvidence='git unavailable on PATH'
+            Write-Host "Git is unavailable; falling back to immutable exact-SHA source archive." -ForegroundColor Yellow
+        }
+
+        if(-not $worktree){
+            $sourceMode='exact-sha-archive'
+            $archiveZip=Join-Path $GamesRoot ('cprealpass-source-'+$ExpectedHead+'-'+$stamp+'.zip')
+            $archiveRoot=Join-Path $GamesRoot ('cprealpass-source-'+$ExpectedHead+'-'+$stamp)
+            $archiveUrl=('https://github.com/natanai/cprealpass/archive/{0}.zip' -f $ExpectedHead)
+            try{
+                Invoke-WebRequest -Uri $archiveUrl -OutFile $archiveZip
+                New-Item -ItemType Directory -Path $archiveRoot | Out-Null
+                Expand-Archive -LiteralPath $archiveZip -DestinationPath $archiveRoot
+            }catch{
+                throw "Could not acquire immutable exact-SHA source archive $ExpectedHead. Clone evidence: $cloneEvidence Archive error: $($_.Exception.Message)"
+            }
+            $roots=@(Get-ChildItem -LiteralPath $archiveRoot -Directory)
+            if($roots.Count -ne 1){throw "Exact-SHA archive extraction produced $($roots.Count) top-level directories; expected exactly one."}
+            $worktree=$roots[0].FullName
+            $builderPath=Join-Path $worktree 'tools\New-ReferenceModBundle.ps1'
+            $bootstrapPath=Join-Path $worktree 'tools\Bootstrap-ReferenceModBundle.ps1'
+            if(-not (Test-Path -LiteralPath $builderPath -PathType Leaf) -or -not (Test-Path -LiteralPath $bootstrapPath -PathType Leaf)){
+                throw 'Exact-SHA archive does not contain the expected Command 18 repository files.'
+            }
+            Write-Host "Using immutable exact-SHA source archive for $ExpectedHead" -ForegroundColor Cyan
+        }
+    }
 
     $args=@('-NoLogo','-NoProfile','-File',(Join-Path $worktree 'tools\New-ReferenceModBundle.ps1'),'-LibraryPath',$LibraryPath,'-OutputRoot',$OutputRoot,'-WorkflowSourceRevision',$ExpectedHead,'-SuppressHandoffMarker')
     if($ReferenceName -and $ReferenceName.Count -gt 0){$args += '-ReferenceNameJson';$args += ($ReferenceName | ConvertTo-Json -Compress)}
@@ -143,8 +187,10 @@ try{
     exit 1
 }finally{
     if($worktree -and (Test-Path -LiteralPath $worktree)){
-        if($seed -and (Test-Path -LiteralPath $seed)){[void](Git @('-C',$seed,'worktree','remove','--force',$worktree))}
+        if($sourceMode -ne 'exact-sha-archive' -and $seed -and (Test-Path -LiteralPath $seed) -and $gitAvailable){[void](Git @('-C',$seed,'worktree','remove','--force',$worktree))}
         if(Test-Path -LiteralPath $worktree){Remove-Item -LiteralPath $worktree -Recurse -Force -ErrorAction SilentlyContinue}
     }
+    if($archiveRoot -and (Test-Path -LiteralPath $archiveRoot)){Remove-Item -LiteralPath $archiveRoot -Recurse -Force -ErrorAction SilentlyContinue}
+    if($archiveZip -and (Test-Path -LiteralPath $archiveZip)){Remove-Item -LiteralPath $archiveZip -Force -ErrorAction SilentlyContinue}
     if($createdSeed -and $seed -and (Test-Path -LiteralPath $seed)){Remove-Item -LiteralPath $seed -Recurse -Force -ErrorAction SilentlyContinue}
 }
