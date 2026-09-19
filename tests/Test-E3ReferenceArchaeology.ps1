@@ -79,10 +79,13 @@ Check (@($record.opaqueAreas).Count -eq 0) 'W18.1 still marks the Project E3 arc
 $opaquePathIdentities = @($record.opaqueAreas | ForEach-Object { $_.pathIdentity })
 Check (-not ($opaquePathIdentities -contains 'Project E3 dependency package/readme metadata')) 'W18.1 left dependency metadata opaque after the public Project E3 2.31 distribution cross-check.'
 Check ($archaeology.Contains('config/patches/realpass-modern-scanner.json')) 'W18.1 archaeology doc does not point to the exact 34-resource scanner exclusion evidence.'
+foreach ($pathNeedle in @('quest_tracker.inkwidget','dpad_hint.inkwidget','compass.inkwidget','ammo_counter.inkwidget','playerhealthbar.inkwidget','npcnameplate.inkwidget','minimap.inkwidget','scanner_hud.inkwidget','activity_log.inkwidget','interaction.inkwidget')) {
+    Check (($record | ConvertTo-Json -Depth 40).Contains($pathNeedle)) "W18.1 direct archive resource evidence is missing from the derived record: $pathNeedle"
+}
 foreach ($archiveArea in @('NPC nameplate authored resource','Minimap authored resource','Activity-log authored resource','Interaction/dialog authored resources')) {
     Check ($areas -contains $archiveArea) "W18.1 derived mapping is missing verified archive-backed area: $archiveArea"
 }
-foreach ($needle in @('Biology-Private-ReferenceBundle-20260919-000857-87b38671.zip','verified WolvenKit listing','accent chrome only','Biology-owned REDmod archive/INK resource')) {
+foreach ($needle in @('Biology-Private-ReferenceBundle-20260919-001914-365937cf.zip','verified WolvenKit listing','accent chrome only','Biology-owned REDmod archive/INK resource')) {
     Check ($archaeology.Contains($needle)) "W18.1 archaeology document is missing verified private-archive conclusion: $needle"
 }
 foreach ($publishedSurface in @('Action buttons','Wanted stars','Vehicle ammo counter','Quest / area / message / contact / item / level-up / warning / vehicle / radio notifications','Hacking minigame','Speedometer','authored-resource follow-up')) {
@@ -118,4 +121,4 @@ foreach ($forbidden in @('ScannerGameController','scannerGameController','Scanne
 Check ($mapping.Contains('E3-REFERENCE-ARCHAEOLOGY.md') -and $mapping.Contains('W18.1')) 'Component mapping does not route future workers to the W18.1 continuation authority.'
 Check ($presentation.Contains('W18.1')) 'Canonical E3 presentation contract does not identify the W18.1 engineering-reference continuation.'
 
-Write-Host "PASS: $script:checks W18.1 Project E3 archaeology checks; verified archive/redscript/TweakXL responsibilities are durable, W03.6 live wins are preserved, third-party runtime content remains excluded, and structural fidelity is routed to authored resources rather than guessed runtime geometry."
+Write-Host "PASS: $script:checks W18.1 Project E3 archaeology checks; direct private-bundle archive/redscript/TweakXL responsibilities are durable, W03.6 live wins are preserved, third-party runtime content remains excluded, and structural fidelity is routed to authored resources rather than guessed runtime geometry."
