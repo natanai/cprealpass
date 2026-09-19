@@ -13,11 +13,11 @@ Project E3 is now an **engineering reference implementation**, not merely a visu
 
 Those continuation records supersede the older assumption in this file that the ~33 MB archive can be treated as generic historical assets while Biology reproduces the look with runtime INK. The predecessor W03 archaeology remains part of the evidence trail, while W18.1 is the current worker authority for what Project E3 actually owns through archive resources, redscript and TweakXL.
 
-W18.1 also cross-checked the Project E3 2.31 public distribution metadata against the exact private-source inventory: redscript and TweakXL are hard requirements, Mod Settings is optional, and the published widget scope is substantially broader than runtime-created overlay geometry. The exact historical scanner split is now explicitly grounded in `config/patches/realpass-modern-scanner.json`, which pins all 34 excluded scanner-family resource paths/hashes from the 370-resource archive. The remaining 336-resource path inventory is intentionally pending #105 rather than inferred.
+W18.1 directly inspected `Biology-Private-ReferenceBundle-20260919-001914-365937cf.zip` in addition to the public distribution cross-check. The bundle contains 22 Project E3 REDscript files, 13 TweakXL YAML files, the separately selected Mod Settings reference, and a WolvenKit listing of the exact pinned HUD archive. The listing has 370 actual resource paths after excluding four WolvenKit long-path warning footer lines; therefore the former 336-resource archive-opacity gate is closed.
 
 ## W18.1 verified archive-inventory closure
 
-P02's accepted private bundle `Biology-Private-ReferenceBundle-20260919-000857-87b38671.zip` includes a WolvenKit-verified listing of the exact Project E3 HUD archive. It confirms authored archive resources for quest list/tracker, D-pad/input hints, compass, ammo/weapon presentation, player health, NPC nameplates, minimap, scanner HUD, activity log, interactions/dialog, and additional HUD families.
+The directly inspected private bundle `Biology-Private-ReferenceBundle-20260919-001914-365937cf.zip` includes a WolvenKit-verified listing of the exact Project E3 HUD archive. Representative exact paths include `quest_tracker.inkwidget`, `dpad_hint.inkwidget`, `compass.inkwidget`, `ammo_counter.inkwidget`, `playerhealthbar.inkwidget`, `npcnameplate.inkwidget`, `minimap.inkwidget`, `scanner_hud.inkwidget`, `activity_log.inkwidget`, `interaction.inkwidget` and `dialog.inkwidget`.
 
 This closes the old "archive opaque" assumption. It does **not** mean Biology should copy those resources. The implementation rule is:
 
