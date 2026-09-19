@@ -68,6 +68,9 @@ Require $nativeProbe 'fitToContent' 'Native ancestry must preserve fit-to-conten
 Require $nativeProbe 'renderTranslation' 'Native ancestry must preserve authored translation/layout evidence.'
 Require $nativeProbe 'Full serialized target JSON may be preserved privately' 'Native-region probe must document its private serialized-resource handoff.'
 Require $bootstrap 'ReferenceNameJson' 'Bootstrap must forward multiple selected reference names losslessly as one JSON argument.'
+Require $bootstrap 'Available private references:' 'Bootstrap must display reference selection in the visible parent process.'
+Require $bootstrap ([regex]::Escape("Read-Host 'Enter numbers separated by commas'")) 'Bootstrap must own the interactive reference selection prompt before spawning the redirected child.'
+Require $bootstrap ([regex]::Escape('$ReferenceName=@($picked)')) 'Bootstrap must materialize visible selections before invoking the child builder.'
 Require $builder 'ZipSingleRoot' 'Builder must recognize ZIP/extracted-folder duplicates by the ZIP sole top-level root as well as basename.'
 
 Require $agents 'REFERENCE-MOD ARCHAEOLOGY GATE' 'AGENTS must require reference archaeology before speculative probing when relevant.'
