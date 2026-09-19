@@ -99,6 +99,12 @@ Require $bootstrap 'Available private references:' 'Bootstrap must display refer
 Require $bootstrap ([regex]::Escape("Read-Host 'Enter numbers separated by commas'")) 'Bootstrap must own the interactive reference selection prompt before spawning the redirected child.'
 Require $bootstrap ([regex]::Escape('$ReferenceName=@($picked)')) 'Bootstrap must materialize visible selections before invoking the child builder.'
 Require $builder 'ZipSingleRoot' 'Builder must recognize ZIP/extracted-folder duplicates by the ZIP sole top-level root as well as basename.'
+Require $builder ([regex]::Escape("Where-Object Name -ne '_tooling'")) 'Builder must exclude the managed reusable tool cache from selectable references.'
+Require $bootstrap ([regex]::Escape("Where-Object Name -ne '_tooling'")) 'Bootstrap must exclude the managed reusable tool cache from owner reference selection.'
+Require $builder ([regex]::Escape("@('desktop.ini','Thumbs.db','.DS_Store')")) 'Builder must ignore known OS metadata instead of failing private archaeology on transient shell files.'
+Require $builder ([regex]::Escape("'-ToolCacheRoot',(Join-Path $LibraryPath '_tooling')")) 'Native UI companion must place reusable pinned tooling in the reference-library managed cache.'
+Require $nativeProbe 'ToolCacheRoot' 'Native-region probe must accept a persistent pinned tool-cache root.'
+Require $nativeProbe 'ConvertFrom-Json -Depth 100 -AsHashtable' 'Native ancestry must preserve case-distinct WolvenKit JSON keys.'
 
 Require $agents 'REFERENCE-MOD ARCHAEOLOGY GATE' 'AGENTS must require reference archaeology before speculative probing when relevant.'
 Require $agents 'mod and any dependencies wanted' 'Worker request convention must name desired mod/dependencies.'
@@ -113,6 +119,8 @@ if($schema.title -notmatch 'redistribution-safe'){throw 'Reference record schema
 if($schema.properties.source.properties.selectedIdentities.items.properties.sha256.pattern -ne '^[0-9A-Fa-f]{64}$'){throw 'Reference record schema must require SHA-256 identities.'}
 $template=$templateText|ConvertFrom-Json -Depth 30
 if($template.schemaVersion -ne 1){throw 'Reference record template schemaVersion mismatch.'}
+$caseDistinct='{"selected":1,"Selected":2}'|ConvertFrom-Json -AsHashtable
+if($caseDistinct.Count -ne 2 -or $caseDistinct['selected'] -ne 1 -or $caseDistinct['Selected'] -ne 2){throw 'PowerShell case-distinct JSON preservation contract failed.'}
 if(-not $schema.properties.mappings.items.properties.widgetAncestry){throw 'Reference record schema must support redistribution-safe derived widget ancestry.'}
 if(-not $template.mappings[0].widgetAncestry){throw 'Reference record template must demonstrate derived widget ancestry without proprietary object bodies.'}
 
@@ -128,6 +136,7 @@ try{
       'Version: 2.31.2',
       'Requires redscript and TweakXL'
     )|Set-Content -LiteralPath (Join-Path $mod 'README.md') -Encoding utf8
+    'Windows shell metadata'|Set-Content -LiteralPath (Join-Path $mod 'desktop.ini') -Encoding utf8
     @(
       '@wrapMethod(NameplateVisualsLogicController)',
       'protected cb func OnInitialize() -> Bool {',
@@ -165,6 +174,32 @@ try{
     if(Test-Path -LiteralPath (Join-Path $expanded 'payload\Project_E3\archive\pc\mod\e3.archive')){throw 'Binary archive payload must not be copied into private text payload.'}
 
     $idx=@(Get-Content -Raw -LiteralPath (Join-Path $expanded 'file-index.json')|ConvertFrom-Json -Depth 30)
+    if(@($idx|Where-Object path -match '(?i)(^|/)desktop\.ini    if($resource.Count -ne 1 -or $resource[0].classification -ne 'archive/resource-container'){throw 'Resource archive was not hash/inventory classified.'}
+    if(-not $resource[0].sha256 -or $resource[0].sha256.Length -ne 64){throw 'Resource archive SHA-256 missing.'}
+
+    $sig=@(Get-Content -Raw -LiteralPath (Join-Path $expanded 'signals.json')|ConvertFrom-Json -Depth 30)
+    if(@($sig|Where-Object kind -eq 'redscript-hook').Count -lt 1){throw 'redscript hook signal was not extracted.'}
+    if(@($sig|Where-Object kind -eq 'framework').Count -lt 1){throw 'dependency/framework signal was not extracted.'}
+
+    # The native-game companion is optional and must fail transparently without
+    # suppressing the third-party reference bundle when current game evidence is unavailable.
+    $nativeOut=Join-Path $temp 'native-out'
+    New-Item -ItemType Directory -Path $nativeOut|Out-Null
+    $nativeBundle=& (Join-Path $project 'tools\New-ReferenceModBundle.ps1') -LibraryPath $library -ReferenceName @('Project E3') -OutputRoot $nativeOut -WorkflowSourceRevision $sourceRevision -IncludeBiologyNativeUi -GamePath (Join-Path $temp 'missing-game')
+    $nativeBundlePath=[string](@($nativeBundle)[-1])
+    if(-not (Test-Path -LiteralPath $nativeBundlePath -PathType Leaf)){throw 'Native-companion transparent-failure bundle was not produced.'}
+    $nativeExpanded=Join-Path $temp 'native-expanded'
+    Expand-Archive -LiteralPath $nativeBundlePath -DestinationPath $nativeExpanded
+    $nativeManifest=Get-Content -Raw -LiteralPath (Join-Path $nativeExpanded 'manifest.json')|ConvertFrom-Json -Depth 30
+    if($nativeManifest.nativeBiologyUi.status -ne 'failed-transparent'){throw 'Unavailable native UI sub-capability did not fail transparently inside the private bundle.'}
+    if($nativeManifest.gameInstallation -notmatch '^read-only native UI inspection requested'){throw 'Native companion manifest did not preserve its read-only game boundary.'}
+    if(-not (Test-Path -LiteralPath (Join-Path $nativeExpanded 'native-game-evidence\collection-failure.txt') -PathType Leaf)){throw 'Transparent native companion failure report is missing.'}
+}finally{
+    if(Test-Path -LiteralPath $temp){Remove-Item -LiteralPath $temp -Recurse -Force}
+}
+
+Write-Host 'PASS: private reference-mod archaeology is exact-source, read-only, duplicate-aware, private-payload bounded, hash-inventoried, opaque-safe, and constrained to redistribution-safe derived Git records.'
+).Count -ne 0){throw 'Known OS metadata should not be indexed as reference evidence.'}
     $resource=@($idx|Where-Object path -eq 'archive/pc/mod/e3.archive')
     if($resource.Count -ne 1 -or $resource[0].classification -ne 'archive/resource-container'){throw 'Resource archive was not hash/inventory classified.'}
     if(-not $resource[0].sha256 -or $resource[0].sha256.Length -ne 64){throw 'Resource archive SHA-256 missing.'}
