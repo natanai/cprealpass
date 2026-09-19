@@ -2,7 +2,10 @@
 [CmdletBinding()]
 param(
     [string]$GamePath = 'C:\Games\Steam\steamapps\common\Cyberpunk 2077',
-    [string]$ReportPath
+    [string]$ReportPath,
+    [string]$PrivateTargetJsonPath,
+    [string]$PrivateWidgetAncestryJsonPath,
+    [string]$ToolCacheRoot = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -74,87 +77,199 @@ function Add-NeedleSnippets([string]$Raw,[string]$Needle,[int]$MaxOccurrences = 
     }
 }
 
-function Get-JsonNodeSummary([object]$Node) {
-    if ($null -eq $Node -or $Node -isnot [pscustomobject]) {
-        return ''
+function Add-RegexSnippets([string]$Raw,[string]$Label,[string]$Pattern,[int]$MaxOccurrences = 12) {
+    $matches = [regex]::Matches($Raw,$Pattern,[Text.RegularExpressions.RegexOptions]::IgnoreCase)
+    $take = [Math]::Min($MaxOccurrences,$matches.Count)
+    for ($i=0; $i -lt $take; $i++) {
+        $match = $matches[$i]
+        $start = [Math]::Max(0,$match.Index-6000)
+        $length = [Math]::Min(14000,$Raw.Length-$start)
+        $snippet = $Raw.Substring($start,$length) -replace '[\r\n]+',' '
+        Add-Report ("TARGETED[$Label]#$($i+1) OFFSET=$($match.Index)")
+        Add-Report $snippet
     }
-
-    $parts = [Collections.Generic.List[string]]::new()
-    foreach ($key in @('$type','type','Type','name','Name','propertyName','PropertyName')) {
-        $property = $Node.PSObject.Properties[$key]
-        if ($null -eq $property -or $null -eq $property.Value) { continue }
-        $value = [string]$property.Value
-        if (-not [string]::IsNullOrWhiteSpace($value)) { $parts.Add("$key=$value") }
-    }
-    return ($parts -join ',')
 }
 
-function Add-JsonNeedlePaths([string]$Raw,[string[]]$Needles,[int]$MaxOccurrences = 12) {
-    try {
-        $root = $Raw | ConvertFrom-Json -Depth 256
+function Has-Property($Object,[string]$Name) {
+    if ($null -eq $Object) { return $false }
+    if ($Object -is [Collections.IDictionary]) { return $Object.Contains($Name) }
+    return @($Object.PSObject.Properties.Name) -contains $Name
+}
+function Get-PropertyValue($Object,[string]$Name) {
+    if ($null -eq $Object) { return $null }
+    if ($Object -is [Collections.IDictionary]) {
+        if ($Object.Contains($Name)) { return $Object[$Name] }
+        return $null
     }
-    catch {
-        Add-Report 'JSON_PATH_REPORT=UNAVAILABLE'
-        Add-Report ("JSON_PATH_ERROR=" + $_.Exception.Message)
-        return
+    $property=$Object.PSObject.Properties[$Name]
+    if ($null -ne $property) { return $property.Value }
+    return $null
+}
+function Get-NodeProperties($Object) {
+    if ($null -eq $Object) { return @() }
+    if ($Object -is [Collections.IDictionary]) {
+        return @(
+            foreach($key in @($Object.Keys)){
+                [pscustomobject]@{Name=[string]$key;Value=$Object[$key]}
+            }
+        )
     }
-
-    $counts = @{}
-    foreach ($needle in $Needles) { $counts[$needle] = 0 }
-
-    function Visit-JsonNode([object]$Node,[string]$Path,[string[]]$Ancestors) {
+    return @($Object.PSObject.Properties)
+}
+function Get-CNameValue($Value) {
+    if ($null -eq $Value) { return $null }
+    if ($Value -is [string]) { return [string]$Value }
+    if (Has-Property $Value '$value') { return [string](Get-PropertyValue $Value '$value') }
+    return $null
+}
+function Get-HandleRefIds($Value) {
+    $found = [Collections.Generic.List[string]]::new()
+    function Walk-Refs($Node) {
         if ($null -eq $Node) { return }
-
-        if ($Node -is [string]) {
-            foreach ($needle in $Needles) {
-                if ($counts[$needle] -ge $MaxOccurrences) { continue }
-                if ($Node.IndexOf($needle,[StringComparison]::OrdinalIgnoreCase) -lt 0) { continue }
-                $counts[$needle]++
-                Add-Report ("JSON_PATH[$needle]#$($counts[$needle])=$Path")
-                if ($Ancestors.Count -gt 0) {
-                    Add-Report ("JSON_ANCESTORS[$needle]#$($counts[$needle])=" + ($Ancestors -join ' -> '))
+        if ($Node -is [string] -or $Node.GetType().IsPrimitive -or $Node -is [decimal]) { return }
+        if ($Node -is [Collections.IDictionary]) {
+            if (Has-Property $Node 'HandleRefId') {
+                $id = [string](Get-PropertyValue $Node 'HandleRefId')
+                if ($id -and -not $found.Contains($id)) { $found.Add($id) }
+            }
+            foreach($key in @($Node.Keys)){ Walk-Refs $Node[$key] }
+            return
+        }
+        if ($Node -is [System.Collections.IEnumerable] -and -not ($Node -is [pscustomobject])) {
+            foreach ($item in $Node) { Walk-Refs $item }
+            return
+        }
+        if (Has-Property $Node 'HandleRefId') {
+            $id = [string](Get-PropertyValue $Node 'HandleRefId')
+            if ($id -and -not $found.Contains($id)) { $found.Add($id) }
+        }
+        foreach ($property in @(Get-NodeProperties $Node)) { Walk-Refs $property.Value }
+    }
+    Walk-Refs $Value
+    @($found)
+}
+function Get-WidgetAncestryEvidence([string]$Raw) {
+    # WolvenKit serialization can contain JSON keys that differ only by case
+    # (for example selected / Selected). -AsHashtable preserves those distinct
+    # keys whereas PSCustomObject conversion rejects them.
+    $document = $Raw | ConvertFrom-Json -Depth 100 -AsHashtable
+    $handles = [Collections.Generic.Dictionary[string,object]]::new([StringComparer]::OrdinalIgnoreCase)
+    $order = [Collections.Generic.List[string]]::new()
+    function Walk-Handles($Node) {
+        if ($null -eq $Node) { return }
+        if ($Node -is [string] -or $Node.GetType().IsPrimitive -or $Node -is [decimal]) { return }
+        if ($Node -is [Collections.IDictionary]) {
+            if (Has-Property $Node 'HandleId') {
+                $id = [string](Get-PropertyValue $Node 'HandleId')
+                if ($id -and -not $handles.ContainsKey($id)) {
+                    $handles.Add($id,$Node)
+                    $order.Add($id)
                 }
             }
+            foreach($key in @($Node.Keys)){ Walk-Handles $Node[$key] }
             return
         }
-
-        if ($Node -is [pscustomobject]) {
-            $summary = Get-JsonNodeSummary $Node
-            $nextAncestors = @($Ancestors)
-            if (-not [string]::IsNullOrWhiteSpace($summary)) {
-                $nextAncestors += $summary
-                if ($nextAncestors.Count -gt 8) { $nextAncestors = @($nextAncestors | Select-Object -Last 8) }
-            }
-            foreach ($property in $Node.PSObject.Properties) {
-                $propertyPath = $Path + '[' + $property.Name + ']'
-                Visit-JsonNode $property.Value $propertyPath $nextAncestors
-            }
+        if ($Node -is [System.Collections.IEnumerable] -and -not ($Node -is [pscustomobject])) {
+            foreach ($item in $Node) { Walk-Handles $item }
             return
         }
-
-        if ($Node -is [Collections.IDictionary]) {
-            foreach ($key in $Node.Keys) {
-                $keyPath = $Path + '[' + [string]$key + ']'
-                Visit-JsonNode $Node[$key] $keyPath $Ancestors
+        if (Has-Property $Node 'HandleId') {
+            $id = [string](Get-PropertyValue $Node 'HandleId')
+            if ($id -and -not $handles.ContainsKey($id)) {
+                $handles.Add($id,$Node)
+                $order.Add($id)
             }
-            return
         }
+        foreach ($property in @(Get-NodeProperties $Node)) { Walk-Handles $property.Value }
+    }
+    Walk-Handles $document
 
-        if ($Node -is [Collections.IEnumerable]) {
-            $index = 0
-            foreach ($item in $Node) {
-                Visit-JsonNode $item ($Path + '[' + $index + ']') $Ancestors
-                $index++
+    $summaries = [Collections.Generic.Dictionary[string,object]]::new([StringComparer]::OrdinalIgnoreCase)
+    foreach ($id in $order) {
+        $wrapper = $handles[$id]
+        $wrapperData = Get-PropertyValue $wrapper 'Data'
+        $data = if ((Has-Property $wrapper 'Data') -and $null -ne $wrapperData) { $wrapperData } else { $wrapper }
+        $parentValue = Get-PropertyValue $data 'parentWidget'
+        $childrenValue = Get-PropertyValue $data 'children'
+        $parent = if ($null -ne $parentValue) { @((Get-HandleRefIds $parentValue))[0] } else { $null }
+        $declaredChildren = if ($null -ne $childrenValue) { @(Get-HandleRefIds $childrenValue) } else { @() }
+        $clip = [ordered]@{}
+        foreach ($property in @(Get-NodeProperties $data | Where-Object Name -Match '(?i)clip')) { $clip[$property.Name]=$property.Value }
+        $renderTransform=Get-PropertyValue $data 'renderTransform'
+        $summaries.Add($id,[ordered]@{
+            handleId=$id
+            type=if(Has-Property $data '$type'){[string](Get-PropertyValue $data '$type')}else{$null}
+            name=if(Has-Property $data 'name'){Get-CNameValue (Get-PropertyValue $data 'name')}else{$null}
+            parentHandleId=$parent
+            declaredChildren=$declaredChildren
+            clipping=$clip
+            fitToContent=if(Has-Property $data 'fitToContent'){Get-PropertyValue $data 'fitToContent'}else{$null}
+            layout=if(Has-Property $data 'layout'){Get-PropertyValue $data 'layout'}else{$null}
+            size=if(Has-Property $data 'size'){Get-PropertyValue $data 'size'}else{$null}
+            opacity=if(Has-Property $data 'opacity'){Get-PropertyValue $data 'opacity'}else{$null}
+            visible=if(Has-Property $data 'visible'){Get-PropertyValue $data 'visible'}else{$null}
+            renderTranslation=if($null -ne $renderTransform -and (Has-Property $renderTransform 'translation')){Get-PropertyValue $renderTransform 'translation'}else{$null}
+        })
+    }
+
+    # Fill children/order from explicit parent references when the resource does not
+    # expose a direct children array. This is derived from the same serialized graph,
+    # not from screenshot geometry.
+    foreach ($id in $order) {
+        $summary=$summaries[$id]
+        $parent=[string]$summary.parentHandleId
+        if($parent -and $summaries.ContainsKey($parent)){
+            $parentSummary=$summaries[$parent]
+            if(@($parentSummary.declaredChildren).Count -eq 0){
+                $inverse=@($order|Where-Object {$summaries[$_].parentHandleId -eq $parent})
+                $parentSummary.declaredChildren=$inverse
             }
         }
     }
 
-    Add-Report ''
-    Add-Report '=== TARGET JSON STRUCTURAL PATHS ==='
-    Add-Report 'Purpose: report redistribution-safe JSON paths and ancestor summaries for the native controller references without preserving the proprietary serialized resource.'
-    Visit-JsonNode $root 'ROOT' @()
-    Add-Report '=== END TARGET JSON STRUCTURAL PATHS ==='
+    $starts=[Collections.Generic.List[string]]::new()
+    foreach($candidate in @('221','746','219','743')){
+        if($summaries.ContainsKey($candidate) -and -not $starts.Contains($candidate)){$starts.Add($candidate)}
+    }
+    foreach($id in $order){
+        if($summaries[$id].name -ieq 'virtualGridContainer' -and -not $starts.Contains($id)){$starts.Add($id)}
+    }
+
+    $chains=[Collections.Generic.List[object]]::new()
+    foreach($start in $starts){
+        $chain=[Collections.Generic.List[object]]::new()
+        $seen=[Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+        $current=$start
+        while($current -and $summaries.ContainsKey($current) -and $seen.Add($current)){
+            $summary=$summaries[$current]
+            $parent=[string]$summary.parentHandleId
+            $siblingOrder=$null
+            if($parent -and $summaries.ContainsKey($parent)){
+                $siblings=@($summaries[$parent].declaredChildren)
+                for($i=0;$i -lt $siblings.Count;$i++){if([string]$siblings[$i] -eq $current){$siblingOrder=$i;break}}
+            }
+            $chain.Add([ordered]@{
+                handleId=$summary.handleId;type=$summary.type;name=$summary.name;parentHandleId=$summary.parentHandleId
+                childOrder=$siblingOrder;children=@($summary.declaredChildren);clipping=$summary.clipping;fitToContent=$summary.fitToContent
+                layout=$summary.layout;size=$summary.size;opacity=$summary.opacity;visible=$summary.visible;renderTranslation=$summary.renderTranslation
+            })
+            $current=$parent
+        }
+        $chains.Add([ordered]@{startHandleId=$start;widgets=@($chain)})
+    }
+
+    [ordered]@{
+        schemaVersion=1
+        generatedUtc=[DateTime]::UtcNow.ToString('o')
+        handleCount=$handles.Count
+        focus='virtualGridContainer direct parent and authored ancestor chain; specifically HandleId 219 / package-copy 743 when present.'
+        chains=@($chains)
+        exactFocusHandles=@(
+            foreach($id in @('219','743')){if($summaries.ContainsKey($id)){$summaries[$id]}}
+        )
+    }
 }
+
 $createdLocalOodle = $false
 $localOodle = Join-Path ([Environment]::GetFolderPath([Environment+SpecialFolder]::LocalApplicationData)) 'oo2ext_7_win64.dll'
 $sourceOodleHash = Get-Sha256 $oodleSource
@@ -182,7 +297,11 @@ try {
         Add-Report "ExistingLocalOodlePreserved: $localOodle"
     }
 
-    $toolchain = & (Join-Path $PSScriptRoot 'Acquire-ArchiveToolchain.ps1')
+    $toolchainArgs=@{}
+    if(-not [string]::IsNullOrWhiteSpace($ToolCacheRoot)){$toolchainArgs.CacheRoot=$ToolCacheRoot}
+    $toolchainArgs=@{}
+
+    $toolchain = & (Join-Path $PSScriptRoot 'Acquire-ArchiveToolchain.ps1') @toolchainArgs
     $dotnet = [string]$toolchain.dotnetExe
     $cli = [string]$toolchain.cliDll
     Add-Report "WolvenKitCLI: $cli"
@@ -194,8 +313,13 @@ try {
     $candidates = [Collections.Generic.List[object]]::new()
     $seen = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
 
-    foreach ($archiveFile in $archiveFiles) {
+    $archiveStopwatch = [Diagnostics.Stopwatch]::StartNew()
+    for ($archiveIndex = 0; $archiveIndex -lt $archiveFiles.Count; $archiveIndex++) {
+        $archiveFile = $archiveFiles[$archiveIndex]
         $relativeArchive = [IO.Path]::GetRelativePath($archiveRoot,$archiveFile.FullName)
+        Write-Host ("[ARCHIVE {0}/{1}] {2}" -f ($archiveIndex+1),$archiveFiles.Count,$relativeArchive) -ForegroundColor DarkGray
+        $beforeCandidates = $candidates.Count
+        $oneArchive = [Diagnostics.Stopwatch]::StartNew()
         $result = Invoke-QuietCaptured $dotnet @(
             $cli,'archive',$archiveFile.FullName,'--list','--regex',$candidateRegex
         )
@@ -227,7 +351,11 @@ try {
                 Priority = $priority
             })
         }
+        $oneArchive.Stop()
+        Write-Host ("  done in {0:N1}s; +{1} candidate(s); cumulative {2}" -f $oneArchive.Elapsed.TotalSeconds,($candidates.Count-$beforeCandidates),$candidates.Count) -ForegroundColor DarkGray
     }
+    $archiveStopwatch.Stop()
+    Write-Host ("Archive scan complete in {0:N1}s; discovered {1} candidate(s)." -f $archiveStopwatch.Elapsed.TotalSeconds,$candidates.Count) -ForegroundColor Cyan
 
     Add-Report ''
     Add-Report "DISCOVERED_INKWIDGET_CANDIDATES=$($candidates.Count)"
@@ -250,6 +378,7 @@ try {
         $exactRegex = '^' + [regex]::Escape($candidate.Path) + '$'
         Add-Report ''
         Add-Report ("TEST_CANDIDATE[$($i+1)] PRIORITY=$($candidate.Priority): " + $candidate.Path + " | ARCHIVE: " + $candidate.RelativeArchive)
+        Write-Host ("[CANDIDATE {0}/{1}] priority={2} {3}" -f ($i+1),$orderedCandidates.Count,$candidate.Priority,$candidate.Path) -ForegroundColor DarkGray
 
         $extract = Invoke-QuietCaptured $dotnet @(
             $cli,'unbundle',$candidate.Archive.FullName,
@@ -323,6 +452,21 @@ try {
     Add-Report ("TARGET_RESOURCE_SHA256=" + (Get-Sha256 $target.ResourceFile.FullName))
     Add-Report ("TARGET_JSON=" + [IO.Path]::GetRelativePath($jsonRoot,$target.JsonFile.FullName))
 
+    if (-not [string]::IsNullOrWhiteSpace($PrivateTargetJsonPath)) {
+        if (-not [IO.Path]::IsPathRooted($PrivateTargetJsonPath)) {
+            throw 'PrivateTargetJsonPath must be an absolute path outside the checkout.'
+        }
+        $privateJson = [IO.Path]::GetFullPath($PrivateTargetJsonPath)
+        $projectBoundary = [IO.Path]::GetFullPath($project).TrimEnd('\') + '\'
+        if (($privateJson + '\').StartsWith($projectBoundary,[StringComparison]::OrdinalIgnoreCase)) {
+            throw 'PrivateTargetJsonPath must remain outside the cprealpass checkout because it contains proprietary serialized game resource data.'
+        }
+        New-Item -ItemType Directory -Force -Path (Split-Path -Parent $privateJson) | Out-Null
+        Copy-Item -LiteralPath $target.JsonFile.FullName -Destination $privateJson -Force
+        Add-Report ("PRIVATE_TARGET_JSON=" + $privateJson)
+        Add-Report ("PRIVATE_TARGET_JSON_SHA256=" + (Get-Sha256 $privateJson))
+    }
+
     $needles = @(
         'RipperDocGameController',
         'RipperdocInventoryController',
@@ -341,7 +485,41 @@ try {
         Add-NeedleSnippets $target.Raw $needle
     }
 
-    Add-JsonNeedlePaths $target.Raw $needles
+    Add-Report ''
+    Add-Report '=== TARGETED HANDLE/ANCESTRY EVIDENCE ==='
+    Add-Report 'Focus: preserve exact serialized object context for W17.1 around virtualGridContainer parent HandleId 219 (package-copy 743) and its direct references.'
+    Add-RegexSnippets $target.Raw 'HANDLE_ID_219_OR_743' '"HandleId"\s*:\s*"?(219|743)"?\b'
+    Add-RegexSnippets $target.Raw 'HANDLE_REF_219_OR_743' '"HandleRefId"\s*:\s*"?(219|743)"?\b'
+    Add-RegexSnippets $target.Raw 'HANDLE_ID_GRID_LABEL_SCROLL' '"HandleId"\s*:\s*"?(208|210|215|221|727|730|737|746)"?\b'
+    Add-RegexSnippets $target.Raw 'PARENT_WIDGET' '"parentWidget"\s*:'
+    Add-Report 'Full serialized target JSON may be preserved privately by the caller with -PrivateTargetJsonPath for exact ancestry reconstruction without broad needle re-probing.'
+
+    Add-Report ''
+    Add-Report '=== DERIVED WIDGET ANCESTRY ==='
+    try {
+        $ancestry = Get-WidgetAncestryEvidence $target.Raw
+        Add-Report ("ANCESTRY_HANDLE_COUNT=" + $ancestry.handleCount)
+        foreach($chain in @($ancestry.chains)){
+            Add-Report ("ANCESTRY_CHAIN_START=" + $chain.startHandleId)
+            foreach($widget in @($chain.widgets)){
+                Add-Report ("WIDGET=" + ($widget | ConvertTo-Json -Depth 20 -Compress))
+            }
+        }
+        if (-not [string]::IsNullOrWhiteSpace($PrivateWidgetAncestryJsonPath)) {
+            if (-not [IO.Path]::IsPathRooted($PrivateWidgetAncestryJsonPath)) { throw 'PrivateWidgetAncestryJsonPath must be absolute.' }
+            $ancestryPath=[IO.Path]::GetFullPath($PrivateWidgetAncestryJsonPath)
+            $projectBoundary=[IO.Path]::GetFullPath($project).TrimEnd('\')+'\'
+            if (($ancestryPath+'\').StartsWith($projectBoundary,[StringComparison]::OrdinalIgnoreCase)) {
+                throw 'PrivateWidgetAncestryJsonPath must remain outside the cprealpass checkout.'
+            }
+            New-Item -ItemType Directory -Force -Path (Split-Path -Parent $ancestryPath)|Out-Null
+            $ancestry|ConvertTo-Json -Depth 30|Set-Content -LiteralPath $ancestryPath -Encoding utf8
+            Add-Report ("PRIVATE_WIDGET_ANCESTRY_JSON=" + $ancestryPath)
+            Add-Report ("PRIVATE_WIDGET_ANCESTRY_JSON_SHA256=" + (Get-Sha256 $ancestryPath))
+        }
+    } catch {
+        Add-Report ("ANCESTRY_DERIVATION_FAILED=" + $_.Exception.Message)
+    }
 
     Add-Report ''
     Add-Report 'PROBE_RESULT=PASS'
@@ -381,7 +559,7 @@ finally {
     $report | Set-Content -LiteralPath $ReportPath -Encoding utf8
     Write-Host ''
     Write-Host "LOCAL EVIDENCE REPORT: $ReportPath" -ForegroundColor Cyan
-    Write-Host 'Attach that .txt file to the W02 worker conversation.' -ForegroundColor DarkGray
+    Write-Host 'Return that report to the requesting worker/parent; private callers may also preserve the serialized target and derived ancestry outside Git.' -ForegroundColor DarkGray
 }
 
 if (-not $probeSucceeded) {

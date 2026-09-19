@@ -200,20 +200,6 @@ Those findings are routed separately:
 
 Source/CI fixes in either PR are not live acceptance until the parent integration thread exact-compiles the combined candidate and records a new attended result.
 
-## Pre-T005 Cyberware reference-archaeology gate
-
-The durable source/resource mapping for issue #107 is in `docs/BIOLOGY-UI-REFERENCE-ARCHAEOLOGY.md`.
-
-Before another attended Biology placement iteration, preserve this distinction:
-
-- `RipperdocInventoryController` is the native selected-detail **lifecycle/opacity authority**.
-- `m_virtualGridContainer` is the native virtualized Cyberware **item-list child**, not itself the detail-surface authority.
-- W02.6's successful sibling reparent proves a shared local coordinate space; it does **not** prove that the grid's direct parent is a generic authored content host.
-- Do not add screenshot-derived offsets or promote that parent to an architectural contract until the current 2.31 serialized INK ancestry establishes its role, clipping, sizing, and child-order behavior.
-- Keep the W02.6 `MOUNTED`/post-mount diagnostics until the eventual source-grounded host is accepted live.
-
-The private-reference request needed to close the remaining resource-level gap is tracked through issue #105. Third-party/game payloads stay outside Git; only derived architecture evidence belongs here.
-
 ## Acceptance criteria
 
 Biology UI is accepted only when an attended integrated build demonstrates all of the following:
