@@ -301,7 +301,7 @@ try {
     if(-not [string]::IsNullOrWhiteSpace($ToolCacheRoot)){$toolchainArgs.CacheRoot=$ToolCacheRoot}
     $toolchainArgs=@{}
     if(-not [string]::IsNullOrWhiteSpace($ToolCacheRoot)){$toolchainArgs.CacheRoot=$ToolCacheRoot}
-    $toolchain = & (Join-Path $PSScriptRoot 'Acquire-ArchiveToolchain.ps1') @toolchainArgs @toolchainArgs
+    $toolchain = & (Join-Path $PSScriptRoot 'Acquire-ArchiveToolchain.ps1') @toolchainArgs
     $dotnet = [string]$toolchain.dotnetExe
     $cli = [string]$toolchain.cliDll
     Add-Report "WolvenKitCLI: $cli"
