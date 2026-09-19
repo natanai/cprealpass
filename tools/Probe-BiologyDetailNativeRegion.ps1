@@ -4,7 +4,8 @@ param(
     [string]$GamePath = 'C:\Games\Steam\steamapps\common\Cyberpunk 2077',
     [string]$ReportPath,
     [string]$PrivateTargetJsonPath,
-    [string]$PrivateWidgetAncestryJsonPath
+    [string]$PrivateWidgetAncestryJsonPath,
+    [string]$ToolCacheRoot = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -298,7 +299,9 @@ try {
 
     $toolchainArgs=@{}
     if(-not [string]::IsNullOrWhiteSpace($ToolCacheRoot)){$toolchainArgs.CacheRoot=$ToolCacheRoot}
-    $toolchain = & (Join-Path $PSScriptRoot 'Acquire-ArchiveToolchain.ps1') @toolchainArgs
+    $toolchainArgs=@{}
+    if(-not [string]::IsNullOrWhiteSpace($ToolCacheRoot)){$toolchainArgs.CacheRoot=$ToolCacheRoot}
+    $toolchain = & (Join-Path $PSScriptRoot 'Acquire-ArchiveToolchain.ps1') @toolchainArgs @toolchainArgs
     $dotnet = [string]$toolchain.dotnetExe
     $cli = [string]$toolchain.cliDll
     Add-Report "WolvenKitCLI: $cli"
