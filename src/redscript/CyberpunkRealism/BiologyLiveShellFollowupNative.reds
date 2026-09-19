@@ -52,7 +52,7 @@ public final func CRSetBiologyDetailSurface(active: Bool) -> Void {
     }
   }
 
-  if !IsDefined(contentHost) {
+  if !IsDefined(contentHost) || !IsDefined(contentHost as inkVerticalPanel) {
     return;
   }
 
