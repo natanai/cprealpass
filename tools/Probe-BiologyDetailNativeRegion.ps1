@@ -259,8 +259,13 @@ try {
     $candidates = [Collections.Generic.List[object]]::new()
     $seen = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
 
-    foreach ($archiveFile in $archiveFiles) {
+    $archiveStopwatch = [Diagnostics.Stopwatch]::StartNew()
+    for ($archiveIndex = 0; $archiveIndex -lt $archiveFiles.Count; $archiveIndex++) {
+        $archiveFile = $archiveFiles[$archiveIndex]
         $relativeArchive = [IO.Path]::GetRelativePath($archiveRoot,$archiveFile.FullName)
+        Write-Host ("[ARCHIVE {0}/{1}] {2}" -f ($archiveIndex+1),$archiveFiles.Count,$relativeArchive) -ForegroundColor DarkGray
+        $beforeCandidates = $candidates.Count
+        $oneArchive = [Diagnostics.Stopwatch]::StartNew()
         $result = Invoke-QuietCaptured $dotnet @(
             $cli,'archive',$archiveFile.FullName,'--list','--regex',$candidateRegex
         )
@@ -292,7 +297,11 @@ try {
                 Priority = $priority
             })
         }
+        $oneArchive.Stop()
+        Write-Host ("  done in {0:N1}s; +{1} candidate(s); cumulative {2}" -f $oneArchive.Elapsed.TotalSeconds,($candidates.Count-$beforeCandidates),$candidates.Count) -ForegroundColor DarkGray
     }
+    $archiveStopwatch.Stop()
+    Write-Host ("Archive scan complete in {0:N1}s; discovered {1} candidate(s)." -f $archiveStopwatch.Elapsed.TotalSeconds,$candidates.Count) -ForegroundColor Cyan
 
     Add-Report ''
     Add-Report "DISCOVERED_INKWIDGET_CANDIDATES=$($candidates.Count)"
@@ -315,6 +324,7 @@ try {
         $exactRegex = '^' + [regex]::Escape($candidate.Path) + '$'
         Add-Report ''
         Add-Report ("TEST_CANDIDATE[$($i+1)] PRIORITY=$($candidate.Priority): " + $candidate.Path + " | ARCHIVE: " + $candidate.RelativeArchive)
+        Write-Host ("[CANDIDATE {0}/{1}] priority={2} {3}" -f ($i+1),$orderedCandidates.Count,$candidate.Priority,$candidate.Path) -ForegroundColor DarkGray
 
         $extract = Invoke-QuietCaptured $dotnet @(
             $cli,'unbundle',$candidate.Archive.FullName,
