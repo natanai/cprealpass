@@ -16,7 +16,7 @@ The current Project E3 distribution page for Nexus mod 8800 identifies **redscri
 
 Historical Biology evidence is stronger than a count-only claim for the scanner split. `config/patches/realpass-modern-scanner.json` pins the same archive hash, `expectedResourceCount: 370`, and **all 34 omitted scanner/quickhack/focus/connected-device resource paths with SHA-256**. Therefore the scanner-family exclusion is path-by-path durable evidence, while the other 336 resource identities remain a separate archive-inventory question.
 
-W18.1 requested that remaining exact `.archive` inventory through process gate #105 rather than interpreting a Cyberpunk archive with a generic ZIP/7-Zip assumption. Until that inventory returns, the 336-resource internal path list remains explicitly opaque.
+P02 has now recorded the successful owner bundle `Biology-Private-ReferenceBundle-20260919-000857-87b38671.zip` on #106. That bundle contains the private Project E3 REDscript/TweakXL material and a **verified WolvenKit listing** of `archive\\pc\\mod\\basegame_3e_demo_hud.archive`. The archive is therefore no longer an opaque architectural unknown. The verified inventory confirms authored Project E3 HUD resources for quest list/tracker, D-pad/input hints, compass, ammo/weapon presentation, player health, NPC nameplates, minimap, scanner HUD, activity log, interactions/dialog, and additional HUD families. The exact third-party payload/listing remains private; this document records only redistribution-safe subsystem conclusions.
 
 ## Architectural finding
 
@@ -58,7 +58,7 @@ The private 2.31.p2 scripts independently prove that many Project E3 controllers
 
 Therefore the archive is **material implementation**, not decorative residue.
 
-The predecessor private ZIP does not by itself expose a complete decoded 370-resource path/ancestry inventory. The tracked modern-scanner patch does preserve the exact 34-resource exclusion set, but not the full other-336 path list. #105/W16.1 is the durable private-bundle route for that remaining evidence. Until a WolvenKit-capable safe inventory is attached, W18.1 records those archive internals as opaque rather than inventing them.
+The predecessor bundle did not expose the complete archive, but the later P02-accepted bundle did: its WolvenKit listing closes the archive-inventory gate and independently confirms that the non-scanner archive materially owns the ordinary HUD families listed above. W18.1 does **not** copy that listing or Project E3 resource bytes into Git. Precise private resource paths that are not needed to identify a Biology seam stay private rather than being reproduced here.
 
 ## Dependency roles
 
@@ -105,6 +105,22 @@ The public 2.31.p2 distribution/changelog is a useful completeness check because
 | Warning/progress/damage/loot/boss-health presentation and HUD decorators | **Archive-only coverage gate** — Project E3 2.31.p2 advertises these as new/remade content; Biology must not accidentally import boss HP or old damage/scanner semantics contrary to its own product rules. |
 
 An **archive-only coverage gate** is not a promise to reproduce that Project E3 surface. It means W18.1 has positively accounted for it and refuses to decide its current-2.31 native seam from screenshots or filenames alone. The #105 inventory closes the implementation/resource side; Biology then chooses either an evidence-backed narrow seam or an explicit native-preserve decision.
+
+## W18.1 implementation consequence before T005
+
+The verified archive evidence changes the **architecture rule**, not the accepted live seam.
+
+Project E3's quest, D-pad, weapon/ammo, minimap, nameplate, activity-log, interaction/dialog and related presentation was materially authored in archive/INK resources. Biology must therefore not treat more runtime-created red rectangles as the route to deeper fidelity.
+
+No W18 runtime source rewrite is warranted before T005 because the existing W03.5/W03.6 fixes already moved Biology onto current 2.31 authored/native content regions and were live-proven to correct specific placement failures:
+
+- quest text/rows remain native `m_QuestTitle` / `QuestTrackerObjectiveLogicController` content inside `m_questTrackerContainer`;
+- quickslots remain under native `m_dpadHintsPanel`;
+- weapon/ammo remains in native `m_onFootContainer` / `m_weaponAmmoWrapper`;
+- nameplates remain in the native projected-nameplate lifecycle;
+- scanner/quickhack remains wholly current/native.
+
+The existing Biology-created frames are therefore **accent chrome only**. They must not become a parallel layout authority. If T005 shows that a surface still needs structural composition beyond what the native authored hierarchy can express cleanly, the next implementation step is a **Biology-owned REDmod archive/INK resource authored from scratch against the current 2.31 resource seam**, not another guessed screen-space overlay and not a copied Project E3 resource.
 
 ## Subsystem reconciliation
 
@@ -214,5 +230,5 @@ W18.1 validation must prove:
 - W03.5 weapon binding, W03.4 reticle cleanup and W03.3/W03.4 nameplate lifecycle remain present;
 - modern scanner/quickhack hooks/resources remain absent;
 - the targeted 2.31 native probe covers every Biology seam retained after archaeology;
-- cloud policy/source tests enforce the derived reference record and archive/dependency conclusions;
+- cloud policy/source tests enforce the derived reference record, verified archive-family conclusions, and dependency conclusions;
 - parent P02, not this worker, owns T005.
