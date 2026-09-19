@@ -105,6 +105,8 @@ Require $bootstrap ([regex]::Escape("Where-Object Name -ne '_tooling'")) 'Bootst
 Require $builder ([regex]::Escape("@('desktop.ini','Thumbs.db','.DS_Store')")) 'Builder must ignore known OS metadata instead of failing private archaeology on transient shell files.'
 Require $builder ([regex]::Escape('''-ToolCacheRoot'',(Join-Path $LibraryPath ''_tooling'')')) 'Native UI companion must place reusable pinned tooling in the reference-library managed cache.'
 Require $nativeProbe 'ToolCacheRoot' 'Native-region probe must accept a persistent pinned tool-cache root.'
+Require $nativeProbe ([regex]::Escape('$toolchainArgs.CacheRoot=$ToolCacheRoot')) 'Native-region probe must forward the persistent cache root to archive-toolchain acquisition.'
+Require $builder ([regex]::Escape("'-ToolCacheRoot',(Join-Path $LibraryPath '_tooling')")) 'Builder ToolCacheRoot forwarding must remain paired with the native probe parameter contract.'
 Require $nativeProbe 'ConvertFrom-Json -Depth 100 -AsHashtable' 'Native ancestry must preserve case-distinct WolvenKit JSON keys.'
 Require $toolchain 'CacheRoot' 'Archive toolchain acquisition must support a persistent explicit cache root.'
 Require $toolchain 'persistent-external' 'Archive toolchain report must distinguish persistent external cache mode.'
