@@ -7,6 +7,7 @@ function Check($condition,[string]$message) { if (-not $condition) { throw $mess
 function Text([string]$name) { return Get-Content -Raw -LiteralPath (Join-Path $source $name) }
 
 $shell = Text 'BiologyCyberwareShell.reds'
+$followup = Text 'BiologyLiveShellFollowupNative.reds'
 $sync = Text 'BiologyModeSyncNative.reds'
 $actions = Text 'BiologyActionsNative.reds'
 
