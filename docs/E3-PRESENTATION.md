@@ -6,7 +6,7 @@ Current worker: W18.1 / issue #106 / parent issue #40
 
 ## W18.1 verified resource-composition rule
 
-P02's accepted private Project E3 bundle records a WolvenKit-verified inventory of the exact HUD archive. Quest/list, D-pad/input hints, compass, weapon/ammo, player health, NPC nameplates, minimap, scanner HUD, activity log, interaction/dialog and other HUD families all have authored archive/resource participation.
+W18.1 directly inspected `Biology-Private-ReferenceBundle-20260919-001914-365937cf.zip`. Its exact pinned Project E3 HUD archive has a WolvenKit-verified inventory of 370 actual resource paths, including authored quest/list, D-pad/input-hint, compass, weapon/ammo, player-health, NPC-nameplate, minimap, scanner/quickhack, activity-log and interaction/dialog resource families.
 
 Therefore Biology's E3 preference must not evolve by stacking more runtime-created red geometry around controller roots. Current native widgets/resources own layout and gameplay semantics. Biology runtime geometry is limited to reversible accent chrome on already-proven semantic hosts. If T005 shows a structural mismatch that native child styling cannot solve, the next step is a Biology-owned REDmod/INK resource authored independently for the current 2.31 seam.
 
