@@ -90,12 +90,35 @@ function Add-RegexSnippets([string]$Raw,[string]$Label,[string]$Pattern,[int]$Ma
 }
 
 function Has-Property($Object,[string]$Name) {
-    return $null -ne $Object -and @($Object.PSObject.Properties.Name) -contains $Name
+    if ($null -eq $Object) { return $false }
+    if ($Object -is [Collections.IDictionary]) { return $Object.Contains($Name) }
+    return @($Object.PSObject.Properties.Name) -contains $Name
+}
+function Get-PropertyValue($Object,[string]$Name) {
+    if ($null -eq $Object) { return $null }
+    if ($Object -is [Collections.IDictionary]) {
+        if ($Object.Contains($Name)) { return $Object[$Name] }
+        return $null
+    }
+    $property=$Object.PSObject.Properties[$Name]
+    if ($null -ne $property) { return $property.Value }
+    return $null
+}
+function Get-NodeProperties($Object) {
+    if ($null -eq $Object) { return @() }
+    if ($Object -is [Collections.IDictionary]) {
+        return @(
+            foreach($key in @($Object.Keys)){
+                [pscustomobject]@{Name=[string]$key;Value=$Object[$key]}
+            }
+        )
+    }
+    return @($Object.PSObject.Properties)
 }
 function Get-CNameValue($Value) {
     if ($null -eq $Value) { return $null }
     if ($Value -is [string]) { return [string]$Value }
-    if (Has-Property $Value '$value') { return [string]$Value.'$value' }
+    if (Has-Property $Value '$value') { return [string](Get-PropertyValue $Value '$value') }
     return $null
 }
 function Get-HandleRefIds($Value) {
@@ -103,62 +126,88 @@ function Get-HandleRefIds($Value) {
     function Walk-Refs($Node) {
         if ($null -eq $Node) { return }
         if ($Node -is [string] -or $Node.GetType().IsPrimitive -or $Node -is [decimal]) { return }
+        if ($Node -is [Collections.IDictionary]) {
+            if (Has-Property $Node 'HandleRefId') {
+                $id = [string](Get-PropertyValue $Node 'HandleRefId')
+                if ($id -and -not $found.Contains($id)) { $found.Add($id) }
+            }
+            foreach($key in @($Node.Keys)){ Walk-Refs $Node[$key] }
+            return
+        }
         if ($Node -is [System.Collections.IEnumerable] -and -not ($Node -is [pscustomobject])) {
             foreach ($item in $Node) { Walk-Refs $item }
             return
         }
         if (Has-Property $Node 'HandleRefId') {
-            $id = [string]$Node.HandleRefId
+            $id = [string](Get-PropertyValue $Node 'HandleRefId')
             if ($id -and -not $found.Contains($id)) { $found.Add($id) }
         }
-        foreach ($property in @($Node.PSObject.Properties)) { Walk-Refs $property.Value }
+        foreach ($property in @(Get-NodeProperties $Node)) { Walk-Refs $property.Value }
     }
     Walk-Refs $Value
     @($found)
 }
 function Get-WidgetAncestryEvidence([string]$Raw) {
-    $document = $Raw | ConvertFrom-Json -Depth 100
+    # WolvenKit serialization can contain JSON keys that differ only by case
+    # (for example selected / Selected). -AsHashtable preserves those distinct
+    # keys whereas PSCustomObject conversion rejects them.
+    $document = $Raw | ConvertFrom-Json -Depth 100 -AsHashtable
     $handles = [Collections.Generic.Dictionary[string,object]]::new([StringComparer]::OrdinalIgnoreCase)
     $order = [Collections.Generic.List[string]]::new()
     function Walk-Handles($Node) {
         if ($null -eq $Node) { return }
         if ($Node -is [string] -or $Node.GetType().IsPrimitive -or $Node -is [decimal]) { return }
+        if ($Node -is [Collections.IDictionary]) {
+            if (Has-Property $Node 'HandleId') {
+                $id = [string](Get-PropertyValue $Node 'HandleId')
+                if ($id -and -not $handles.ContainsKey($id)) {
+                    $handles.Add($id,$Node)
+                    $order.Add($id)
+                }
+            }
+            foreach($key in @($Node.Keys)){ Walk-Handles $Node[$key] }
+            return
+        }
         if ($Node -is [System.Collections.IEnumerable] -and -not ($Node -is [pscustomobject])) {
             foreach ($item in $Node) { Walk-Handles $item }
             return
         }
         if (Has-Property $Node 'HandleId') {
-            $id = [string]$Node.HandleId
+            $id = [string](Get-PropertyValue $Node 'HandleId')
             if ($id -and -not $handles.ContainsKey($id)) {
                 $handles.Add($id,$Node)
                 $order.Add($id)
             }
         }
-        foreach ($property in @($Node.PSObject.Properties)) { Walk-Handles $property.Value }
+        foreach ($property in @(Get-NodeProperties $Node)) { Walk-Handles $property.Value }
     }
     Walk-Handles $document
 
     $summaries = [Collections.Generic.Dictionary[string,object]]::new([StringComparer]::OrdinalIgnoreCase)
     foreach ($id in $order) {
         $wrapper = $handles[$id]
-        $data = if ((Has-Property $wrapper 'Data') -and $null -ne $wrapper.Data) { $wrapper.Data } else { $wrapper }
-        $parent = if (Has-Property $data 'parentWidget') { @((Get-HandleRefIds $data.parentWidget))[0] } else { $null }
-        $declaredChildren = if (Has-Property $data 'children') { @(Get-HandleRefIds $data.children) } else { @() }
+        $wrapperData = Get-PropertyValue $wrapper 'Data'
+        $data = if ((Has-Property $wrapper 'Data') -and $null -ne $wrapperData) { $wrapperData } else { $wrapper }
+        $parentValue = Get-PropertyValue $data 'parentWidget'
+        $childrenValue = Get-PropertyValue $data 'children'
+        $parent = if ($null -ne $parentValue) { @((Get-HandleRefIds $parentValue))[0] } else { $null }
+        $declaredChildren = if ($null -ne $childrenValue) { @(Get-HandleRefIds $childrenValue) } else { @() }
         $clip = [ordered]@{}
-        foreach ($property in @($data.PSObject.Properties | Where-Object Name -Match '(?i)clip')) { $clip[$property.Name]=$property.Value }
+        foreach ($property in @(Get-NodeProperties $data | Where-Object Name -Match '(?i)clip')) { $clip[$property.Name]=$property.Value }
+        $renderTransform=Get-PropertyValue $data 'renderTransform'
         $summaries.Add($id,[ordered]@{
             handleId=$id
-            type=if(Has-Property $data '$type'){[string]$data.'$type'}else{$null}
-            name=if(Has-Property $data 'name'){Get-CNameValue $data.name}else{$null}
+            type=if(Has-Property $data '$type'){[string](Get-PropertyValue $data '$type')}else{$null}
+            name=if(Has-Property $data 'name'){Get-CNameValue (Get-PropertyValue $data 'name')}else{$null}
             parentHandleId=$parent
             declaredChildren=$declaredChildren
             clipping=$clip
-            fitToContent=if(Has-Property $data 'fitToContent'){$data.fitToContent}else{$null}
-            layout=if(Has-Property $data 'layout'){$data.layout}else{$null}
-            size=if(Has-Property $data 'size'){$data.size}else{$null}
-            opacity=if(Has-Property $data 'opacity'){$data.opacity}else{$null}
-            visible=if(Has-Property $data 'visible'){$data.visible}else{$null}
-            renderTranslation=if((Has-Property $data 'renderTransform') -and $null -ne $data.renderTransform -and (Has-Property $data.renderTransform 'translation')){$data.renderTransform.translation}else{$null}
+            fitToContent=if(Has-Property $data 'fitToContent'){Get-PropertyValue $data 'fitToContent'}else{$null}
+            layout=if(Has-Property $data 'layout'){Get-PropertyValue $data 'layout'}else{$null}
+            size=if(Has-Property $data 'size'){Get-PropertyValue $data 'size'}else{$null}
+            opacity=if(Has-Property $data 'opacity'){Get-PropertyValue $data 'opacity'}else{$null}
+            visible=if(Has-Property $data 'visible'){Get-PropertyValue $data 'visible'}else{$null}
+            renderTranslation=if($null -ne $renderTransform -and (Has-Property $renderTransform 'translation')){Get-PropertyValue $renderTransform 'translation'}else{$null}
         })
     }
 
