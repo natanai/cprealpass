@@ -30,10 +30,11 @@ foreach ($needle in @(
     'this.SetButtonHints(true, false);')) {
     Check ($shell.Contains($needle)) "Biology native drill-down entry contract missing: $needle"
 }
-Check ($shell.Contains('this.crBiologyNativeContent = new inkVerticalPanel();')) 'Biology detail content is not retained for live native-region retry.'
-Check ($shell.Contains('this.m_inventoryView.CRMountBiologyDetailInNativeRegion(this.crBiologyNativeContent);')) 'Biology detail does not preserve its native content-region coordinate space at detail depth.'
-Check (-not $shell.Contains('this.m_inventoryView.GetRootWidget() as inkCompoundWidget')) 'Biology detail still mounts directly under the zero-margin inventory controller root.'
-Check (-not $shell.Contains('let nativeContentParent: ref<inkCompoundWidget> = inkCompoundRef.Get(this.m_inventoryViewAnchor) as inkCompoundWidget;')) 'Biology detail still uses the obsolete sibling mount under the inventory anchor.'
+Check ($shell.Contains('this.crBiologyNativeContent = new inkVerticalPanel();')) 'Biology detail content is not retained for live authored-host retry.'
+Check ($shell.Contains('this.m_inventoryView.CRMountBiologyDetailInAuthoredContentHost(this.crBiologyNativeContent);')) 'Biology detail does not resolve the authored selected-content seam at detail depth.'
+Check ($followup.Contains('Equals(child.GetName(), n"cyberwareContainer")')) 'Biology detail is not tied to the authored cyberwareContainer.'
+Check ($followup.Contains('target.Reparent(inventoryRoot, -1);')) 'Biology detail is not mounted beside cyberwareContainer under the native Inventory lifecycle root.'
+Check (-not $followup.Contains('inkVirtualCompoundRef.Get(this.m_virtualGridContainer)')) 'Biology detail still mounts relative to the virtualized item-list subtree.'
 Check (-not $shell.Contains('crBiologyDetailBack')) 'Parallel Biology detail Back widget still exists.'
 
 # Native selector owns left/right arrows and option-switch input. Biology changes names
