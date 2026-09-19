@@ -110,6 +110,9 @@ Require $builder ([regex]::Escape("@('desktop.ini','Thumbs.db','.DS_Store')")) '
 Require $builder ([regex]::Escape('''-ToolCacheRoot'',(Join-Path $LibraryPath ''_tooling'')')) 'Native UI companion must place reusable pinned tooling in the reference-library managed cache.'
 Require $nativeProbe 'ToolCacheRoot' 'Native-region probe must accept a persistent pinned tool-cache root.'
 Require $nativeProbe ([regex]::Escape('$toolchainArgs.CacheRoot=$ToolCacheRoot')) 'Native-region probe must forward the persistent cache root to archive-toolchain acquisition.'
+if(([regex]::Matches($nativeProbe,[regex]::Escape('$toolchainArgs.CacheRoot=$ToolCacheRoot'))).Count -ne 1){throw 'Native-region probe must assign CacheRoot exactly once.'}
+if(([regex]::Matches($nativeProbe,[regex]::Escape("@toolchainArgs @toolchainArgs"))).Count -ne 0){throw 'Native-region probe must not splat the toolchain arguments twice.'}
+Require $nativeProbe ([regex]::Escape("Acquire-ArchiveToolchain.ps1') @toolchainArgs")) 'Native-region probe must invoke archive-toolchain acquisition with one splatted argument map.'
 Require $nativeProbe 'ConvertFrom-Json -Depth 100 -AsHashtable' 'Native ancestry must preserve case-distinct WolvenKit JSON keys.'
 Require $toolchain 'CacheRoot' 'Archive toolchain acquisition must support a persistent explicit cache root.'
 Require $toolchain 'persistent-external' 'Archive toolchain report must distinguish persistent external cache mode.'
