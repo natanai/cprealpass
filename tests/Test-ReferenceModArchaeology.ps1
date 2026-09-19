@@ -108,6 +108,8 @@ Require $nativeProbe 'ToolCacheRoot' 'Native-region probe must accept a persiste
 Require $nativeProbe 'ConvertFrom-Json -Depth 100 -AsHashtable' 'Native ancestry must preserve case-distinct WolvenKit JSON keys.'
 Require $toolchain 'CacheRoot' 'Archive toolchain acquisition must support a persistent explicit cache root.'
 Require $toolchain 'persistent-external' 'Archive toolchain report must distinguish persistent external cache mode.'
+Require $toolchain ([regex]::Escape('$stageBase = if ($cacheRootFull) { $cacheRootFull } else { $project }')) 'Persistent tool extraction staging must remain under the selected cache root.'
+Require $toolchain ([regex]::Escape('$checkedTarget = $extractRoot')) 'Persistent tool extraction must move only to the already validated remapped target.'
 Require $toolchain 'Cached tool ZIP checksum/length differs' 'Persistent cached tool ZIPs must be reverified against pins before use.'
 
 Require $agents 'REFERENCE-MOD ARCHAEOLOGY GATE' 'AGENTS must require reference archaeology before speculative probing when relevant.'
