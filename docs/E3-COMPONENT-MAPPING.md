@@ -15,6 +15,16 @@ Those continuation records supersede the older assumption in this file that the 
 
 W18.1 also cross-checked the Project E3 2.31 public distribution metadata against the exact private-source inventory: redscript and TweakXL are hard requirements, Mod Settings is optional, and the published widget scope is substantially broader than runtime-created overlay geometry. The exact historical scanner split is now explicitly grounded in `config/patches/realpass-modern-scanner.json`, which pins all 34 excluded scanner-family resource paths/hashes from the 370-resource archive. The remaining 336-resource path inventory is intentionally pending #105 rather than inferred.
 
+## W18.1 verified archive-inventory closure
+
+P02's accepted private bundle `Biology-Private-ReferenceBundle-20260919-000857-87b38671.zip` includes a WolvenKit-verified listing of the exact Project E3 HUD archive. It confirms authored archive resources for quest list/tracker, D-pad/input hints, compass, ammo/weapon presentation, player health, NPC nameplates, minimap, scanner HUD, activity log, interactions/dialog, and additional HUD families.
+
+This closes the old "archive opaque" assumption. It does **not** mean Biology should copy those resources. The implementation rule is:
+
+`Project E3 authored resource evidence -> current 2.31 authored/native authority -> narrow Biology styling seam -> Biology-owned REDmod resource only if structural fidelity truly requires one`.
+
+Existing W03.5/W03.6 semantic-host fixes remain valid because they moved Biology toward current authored content ownership. Their generated chrome is an accent layer, not the layout authority. A future structural correction must use a Biology-owned resource rather than expanding runtime geometry.
+
 ## Evidence boundary
 
 W13 accepted the live REDscript startup boundary on integrated candidate `f643bbc1c50a69d223c2cf54e9fc7f68215e33fd`: all Biology REDscript compiled on actual Cyberpunk 2.31 startup. W03.2 therefore treats the remaining “still retail” result as presentation/hook behavior.
@@ -44,7 +54,7 @@ For each Project E3 area: identify the visual responsibility, the current 2.31 a
 | Project E3 NPC tweak files | Historical nameplate schema/record tuning. | Native `UINameplate_Record` / character records. | **Reference only.** No Project E3 tweak payload. A defined disabled native nameplate remains an explicit no. W03.2 removes the overly specific W03.1 requirement that every public civilian use exactly `UINameplate.CrowdSettings`. | Hidden/disabled/alternative/quest policy remains protected. |
 | Project E3 mappin/UI tweak files | Historical marker/icon/clamping styles. | Native current mappin profiles. | **Reference only.** No Project E3 TweakDB authority copied. | Native navigation semantics remain unchanged. |
 | `cyberpunk/hud/scanner/scanner_border.reds` and scanner resources in `basegame_3e_demo_hud.archive` | Old E3 scanner/focus composition. | Modern native scanner, quickhack list, RAM, scan details, target highlight. | **Hard preserve current/native.** No Biology scanner/quickhack hook/resource. | Modern scanner looks/behaves the same with E3 ON and OFF. |
-| `archive/pc/mod/basegame_3e_demo_hud.archive` | Historical archive-backed HUD layouts/assets across many areas. | Current native UI resources plus Biology-owned runtime INK. | **Reference only; forbidden from player artifact.** W03.2 reproduces only needed visual language in owned code. | Player artifact contains no Project E3 archive/runtime content. |
+| `archive/pc/mod/basegame_3e_demo_hud.archive` | Authored HUD composition/resources across quest, D-pad, compass, weapon/ammo, player health, NPC nameplates, minimap, scanner, activity log, interaction/dialog and other HUD families; verified by the W18 private WolvenKit inventory. | Current 2.31 authored native UI resources/controllers for each surface. | **Reference only; forbidden from player artifact.** Existing Biology code may add reversible accent styling to proven native content regions, but structural fidelity must come from current native resources or a Biology-owned REDmod resource authored from scratch—not progressively more runtime rectangles. | Player artifact contains no Project E3 payload; T005 validates preserved semantic hosts and native scanner. |
 
 ## Why W03.1 could compile yet still look retail
 
