@@ -64,15 +64,18 @@ foreach ($mechanism in @('redscript-hook-replace','tweakxl','archive-resource-re
 }
 
 foreach ($needle in @('370','34','336','authored INK','OptionalTracker','m_dpadHintsPanel','Pusula','blanket Always','MinimapContainerController','Biology-owned REDmod archive resource')) {
-    Check ($archaeology.Contains($needle)) "W03.7 archaeology document is missing a material derived conclusion: $needle"
+    Check ($archaeology.Contains($needle)) "W18.1 archaeology document is missing a material derived conclusion: $needle"
 }
-Check ($archaeology.Contains('does **not** reproduce Project E3 source bodies or archive payloads')) 'W03.7 archaeology doc lost its redistribution boundary.'
-Check ($archaeology.Contains('never copy Project E3 resource bytes')) 'W03.7 archaeology doc no longer forbids Project E3 runtime/resource copying.'
+Check ($archaeology.Contains('does **not** reproduce Project E3 source bodies or archive payloads')) 'W18.1 archaeology doc lost its redistribution boundary.'
+Check ($archaeology.Contains('never copy Project E3 resource bytes')) 'W18.1 archaeology doc no longer forbids Project E3 runtime/resource copying.'
 Check ($scannerPatch.expectedResourceCount -eq 370) 'Historical Project E3 archive resource count drifted from the exact scanner-split evidence.'
 Check (@($scannerPatch.excludedResources).Count -eq 34) 'Historical Project E3 scanner-family exclusion set must preserve exactly 34 resources.'
 Check ($scannerPatch.expectedArchiveSha256 -eq $archiveIdentity[0].sha256) 'Historical scanner-split evidence is not pinned to the exact Project E3 archive.'
 Check (@($scannerPatch.excludedResources.path | Sort-Object -Unique).Count -eq 34) 'Project E3 scanner-family exclusion paths are not unique.'
-Check (@($scannerPatch.excludedResources.sha256 | Where-Object { $_ -match '^[0-9A-F]{64}
+Check (@($scannerPatch.excludedResources.sha256 | Where-Object { $_ -match '^[0-9A-F]{64}$' }).Count -eq 34) 'Project E3 scanner-family exclusion hashes are incomplete.'
+Check (@($record.opaqueAreas).Count -ge 1) 'W18.1 record must represent incomplete archive internals as opaque rather than inventing them.'
+Check (-not (@($record.opaqueAreas.pathIdentity) -contains 'Project E3 dependency package/readme metadata')) 'W18.1 left dependency metadata opaque after the public Project E3 2.31 distribution cross-check.'
+Check ($archaeology.Contains('config/patches/realpass-modern-scanner.json')) 'W18.1 archaeology doc does not point to the exact 34-resource scanner exclusion evidence.'
 
 # The architecture conclusion is intentionally not "copy Project E3". Preserve the
 # narrower native-content seams that attended evidence already proved useful.
