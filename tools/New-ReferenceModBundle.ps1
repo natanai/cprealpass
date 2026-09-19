@@ -93,12 +93,13 @@ function NativeLive([string]$exe,[string[]]$arguments) {
 }
 function FolderFiles([IO.DirectoryInfo]$root) {
     $out=[Collections.Generic.List[IO.FileInfo]]::new()
+    $ignoredMetadata=@('desktop.ini','Thumbs.db','.DS_Store')
     $stack=[Collections.Generic.Stack[IO.DirectoryInfo]]::new(); $stack.Push($root)
     while($stack.Count -gt 0){
         $d=$stack.Pop()
         foreach($x in @($d.GetFileSystemInfos() | Sort-Object Name)){
             if(($x.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0){continue}
-            if($x -is [IO.DirectoryInfo]){$stack.Push($x)} else {$out.Add([IO.FileInfo]$x)}
+            if($x -is [IO.DirectoryInfo]){$stack.Push($x)} elseif($x.Name -notin $ignoredMetadata){$out.Add([IO.FileInfo]$x)}
         }
     }
     @($out)
@@ -112,7 +113,7 @@ if(Under $OutputRoot $LibraryPath){throw 'OutputRoot must be outside the private
 if(Under $OutputRoot $project){throw 'OutputRoot must be outside the cprealpass checkout.'}
 New-Item -ItemType Directory -Force -Path $OutputRoot | Out-Null
 
-$children=@(Get-ChildItem -LiteralPath $LibraryPath -Force | Sort-Object Name)
+$children=@(Get-ChildItem -LiteralPath $LibraryPath -Force | Where-Object Name -ne '_tooling' | Sort-Object Name)
 if($children.Count -eq 0){throw 'Reference library is empty.'}
 if(( -not $ReferenceName -or $ReferenceName.Count -eq 0) -and -not [string]::IsNullOrWhiteSpace($ReferenceNameJson)){
     try{$ReferenceName=@($ReferenceNameJson|ConvertFrom-Json)}catch{throw "ReferenceNameJson is invalid JSON: $($_.Exception.Message)"}
@@ -264,7 +265,8 @@ function CollectBiologyNativeUi {
         '-GamePath',$resolvedGame,
         '-ReportPath',$probeReport,
         '-PrivateTargetJsonPath',$targetJson,
-        '-PrivateWidgetAncestryJsonPath',$ancestryJson
+        '-PrivateWidgetAncestryJsonPath',$ancestryJson,
+        '-ToolCacheRoot',(Join-Path $LibraryPath '_tooling')
     )
     @(
       ('ExitCode: '+$probe.ExitCode),
@@ -444,6 +446,7 @@ try{
     $manifest=[ordered]@{
       schemaVersion=1;kind='private-reference-mod-archaeology-bundle';createdUtc=[DateTime]::UtcNow.ToString('o')
       analysisOnly=$true;redistributionAllowed=$false;workflowSourceRevision=$WorkflowSourceRevision;sourceLibrary=$LibraryPath;referenceSelections=@($refs)
+      managedToolCache=[ordered]@{path=(Join-Path $LibraryPath '_tooling');policy='owner-authorized pinned reusable dependencies; excluded from reference selections';referencePayloadMutation='none'}
       provenanceVersionNotes=@($notes|Select-Object -Unique);fileCount=$index.Count;copiedTextBytes=$copied
       archiveInventory=@($archives);nativeBiologyUi=$nativeUi;sourceMutation='none';gameInstallation=$gameAccess
       duplicatePolicy='Selected ZIPs whose basename or sole top-level root matches a selected extracted sibling folder are hash-recorded but their duplicate payload is skipped.'
@@ -455,7 +458,8 @@ try{
       'BIOLOGY PRIVATE REFERENCE-MOD ARCHAEOLOGY BUNDLE',
       ('Created UTC: '+$manifest.createdUtc),
       ('Source library: '+$LibraryPath),
-      'Source-library mutation: NONE',
+      'Selected reference payload mutation: NONE',
+      ('Managed reusable tool cache: '+(Join-Path $LibraryPath '_tooling')),
       ('Cyberpunk install access/mutation: '+$gameAccess),
       ('Selected references: '+$refs.Count),
       ('Indexed files: '+$index.Count),

@@ -1,11 +1,21 @@
 #requires -Version 7.0
 param(
     [string]$ConfigPath = 'config/archive-toolchain.json',
+    [string]$CacheRoot = '',
     [switch]$Offline
 )
 . "$PSScriptRoot/Common.ps1"
 $project = Get-ProjectRoot
 $configPathFull = Resolve-SafeChildPath $project $ConfigPath
+$cacheRootFull = $null
+if (-not [string]::IsNullOrWhiteSpace($CacheRoot)) {
+    if (-not [IO.Path]::IsPathRooted($CacheRoot)) { throw 'CacheRoot must be an absolute path when provided.' }
+    $cacheRootFull = [IO.Path]::GetFullPath($CacheRoot).TrimEnd('\','/')
+    New-Item -ItemType Directory -Force -Path $cacheRootFull | Out-Null
+    if ((Get-Item -Force -LiteralPath $cacheRootFull).Attributes -band [IO.FileAttributes]::ReparsePoint) {
+        throw 'Tool cache root may not be a reparse point.'
+    }
+}
 $configHash = Get-Sha256 $configPathFull
 $config = Get-Content -Raw -LiteralPath $configPathFull | ConvertFrom-Json
 if ($config.schemaVersion -ne 1 -or $config.id -ne 'realpass-portable-archive-tools-v1' -or $config.platform -ne 'win-x64' -or @($config.tools).Count -ne 2) {
@@ -116,8 +126,16 @@ foreach ($pin in $config.tools) {
     $hashLength = if ($pin.hashAlgorithm -eq 'SHA512') { 128 } else { 64 }
     if ($pin.archiveHash -notmatch ('^[A-Fa-f0-9]{'+$hashLength+'}$') -or $pin.entryPointSha256 -notmatch '^[A-Fa-f0-9]{64}$') { throw 'Invalid pinned checksum.' }
     if ($pin.archivePath -notmatch '^vendor[\\/]' -or $pin.extractRoot -notmatch '^vendor[\\/]' -or [IO.Path]::GetExtension($pin.archivePath) -ne '.zip') { throw 'Portable archive tools must remain inside the workspace vendor directory.' }
-    $archivePath = Resolve-SafeChildPath $project $pin.archivePath
-    $extractRoot = Resolve-SafeChildPath $project $pin.extractRoot
+    if ($cacheRootFull) {
+        $archiveRelative = ($pin.archivePath -replace '^[Vv][Ee][Nn][Dd][Oo][Rr][\\/]+','')
+        $extractRelative = ($pin.extractRoot -replace '^[Vv][Ee][Nn][Dd][Oo][Rr][\\/]+','')
+        if ($archiveRelative -eq $pin.archivePath -or $extractRelative -eq $pin.extractRoot) { throw 'Pinned tool paths must remain vendor-relative before cache remapping.' }
+        $archivePath = Resolve-SafeChildPath $cacheRootFull $archiveRelative
+        $extractRoot = Resolve-SafeChildPath $cacheRootFull $extractRelative
+    } else {
+        $archivePath = Resolve-SafeChildPath $project $pin.archivePath
+        $extractRoot = Resolve-SafeChildPath $project $pin.extractRoot
+    }
     $entryPoint = Resolve-SafeChildPath $extractRoot $pin.entryPoint
     if ($archivePath.StartsWith($extractRoot+'\',[StringComparison]::OrdinalIgnoreCase)) { throw 'Tool ZIP must be outside its extracted tree.' }
     if ($roots.ContainsKey($extractRoot) -or $roots.ContainsKey($archivePath)) { throw 'Colliding portable-tool paths.' }
@@ -203,7 +221,19 @@ foreach ($tool in $validatedPins) {
 }
 if ((Get-Sha256 $configPathFull) -ne $configHash) { throw 'Toolchain configuration changed during acquisition.' }
 $reportPath = Resolve-SafeChildPath $project 'reports/archive-toolchain.json'
-Write-JsonFile ([ordered]@{schemaVersion=1;verifiedAtUtc=[DateTime]::UtcNow.ToString('o');configuration=$ConfigPath;configurationSha256=$configHash;verified=$true;offline=[bool]$Offline;runtimeExecuted=$false;machineEnvironmentChanged=$false;tools=$verified}) $reportPath
+Write-JsonFile ([ordered]@{
+    schemaVersion=1
+    verifiedAtUtc=[DateTime]::UtcNow.ToString('o')
+    configuration=$ConfigPath
+    configurationSha256=$configHash
+    verified=$true
+    offline=[bool]$Offline
+    runtimeExecuted=$false
+    machineEnvironmentChanged=$false
+    cacheRoot=$cacheRootFull
+    cacheMode=$(if($cacheRootFull){'persistent-external'}else{'workspace-vendor'})
+    tools=$verified
+}) $reportPath
 $dotnet = @($verified | Where-Object id -eq 'dotnet-runtime')[0]
 $cli = @($verified | Where-Object id -eq 'wolvenkit-cli')[0]
 [pscustomobject]@{dotnetExe=$dotnet.entryPoint;cliDll=$cli.entryPoint;reportPath=$reportPath;dotnetExeSha256=$dotnet.entryPointSha256;cliDllSha256=$cli.entryPointSha256}

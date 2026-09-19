@@ -22,6 +22,7 @@ function Fingerprint([string]$root){
 $builder=Read 'tools/New-ReferenceModBundle.ps1'
 $bootstrap=Read 'tools/Bootstrap-ReferenceModBundle.ps1'
 $nativeProbe=Read 'tools/Probe-BiologyDetailNativeRegion.ps1'
+$toolchain=Read 'tools/Acquire-ArchiveToolchain.ps1'
 $agents=Read 'AGENTS.md'
 $catalog=Read 'docs/LOCAL-OPERATOR-COMMANDS.md'
 $readme=Read 'docs/reference-mods/README.md'
@@ -62,6 +63,9 @@ Require $bootstrap 'IncludeBiologyNativeUi' 'Bootstrap must forward the optional
 Require $nativeProbe 'PrivateTargetJsonPath' 'Native-region probe must support preserving the serialized target JSON privately outside Git.'
 Require $nativeProbe 'PrivateWidgetAncestryJsonPath' 'Native-region probe must support preserving a derived widget ancestry report privately outside Git.'
 Require $nativeProbe 'Get-WidgetAncestryEvidence' 'Native-region probe must derive the authored HandleId parent/child graph from serialized INK evidence.'
+Require $nativeProbe '\[ARCHIVE \{0\}/\{1\}\]' 'Native-region probe must expose bounded per-archive progress during long WolvenKit scans.'
+Require $nativeProbe 'Archive scan complete in' 'Native-region probe must report archive-scan completion and elapsed time.'
+Require $nativeProbe '\[CANDIDATE \{0\}/\{1\}\]' 'Native-region probe must expose candidate-testing progress without dumping every resource path.'
 Require $nativeProbe 'HANDLE_ID_219_OR_743' 'Native-region probe must preserve targeted object context for the decisive HandleId 219/743 parent evidence.'
 Require $nativeProbe 'declaredChildren' 'Native ancestry must preserve child membership/order evidence when present.'
 Require $nativeProbe 'fitToContent' 'Native ancestry must preserve fit-to-content evidence.'
@@ -96,6 +100,15 @@ Require $bootstrap 'Available private references:' 'Bootstrap must display refer
 Require $bootstrap ([regex]::Escape("Read-Host 'Enter numbers separated by commas'")) 'Bootstrap must own the interactive reference selection prompt before spawning the redirected child.'
 Require $bootstrap ([regex]::Escape('$ReferenceName=@($picked)')) 'Bootstrap must materialize visible selections before invoking the child builder.'
 Require $builder 'ZipSingleRoot' 'Builder must recognize ZIP/extracted-folder duplicates by the ZIP sole top-level root as well as basename.'
+Require $builder ([regex]::Escape("Where-Object Name -ne '_tooling'")) 'Builder must exclude the managed reusable tool cache from selectable references.'
+Require $bootstrap ([regex]::Escape("Where-Object Name -ne '_tooling'")) 'Bootstrap must exclude the managed reusable tool cache from owner reference selection.'
+Require $builder ([regex]::Escape("@('desktop.ini','Thumbs.db','.DS_Store')")) 'Builder must ignore known OS metadata instead of failing private archaeology on transient shell files.'
+Require $builder ([regex]::Escape('''-ToolCacheRoot'',(Join-Path $LibraryPath ''_tooling'')')) 'Native UI companion must place reusable pinned tooling in the reference-library managed cache.'
+Require $nativeProbe 'ToolCacheRoot' 'Native-region probe must accept a persistent pinned tool-cache root.'
+Require $nativeProbe 'ConvertFrom-Json -Depth 100 -AsHashtable' 'Native ancestry must preserve case-distinct WolvenKit JSON keys.'
+Require $toolchain 'CacheRoot' 'Archive toolchain acquisition must support a persistent explicit cache root.'
+Require $toolchain 'persistent-external' 'Archive toolchain report must distinguish persistent external cache mode.'
+Require $toolchain 'Cached tool ZIP checksum/length differs' 'Persistent cached tool ZIPs must be reverified against pins before use.'
 
 Require $agents 'REFERENCE-MOD ARCHAEOLOGY GATE' 'AGENTS must require reference archaeology before speculative probing when relevant.'
 Require $agents 'mod and any dependencies wanted' 'Worker request convention must name desired mod/dependencies.'
@@ -110,6 +123,8 @@ if($schema.title -notmatch 'redistribution-safe'){throw 'Reference record schema
 if($schema.properties.source.properties.selectedIdentities.items.properties.sha256.pattern -ne '^[0-9A-Fa-f]{64}$'){throw 'Reference record schema must require SHA-256 identities.'}
 $template=$templateText|ConvertFrom-Json -Depth 30
 if($template.schemaVersion -ne 1){throw 'Reference record template schemaVersion mismatch.'}
+$caseDistinct='{"selected":1,"Selected":2}'|ConvertFrom-Json -AsHashtable
+if($caseDistinct.Count -ne 2 -or $caseDistinct['selected'] -ne 1 -or $caseDistinct['Selected'] -ne 2){throw 'PowerShell case-distinct JSON preservation contract failed.'}
 if(-not $schema.properties.mappings.items.properties.widgetAncestry){throw 'Reference record schema must support redistribution-safe derived widget ancestry.'}
 if(-not $template.mappings[0].widgetAncestry){throw 'Reference record template must demonstrate derived widget ancestry without proprietary object bodies.'}
 
@@ -125,6 +140,7 @@ try{
       'Version: 2.31.2',
       'Requires redscript and TweakXL'
     )|Set-Content -LiteralPath (Join-Path $mod 'README.md') -Encoding utf8
+    'Windows shell metadata'|Set-Content -LiteralPath (Join-Path $mod 'desktop.ini') -Encoding utf8
     @(
       '@wrapMethod(NameplateVisualsLogicController)',
       'protected cb func OnInitialize() -> Bool {',
@@ -150,7 +166,8 @@ try{
     }
     $manifest=Get-Content -Raw -LiteralPath (Join-Path $expanded 'manifest.json')|ConvertFrom-Json -Depth 30
     if($manifest.workflowSourceRevision -ne $sourceRevision){throw 'Bundle did not record exact workflow source revision.'}
-    if($manifest.sourceMutation -ne 'none'){throw 'Bundle does not prove source mutation boundary.'}
+    if($manifest.sourceMutation -ne 'none'){throw 'Bundle does not prove selected reference-payload mutation boundary.'}
+    if(-not $manifest.managedToolCache -or $manifest.managedToolCache.referencePayloadMutation -ne 'none'){throw 'Bundle does not describe managed tool-cache vs reference-payload mutation boundary.'}
     if($manifest.gameInstallation -ne 'not accessed or modified'){throw 'Bundle does not prove game-install boundary.'}
     if(@($manifest.provenanceVersionNotes|Where-Object {$_ -match 'version=2\.31\.2'}).Count -lt 1){throw 'Discoverable reference version metadata was not recorded.'}
     if(@($manifest.provenanceVersionNotes|Where-Object {$_ -match 'dependency=TweakXL'}).Count -lt 1){throw 'Discoverable dependency metadata was not recorded.'}
@@ -162,6 +179,7 @@ try{
     if(Test-Path -LiteralPath (Join-Path $expanded 'payload\Project_E3\archive\pc\mod\e3.archive')){throw 'Binary archive payload must not be copied into private text payload.'}
 
     $idx=@(Get-Content -Raw -LiteralPath (Join-Path $expanded 'file-index.json')|ConvertFrom-Json -Depth 30)
+    if(@($idx|Where-Object path -match '(?i)(^|/)desktop\.ini$').Count -ne 0){throw 'Known OS metadata should not be indexed as reference evidence.'}
     $resource=@($idx|Where-Object path -eq 'archive/pc/mod/e3.archive')
     if($resource.Count -ne 1 -or $resource[0].classification -ne 'archive/resource-container'){throw 'Resource archive was not hash/inventory classified.'}
     if(-not $resource[0].sha256 -or $resource[0].sha256.Length -ne 64){throw 'Resource archive SHA-256 missing.'}

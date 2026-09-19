@@ -141,7 +141,7 @@ try{
     if(-not (Get-Command pwsh -ErrorAction SilentlyContinue)){throw 'pwsh is not available on PATH.'}
 
     if(-not $ReferenceName -or $ReferenceName.Count -eq 0){
-        $children=@(Get-ChildItem -LiteralPath $LibraryPath -Force | Sort-Object Name)
+        $children=@(Get-ChildItem -LiteralPath $LibraryPath -Force | Where-Object Name -ne '_tooling' | Sort-Object Name)
         if($children.Count -eq 0){throw 'Reference library is empty.'}
         Write-Host 'Available private references:' -ForegroundColor Cyan
         for($i=0;$i -lt $children.Count;$i++){Write-Host ("[{0}] {1}" -f ($i+1),$children[$i].Name)}
