@@ -49,7 +49,7 @@ Before P02 allocates T005 as READY FOR PC TEST:
 
 1. Project E3 must be treated as an engineering reference implementation, not merely a screenshot target.
 2. The full locally supplied Project E3 HUD/UI reference set must be inspectable by the E3 worker through a private owner handoff rather than committed to Git.
-3. E3 work must map actual reference implementation mechanism -> dependency/framework role -> current CP2077 2.31 native controller/widget/resource -> Biology-owned seam.
+3. E3 work must map actual reference implementation mechanism -> dependency/framework role -> current CP2077 2.31 native controller/widget/resource -> Biology-owned seam. The prior W03 conversation became TOO-LONG during this assignment; W18.1 continues the same issue/branch without restarting its completed archaeology commits.
 4. Biology body-screen work must inspect current native Cyberware/Ripperdoc layout authority and at least one relevant working reference implementation such as Cyberware-EX before another geometry iteration.
 5. W03.6 must be reconciled with current main/W02.6 before parent merge or final exact integrated validation.
 6. Cloud CI/source checks are necessary but not live acceptance. The final selected integrated main must still receive exact supported-game compile/audit as required by the canonical operator contract.
@@ -61,7 +61,7 @@ Reference mods remain **development evidence only**. Do not commit or redistribu
 P02 may run up to three independent lanes in parallel:
 
 - **W16.1** — reusable reference-mod private handoff tooling / issue #105.
-- **W03.7** — Project E3 full archaeology + W03.6/current-main reconciliation; reuse the existing W03 conversation if still manageable.
+- **W18.1** — Project E3 full archaeology + W03.6/current-main reconciliation in a fresh replacement conversation because W03 became TOO-LONG.
 - **W17.1** — Biology Cyberware/native-screen reference archaeology, because the earlier W02 conversation has had continuity problems and this work may run in parallel.
 
 Each lane uses its own branch and must not ask the owner to install/play a worker branch.
