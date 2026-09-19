@@ -182,8 +182,13 @@ foreach ($tool in $validatedPins) {
         $zip = [IO.Compression.ZipArchive]::new($archiveStream,[IO.Compression.ZipArchiveMode]::Read,$true)
         $inventory = Get-ValidatedArchiveInventory $zip $extractRoot $pin
         if (-not (Test-Path -LiteralPath $extractRoot)) {
-            $stageRelative = $pin.extractRoot+'.extract-'+[guid]::NewGuid().ToString('N')
-            $stage = Resolve-SafeChildPath $project $stageRelative
+            $stageBase = if ($cacheRootFull) { $cacheRootFull } else { $project }
+            $stageRelative = if ($cacheRootFull) {
+                $extractRelative+'.extract-'+[guid]::NewGuid().ToString('N')
+            } else {
+                $pin.extractRoot+'.extract-'+[guid]::NewGuid().ToString('N')
+            }
+            $stage = Resolve-SafeChildPath $stageBase $stageRelative
             New-Item -ItemType Directory -Path $stage | Out-Null
             try {
                 foreach ($directory in $inventory.directories.Keys) {
@@ -198,15 +203,15 @@ foreach ($tool in $validatedPins) {
                     } finally { $inputStream.Dispose() }
                 }
                 Assert-ArchiveTree $stage $inventory
-                $checkedStage = Resolve-SafeChildPath $project $stageRelative
-                $checkedTarget = Resolve-SafeChildPath $project $pin.extractRoot
+                $checkedStage = Resolve-SafeChildPath $stageBase $stageRelative
+                $checkedTarget = $extractRoot
                 [IO.Directory]::Move($checkedStage,$checkedTarget)
                 $extracted = $true
             } finally {
                 if (Test-Path -LiteralPath $stage) {
                     # This unique private staging tree was created by this invocation.
-                    $checkedStage = Resolve-SafeChildPath $project $stageRelative
-                    if ($checkedStage -ne $stage -or $stageRelative -notmatch '^vendor[\\/].+\.extract-[a-f0-9]{32}$') { throw 'Refusing unsafe staging cleanup.' }
+                    $checkedStage = Resolve-SafeChildPath $stageBase $stageRelative
+                    if ($checkedStage -ne $stage -or $stageRelative -notmatch '\.extract-[a-f0-9]{32}$') { throw 'Refusing unsafe staging cleanup.' }
                     Remove-Item -LiteralPath $checkedStage -Recurse
                 }
             }
