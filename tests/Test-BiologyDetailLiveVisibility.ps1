@@ -16,27 +16,27 @@ $sync = Text 'BiologyModeSyncNative.reds'
 Check ($shell.Contains('this.crBiologyNativeContent = new inkVerticalPanel();')) 'W02.5 does not retain the Biology detail panel independently of initial native mount success.'
 Check ($shell.Contains('this.crBiologyNativeContent.SetVisible(false);')) 'W02.5 retained detail panel is not initially fail-closed.'
 Check ($shell.Contains('this.crBiologyNativeContent.SetAffectsLayoutWhenHidden(true);')) 'W02.5 hidden detail panel does not remain layout-participating while native layout settles.'
-Check ($shell.Contains('this.m_inventoryView.CRMountBiologyDetailInNativeRegion(this.crBiologyNativeContent);')) 'W02.5 does not perform/retry the native-region mount on the retained panel.'
-Check (-not $shell.Contains('if this.m_inventoryView.CRMountBiologyDetailInNativeRegion(nativeContent)')) 'W02.5 still discards the panel when the first mount attempt fails.'
+Check ($shell.Contains('this.m_inventoryView.CRMountBiologyDetailInAuthoredContentHost(this.crBiologyNativeContent);')) 'W02.5 does not perform/retry the native-region mount on the retained panel.'
+Check (-not $shell.Contains('if this.m_inventoryView.CRMountBiologyDetailInAuthoredContentHost(nativeContent)')) 'W02.5 still discards the panel when the first mount attempt fails.'
 Check ($shell.Contains('detailLayoutReady = this.CRSyncBiologyNativeContentLayout();')) 'W02.5 does not retry native layout at live detail depth.'
 Check ($shell.Contains('this.crBiologyNativeContent.SetVisible(detail && detailLayoutReady);')) 'W02.5 no longer fails closed when live native-region resolution genuinely fails.'
 
-# W02.4 hides the Cyberware virtual grid while Biology telemetry occupies the same
-# region. Hidden native geometry must continue participating in layout during Biology
-# detail and its stock policy must be restored on exit.
-Check ($followup.Contains('this.crBiologyVirtualGridAffectsLayoutWhenHidden = virtualGrid.GetAffectsLayoutWhenHidden();')) 'W02.5 does not capture the stock virtual-grid hidden-layout policy.'
-Check ($followup.Contains('virtualGrid.SetAffectsLayoutWhenHidden(true);')) 'W02.5 can still collapse the native geometry donor when hiding Cyberware content.'
-Check ($followup.Contains('virtualGrid.SetVisible(false);')) 'Biology detail no longer suppresses the stock Cyberware item grid.'
-Check ($followup.Contains('virtualGrid.SetAffectsLayoutWhenHidden(this.crBiologyVirtualGridAffectsLayoutWhenHidden);')) 'W02.5 does not restore the stock virtual-grid layout policy.'
-Check ($followup.Contains('this.crBiologyVirtualGridLayoutPolicyCaptured = false;')) 'W02.5 does not clear the temporary native-grid policy capture after restoration.'
+# W17.1 proves Biology must suppress the authored cyberwareContainer as a unit rather
+# than borrowing visibility/layout behavior from the virtualized item-list child.
+Check ($followup.Contains('this.crBiologyContentHostWasVisible = contentHost.IsVisible();')) 'W17.1 does not capture stock content-host visibility.'
+Check ($followup.Contains('contentHost.SetVisible(false);')) 'Biology detail does not suppress the authored Cyberware content host.'
+Check ($followup.Contains('contentHost.SetVisible(this.crBiologyContentHostWasVisible);')) 'Biology does not restore the authored Cyberware content host exactly.'
+Check ($followup.Contains('this.crBiologyContentHostVisibilityCaptured = false;')) 'Biology does not clear its bounded stock-visibility capture.'
+Check (-not $followup.Contains('crBiologyVirtualGridLayoutPolicyCaptured')) 'Obsolete virtual-grid hidden-layout policy remains active.'
+Check (-not $followup.Contains('inkVirtualCompoundRef.Get(this.m_virtualGridContainer)')) 'Biology still manipulates the virtualized item list as its presentation boundary.'
 
-# The mount adapter must distinguish each live boundary and verify the reparent itself.
-foreach ($status in @('TARGET_MISSING','GRID_MISSING','ROOT_MISSING','PARENT_MISSING','REPARENT_UNCONFIRMED','MOUNTED')) {
-    Check ($followup.Contains('"' + $status + '"')) "W02.5 mount trace is missing status: $status"
+# The mount adapter must distinguish each live authored-host boundary and verify reparent.
+foreach ($status in @('TARGET_MISSING','ROOT_MISSING','CONTENT_HOST_MISSING','CONTENT_HOST_TYPE_MISMATCH','REPARENT_UNCONFIRMED','CONTENT_HOST_MOUNTED')) {
+    Check ($followup.Contains('"' + $status + '"')) "W17.1 mount trace is missing status: $status"
 }
-Check ($followup.Contains('private final func CRBiologyDirectParentOwnsWidget')) 'W02.5 does not verify the direct native parent after reparent.'
-Check ($followup.Contains('if !this.CRBiologyDirectParentOwnsWidget(nativeParent, target)')) 'W02.5 reports mount success without verifying the target is actually attached.'
-Check ($followup.Contains('public final func CRBiologyDetailMountStatus() -> String')) 'W02.5 does not expose the bounded live mount result to the shell.'
+Check ($followup.Contains('private final func CRBiologyDirectParentOwnsWidget')) 'W17.1 does not verify the direct Inventory parent after reparent.'
+Check ($followup.Contains('if !this.CRBiologyDirectParentOwnsWidget(inventoryRoot, target)')) 'W17.1 reports host mount success without verifying the target is attached.'
+Check ($followup.Contains('public final func CRBiologyDetailMountStatus() -> String')) 'W17.1 does not expose the bounded live mount result to the shell.'
 
 # T003 proved the stock selector remains visible even when Biology detail disappears.
 # Use that existing native label as a bounded attended breadcrumb for BOTH successful
@@ -44,8 +44,8 @@ Check ($followup.Contains('public final func CRBiologyDetailMountStatus() -> Str
 Check ($sync.Contains('public final func CRSetBiologyLayoutDiagnostic(status: String) -> Void')) 'W02.5 lacks bounded native-selector mount diagnostics.'
 Check ($sync.Contains('[BIOLOGY LAYOUT: ')) 'W02.5 failure diagnostic does not identify the Biology layout boundary.'
 Check ($shell.Contains('this.m_selector.CRSetBiologyLayoutDiagnostic(this.CRBiologyDetailPostMountStatus(detailLayoutReady));')) 'W02.6 no longer surfaces the live mount result through the native selector breadcrumb.'
-Check ($followup.Contains('this.crBiologyDetailMountStatus = "MOUNTED";')) 'W02.5 positive MOUNTED state was removed instead of extended with post-mount evidence.'
-Check (-not $sync.Contains('Equals(status, "MOUNTED")')) 'The selector still suppresses successful MOUNTED evidence.'
+Check ($followup.Contains('this.crBiologyDetailMountStatus = "CONTENT_HOST_MOUNTED";')) 'W17.1 positive authored-host mount state is missing.'
+Check (-not $sync.Contains('Equals(status, "CONTENT_HOST_MOUNTED")')) 'The selector suppresses successful authored-host evidence instead of exposing the breadcrumb.'
 Check ($shell.Contains('return "INVENTORY_MISSING " + this.crBiologyDetailContentStatus;')) 'The attended breadcrumb can no longer distinguish a missing inventory controller from post-mount state.'
 
 # Preserve the actual selected-system/runtime path and native navigation. Invisible UI
@@ -61,6 +61,6 @@ Check (-not $followup.Contains('CRBodyRuntime')) 'W02.5 presentation repair broa
 Check (-not $shell.Contains('this.crBiologyNativeContent.SetAnchor(inkEAnchor.TopLeft);')) 'W02.5 reintroduced a screen-origin TopLeft fallback.'
 Check (-not $shell.Contains('this.crBiologyNativeContent.SetMargin(inkMargin(0.0, 42.0, 0.0, 0.0));')) 'W02.5 reintroduced the old arbitrary root-relative margin.'
 Check (-not $shell.Contains('this.crBiologyNativeContent.SetSize(Vector2(720.0, 0.0));')) 'W02.5 reintroduced the old fixed detail width.'
-Check ($followup.Contains('target.SetMargin(nativeRegion.GetMargin());') -and $followup.Contains('target.SetTranslation(nativeRegion.GetTranslation());')) 'W02.5 no longer derives placement from live native geometry.'
+Check ($followup.Contains('target.SetMargin(contentHost.GetMargin());') -and $followup.Contains('target.SetTranslation(contentHost.GetTranslation());')) 'W17.1 no longer derives placement from the live authored content host.'
 
-Write-Host "PASS: $script:checks W02.5 live detail visibility/native-region checks."
+Write-Host "PASS: $script:checks W17.1 live authored-host visibility checks."
