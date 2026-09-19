@@ -71,7 +71,7 @@ No Project E3 evidence establishes a need for Biology to add ArchiveXL, Codeware
 
 ### Quest tracker
 
-Project E3 replaces the native tracker update/state logic so it can populate an archive-authored optional-objective hierarchy and alter objective success/failure imagery.
+Project E3 replaces the native tracker update/state logic so it can populate its archive-authored `OptionalTracker` optional-objective hierarchy and alter objective success/failure imagery.
 
 Biology intentionally keeps current 2.31 `QuestTrackerGameController` and `QuestTrackerObjectiveLogicController` lifecycle authority. W03.6 mounts only inside `m_questTrackerContainer` and styles native `m_QuestTitle`, `m_objectiveTitle`, `m_trackingIcon`, and `m_trackingFrame`. It never injects a foreign child into `m_ObjectiveContainer`.
 
