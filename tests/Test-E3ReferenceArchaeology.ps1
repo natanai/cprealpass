@@ -76,6 +76,9 @@ Check (@($scannerPatch.excludedResources.sha256 | Where-Object { $_ -match '^[0-
 Check (@($record.opaqueAreas).Count -ge 1) 'W18.1 record must represent incomplete archive internals as opaque rather than inventing them.'
 Check (-not (@($record.opaqueAreas.pathIdentity) -contains 'Project E3 dependency package/readme metadata')) 'W18.1 left dependency metadata opaque after the public Project E3 2.31 distribution cross-check.'
 Check ($archaeology.Contains('config/patches/realpass-modern-scanner.json')) 'W18.1 archaeology doc does not point to the exact 34-resource scanner exclusion evidence.'
+foreach ($publishedSurface in @('Action buttons','Wanted stars','Vehicle ammo counter','Quest / area / message / contact / item / level-up / warning / vehicle / radio notifications','Hacking minigame','Speedometer','archive-only coverage gate')) {
+    Check ($archaeology.Contains($publishedSurface)) "W18.1 lost published Project E3 surface coverage: $publishedSurface"
+}
 
 # The architecture conclusion is intentionally not "copy Project E3". Preserve the
 # narrower native-content seams that attended evidence already proved useful.

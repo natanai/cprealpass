@@ -77,6 +77,35 @@ The predecessor private ZIP does not by itself expose a complete decoded 370-res
 
 No Project E3 evidence establishes a need for Biology to add ArchiveXL, Codeware, CET or RED4ext.
 
+## Published Project E3 surface coverage ledger
+
+The public 2.31.p2 distribution/changelog is a useful completeness check because several visual families are implemented primarily through archive resources and therefore do not appear as dedicated files in `config/realpass-e3.json`. This ledger prevents those surfaces from disappearing from future archaeology simply because no standalone REDscript file exists.
+
+| Published Project E3 surface | W18.1 disposition before private archive inventory |
+| --- | --- |
+| Compass | **Mapped** — custom Project E3 compass is archive/script-backed; Biology currently preserves native persistent minimap/navigation instead of resurrecting it. |
+| Nameplates | **Mapped** — archive + redscript + TweakXL; Biology keeps narrower native identity/projection authority. |
+| Health / RAM / stamina | **Partially mapped** — Project E3 health/RAM archive/script behavior is understood; Biology owns lower-left body presentation and no-healthbar policy. Stamina-specific archive contribution awaits #105 inventory and is not guessed. |
+| Holocall / waveform | **Mapped at controller level** — Biology keeps native phone/waveform behavior. Archive-only presentation details await #105. |
+| Quest list | **Mapped** — authored optional subtree + replaced tracker logic; Biology preserves W03.6 native title/objective-row seam. |
+| World mappin widget / minimap mappins | **Mapped at script/TweakXL level** — Biology keeps current native mappin authority; archive widget ancestry awaits #105. |
+| Input hints / D-pad | **Mapped for current Biology seam** — W03.6 `m_dpadHintsPanel`; any other authored input-icon resources await #105. |
+| Action buttons | **Archive-only coverage gate** — no Biology takeover is justified until #105 identifies the exact resource/controller relationship. |
+| Wanted stars | **Archive-only coverage gate** — retain native/current behavior unless archive evidence plus product need proves a Biology seam is necessary. |
+| Minimap | **Mapped** — native `MinimapContainerController` remains authority; Project E3 archive/style contribution is material but not copied. |
+| On-foot ammo counter | **Mapped** — preserve W03.5 lower-right native weapon binding. |
+| Vehicle ammo counter | **Archive-only coverage gate** — do not infer it is covered by the on-foot seam; #105 must identify the relevant resource family first. |
+| Pistol / shotgun / smart crosshairs | **Partially mapped** — current generic/crosshair-state lifecycle is preserved and old Biology artifact removed; Project E3 weapon-specific archive resources await #105. |
+| Quest / area / message / contact / item / level-up / warning / vehicle / radio notifications | **Archive-only coverage gate** — activity log is separately mapped, but this notification family must not be silently treated as the same surface. |
+| Dialog / interaction widgets | **Mapped at controller/TweakXL level** — native behavior remains authority; authored child ancestry awaits #105. |
+| Scanner HUD / scan details | **Hard preserve: native/current** — exact 34 Project E3 scanner-family overrides are known and intentionally absent from Biology. |
+| Phone / vehicle / radio / radial / metro menus | **Archive-only coverage gate / native preserve** — outside the accepted ordinary-HUD redesign unless future evidence/product scope says otherwise. |
+| Hacking minigame | **Native preserve** — no Biology presentation ownership is justified by #40. Archive resource identity still belongs in the #105 inventory for completeness. |
+| Speedometer | **Native preserve / archive-only coverage gate** — Project E3 2.31.p2 advertises an E3 speedometer, but Biology has no justified seam yet. |
+| Warning/progress/damage/loot/boss-health presentation and HUD decorators | **Archive-only coverage gate** — Project E3 2.31.p2 advertises these as new/remade content; Biology must not accidentally import boss HP or old damage/scanner semantics contrary to its own product rules. |
+
+An **archive-only coverage gate** is not a promise to reproduce that Project E3 surface. It means W18.1 has positively accounted for it and refuses to decide its current-2.31 native seam from screenshots or filenames alone. The #105 inventory closes the implementation/resource side; Biology then chooses either an evidence-backed narrow seam or an explicit native-preserve decision.
+
 ## Subsystem reconciliation
 
 ### Quest tracker
