@@ -47,9 +47,6 @@ public class TransactionSystem {
         return true;
     }
 }
-public static class CRBiologySessionAuthority {
-    public static CRFieldCareActionRuntime FieldCare(GameInstance game) { return CRFieldCareActionRuntime.Get(); }
-}
 public static class CareCallbackFixture {
     public static int nestedResult = -1;
     public static void ChangeBody(PlayerPuppet player, CRInjuryState state) {

@@ -30,6 +30,7 @@ public class CRPainRuntime extends ScriptableSystem {
     let bodyRuntime: ref<CRBodyRuntime>;
     let body: ref<CRBodyState>;
     let delta: Float;
+    this.EnsureState();
     bodyRuntime = CRBiologySessionAuthority.Body(this.GetGameInstance());
     if !IsDefined(bodyRuntime) || !bodyRuntime.OwnsNeeds() {
       return null;
@@ -38,7 +39,6 @@ public class CRPainRuntime extends ScriptableSystem {
     if !IsDefined(body) || !body.initialized {
       return null;
     }
-    this.EnsureState();
     if !this.bodyClockAnchored || body.elapsedHours < this.lastBodyHours {
       this.lastBodyHours = body.elapsedHours;
       this.bodyClockAnchored = true;

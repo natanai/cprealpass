@@ -17,7 +17,6 @@ $generated=Join-Path $project ('staging/native-wound-test-'+[guid]::NewGuid().To
 [IO.File]::WriteAllText($generated,($classes -join "`n"))
 $paths=@('NPCBodyModel','ArmorWearModel','ImpactModel','HitModel','WoundModel','InjuryModel','BodyModel','SleepModel','BodyInputs','FieldCareModel')|ForEach-Object{Join-Path $project "src/redscript/CyberpunkRealism/$_.reds"}
 $code=Convert-RedscriptCore ($paths+@($generated))
-$code=$code.Replace('CRBiologySessionAuthority.Body(npc.GetGame())','CRBodyRuntime.Get()').Replace('CRBiologySessionAuthority.Body(hit.target.GetGame())','CRBodyRuntime.Get()').Replace('CRBiologySessionAuthority.InjuryEffects(npc.GetGame())','CRInjuryEffectsRuntime.Get()').Replace('CRBiologySessionAuthority.Provenance(hit.target.GetGame())','CRInjuryProvenanceRuntime.Get()')
 $code=$code.Replace('array emptyLosses<SDamageDealt>;','SDamageDealt[] emptyLosses = new SDamageDealt[0];').Replace('Cast<StatsObjectID>','').Replace('NotEquals(','NativeWoundFixture.NotEquals(').Replace('String','string')
 $code=[regex]::Replace($code,'\bEntityID\b','string')
 Add-Type -TypeDefinition ($code+(Get-Content -Raw "$PSScriptRoot/fixtures/NativeWounds.cs"))

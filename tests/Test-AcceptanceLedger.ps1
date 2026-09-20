@@ -49,15 +49,14 @@ if ($ids['official-source-first-investigation-policy'].status -ne 'passed') { th
 if ($ids['redmod-package-recognition-and-deployment'].status -ne 'passed') { throw 'Already-observed Biology REDmod recognition/deployment was regressed to an open gate.' }
 if (($ids['redmod-package-recognition-and-deployment'].evidence -join ' ') -notmatch '8cf04566-redmod-deploy-preflight') { throw 'Accepted REDmod gate is not tied to attended deployment evidence.' }
 
-# Native observations remain separate from repaired source/local release gates.
+# Current attended failures remain open even when worker source/CI is ready.
 foreach ($id in @('biology-native-shell-and-drilldown','body-runtime-authority','owned-nameplate-presentation','e3-independent-standalone-presentation')) {
     if ($ids[$id].status -eq 'passed') { throw "$id cannot pass before a new integrated attended build accepts it." }
 }
-foreach ($id in @('biology-native-shell-and-drilldown','body-runtime-authority','owned-nameplate-presentation','e3-independent-standalone-presentation')) {
-    if ($ids[$id].remaining -notmatch 'LIVE-ONLY' -or ($ids[$id].evidence -join ' ') -notmatch 'AUTONOMOUS-COMPLETION') { throw "$id lost the current repair/evidence boundary." }
-}
-if ($ids['body-runtime-authority'].remaining -notmatch 'BODY RUNTIME SYSTEM MISSING' -or $ids['body-runtime-authority'].remaining -notmatch 'source repairs') { throw 'Body authority must distinguish its historical failure from current repaired source.' }
-if ($ids['owned-nameplate-presentation'].remaining -notmatch '(?i)civilian|scanner' -or $ids['e3-independent-standalone-presentation'].remaining -notmatch 'E3 ON/OFF') { throw 'Native presentation observations lost their scope.' }
+if ($ids['biology-native-shell-and-drilldown'].remaining -notmatch 'PR #43' -or $ids['biology-native-shell-and-drilldown'].remaining -notmatch '(?i)attend') { throw 'Biology shell gate lost the current #39/PR #43 attended boundary.' }
+if ($ids['body-runtime-authority'].remaining -notmatch 'PR #47' -or $ids['body-runtime-authority'].remaining -notmatch 'BODY RUNTIME SYSTEM MISSING') { throw 'Body runtime gate lost the live failure/current worker evidence.' }
+if ($ids['owned-nameplate-presentation'].remaining -notmatch 'PR #46' -or $ids['owned-nameplate-presentation'].remaining -notmatch '(?i)civilian') { throw 'Nameplate gate lost the current ambient-nameplate failure/follow-up.' }
+if ($ids['e3-independent-standalone-presentation'].remaining -notmatch 'PR #46' -or $ids['e3-independent-standalone-presentation'].remaining -notmatch '(?i)E3 ON/OFF') { throw 'E3 HUD gate lost current attended acceptance criteria.' }
 
 if ($ids['modern-scanner-native-acceptance'].status -eq 'pending') { throw 'Attended evidence already demonstrated the modern scanner composition; gate should be partial pending regression confirmation.' }
 if ($ids['modern-scanner-native-acceptance'].remaining -notmatch '(?i)reconfirm') { throw 'Scanner gate does not preserve the current positive attended evidence plus regression requirement.' }
@@ -81,11 +80,11 @@ foreach ($name in @('TweakXL','Codeware','Input Loader')) {
     if ($dependency.remaining -notmatch [regex]::Escape($name)) { throw "Dependency audit gate lost explicit exclusion: $name" }
 }
 
-if ($ids['one-download-playable-package'].status -notin @('passed','partial','pending','blocked')) { throw 'Invalid local package completion status.' }
+if ($ids['one-download-playable-package'].status -notin @('partial','pending','blocked')) { throw 'One-download public package cannot pass while release gates remain.' }
 if ($ids['one-download-playable-package'].remaining -notmatch '(?i)runtime/UI/presentation/disable/uninstall') { throw 'Player package gate no longer names the actual remaining release blockers.' }
 
-if ($ids['launcher-off-vanilla-play'].status -notin @('partial','pending') -or $ids['launcher-off-vanilla-play'].remaining -notmatch 'Enable mods OFF') { throw 'Launcher-off native gameplay must remain unclaimed without native observation.' }
-if ($ids['self-contained-hard-uninstall'].status -ne 'passed' -or $ids['self-contained-hard-uninstall'].remaining -notmatch 'Uninstall Biology\.exe' -or ($ids['self-contained-hard-uninstall'].evidence -join ' ') -notmatch 'AUTONOMOUS-COMPLETION') { throw 'Hard uninstall must be bound to the actual shipped-binary lifecycle evidence.' }
+if ($ids['launcher-off-vanilla-play'].status -ne 'pending' -or $ids['launcher-off-vanilla-play'].remaining -notmatch 'Enable mods OFF') { throw 'Launcher-off vanilla-play gate is missing or prematurely accepted.' }
+if ($ids['self-contained-hard-uninstall'].status -ne 'pending' -or $ids['self-contained-hard-uninstall'].remaining -notmatch 'Uninstall Biology\.exe') { throw 'Self-contained hard-uninstall gate is missing or prematurely accepted.' }
 if ($ids['save-reload-upgrade-uninstall'].remaining -notmatch '(?i)Steam reinstall is exceptional') { throw 'Acceptance ledger regressed to routine Steam reinstall as Biology removal.' }
 
 # Retired active-looking evidence paths must not return to the current ledger.
@@ -95,8 +94,8 @@ foreach ($stale in @('REALISM-SPEC.md','tools/Finalize-PlayerPackage.ps1','docs/
 }
 
 $distribution = Get-Content -Raw -LiteralPath (Join-Path $project 'manifest/distribution.json') | ConvertFrom-Json
-if ($ids['one-download-playable-package'].status -eq 'passed' -and $distribution.releaseGate.localReleaseReady -ne $true) {
-    throw 'Acceptance ledger conflicts with the local release gate.'
+if ($distribution.releaseGate.publicPlayableArtifactReady -eq $false -and $ids['one-download-playable-package'].status -eq 'passed') {
+    throw 'Acceptance ledger conflicts with distribution release gate.'
 }
 
 $summary = $gates | Group-Object status | Sort-Object Name | ForEach-Object { "$($_.Name)=$($_.Count)" }

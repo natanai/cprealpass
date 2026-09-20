@@ -14,12 +14,6 @@ module CyberpunkRealism.Presentation
 import CyberpunkRealism.Settings.*
 
 @addField(NameplateVisualsLogicController)
-public let crBiologyE3ScannerActive: Bool;
-
-@addField(NameplateVisualsLogicController)
-private let crBiologyE3PreferenceActive: Bool;
-
-@addField(NameplateVisualsLogicController)
 private let crBiologyE3LastPuppet: wref<GameObject>;
 
 @addField(NameplateVisualsLogicController)
@@ -53,38 +47,7 @@ private let crBiologyE3LoggedProjection: Bool;
 private final func CRBiologyE3ShouldShowAmbientName(puppet: wref<GameObject>, data: NPCNextToTheCrosshair) -> Bool {
   return IsDefined(puppet)
     && CRRealpassSettings.UseE3FirstPersonHudVisuals(puppet.GetGame())
-    && this.CRPublicAmbientNameAllowed(puppet)
     && IsStringValid(this.CRResolveBiologyAmbientName(puppet, data));
-}
-
-@addMethod(NameplateVisualsLogicController)
-public final func CRSyncBiologyE3IdentityOwner(scanning: Bool, enabled: Bool) -> Void {
-  if Equals(scanning, this.crBiologyE3ScannerActive) && Equals(enabled, this.crBiologyE3PreferenceActive) {
-    return;
-  }
-  this.crBiologyE3ScannerActive = scanning;
-  this.crBiologyE3PreferenceActive = enabled;
-  if IsDefined(this.crBiologyE3LastPuppet) {
-    // Re-run native identity/visibility using only its own unchanged data. This
-    // clears an ambient fallback immediately on scanner entry or preference OFF.
-    this.SetVisualData(this.crBiologyE3LastPuppet, this.crBiologyE3LastData);
-  }
-}
-
-@addMethod(NameplateVisualsLogicController)
-private final func CRRestoreBiologyE3NameplateStyle() -> Void {
-  let name: ref<inkWidget> = inkWidgetRef.Get(this.m_nameTextMain);
-  let frame: ref<inkWidget> = inkWidgetRef.Get(this.m_nameFrame);
-  if IsDefined(name) && this.crBiologyE3HasNativeNameTint {
-    name.SetTintColor(this.crBiologyE3NativeNameTint);
-  }
-  if IsDefined(frame) && this.crBiologyE3HasNativeFrameStyle {
-    frame.SetTintColor(this.crBiologyE3NativeFrameTint);
-    frame.SetOpacity(this.crBiologyE3NativeFrameOpacity);
-    frame.SetVisible(this.crBiologyE3NativeFrameVisible);
-  }
-  this.crBiologyE3HasNativeNameTint = false;
-  this.crBiologyE3HasNativeFrameStyle = false;
 }
 
 @addMethod(NameplateVisualsLogicController)
@@ -107,19 +70,30 @@ private final func CRCaptureBiologyE3NativeNameplateStyle() -> Void {
 
 @addMethod(NameplateVisualsLogicController)
 private final func CRRefreshBiologyE3Nameplate(puppet: wref<GameObject>, data: NPCNextToTheCrosshair) -> Void {
+  let e3Enabled: Bool = IsDefined(puppet) && CRRealpassSettings.UseE3FirstPersonHudVisuals(puppet.GetGame());
   let name: String = this.CRResolveBiologyAmbientName(puppet, data);
-  let showName: Bool = this.CRBiologyE3ShouldShowAmbientName(puppet, data);
+  let showName: Bool = e3Enabled && IsStringValid(name);
   let nativeNameText: ref<inkText> = inkWidgetRef.Get(this.m_nameTextMain) as inkText;
   let nativeNameFrame: ref<inkWidget> = inkWidgetRef.Get(this.m_nameFrame);
 
-  if !showName {
+  this.CRCaptureBiologyE3NativeNameplateStyle();
+
+  if !e3Enabled {
+    if IsDefined(nativeNameText) && this.crBiologyE3HasNativeNameTint {
+      nativeNameText.SetTintColor(this.crBiologyE3NativeNameTint);
+    }
+    if IsDefined(nativeNameFrame) && this.crBiologyE3HasNativeFrameStyle {
+      nativeNameFrame.SetTintColor(this.crBiologyE3NativeFrameTint);
+      nativeNameFrame.SetOpacity(this.crBiologyE3NativeFrameOpacity);
+      nativeNameFrame.SetVisible(this.crBiologyE3NativeFrameVisible);
+    }
     return;
   }
-  this.CRCaptureBiologyE3NativeNameplateStyle();
 
   if showName && IsDefined(nativeNameText) {
     nativeNameText.SetText(name);
     nativeNameText.SetLetterCase(textLetterCase.UpperCase);
+    nativeNameText.SetFontStyle(n"Medium");
     nativeNameText.SetTintColor(CRBiologyE3Primitives.Red());
     nativeNameText.SetVisible(true);
   }
@@ -137,7 +111,6 @@ public final func SetVisualData(puppet: ref<GameObject>, const incomingData: scr
 
   this.crBiologyE3LastPuppet = puppet;
   this.crBiologyE3LastData = data;
-  this.CRRestoreBiologyE3NameplateStyle();
 
   if !this.crBiologyE3LoggedVisualData {
     CRBiologyE3Primitives.Trace("NameplateVisualsLogicController.SetVisualData");
@@ -153,7 +126,6 @@ public final func SetVisualData(puppet: ref<GameObject>, const incomingData: scr
 @wrapMethod(NameplateVisualsLogicController)
 private func SetElementVisibility(const incomingData: script_ref<NPCNextToTheCrosshair>) -> Void {
   this.crBiologyE3LastData = Deref(incomingData);
-  this.CRRestoreBiologyE3NameplateStyle();
   wrappedMethod(incomingData);
   this.CRRefreshBiologyE3Nameplate(this.crBiologyE3LastPuppet, this.crBiologyE3LastData);
 }
@@ -187,9 +159,6 @@ protected cb func OnInitialize() -> Bool {
 
 @wrapMethod(NpcNameplateGameController)
 protected cb func OnScreenProjectionUpdate(projections: ref<gameuiScreenProjectionsData>) -> Void {
-  if IsDefined(this.m_visualController) {
-    this.m_visualController.CRSyncBiologyE3IdentityOwner(this.m_isScanning, CRRealpassSettings.UseE3FirstPersonHudVisuals(GetGameInstance()));
-  }
   this.CRRefreshBiologyE3NameplateRange();
   wrappedMethod(projections);
 
@@ -198,7 +167,7 @@ protected cb func OnScreenProjectionUpdate(projections: ref<gameuiScreenProjecti
     this.crBiologyE3LoggedProjection = true;
   }
 
-  if this.m_isScanning || !CRRealpassSettings.UseE3FirstPersonHudVisuals(GetGameInstance()) {
+  if !CRRealpassSettings.UseE3FirstPersonHudVisuals(GetGameInstance()) {
     return;
   }
 
@@ -207,13 +176,4 @@ protected cb func OnScreenProjectionUpdate(projections: ref<gameuiScreenProjecti
       inkWidgetRef.SetVisible(this.m_displayName, true);
     }
   }
-}
-
-@wrapMethod(NpcNameplateGameController)
-protected cb func OnIsEnabledChange(val: Int32) -> Bool {
-  let result: Bool = wrappedMethod(val);
-  if IsDefined(this.m_visualController) {
-    this.m_visualController.CRSyncBiologyE3IdentityOwner(this.m_isScanning, CRRealpassSettings.UseE3FirstPersonHudVisuals(GetGameInstance()));
-  }
-  return result;
 }

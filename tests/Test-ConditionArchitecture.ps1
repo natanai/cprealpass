@@ -64,7 +64,7 @@ Check ($biologyActions.Contains('ItemActionsHelper.GetDrinkAction') -and $biolog
 Check ($biologyActions.Contains('ItemActionsHelper.GetConsumeAction') -and $biologyActions.Contains('ItemActionsHelper.ConsumeItem')) 'Biology lost stock generic Consume fallback.'
 Check ($biologyActions.Contains('GetLocalizedItemNameByCName(record.DisplayName())')) 'Biology item picker does not use stock item-name localization.'
 Check (-not $biologyActions.Contains('RemoveItem(') -and -not $biologyActions.Contains('CRBodyRuntime.Get().Consume(')) 'Biology bypasses native item transaction/consumption adapter.'
-Check ($biologyActions.Contains('CRBiologySessionAuthority.Body(player.GetGame())') -and $biologyActions.Contains('runtime.UseFieldCare')) 'Biology does not initiate shared field care from its native player session.'
+Check ($biologyActions.Contains('CRBodyRuntime.Get().UseFieldCare')) 'Biology does not initiate shared field-care runtime actions.'
 Check ($biologyActions.Contains('CRProfessionalCareRuntime.Complete')) 'Biology has no professional-care completion path.'
 Check ($biologyActions.Contains('CyberwareScreenType.Ripperdoc')) 'Professional Biology care is not constrained to ripperdoc context.'
 Check (-not $biologyActions.Contains('SetStatPoolValue') -and -not $biologyActions.Contains('ApplyDamage') -and -not $biologyActions.Contains('CRInjuryModel.Treat(')) 'Biology action UI became a simulation/damage authority.'
@@ -79,8 +79,8 @@ Check ($provenance.Contains('private persistent let recent: array<ref<CRInjuryPr
 Check ($provenance.Contains('while ArraySize(this.recent) > 16')) 'Provenance history has no hard bound.'
 Check ($provenance.Contains('ArrayErase(this.recent, i)') -and $provenance.Contains('ArrayErase(this.recent, 0)')) 'Provenance pruning is not using REDscript array helpers.'
 Check (-not $provenance.Contains('CRInjuryModel.Wound(') -and -not $provenance.Contains('CRInjuryModel.Treat(')) 'Provenance became a second injury/treatment authority.'
-$commitIndex = $wounds.IndexOf('plan.committed = runtime.RecordInjury')
-$recordIndex = $wounds.IndexOf('provenance.Record(sample, wound)')
+$commitIndex = $wounds.IndexOf('plan.committed = CRBodyRuntime.Get().RecordInjury')
+$recordIndex = $wounds.IndexOf('CRInjuryProvenanceRuntime.Get().Record(sample, wound)')
 Check ($commitIndex -ge 0 -and $recordIndex -gt $commitIndex -and $wounds.Contains('if plan.committed')) 'Provenance is not recorded only after authoritative wound commit.'
 
 # Condition projection remains qualitative and model-derived.
@@ -97,7 +97,7 @@ Check ($professional.Contains('kind != 4 && kind != 5')) 'Professional care acce
 Check ($professional.Contains('ClinicalCanHelp') -and $professional.Contains('MechanicalCanHelp')) 'Professional biological/mechanical eligibility is not separated.'
 Check ($professional.Contains('r.cyberwareDamage > 0.0')) 'Mechanical care does not key off chrome damage.'
 Check (-not $professional.Contains('CRInjuryModel.Treat(')) 'Professional-care eligibility mutates authoritative injury state.'
-Check ($professionalRuntime.Contains('public class CRProfessionalCareRuntime') -and $professionalRuntime.Contains('CRBiologySessionAuthority.Body(game)')) 'Professional care has no explicit Biology session boundary.'
+Check ($professionalRuntime.Contains('public class CRProfessionalCareRuntime') -and $professionalRuntime.Contains('CRBodyRuntime.Get()')) 'Professional care has no explicit Biology runtime boundary.'
 Check ($professionalRuntime.Contains('CRProfessionalCareModel.CanHelp')) 'Professional runtime does not revalidate current condition before commit.'
 Check ($professionalRuntime.Contains('.CompleteTreatment(region, kind, 1.0)')) 'Professional runtime does not enter shared ordered treatment authority.'
 Check (-not $fieldCare.Contains('DarkFuture.')) 'Field-care runtime still depends on Dark Future.'

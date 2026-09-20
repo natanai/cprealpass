@@ -49,14 +49,7 @@ public class ScriptedPuppet : GameObject {
     public bool IsDead() { return dead; }
     public bool IsAttached() { return attached; }
     public bool IsReplacer() { return replacer; }
-    public bool IsPlayer() { return this is PlayerPuppet; }
     public static bool IsDefeated(ScriptedPuppet actor) { return actor.defeated; }
-}
-// Player lifecycle itself is translated and exercised by
-// Test-PlayerLifecycleAndPreferences; this fixture isolates modifier ownership.
-public class PlayerPuppet : ScriptedPuppet { public bool lifecycleAllowed = true; }
-public static class CRPlayerBodyLifecycle {
-    public static bool Allowed(PlayerPuppet player, bool allowMenu) { return player != null && player.lifecycleAllowed; }
 }
 public enum gamedataNPCType { Human, Android }
 public class NPCPuppet : ScriptedPuppet {

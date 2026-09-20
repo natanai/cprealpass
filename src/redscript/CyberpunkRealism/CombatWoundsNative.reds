@@ -74,7 +74,6 @@ public class CRNPCInjuryBridge extends IScriptable {
     return CRNPCBodyModel.Advance(npc.crInjuryBody, config, hours, activity);
   }
   public static func CanAccept(npc: ref<NPCPuppet>) -> Bool {
-    let runtime: ref<CRBodyRuntime>;
     if !IsDefined(npc) || npc.IsReplacer() || NotEquals(npc.GetNPCType(), gamedataNPCType.Human) {
       return false;
     }
@@ -82,26 +81,19 @@ public class CRNPCInjuryBridge extends IScriptable {
       return !IsDefined(npc.crLocalizedInjuries) && !IsDefined(npc.crInjuryBody);
     }
     if npc.crInjurySchemaVersion == 2 {
-      runtime = CRBiologySessionAuthority.Body(npc.GetGame());
-      return IsDefined(runtime) && !IsDefined(npc.crLocalizedInjuries) && CRNPCBodyModel.Valid(npc.crInjuryBody, runtime.GetBodyConfig());
+      return !IsDefined(npc.crLocalizedInjuries) && CRNPCBodyModel.Valid(npc.crInjuryBody, CRBodyRuntime.Get().GetBodyConfig());
     }
     return npc.crInjurySchemaVersion == 1 && !IsDefined(npc.crInjuryBody) && IsDefined(npc.crLocalizedInjuries) && CRInjuryModel.ValidState(npc.crLocalizedInjuries);
   }
 
   public static func Commit(npc: ref<NPCPuppet>, wound: ref<CRImpactWound>) -> Bool {
     let injuries: ref<CRInjuryState>;
-    let runtime: ref<CRBodyRuntime>;
-    let effects: ref<CRInjuryEffectsRuntime>;
     if !CRNPCInjuryBridge.CanAccept(npc) || !CRWoundModel.HasInjury(wound) {
       return false;
     }
     // Settle the accepted shared interval before adding a newly received wound.
-    runtime = CRBiologySessionAuthority.Body(npc.GetGame());
-    if !IsDefined(runtime) {
-      return false;
-    }
-    runtime.Observe();
-    if !CRNPCInjuryBridge.EnsureBody(npc, runtime.GetBodyConfig()) || !CRNPCBodyModel.BeforeEvent(npc.crInjuryBody, runtime.GetBodyConfig()) {
+    CRBodyRuntime.Get().Observe();
+    if !CRNPCInjuryBridge.EnsureBody(npc, CRBodyRuntime.Get().GetBodyConfig()) || !CRNPCBodyModel.BeforeEvent(npc.crInjuryBody, CRBodyRuntime.Get().GetBodyConfig()) {
       return false;
     }
     injuries = npc.crInjuryBody.injuries;
@@ -109,9 +101,8 @@ public class CRNPCInjuryBridge extends IScriptable {
       return false;
     }
 
-    effects = CRBiologySessionAuthority.InjuryEffects(npc.GetGame());
-    if IsDefined(effects) && effects.Register(npc) {
-      runtime.RefreshInjuryEffects();
+    if CRInjuryEffectsRuntime.Get().Register(npc) {
+      CRBodyRuntime.Get().RefreshInjuryEffects();
     }
     return true;
   }
@@ -144,10 +135,7 @@ public class CRNativeWoundBridge extends IScriptable {
     if !CRCombatRuntimePolicy.Enabled() || !IsDefined(hit) || hit.projectionPipeline || hit.crWoundPrepared {
       return;
     }
-    if !IsDefined(hit.target) {
-      return;
-    }
-    runtime = CRBiologySessionAuthority.Body(hit.target.GetGame());
+    runtime = CRBodyRuntime.Get();
     if !IsDefined(runtime) {
       return;
     }
@@ -234,14 +222,10 @@ public class CRNativeWoundBridge extends IScriptable {
     let wound: ref<CRImpactWound>;
     let plan: ref<CRNativeWoundPlan>;
     let runtime: ref<CRBodyRuntime>;
-    let provenance: ref<CRInjuryProvenanceRuntime>;
     if !CRCombatRuntimePolicy.Enabled() || !IsDefined(hit) || hit.projectionPipeline || !IsDefined(sample) {
       return false;
     }
-    if !IsDefined(hit.target) || !IsDefined(hit.attackComputed) {
-      return false;
-    }
-    runtime = CRBiologySessionAuthority.Body(hit.target.GetGame());
+    runtime = CRBodyRuntime.Get();
     if !IsDefined(runtime) {
       return false;
     }
@@ -274,14 +258,11 @@ public class CRNativeWoundBridge extends IScriptable {
     }
     if sample.targetIsPlayer {
       CRNativeWoundBridge.Diagnose(runtime, "commit-ready", sample, sample.nativePhysicalHealthDamage);
-      plan.committed = runtime.RecordInjury(wound.region, wound.tissueDamage, wound.boneDamage, wound.cyberwareDamage, wound.externalBleedMlPerHour, wound.internalBleedMlPerHour);
+      plan.committed = CRBodyRuntime.Get().RecordInjury(wound.region, wound.tissueDamage, wound.boneDamage, wound.cyberwareDamage, wound.externalBleedMlPerHour, wound.internalBleedMlPerHour);
       if plan.committed {
         // Provenance is explanatory metadata only. A metadata failure must never
         // roll back or veto an already accepted physical wound.
-        provenance = CRBiologySessionAuthority.Provenance(hit.target.GetGame());
-        if IsDefined(provenance) {
-          provenance.Record(sample, wound);
-        }
+        CRInjuryProvenanceRuntime.Get().Record(sample, wound);
       }
     } else {
       plan.committed = CRNPCInjuryBridge.Commit(hit.target as NPCPuppet, wound);

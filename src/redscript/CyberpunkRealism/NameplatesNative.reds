@@ -20,8 +20,7 @@ public final func CRPublicAmbientNameAllowed(puppet: wref<GameObject>) -> Bool {
   if !IsDefined(puppet) || !CRRealpassSettings.UseE3FirstPersonHudVisuals(puppet.GetGame()) {
     return false;
   }
-  if !IsDefined(npc) || !npc.IsAttached() || this.IsQuestTarget()
-    || this.m_forceHide || !this.m_npcNamesEnabled || this.crBiologyE3ScannerActive {
+  if !IsDefined(npc) || !npc.IsAttached() || this.IsQuestTarget() {
     return false;
   }
   if npc.GetBoolFromCharacterTweak("hide_nametag") || !IsDefined(npc.GetBlackboard()) || npc.GetBlackboard().GetBool(GetAllBlackboardDefs().Puppet.HideNameplate) {
