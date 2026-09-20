@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 2,
+  "profiles": {
+    "m1-base": [
+      "redscript",
+      "cybercmd"
+    ],
+    "biology-runtime": [
+      "redscript",
+      "cybercmd"
+    ]
+  }
+}

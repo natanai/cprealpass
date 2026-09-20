@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 5,
+  "product": "realpass",
+  "playerFacingProduct": "Biology",
+  "surface": {
+    "provider": "biology-owned-body-shell",
+    "providerRole": "self-contained-preference-editor",
+    "semanticOwner": "biology",
+    "purpose": "one save-persistent presentation-only preference edited from the Biology body shell",
+    "publicGameplaySettings": false,
+    "publicBalanceSettings": false,
+    "publicMasterEnable": false,
+    "publicPresentationPreferences": true,
+    "persistenceOwner": "cyberpunk-save-scriptable-system",
+    "persistenceScope": "per-save",
+    "activationOwner": "redlauncher-redmod-sentinel",
+    "notes": "REDlauncher Enable mods is the sole public whole-Biology activation boundary. The remaining E3 HUD/nameplate Boolean is persisted directly by Biology's ScriptableSystem in the game save and edited from Biology's existing body shell; no external settings provider or pause-menu registration is used."
+  },
+  "featureLedger": [],
+  "releaseProfile": {
+    "body": true,
+    "injury": true,
+    "combat": true,
+    "armor": true,
+    "cyberwarePhysiology": true,
+    "presentation": true,
+    "diagnostics": false,
+    "traditionalActorHealthBarsFinalTarget": false,
+    "nativeModernScanner": true,
+    "e3InspiredFirstPersonHud": true,
+    "e3InspiredNpcNameplates": true
+  },
+  "developmentFeedbackFallback": {
+    "traditionalPlayerHealthBarsVisibleUntilReplacementAccepted": false,
+    "traditionalNpcHealthBarsVisibleUntilReplacementAccepted": false,
+    "rule": "Attended feedback explicitly accepted barless actor presentation for Biology-on play. The E3 preference does not own health-bar suppression. REDlauncher Enable mods OFF restores native HUD/nameplate behavior by making the Biology activation sentinel unavailable."
+  },
+  "publicControls": [
+    {
+      "id": "presentation.e3-first-person-hud-visuals",
+      "displayName": "E3-inspired HUD + nameplates",
+      "type": "bool",
+      "default": true,
+      "authority": "presentation-only",
+      "persistence": "Cyberpunk save via CRRealpassSettings persistent field",
+      "editor": "Biology body shell",
+      "description": "Toggles Biology's red E3-inspired first-person HUD and NPC-nameplate visual layer. The physical simulation, barless-health policy, and native modern scanner/quickhack interface remain unchanged."
+    }
+  ],
+  "developmentProfileKeys": [
+    "body",
+    "injury",
+    "combat",
+    "armor",
+    "cyberwarePhysiology",
+    "presentation",
+    "diagnostics"
+  ],
+  "developmentRules": [
+    "Development profile keys exist only to isolate authorities during compilation, calibration and attended diagnosis.",
+    "A release builder fixes gameplay/presentation authority keys to the release profile and diagnostics off.",
+    "Individual development authority gates are never persisted as normal player preferences.",
+    "REDlauncher Enable mods plus Biology's REDmod activation sentinel is the sole public whole-mod activation boundary.",
+    "The E3-inspired HUD preference may suppress only Biology-owned E3-specific visual skin/nameplate presentation; underlying physical state, the barless-health policy, and consequences continue unchanged while Biology remains enabled.",
+    "The E3 preference is persisted in Biology's ScriptableSystem save state and edited only through Biology-owned UI; no third-party settings provider may register a Biology menu row."
+  ],
+  "forbiddenPublicSettings": [
+    "biology.enabled",
+    "realpass.enabled",
+    "body.enabled",
+    "injury.enabled",
+    "combat.enabled",
+    "armor.enabled",
+    "cyberwarePhysiology.enabled",
+    "presentation.enabled",
+    "damage-scale",
+    "hunger-rate",
+    "hydration-rate",
+    "bleed-scale",
+    "pain-scale",
+    "armor-scale",
+    "maxdoc-dose-or-decay-scale",
+    "weather",
+    "economy",
+    "carry-weight-difficulty",
+    "fast-travel-restrictions",
+    "vehicle-summon-limits",
+    "random-sleep-encounters",
+    "humanity-or-cyberpsychosis",
+    "addictions",
+    "cosmetic-transmog-authority"
+  ],
+  "numericPublicBalanceControlsAllowed": false,
+  "binaryPreferenceRule": "The only normal in-game public preference is the E3-inspired presentation Boolean. Whole-Biology activation belongs to REDlauncher/REDmod; no physical authority, rate, damage, protection, injury, pain, treatment or recovery parameter is player-tunable."
+}

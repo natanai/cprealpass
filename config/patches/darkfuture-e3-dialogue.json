@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "id": "darkfuture-e3-dialogue-v1",
+  "component": "darkfuture",
+  "sourceVersion": "2.0-release",
+  "license": "CC-BY-SA-4.0",
+  "sourceUrl": "https://github.com/DarkFortuneTeller/DarkFuture/tree/2.0-release",
+  "description": "Guard optional humanity dialogue icons against missing or rearranged E3 widgets; remove from the actual compound owner, preserve horizontal layout requirements, and bound ancestor traversal without altering dialogue or humanity gameplay.",
+  "patches": [
+    {
+      "destination": "r6/scripts/Dark Future/Gameplay/DFInteractionSystem.reds",
+      "expectedSha256": "F47D074C2A674A8E42735461151B128B7CCCD09F02DBE2DBEB8CEBB42F5089E9",
+      "edits": [
+        {
+          "find": "\t\tlet parent: ref<inkHorizontalPanel> = this.m_TextFlex.GetParentWidget() as inkHorizontalPanel;\r\n\t\tparent.RemoveChild(this.m_humanityLossHolder);",
+          "replace": "\t\tlet parent: ref<inkCompoundWidget> = this.m_humanityLossHolder.GetParentWidget() as inkCompoundWidget;\r\n\t\tif IsDefined(parent) { parent.RemoveChild(this.m_humanityLossHolder); }",
+          "expectedOccurrences": 1
+        },
+        {
+          "find": "\tlet parent: ref<inkHorizontalPanel> = this.m_TextFlex.GetParentWidget() as inkHorizontalPanel;\r\n\tlet hubVert: ref<inkVerticalPanel> = parent.GetParentWidget().GetParentWidget().GetParentWidget().GetParentWidget() as inkVerticalPanel;",
+          "replace": "\tif IsDefined(this.m_humanityLossHolder) || !IsDefined(this.m_TextFlex) || !IsDefined(this.m_SelectedBg) || !IsDefined(currController) || !IsDefined(currentSecondaryController) { return; }\r\n\tlet parent: ref<inkHorizontalPanel> = this.m_TextFlex.GetParentWidget() as inkHorizontalPanel;\r\n\tif !IsDefined(parent) { return; }\r\n\tlet hubWidget: ref<inkWidget> = parent;\r\n\tlet depth: Int32 = 0;\r\n\twhile IsDefined(hubWidget) && depth < 4 {\r\n\t\thubWidget = hubWidget.GetParentWidget();\r\n\t\tdepth += 1;\r\n\t}\r\n\tlet hubVert: ref<inkVerticalPanel> = hubWidget as inkVerticalPanel;",
+          "expectedOccurrences": 1
+        },
+        {
+          "find": "if hubVert.GetNumChildren() > 2 ||",
+          "replace": "if (IsDefined(hubVert) && hubVert.GetNumChildren() > 2) ||",
+          "expectedOccurrences": 1
+        }
+      ]
+    }
+  ]
+}

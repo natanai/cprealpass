@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 3,
+  "product": "Biology",
+  "installModel": "game-root-shaped-redmod-first",
+  "gameRootEvidence": [
+    "bin/x64/Cyberpunk2077.exe",
+    "tools/redmod/bin/redMod.exe",
+    "archive/pc",
+    "r6"
+  ],
+  "playerFlow": {
+    "firstInstall": "close-game_then_extract-release-outside-game-root_then-run-collision-safe Install Biology.ps1_then_use-supported-redmod-enable-flow",
+    "normalLaunch": "Steam",
+    "permanentLauncher": false,
+    "vanillaPlay": "REDlauncher Enable mods OFF after launcher-off Biology-inactive behavior is accepted",
+    "update": "close-game_then_extract-new-release-outside-game-root_then_run-collision-safe Install Biology.ps1; preserve byte-identical shared global.ini/version.dll, fail closed before mutation on non-identical copies, allow replacement only of cybercmd.asi within standalone cybercmd",
+    "uninstall": "run self-contained Uninstall Biology.exe; remove only manifest-proven owned files and report changed/ambiguous files"
+  },
+  "releaseRootFiles": [
+    "Install Biology.ps1",
+    "BiologyReleaseInstall.Core.ps1",
+    "INSTALL.txt",
+    "UNINSTALL.txt",
+    "BIOLOGY-VERSION.txt",
+    "SHA256SUMS.txt",
+    "biology/build-manifest.json",
+    "biology/provenance.json",
+    "mods/Biology/info.json"
+  ],
+  "ownerManifest": {
+    "path": "biology/build-manifest.json",
+    "schemaVersion": 2,
+    "requiredFileProperties": ["path", "sha256", "owner", "component", "route", "replacePolicy"],
+    "biologyOwnerValue": "Biology",
+    "approvedDependencyOwnerPrefix": "upstream:",
+    "allowedReplacePolicies": ["biology-owned", "generic-dependency-shared"],
+    "rule": "Every ordinary runtime/package payload file installed by a Biology release must appear exactly once. No broad shared-root deletion is permitted during uninstall."
+  },
+  "installer": {
+    "entryScript": "Install Biology.ps1",
+    "coreScript": "BiologyReleaseInstall.Core.ps1",
+    "packageMustBeStagedOutsideGameRoot": true,
+    "preflightAllInventoriedHashesBeforeMutation": true,
+    "sharedStandaloneCybercmdPolicy": {
+      "bin/x64/global.ini": "create-if-absent_preserve-if-byte-identical_fail-closed-before-mutation-if-non-identical",
+      "bin/x64/version.dll": "create-if-absent_preserve-if-byte-identical_fail-closed-before-mutation-if-non-identical",
+      "bin/x64/plugins/cybercmd.asi": "create-preserve-or-replace"
+    },
+    "directZipMergeSupported": false
+  },
+  "uninstaller": {
+    "targetExecutable": "Uninstall Biology.exe",
+    "selfContained": true,
+    "requiresPowerShell": false,
+    "requiresRepositoryCheckout": false,
+    "gameMustBeClosed": true,
+    "deleteChangedFileByDefault": false,
+    "preserveSaves": true,
+    "preferencesLiveInSaves": true,
+    "removeOnlyEmptyOwnedDirectories": true,
+    "refreshRedmodStateAfterRemoval": true,
+    "preserveGenericDependencies": ["redscript", "cybercmd"]
+  },
+  "stateAndSaves": {
+    "saveDataIsNeverInArtifact": true,
+    "saveDataIsNeverDeletedByUninstaller": true,
+    "fileRemovalIsNotSaveRollback": true,
+    "settingsPreservedByDefault": true,
+    "destructiveStateResetByToggle": false,
+    "e3PreferencePersistence": "Biology ScriptableSystem persistent field in the Cyberpunk save"
+  },
+  "preflight": [
+    "game-must-be-closed-for-installer-or-uninstaller-writes",
+    "supported-game-version-must-match-release-metadata",
+    "artifact-sha256-and-file-manifest-must-verify",
+    "redscript-startup-task-runner-must-be-present-in-release",
+    "standalone-cybercmd-global-ini-and-version-dll-must-never-be-silently-overwritten",
+    "only-cybercmd-asi-may-be-replaced-within-standalone-cybercmd-payload",
+    "shared-loader-collision-must-fail-before-any-game-file-mutation",
+    "unknown-collision-must-fail-closed-for-assisted-updates",
+    "changed-owned-file-must-not-be-auto-deleted",
+    "blocked-component-must-not-be-present",
+    "retired-settings-stack-must-not-be-present"
+  ],
+  "runtimeRoots": [
+    "mods/Biology",
+    "r6/scripts",
+    "r6/tweaks",
+    "engine/tools",
+    "engine/config/base",
+    "r6/config/cybercmd",
+    "bin/x64",
+    "biology",
+    "LICENSES"
+  ],
+  "sharedRootsNeverRecursivelyOwned": [
+    "archive",
+    "bin",
+    "engine",
+    "mods",
+    "r6",
+    "red4ext"
+  ],
+  "notes": [
+    "runtimeRoots are allowed locations, not a claim that every final release uses every root",
+    "the player-facing package contains only roots actually required by that exact build",
+    "redscript and standalone cybercmd are the only retained generic runtime dependencies and are tracked per file; cybercmd only executes redscript's scc.toml startup compilation task",
+    "the supported player/parent install path stages the release outside the game root and runs the Biology collision-safe installer; blind ZIP merge is not supported while standalone cybercmd carries shared ASI-loader files",
+    "byte-identical existing global.ini/version.dll are accepted as compatible and preserved; a non-identical copy fails closed before mutation because compatibility cannot be proven; only cybercmd.asi is replaceable",
+    "the REDmod-owned Biology activation marker remains the sole whole-mod activation authority; redscript/cybercmd plumbing is non-authoritative",
+    "the public artifact never includes developer deployment receipts, reports, staging, saves, game executables, stock game archives or local ReferenceMods payload",
+    "full Steam reinstall is exceptional clean-room/recovery, not the normal Biology uninstall path"
+  ]
+}

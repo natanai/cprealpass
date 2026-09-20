@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "product": "Biology",
+  "evidenceId": "w11-transition-cleanup-20260915-224207-4df9bb80",
+  "operation": "legacy-framework-transition-cleanup",
+  "createdUtc": "2026-09-16T03:42:10.9099919Z",
+  "sourceRevision": "052888059bb2f1e75a64804494d302ced6b51e9f",
+  "result": "PASS",
+  "proofBoundary": "Attended W11.1 targeted transition cleanup: exact planned pre-W10 Mod Settings / ArchiveXL / RED4ext payload retired; redscript, shared roots, and legacy preference state preserved. Subsequent Biology build/deploy/gameplay acceptance remains separate.",
+  "game": {
+    "productVersion": "2.31"
+  },
+  "artifact": null,
+  "install": {
+    "gameMutationStarted": true
+  },
+  "recovery": {
+    "mode": "none",
+    "eligible": false
+  },
+  "cleanup": {
+    "artifactRootName": null,
+    "artifactZipName": null,
+    "packageRootName": null
+  },
+  "handoff": {
+    "bundleName": "repository-curated-w11-transition-cleanup",
+    "reportSha256": "F6822A5B7DB8CC95AAFA3551CC8057CDDA7A32DC781B07892828E0341DEED6FC"
+  },
+  "originalLocalReportSha256": "ABA0E1F5215614310C86F08665E2960324771855FA60ED65914838E27FD3011F",
+  "transitionPlanSha256": "B54A34ABF4A694BF49B03F530AD38A4E4D4828796E0EA993B65412F451B39FDE",
+  "retiredFileCount": 42,
+  "protectedRedscriptFilesReverified": 5,
+  "preservedLegacyPreferencePath": "red4ext/plugins/mod_settings/user.ini"
+}

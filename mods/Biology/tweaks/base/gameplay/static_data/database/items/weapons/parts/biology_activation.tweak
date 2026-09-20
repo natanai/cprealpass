@@ -1,0 +1,20 @@
+// Biology launcher activation sentinel.
+//
+// Cyberpunk/REDmod 2.31 defines IconicWeaponModAbilityBase in package Items.
+// The shipped base file declares `package Items` first and then defines the base
+// unqualified inside that package. Biology mirrors that same-package source shape
+// instead of using the standalone top-level `using Items` form rejected by the
+// attended REDmod 2.31 parser.
+//
+// The declaration is additive and intentionally inert: no gameplay record points
+// at BiologyLauncherActivationMarker. Loose Biology REDscript reads only the
+// inherited stackable flat as the non-persistent REDmod-owned launcher authority.
+// REDlauncher Enable mods OFF therefore makes
+// Items.BiologyLauncherActivationMarker.stackable resolve to the supplied default
+// false rather than allowing loose redscript/framework state to keep Biology active.
+package Items
+
+BiologyLauncherActivationMarker : IconicWeaponModAbilityBase
+{
+    stackable = true;
+}

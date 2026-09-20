@@ -1,0 +1,279 @@
+{
+  "schemaVersion": 2,
+  "product": "Biology",
+  "idCompatibilityNote": "Several stable feature ids retain the historical realpass prefix to avoid unnecessary identifier churn. The prefix is internal compatibility residue, not current product identity.",
+  "purpose": "Consolidation ledger for behavior once explored through source/reference mods and for project-original Biology feature families. Source/reference mods are inspiration/history only; no executing gameplay or presentation behavior from them is part of the Biology target. Biology starts from vanilla Cyberpunk identities and substitutes project-original mechanics only where the authored physical model requires it.",
+  "allowedDispositions": ["retain", "replace", "remove", "development-only"],
+  "features": [
+    {
+      "id": "darkfuture-basic-needs",
+      "source": "Dark Future 2.0",
+      "phenomenon": "hydration/nutrition/energy presentation and integration patterns",
+      "owner": "body",
+      "disposition": "replace",
+      "currentState": "replaced by the project-original shared body/runtime and direct vanilla consumable/time/lifecycle adapters",
+      "targetState": "Biology owns physiology, state, timing and native adapters; no source-mod runtime required"
+    },
+    {
+      "id": "darkfuture-needs-ui",
+      "source": "Dark Future 2.0",
+      "phenomenon": "contextual needs visibility ideas",
+      "owner": "presentation",
+      "disposition": "replace",
+      "currentState": "replaced by qualitative Biology presentation; Backpack body-dashboard injection retired",
+      "targetState": "Biology communicates player-knowable body state without permanent survival meters"
+    },
+    {
+      "id": "darkfuture-consumable-intake",
+      "source": "Dark Future 2.0",
+      "phenomenon": "food/drink events entering physiology",
+      "owner": "body",
+      "disposition": "replace",
+      "currentState": "Biology-owned BodyNativeHooks observes stock Cyberpunk consumable actions directly; Biology uses the same stock item transaction",
+      "targetState": "vanilla consumable identity/action -> thin Biology adapter -> ordered Biology body model"
+    },
+    {
+      "id": "darkfuture-legacy-injury-condition",
+      "source": "Dark Future 2.0",
+      "phenomenon": "generic HP-derived injury condition",
+      "owner": "injury",
+      "disposition": "replace",
+      "currentState": "replaced by regional Biology injury authority, bounded provenance and Biology condition presentation",
+      "targetState": "localized physical injury authority plus qualitative Biology condition detail"
+    },
+    {
+      "id": "darkfuture-item-renames",
+      "source": "Dark Future 2.0",
+      "phenomenon": "renaming/recasting vanilla medical items into different concepts",
+      "owner": null,
+      "disposition": "remove",
+      "currentState": "explicitly rejected by canonical goal G-004",
+      "targetState": "preserve vanilla MaxDoc, Bounce Back, Health Booster and other item identities; change mechanics underneath only when explicitly authored"
+    },
+    {
+      "id": "darkfuture-reduced-carry-weight",
+      "source": "Dark Future 2.0",
+      "phenomenon": "inventory difficulty",
+      "owner": null,
+      "disposition": "remove",
+      "currentState": "out of scope",
+      "targetState": "not present in Biology runtime"
+    },
+    {
+      "id": "darkfuture-stamina-recovery-penalty",
+      "source": "Dark Future 2.0",
+      "phenomenon": "generic difficulty penalty",
+      "owner": null,
+      "disposition": "remove",
+      "currentState": "out of scope",
+      "targetState": "exertion effects come only from Biology body/injury state"
+    },
+    {
+      "id": "darkfuture-stash-crafting-restriction",
+      "source": "Dark Future 2.0",
+      "phenomenon": "inventory/crafting restriction",
+      "owner": null,
+      "disposition": "remove",
+      "currentState": "out of scope",
+      "targetState": "vanilla authority"
+    },
+    {
+      "id": "darkfuture-stash-consumable-restriction",
+      "source": "Dark Future 2.0",
+      "phenomenon": "inventory restriction",
+      "owner": null,
+      "disposition": "remove",
+      "currentState": "out of scope",
+      "targetState": "vanilla authority"
+    },
+    {
+      "id": "darkfuture-fast-travel-restrictions",
+      "source": "Dark Future 2.0",
+      "phenomenon": "travel restriction",
+      "owner": null,
+      "disposition": "remove",
+      "currentState": "out of scope",
+      "targetState": "vanilla authority"
+    },
+    {
+      "id": "darkfuture-fast-travel-marker-hiding",
+      "source": "Dark Future 2.0",
+      "phenomenon": "travel UI restriction",
+      "owner": null,
+      "disposition": "remove",
+      "currentState": "out of scope",
+      "targetState": "vanilla authority"
+    },
+    {
+      "id": "darkfuture-vehicle-summon-limits",
+      "source": "Dark Future 2.0",
+      "phenomenon": "vehicle summon restriction/currency",
+      "owner": null,
+      "disposition": "remove",
+      "currentState": "out of scope",
+      "targetState": "vanilla authority"
+    },
+    {
+      "id": "darkfuture-sleep-random-encounters",
+      "source": "Dark Future 2.0",
+      "phenomenon": "added random encounter",
+      "owner": null,
+      "disposition": "remove",
+      "currentState": "out of scope",
+      "targetState": "not part of Biology"
+    },
+    {
+      "id": "darkfuture-nerve-fatality",
+      "source": "Dark Future 2.0",
+      "phenomenon": "arbitrary stress-meter death",
+      "owner": null,
+      "disposition": "remove",
+      "currentState": "out of scope",
+      "targetState": "not part of Biology"
+    },
+    {
+      "id": "darkfuture-humanity-cyberpsychosis",
+      "source": "Dark Future 2.0",
+      "phenomenon": "humanity/cyberpsychosis gameplay system",
+      "owner": null,
+      "disposition": "remove",
+      "currentState": "out of scope",
+      "targetState": "not part of Biology; cyberware scope is physical/physiological only"
+    },
+    {
+      "id": "darkfuture-addictions",
+      "source": "Dark Future 2.0",
+      "phenomenon": "alcohol/nicotine/narcotic addiction progression",
+      "owner": null,
+      "disposition": "remove",
+      "currentState": "out of scope",
+      "targetState": "not in current Biology scope"
+    },
+    {
+      "id": "darkfuture-economy-prices",
+      "source": "Dark Future 2.0",
+      "phenomenon": "consumable/ammunition economy",
+      "owner": null,
+      "disposition": "remove",
+      "currentState": "out of scope",
+      "targetState": "vanilla economy authority"
+    },
+    {
+      "id": "darkfuture-consumable-weight-rebalance",
+      "source": "Dark Future 2.0",
+      "phenomenon": "inventory/economy mass tuning",
+      "owner": null,
+      "disposition": "remove",
+      "currentState": "out of scope",
+      "targetState": "not part of current Biology scope"
+    },
+    {
+      "id": "source-mod-outfit-transmog-layer",
+      "source": "any upstream dependency",
+      "phenomenon": "separate outfit/transmog gameplay authority",
+      "owner": null,
+      "disposition": "remove",
+      "currentState": "explicitly prohibited as a parallel cosmetic/protection authority",
+      "targetState": "no source-mod transmog layer; visual equipment and armor/protection identity come from the physically equipped object"
+    },
+    {
+      "id": "realpass-physical-outfit-loadouts",
+      "source": "project-original",
+      "phenomenon": "vanilla Outfit convenience reinterpreted as physical equipment loadouts",
+      "owner": "armor",
+      "disposition": "retain",
+      "currentState": "PhysicalOutfits.reds wraps the vanilla wardrobe apply boundary, resolves recorded visuals to actual carried wearable objects, preflights missing/blocked slots, applies ordinary equipment transactions and clears cosmetic override authority; live validation pending",
+      "targetState": "vanilla Outfit UX equips the actual carried items used by Biology protection logic; no conjuring, remote stash teleport, substitution or parallel transmog authority"
+    },
+    {
+      "id": "e3-npc-nameplates",
+      "source": "Project E3 - HUD",
+      "phenomenon": "ambient readable NPC identity/focus presentation idea",
+      "owner": "presentation",
+      "disposition": "replace",
+      "currentState": "the integrated 8cf attended artifact did not show an ambient nameplate for a random civilian and showed only a narrow red police strip; issue #40/PR #46 owns the Biology replacement and has direct current-2.31 native seam evidence",
+      "targetState": "native identity/visibility authority plus Biology-owned ambient E3-style nameplate presentation, with scanner-acquired knowledge able to enrich identity and no Project E3 runtime/assets"
+    },
+    {
+      "id": "e3-hud-aesthetic",
+      "source": "Project E3 - HUD",
+      "phenomenon": "red/minimal 2018/E3-inspired ordinary first-person HUD language",
+      "owner": "presentation",
+      "disposition": "replace",
+      "currentState": "the integrated 8cf attended artifact still read overwhelmingly as the modern retail HUD with E3 presentation enabled; issue #40/PR #46 owns the Biology replacement and has exact-compile/current-native-controller evidence",
+      "targetState": "Biology-owned red/minimal quest, navigation, weapon/ammo, focus/crosshair, quick-slot and nameplate presentation that is unmistakable in ordinary gameplay while the modern scanner/quickhack UI remains native"
+    },
+    {
+      "id": "e3-scanner-overrides",
+      "source": "Project E3 - HUD",
+      "phenomenon": "scanner/quickhack replacement",
+      "owner": "presentation",
+      "disposition": "remove",
+      "currentState": "removed from the Biology runtime target; attended 8cf evidence showed the modern scanner composition intact",
+      "targetState": "native modern scanner/quickhack presentation remains authoritative"
+    },
+    {
+      "id": "realpass-settings-presence",
+      "source": "project-original",
+      "phenomenon": "minimal Biology activation/presentation preference surface (legacy stable feature id)",
+      "owner": "presentation",
+      "disposition": "retain",
+      "currentState": "the provider-neutral Biology semantic surface is limited to Enable Biology and E3-inspired HUD + nameplates; Mod Settings is the current temporary UI/persistence adapter and no subsystem ledger or numeric balance controls are exposed",
+      "targetState": "players get only the complete Biology activation boundary plus the optional E3 presentation preference where practical; provider choice may change without changing semantics"
+    },
+    {
+      "id": "realpass-body-model",
+      "source": "project-original",
+      "phenomenon": "body resources, sleep, exertion, digestion/elimination and recovery (legacy stable feature id)",
+      "owner": "body",
+      "disposition": "retain",
+      "currentState": "project-original model/runtime/native adapters and Biology projection implemented; live authoritative-session follow-up is tracked by issue #41/PR #47",
+      "targetState": "single authored Biology body authority active as part of the all-or-nothing release"
+    },
+    {
+      "id": "realpass-ballistics-wounds",
+      "source": "project-original",
+      "phenomenon": "projectile/armor/region/tissue-or-chrome injury pipeline (legacy stable feature id)",
+      "owner": "combat",
+      "disposition": "retain",
+      "currentState": "models/native bridges implemented behind canonical fail-closed build gates; attended combat validation remains",
+      "targetState": "one Biology physical combat pipeline feeding injury authority"
+    },
+    {
+      "id": "realpass-regional-injury-care",
+      "source": "project-original",
+      "phenomenon": "localized wounds, blood loss, pain, impairment, treatment and recovery (legacy stable feature id)",
+      "owner": "injury",
+      "disposition": "retain",
+      "currentState": "models/native adapters, provenance, field/professional care and Biology condition presentation implemented; live acceptance pending",
+      "targetState": "single regional Biology injury authority for V and supported human NPCs"
+    },
+    {
+      "id": "realpass-pain-maxdoc",
+      "source": "project-original",
+      "phenomenon": "injury-derived pain, MaxDoc analgesia, diminishing returns and analgesic overuse (legacy stable feature id)",
+      "owner": "injury",
+      "disposition": "retain",
+      "currentState": "model and native adapter authored; exact integrated compile/live gameplay acceptance remains",
+      "targetState": "vanilla MaxDoc/FirstAidWhiff identity and native use flow retained while Biology replaces its HP-regeneration effect with pain-only analgesia"
+    },
+    {
+      "id": "realpass-physical-protection",
+      "source": "project-original",
+      "phenomenon": "regional protective coverage and armor wear (legacy stable feature id)",
+      "owner": "armor",
+      "disposition": "retain",
+      "currentState": "stock mapping and wear model/native commit implemented with provisional coefficients; live equipment/coverage calibration pending",
+      "targetState": "visual/equipment-validated physical coverage; ordinary clothing supplies negligible ballistic protection"
+    },
+    {
+      "id": "development-diagnostics",
+      "source": "project-original",
+      "phenomenon": "finite attended calibration visibility",
+      "owner": "diagnostics",
+      "disposition": "development-only",
+      "currentState": "off by default and enabled only by an explicit candidate-build flag",
+      "targetState": "remain off in normal play and never become a background service"
+    }
+  ]
+}

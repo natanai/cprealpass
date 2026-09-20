@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "product": "realpass",
+  "purpose": "Keep Cyberpunk-version-sensitive bindings in explicit thin boundary adapters so project-original simulation models remain as patch-resilient as practical.",
+  "gameVersion": "2.31",
+  "hookAnnotations": [
+    "@wrapMethod",
+    "@replaceMethod",
+    "@addMethod",
+    "@addField"
+  ],
+  "allowedHookFiles": [
+    "ArmorWearNative.reds",
+    "BiologyActionsNative.reds",
+    "BiologyCyberwareShell.reds",
+    "BiologyLiveShellFollowupNative.reds",
+    "BiologyModeSyncNative.reds",
+    "BiologyPreferencesNative.reds",
+    "BiologyRadialHubNative.reds",
+    "BloodLossNative.reds",
+    "BodyInteractionRuntime.reds",
+    "BodyNativeHooks.reds",
+    "CombatNativeBridge.reds",
+    "CombatProfilesNative.reds",
+    "CombatWoundsNative.reds",
+    "E3ActivityHudNative.reds",
+    "E3CrosshairHudNative.reds",
+    "E3FirstPersonHud.reds",
+    "E3HotkeyHudNative.reds",
+    "E3InteractionHudNative.reds",
+    "E3NameplatesNative.reds",
+    "E3NavigationHudNative.reds",
+    "E3QuestHudNative.reds",
+    "E3WeaponHudNative.reds",
+    "FieldCareActionRuntime.reds",
+    "InjuryEffectsNative.reds",
+    "NameplatesNative.reds",
+    "NoHealthbars.reds",
+    "PainNativeEffects.reds",
+    "PhysicalOutfits.reds",
+    "ProfessionalCareRuntime.reds"
+  ],
+  "stableCoreExamples": [
+    "BodyModel.reds",
+    "ImpactModel.reds",
+    "BallisticProfiles.reds",
+    "InjuryModel.reds",
+    "WoundModel.reds",
+    "PainModel.reds",
+    "ProfessionalCareModel.reds",
+    "BloodLossModel.reds",
+    "ArmorWearModel.reds",
+    "InjuryEffectsModel.reds"
+  ],
+  "rules": [
+    "A production REDscript file containing a native hook annotation must be listed in allowedHookFiles.",
+    "Core simulation/model files must not contain native hook annotations.",
+    "Adding a new native seam requires updating this manifest with an intentional reviewable change.",
+    "A game patch should normally be repaired at these seams before changing stable simulation models.",
+    "This contract localizes patch-sensitive code; it does not claim any listed seam is guaranteed stable across CDPR patches."
+  ]
+}

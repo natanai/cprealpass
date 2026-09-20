@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "id": "darkfuture-injury-authority-v1",
+  "component": "darkfuture",
+  "sourceVersion": "2.0-release",
+  "license": "CC-BY-SA-4.0",
+  "sourceUrl": "https://github.com/DarkFortuneTeller/DarkFuture/tree/2.0-release",
+  "description": "Expose retained legacy injury state for non-destructive handover and suppress HP-based injury accumulation after localized ownership.",
+  "patches": [
+    {
+      "destination": "r6/scripts/Dark Future/Conditions/DFConditionSystemInjury.reds",
+      "expectedSha256": "ECC456708EE205C90C8404CA968DDBA57372CB5692DDA0405FE9D997E1942E5E",
+      "edits": [
+        {
+          "find": "module DarkFuture.Conditions",
+          "replace": "module DarkFuture.Conditions\nimport CyberpunkRealism.Integration.CRBodyRuntime",
+          "expectedOccurrences": 1
+        },
+        {
+          "find": "public final func AccumulateHealthLoss(change: Float) -> Void {",
+          "replace": "// Cyberpunk Realism: inspect retained state without a suspended-system\n    // getter substituting zero. Existing unlocalized injuries are not erased.\n    public final func CRIsClearForHandover() -> Bool {\n        return IsDefined(this.player) && this.currentConditionLevel == 0u && this.accumulatedPercentTowardNextLevel == 0.0 && !StatusEffectSystem.ObjectHasStatusEffectWithTag(this.player, n\"DarkFutureConditionInjury\");\n    }\n\n    public final func AccumulateHealthLoss(change: Float) -> Void {\n        if CRBodyRuntime.Get().OwnsLocalizedInjuries() {\n            return;\n        }",
+          "expectedOccurrences": 1
+        },
+        {
+          "find": "public final func GetConditionCureItemTag() -> CName {",
+          "replace": "public final func GetConditionCureItemTag() -> CName {\n        if CRBodyRuntime.Get().OwnsLocalizedInjuries() {\n            return n\"\";\n        }",
+          "expectedOccurrences": 1
+        }
+      ]
+    }
+  ]
+}
