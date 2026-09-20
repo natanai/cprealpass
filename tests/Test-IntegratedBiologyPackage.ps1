@@ -24,7 +24,7 @@ $script:checks = 0
 function Check($condition,[string]$message) { if (-not $condition) { throw $message }; $script:checks++ }
 
 Check ($package.schemaVersion -eq 2) 'Integrated REDmod package schema drifted.'
-Check ($package.status -eq 'playable-integrated-candidate') 'Package lost playable integrated candidate status.'
+Check ($package.status -eq 'local-release') 'Package lost local-release status.'
 Check ($package.canonicalBuilder -eq 'tools/Build-BiologyPackage.ps1') 'Canonical builder is not Build-BiologyPackage.ps1.'
 Check ($package.exactCompileRequiredBeforeArtifact -eq $true) 'Exact compilation is not a package-emission requirement.'
 Check ($package.redmod.packageRoot -eq 'mods/Biology') 'Official REDmod identity is not mods/Biology.'

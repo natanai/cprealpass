@@ -10,7 +10,7 @@ The repository is the durable source of truth. Git issues/branches/PRs track imp
 
 ## Current owner override — 2026-09-20
 
-Issue #152 and `docs/handoffs/AUTONOMOUS-FINAL-PRODUCT-COMPLETION.md` authorize a sole local agent on `autonomous/final-product-completion` to finish the entire product. No worker/parent handoff or owner testing wait is required in this run. The historical assignments below do not define active lanes. T007 has already occurred; its source findings are being repaired and audited under #152. Current gates and exact evidence are in `docs/PRODUCT-COMPLETION-MATRIX.md` and `docs/evidence/AUTONOMOUS-COMPLETION-2026-09-20.md`.
+Issue #152 and `docs/handoffs/AUTONOMOUS-FINAL-PRODUCT-COMPLETION.md` authorize a sole local agent on `autonomous/final-product-completion` to finish the entire product. No worker/parent handoff or owner testing wait is required in this run. The historical assignments below do not define active lanes. T007 has already occurred; its source findings are repaired and audited under #152, and the 1.0.0 local release lifecycle has passed. Current gates and exact evidence are in `docs/PRODUCT-COMPLETION-MATRIX.md` and `docs/evidence/AUTONOMOUS-COMPLETION-2026-09-20.md`.
 
 ## Historical parent recovery snapshot — 2026-09-19 (T006)
 

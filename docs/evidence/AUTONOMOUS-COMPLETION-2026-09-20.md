@@ -63,7 +63,7 @@ its filename and SHA match this exact binary; the current copy follows the OS
 Temp lifecycle. Command-mode removal runs the exact receipt-matching uninstaller
 from the extracted release outside the game root, avoiding self-image locking.
 
-## Executed checks so far
+## Historical first-checkpoint checks
 
 - Exact 2.31 compile `autonomous-t007-5`: all 65 production sources passed with
   redscript CLI 0.5.31, diagnostics OFF, using the game base read-only.
@@ -118,3 +118,49 @@ Uninstaller fixtures now pass 46 checks, including changed-receipt refusal befor
 mutation and receipt retention for untracked residual files. Native installer
 fixtures remain 31 passing checks plus a real junction refusal; player preflight
 also requires installed official REDmod tools matching 2.31.
+
+## Executed real-game release lifecycle
+
+Source checkpoint `cf1bc0994cfc294f453a5b8b09c854a94ed2ef3a` passed all **88** CI
+suites and the canonical package builder's 65-source exact compilation and
+86-file artifact policy. The lifecycle ZIP SHA-256 is
+`04290954CA0F988BD5C50C38C416DEA9D16C4145E61271CD8B38DEF94E3858E3`.
+
+Before mutation, the existing T007 `d2a4c8f1c166` receipt and all 75 prior owned
+files were backed up outside the game. A 5,077-file size/time inventory and 143
+unrelated pre-existing file hashes were captured. Large official archive/video
+assets were inventoried, not exhaustively hashed. This is receipt-bounded
+iteration evidence, not a fresh Steam reinstall or full vanilla hash proof.
+
+The actual packaged native binaries completed:
+
+1. Full read-only preflight, upgrade from T007, then same-version reinstall.
+2. Official REDmod recognition/deploy of the installed package.
+3. Startup with the official `-modded` flag: current redscript log enumerated the
+   Biology sources, reported compilation complete and regenerated
+   `r6/cache/modded/final.redscripts` at 2026-09-20 13:37:54 UTC. The game process
+   remained responsive; no input or load-save action was sent.
+4. Packaged `Uninstall Biology.exe --uninstall`: 76 owned files removed, 9 shared
+   files preserved, zero errors, receipt removed. Official five-stage REDmod
+   refresh succeeded and produced `mods: []`; the generated script blob returned
+   to the native base size. Read-only removal verification passed.
+5. All 143 unrelated baseline hashes remained unchanged after removal.
+6. Clean reinstall through `Install Biology.exe` and official REDmod deployment.
+7. Startup without `-modded`: game remained responsive, no save loaded. This tests
+   the native launch-flag boundary, not the REDlauncher checkbox itself.
+
+Only task-started smoke processes were stopped. No game inputs were injected.
+Computer Use permission for Steam timed out and the game had no targetable
+Computer Use window. Consequently **no rendered title/main-menu capture, actual
+REDlauncher OFF/ON checkbox operation, E3 click, save reload, gameplay/quest or
+performance acceptance is claimed**. These limits do not reopen repaired source
+defects. The official launch flag is documented in
+[CDPR's REDmod guide](https://cdn-l-cyberpunk.cdprojektred.com/REDmod-docs.pdf).
+
+The local product is promoted to **1.0.0** under the owner's #152 criteria.
+The final merged-source artifact identity and installed receipt are recorded in
+the final issue/PR handoff and local release report, avoiding a self-referential
+commit hash in this source file. Every rebuild must repeat exact compile and
+artifact checks; the final release must remain installed. No public player
+distribution is authorized or published. Native acceptance gates remain separate
+in `manifest/acceptance.json` and `docs/PRODUCT-COMPLETION-MATRIX.md`.

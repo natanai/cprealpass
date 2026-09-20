@@ -147,7 +147,7 @@ The package builder requires cybercmd's exact three-file standalone payload (`gl
 
 ## Native observations and final local evidence
 
-Cloud CI and source contracts do **not** close live acceptance. Parent integration owns attended integration acceptance of an exact release-shaped repaired artifact, including:
+Cloud CI and source contracts do **not** close native gameplay acceptance. The owner-authorized #152 run directly passed startup-output regeneration, real shipped-binary hard removal, unchanged shared/unrelated-file hashes, clean reinstall and official REDmod refresh. See `evidence/AUTONOMOUS-COMPLETION-2026-09-20.md`. The following list defines the broader native observation scope; it is not an obsolete parent/worker assignment or a request for the owner to test:
 
 1. Supported launch regenerates `r6/cache/modded/final.redscripts` at/after the installed candidate payload through packaged cybercmd + redscript.
 2. REDlauncher Enable mods ON: Biology is active.
@@ -160,4 +160,4 @@ Cloud CI and source contracts do **not** close live acceptance. Parent integrati
 9. Another harmless REDmod is preserved/redeployed correctly after clean Biology removal.
 10. No stale Biology activation/behavior remains after hard uninstall/official refresh, and normal launch/save load remains healthy.
 
-The W13 worker does not ask the user to install or play the worker branch. Parent integration owns release-shaped attended validation after this source repair is integrated.
+The #152 handoff authorizes local release completion with unobserved native gameplay and visual items recorded honestly. No user save is loaded or edited by the autonomous lifecycle checks.

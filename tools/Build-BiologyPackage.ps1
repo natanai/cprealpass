@@ -154,10 +154,10 @@ Copy-IntoPackage $installerSource 'Install Biology.ps1' (Get-Sha256 $installerSo
 Copy-IntoPackage $installerCoreSource 'BiologyReleaseInstall.Core.ps1' (Get-Sha256 $installerCoreSource) 'Biology' 'biology-player-installer' 'REDMOD-NATIVE' 'biology-owned'
 
 $installText = @'
-Biology — REDmod-first player candidate
+Biology — REDmod-first player release
 
 SUPPORTED GAME
-Cyberpunk 2077 2.31
+Cyberpunk 2077 2.31 with the official REDmod tools installed
 
 INSTALL
 1. Close Cyberpunk 2077.
@@ -205,7 +205,7 @@ If a changed Biology file is preserved, the ownership receipt itself is also pre
 [IO.File]::WriteAllText((Join-Path $packageRoot 'UNINSTALL.txt'),$uninstallText.TrimStart() + "`n",[Text.UTF8Encoding]::new($false))
 Add-FileRecord 'UNINSTALL.txt' 'Biology' 'biology-package-metadata' 'REDMOD-NATIVE' 'biology-owned'
 
-$version = [string]$info.version + '-candidate.' + $stamp + '.' + $shortRevision
+$version = [string]$info.version + '+' + $stamp + '.' + $shortRevision
 $versionText = @(
     'Biology ' + $version,
     'Cyberpunk 2077 ' + $gameVersion,

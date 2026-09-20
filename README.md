@@ -1,6 +1,6 @@
 # Biology
 
-Biology is a Cyberpunk 2077 + Phantom Liberty body and physiology overhaul for **game version 2.31**. It combines hydration, nutrition, digestion, sleep/fatigue, elimination and hygiene with localized physical injury, bleeding, pain, protection wear and care. One persistent body is authoritative; native Health loss remains a prerequisite for physical wounds.
+Biology **1.0.0** is a Cyberpunk 2077 + Phantom Liberty body and physiology overhaul for **game version 2.31**. It combines hydration, nutrition, digestion, sleep/fatigue, elimination and hygiene with localized physical injury, bleeding, pain, protection wear and care. One persistent body is authoritative; native Health loss remains a prerequisite for physical wounds.
 
 **Backpack = possessions. Biology = embodied state. Cyberware = installed equipment.** The Biology screen stays inspectable while healthy. Its overview is qualitative; deliberate drill-down reveals metrics, conditions and contextual actions. Native Cyberware navigation and the modern scanner/quickhack experience remain authoritative.
 
@@ -17,9 +17,9 @@ The package includes the pinned redscript 0.5.31 and standalone cybercmd 0.0.13 
 
 Turn REDlauncher Enable mods OFF and relaunch for Biology-inactive play; ON resumes it. To remove the files, close the game and double-click **Uninstall Biology.exe** in the game folder. Removal preserves saves, changed files, shared dependencies and unrelated mods. Never merge the ZIP directly into the game directory.
 
-## Current completion work and evidence
+## Release evidence
 
-Owner-authorized issue **#152**, branch `autonomous/final-product-completion`, supersedes the old parent/worker routing for this solo completion run. See [ROADMAP.md](ROADMAP.md), the [product matrix](docs/PRODUCT-COMPLETION-MATRIX.md), and [completion evidence](docs/evidence/AUTONOMOUS-COMPLETION-2026-09-20.md) for exact executed gates and pending work. No external distribution has been published.
+Owner-authorized issue **#152** governs this local release. All 88 CI suites passed; the 65 production scripts exact-compiled; the 86-file package passed the actual upgrade, reinstall, uninstall and clean reinstall lifecycle. See [ROADMAP.md](ROADMAP.md), the [product matrix](docs/PRODUCT-COMPLETION-MATRIX.md), and [completion evidence](docs/evidence/AUTONOMOUS-COMPLETION-2026-09-20.md) for exact revisions and observation limits. No external distribution has been published.
 
 The current source repairs the T007 player-state gate, E3 preference writes/refresh and scanner identity ownership. It also hardens launcher-off presentation, native-session care/combat authority, installer rollback and safe removal. Compilation/model checks establish source contracts; they do not establish native save serialization, rendered visual acceptance, quest outcomes or combat feel. Old attended failures remain historical evidence, not assertions that the repaired source has reproduced them.
 

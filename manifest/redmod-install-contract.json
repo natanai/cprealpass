@@ -3,7 +3,7 @@
   "product": "Biology",
   "installModel": "redmod-first-game-root-relative",
   "supportedGameVersion": "2.31",
-  "candidateStatus": "playable-integrated-candidate",
+  "candidateStatus": "local-release",
   "canonicalBuilder": "tools/Build-BiologyPackage.ps1",
   "canonicalBuildCommand": "pwsh ./tools/Build-BiologyPackage.ps1",
   "officialPackageRoot": "mods/Biology",

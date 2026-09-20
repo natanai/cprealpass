@@ -1,4 +1,4 @@
-# Biology development/source artifact 0.1.0-dev.20
+# Biology development/source artifact 1.0.0-source
 
 This redistribution-safe **development/source artifact** contains a selected set of project-original Biology model/policy sources plus the authored stock-protection recipe. It exists for offline model review, CI packaging, artifact-policy checks, and source handoff.
 
@@ -51,4 +51,4 @@ Successful source packaging/model tests do not prove:
 
 Those gates belong to the canonical Biology build/test flow and direct evidence recorded by the parent integration thread.
 
-Version `0.1.0-dev.20` is the development-source recipe version, not the public Biology release version.
+Version `1.0.0-source` is the development-source recipe version, not the public Biology release version.

@@ -13,6 +13,7 @@ if ($distribution.target.specialLauncherRequiredAfterInstall -ne $false) { throw
 if ($distribution.target.vanillaPlayTarget -notmatch '(?i)Enable mods OFF') { throw 'Distribution lost launcher-off vanilla-play target.' }
 if ($distribution.target.hardUninstallTarget -notmatch 'Uninstall Biology\.exe') { throw 'Distribution lost self-contained hard-uninstall target.' }
 if ($distribution.releaseGate.publicPlayableArtifactReady -ne $false -or $distribution.releaseGate.candidatePlayableAfterExactCompile -ne $true) { throw 'Distribution release gating drifted.' }
+if ($distribution.releaseGate.localReleaseReady -ne $true -or $distribution.releaseGate.externalPublicationAuthorized -ne $false -or $distribution.releaseGate.localReleaseEvidence -notmatch 'AUTONOMOUS-COMPLETION') { throw 'Local release completion must remain distinct from public publication authorization and native acceptance.' }
 if ($distribution.releaseGate.foundationEvidence -notmatch '(?i)REDmod recognition' -or $distribution.releaseGate.foundationEvidence -notmatch '(?i)five-stage' -or $distribution.releaseGate.foundationEvidence -notmatch '(?i)W13') { throw 'Distribution contract forgot proven REDmod foundation/W13 evidence.' }
 
 $components = @{}

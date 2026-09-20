@@ -5,7 +5,7 @@
   "foundationBaseRevision": "6fab5ba706e2a10387bb8629cccdb0868533bb97",
   "integratedBaseRevision": "bfd6f7469139c64f0b9185724619a37e4ced5eca",
   "supportedGameVersion": "2.31",
-  "status": "playable-integrated-candidate",
+  "status": "local-release",
   "canonicalBuilder": "tools/Build-BiologyPackage.ps1",
   "canonicalBuildCommand": "pwsh ./tools/Build-BiologyPackage.ps1",
   "exactCompileRequiredBeforeArtifact": true,
