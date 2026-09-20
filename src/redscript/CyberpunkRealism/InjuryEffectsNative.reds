@@ -94,6 +94,9 @@ public let crProgressAllowed: Bool;
 public class CRInjuryEffectsBridge extends IScriptable {
   public static func Allowed(actor: ref<ScriptedPuppet>, enabled: Bool) -> Bool {
     let scene: ref<SceneSystemInterface>;
+    if IsDefined(actor) && actor.IsPlayer() {
+      return enabled && CRPlayerBodyLifecycle.Allowed(actor as PlayerPuppet, false);
+    }
     if !enabled || !IsDefined(actor) || actor.IsReplacer() || actor.IsDead() || ScriptedPuppet.IsDefeated(actor) || !actor.IsAttached() {
       return false;
     }

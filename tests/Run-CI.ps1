@@ -52,6 +52,7 @@ $tests = @(
     'Test-BiologyRuntimeLifecycle.ps1',
     'Test-BodyRuntimeAuthority.ps1',
     'Test-BodyRuntimePersistence.ps1',
+    'Test-SystemicBodyAuthority.ps1',
     'Test-ConditionArchitecture.ps1',
     'Test-PainArchitecture.ps1',
     'Test-OwnedNameplates.ps1',

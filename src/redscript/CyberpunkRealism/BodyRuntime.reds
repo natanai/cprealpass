@@ -234,17 +234,11 @@ public class CRBodyRuntime extends ScriptableSystem {
     return GameInstance.GetPlayerSystem(this.GetGameInstance()).GetLocalPlayerMainGameObject() as PlayerPuppet;
   }
 
-  private func InMenu() -> Bool {
-    let board: ref<IBlackboard> = GameInstance.GetBlackboardSystem(this.GetGameInstance()).Get(GetAllBlackboardDefs().UI_System);
-    return IsDefined(board) && board.GetBool(GetAllBlackboardDefs().UI_System.IsInMenu);
-  }
-
   private func NativeStateAllowed(allowMenu: Bool) -> Bool {
-    let player: ref<PlayerPuppet> = this.Player();
-    if !this.running || !CRInjuryEffectsBridge.Allowed(player, true) {
+    if !this.running {
       return false;
     }
-    return allowMenu || !this.InMenu();
+    return CRPlayerBodyLifecycle.Allowed(this.Player(), allowMenu);
   }
 
   private func WorldSeconds() -> Int32 {
