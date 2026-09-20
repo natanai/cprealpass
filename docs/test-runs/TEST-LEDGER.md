@@ -1,8 +1,8 @@
 # Biology attended-test ledger
 
 Status: **canonical numbered live-test index**  
-Last updated: **2026-09-18**  
-Next unallocated live test ID: **T005**
+Last updated: **2026-09-19**  
+Next unallocated live test ID: **T006**
 
 This file is the parent-owned chronological authority for owner-run live Cyberpunk attended sessions. It is intentionally compact. Open the linked completed record for detail.
 
@@ -24,6 +24,7 @@ Before a live launch, parent creates/updates a GitHub `[T###]` tracking issue so
 | **T002** | 2026-09-17 | `3dc049ee99979f924978b671ddbbbda06b472d1b` | **PARTIAL** | Listener fixed; ambient names now live; Biology telemetry still extreme top-left; overall E3 design still insufficient; reticle red artifact persists; persistence sequence not exercised. |
 | **T003** | 2026-09-18 | `67593bfbb12b4a6ebcec7042066d48b4f5fac427` | **PARTIAL** | Listener/session PASS. Biology selected anatomy works but detail telemetry disappears entirely -> W02.5/#96. E3 nameplate + old reticle fix improved, but WEAPON // AMMO chrome is detached and quest tracker remains untreated -> W03.5/#97. |
 | **T004** | 2026-09-18 | `ffa6f64d6c837146d032aaab565d671c932453a2` | **PARTIAL** | Listener/session PASS across two observed launch cycles. Biology breadcrumb proves `MOUNTED` but detail remains blank -> post-mount W02.6. E3 quest/weapon now reach their native regions, but quest treatment is still tiny/partial and lower-left hotkey chrome is visibly mis-composed -> W03.6. |
+| **T005** | 2026-09-19 | `a5818db6596e335824d75f596fc8204cc419de4f` | **PARTIAL** | Session/startup PASS; runtime visible and E3 materially improved. Back transition flashes stock Cyberware -> W19.1/#133; nameplate frame + police scan identity -> W20.1/#134; live Health loss not reflected in Biology injury state -> W21.1/#135. Persistence sequence remains open on #41. |
 
 ## Records
 
@@ -31,6 +32,7 @@ Before a live launch, parent creates/updates a GitHub `[T###]` tracking issue so
 - `T002-2026-09-17-3dc049ee-live-ui-followup.md`
 - `T003-2026-09-18-67593bfb-native-region-e3-followup.md`
 - `T004-2026-09-18-ffa6f64d-post-mount-e3-region-followup.md`
+- `T005-2026-09-19-a5818db6-integrated-reference-followup.md`
 
 ## Pre-numbering history
 
