@@ -196,3 +196,10 @@ protected cb func OnCRBiologyE3PreferenceChanged(evt: ref<CRBiologyE3PreferenceC
   // Notification events are broadcast invalidations; do not consume propagation.
   return false;
 }
+
+@addMethod(WeaponRosterGameController)
+protected cb func OnCRBiologyE3PreferenceChangedEvent(evt: ref<CRBiologyE3PreferenceChangedEvent>) -> Bool {
+  this.CRRefreshBiologyE3WeaponFrame();
+  // Notification events are broadcast invalidations; do not consume propagation.
+  return false;
+}
