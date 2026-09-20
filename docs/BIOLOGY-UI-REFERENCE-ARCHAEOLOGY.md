@@ -312,3 +312,48 @@ Parent P02's attended T005 should establish:
 9. Existing W02.6 diagnostics can be removed only after this new authored-host path is visually accepted.
 
 No further local resource probe is required for this hierarchy unless T005 exposes a genuinely new native boundary rather than a visual/runtime implementation defect.
+
+
+## W20.2 — Biology E3 preference placement contract
+
+T006 live evidence proved that the previous E3 preference editor was not a usable
+part of the Biology interface. It created a free-floating `inkText`, reparented it
+directly to the fullscreen `RipperDocGameController` root, anchored it
+`TopRight`, and relied on fixed top/right margins. On the actual Cyberpunk 2.31
+Biology screen this was clipped at the extreme right edge.
+
+The corrected placement reuses W17.1's already-proven authored detail seam instead of
+introducing another screen coordinate system:
+
+```text
+wrapper
+└─ Inventory                         RipperdocInventoryController lifecycle root
+   ├─ cyberwareContainer             authored stock selected-content container
+   └─ CRBiologyNativeContent         Biology sibling with copied authored placement
+      ├─ selected-system title / summary / metrics
+      ├─ PRESENTATION
+      │  └─ E3 HUD + NAMEPLATES   ON|OFF
+      └─ contextual Biology actions
+```
+
+The preference row is progressive-disclosure UI at deliberate detail depth. This keeps
+it readily reachable from Biology while preventing permanent chrome from competing with
+level/street cred, top tabs, currency, anatomy, category nodes, or ordinary Cyberware.
+
+Implementation rules:
+
+- `CRRealpassSettings` remains the sole save-backed preference authority.
+- The preference panel is a child of `CRBiologyNativeContent`; it is not a child of
+  the fullscreen root and has no screen-space anchor.
+- The local row owns a 680x48 interactive hit target aligned with Biology's existing
+  680-wide metric/detail composition.
+- The parent `CRBiologyNativeContent` remains visible only when Biology owns detail
+  depth and the authored `Inventory -> cyberwareContainer` host contract resolves.
+- Teardown clears the preference widget references with the shared Ripperdoc lifecycle.
+- No Mod Settings, ArchiveXL, RED4ext, Codeware, or Project E3 runtime dependency is
+  introduced.
+
+T007 must visually/interactively prove that the complete label and current ON/OFF value
+are legible inside the selected-content region, that mouse/controller activation toggles
+the saved E3 state, and that repeated detail -> Back plus Biology <-> Cyberware switching
+does not leak or strand the preference.

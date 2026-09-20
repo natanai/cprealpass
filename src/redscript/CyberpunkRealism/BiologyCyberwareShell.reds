@@ -341,6 +341,10 @@ private final func CRCreateBiologyShell() -> Void {
       this.CRCreateMetricRow(i);
       i += 1;
     }
+
+    // W20.2: preference is progressive-disclosure UI inside the same authored local
+    // selected-content composition as Biology detail. It is never screen-root chrome.
+    this.CRMountBiologyE3PreferenceInNativeContent(this.crBiologyNativeContent);
   }
 }
 
@@ -568,6 +572,9 @@ private final func CRSyncBiologyContentVisibility() -> Void {
     // can recover from an early lifecycle miss, while a changed/missing native host
     // fails closed and remains visible in the existing selector diagnostic.
     this.crBiologyNativeContent.SetVisible(detail && detailLayoutReady);
+    if detail && detailLayoutReady {
+      this.CRRefreshBiologyE3Preference();
+    }
   }
 
   if this.crBiologyShellMode {
@@ -876,6 +883,7 @@ protected cb func OnUninitialize() -> Bool {
   if IsDefined(this.m_inventoryView) {
     this.m_inventoryView.CRSetBiologyStockContentSuppressed(false);
   }
+  this.CRResetBiologyE3Preference();
   ArrayClear(this.crBiologyMetricRows);
   ArrayClear(this.crBiologyMetricLabels);
   ArrayClear(this.crBiologyMetricBackgrounds);
