@@ -773,6 +773,11 @@ public final func CRApplyBiologyShellMode(biology: Bool) -> Void {
 
   this.crBiologySelectedArea = gamedataEquipmentArea.Invalid;
   this.crBiologyShellMode = biology;
+  if IsDefined(this.m_inventoryView) {
+    // Biology owns suppression for the entire Biology-mode overview/detail lifecycle.
+    // Cyberware restores the exact local visibility captured when Biology took over.
+    this.m_inventoryView.CRSetBiologyStockContentSuppressed(biology);
+  }
   this.m_selector.CRSetBiologyDetailMode(false);
   this.CRSetCategoryMode(biology);
   this.CRSetStockMetersVisible(!biology);
@@ -868,6 +873,9 @@ protected cb func OnInitialize() -> Bool {
 
 @wrapMethod(RipperDocGameController)
 protected cb func OnUninitialize() -> Bool {
+  if IsDefined(this.m_inventoryView) {
+    this.m_inventoryView.CRSetBiologyStockContentSuppressed(false);
+  }
   ArrayClear(this.crBiologyMetricRows);
   ArrayClear(this.crBiologyMetricLabels);
   ArrayClear(this.crBiologyMetricBackgrounds);
