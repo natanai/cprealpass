@@ -40,7 +40,7 @@ $targetInstallMutationStarted = $false
 $priorTransitionAttempted = $false
 $priorTransitionPassed = $false
 $priorTransitionMutationStarted = $false
-$priorTransitionToolRoot = $null
+$priorTransitionReportPath = $null
 $installedReceiptVerified = $false
 $deployPassed = $false
 $failed = $false
@@ -307,18 +307,14 @@ try {
             throw 'Installed Biology ownership receipt is not parseable; prior-install transition refused before mutation.'
         }
 
-        $priorTransitionToolRoot = Join-Path ([IO.Path]::GetTempPath()) ('biology-prior-install-transition-' + [guid]::NewGuid().ToString('N'))
-        New-Item -ItemType Directory -Force -Path $priorTransitionToolRoot | Out-Null
-        $scratchPlayer = Join-Path $priorTransitionToolRoot 'Uninstall Biology.exe'
-        $transitionExe = Join-Path $priorTransitionToolRoot 'BiologyPriorInstallTransition.exe'
-        $transitionReport = Join-Path $priorTransitionToolRoot 'transition-report.txt'
-        $transitionBuild = Invoke-NativeSafe 'pwsh' @('-NoLogo','-NoProfile','-File',(Join-Path $worktree 'tools\Build-BiologyUninstaller.ps1'),'-OutputPath',$scratchPlayer,'-TransitionOutputPath',$transitionExe)
-        Record-Process 'Build receipt-bounded prior-install transition helper' $transitionBuild
-        if ($transitionBuild.ExitCode -ne 0 -or -not (Test-Path -LiteralPath $transitionExe -PathType Leaf)) { throw 'Could not build the current exact-source prior-install transition helper.' }
+        $priorTransitionReportPath = Join-Path ([IO.Path]::GetTempPath()) ('biology-prior-install-transition-report-' + [guid]::NewGuid().ToString('N') + '.txt')
+        $transitionScript = Join-Path $worktree 'tools\Invoke-BiologyPriorInstallTransition.ps1'
+        if (-not (Test-Path -LiteralPath $transitionScript -PathType Leaf)) { throw 'Current exact-source prior-install transition PowerShell host is missing.' }
+        Add-Evidence 'Prior transition execution path: existing PowerShell runtime; no generated transition executable is required.'
 
-        $transition = Invoke-NativeSafe $transitionExe @(('--game-root=' + $GameRoot),('--report=' + $transitionReport))
-        Record-Process 'BiologyPriorInstallTransition.exe' $transition
-        $priorTransitionText = if (Test-Path -LiteralPath $transitionReport -PathType Leaf) { Get-Content -Raw -LiteralPath $transitionReport } else { '' }
+        $transition = Invoke-NativeSafe 'pwsh' @('-NoLogo','-NoProfile','-NonInteractive','-File',$transitionScript,'-GameRoot',$GameRoot,'-ReportPath',$priorTransitionReportPath)
+        Record-Process 'Invoke-BiologyPriorInstallTransition.ps1' $transition
+        $priorTransitionText = if (Test-Path -LiteralPath $priorTransitionReportPath -PathType Leaf) { Get-Content -Raw -LiteralPath $priorTransitionReportPath } else { '' }
         Add-Evidence '--- PRIOR-INSTALL TRANSITION REPORT ---'
         Add-Evidence $priorTransitionText.TrimEnd()
         $priorTransitionMutationStarted = $priorTransitionText -match '(?im)^Game mutation started:\s*True\s*$'
@@ -327,8 +323,8 @@ try {
             throw 'Receipt-bounded prior Biology transition did not PASS. The current report records whether any exact deletion began.'
         }
         $priorTransitionPassed = $true
-        Remove-Item -LiteralPath $priorTransitionToolRoot -Recurse -Force
-        $priorTransitionToolRoot = $null
+        Remove-Item -LiteralPath $priorTransitionReportPath -Force
+        $priorTransitionReportPath = $null
     } else {
         Add-Evidence 'No installed schema-2 Biology ownership receipt was present; no prior-install transition mutation was attempted.'
     }
@@ -415,9 +411,9 @@ try {
     if ($gameMutationStarted) { Add-Evidence 'IMPORTANT: failure occurred after a bounded game mutation began. Do not improvise cleanup; return this report to P01.2.' }
     else { Add-Evidence 'Installed game remained read-only because failure occurred before any prior-candidate retirement or target installation began.' }
 } finally {
-    if ($priorTransitionToolRoot -and (Test-Path -LiteralPath $priorTransitionToolRoot)) {
-        try { Remove-Item -LiteralPath $priorTransitionToolRoot -Recurse -Force -ErrorAction Stop }
-        catch { Add-Evidence ('WARNING: temporary prior-transition helper cleanup failed: ' + $priorTransitionToolRoot + ' | ' + $_.Exception.Message) }
+    if ($priorTransitionReportPath -and (Test-Path -LiteralPath $priorTransitionReportPath -PathType Leaf)) {
+        try { Remove-Item -LiteralPath $priorTransitionReportPath -Force -ErrorAction Stop }
+        catch { Add-Evidence ('WARNING: temporary prior-transition report cleanup failed: ' + $priorTransitionReportPath + ' | ' + $_.Exception.Message) }
     }
     if ($worktree -and $seedRepo -and (Test-Path -LiteralPath $worktree)) {
         try {

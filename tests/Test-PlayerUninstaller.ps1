@@ -15,7 +15,7 @@ function Write-FixtureFile([string]$Root,[string]$Relative,[string]$Content) {
     return $path
 }
 
-function New-PriorInstallFixture([string]$Root,[switch]$UnexpectedOwnedRoot,[switch]$ChangeOwnedAfterReceipt) {
+function New-PriorInstallFixture([string]$Root,[switch]$UnexpectedOwnedRoot,[switch]$ChangeOwnedAfterReceipt,[switch]$ChangeSharedAfterReceipt) {
     New-Item -ItemType Directory -Force -Path (Join-Path $Root 'bin\x64') | Out-Null
     New-Item -ItemType Directory -Force -Path (Join-Path $Root 'r6') | Out-Null
     [IO.File]::WriteAllText((Join-Path $Root 'bin\x64\Cyberpunk2077.exe'),'fixture-game',[Text.UTF8Encoding]::new($false))
@@ -75,14 +75,19 @@ function New-PriorInstallFixture([string]$Root,[switch]$UnexpectedOwnedRoot,[swi
     if ($ChangeOwnedAfterReceipt) {
         [IO.File]::WriteAllText($changedPath,'changed-after-receipt',[Text.UTF8Encoding]::new($false))
     }
+    $changedSharedPath = Join-Path $Root ([string]$shared[0].path)
+    if ($ChangeSharedAfterReceipt) {
+        [IO.File]::WriteAllText($changedSharedPath,'shared-changed-after-receipt',[Text.UTF8Encoding]::new($false))
+    }
 
     return [pscustomobject]@{
-        root=$Root; manifest=$manifestPath; owned=@($owned); shared=@($shared); unexpected=$unexpectedPath; changed=$changedPath
+        root=$Root; manifest=$manifestPath; owned=@($owned); shared=@($shared); unexpected=$unexpectedPath
+        changed=$changedPath; changedShared=$changedSharedPath
     }
 }
 
-function Invoke-TransitionFixture([string]$TransitionExe,[string]$GameRoot,[string]$ReportPath) {
-    & $TransitionExe ("--game-root=$GameRoot") ("--report=$ReportPath")
+function Invoke-TransitionFixture([string]$TransitionScript,[string]$GameRoot,[string]$ReportPath) {
+    & pwsh -NoLogo -NoProfile -NonInteractive -File $TransitionScript -GameRoot $GameRoot -ReportPath $ReportPath | Out-Null
     return $LASTEXITCODE
 }
 
@@ -91,12 +96,12 @@ New-Item -ItemType Directory -Force -Path $work | Out-Null
 try {
     $player = Join-Path $work 'Uninstall Biology.exe'
     $tests = Join-Path $work 'BiologyUninstallCoreTests.exe'
-    $transition = Join-Path $work 'BiologyPriorInstallTransition.exe'
-    & (Join-Path $project 'tools\Build-BiologyUninstaller.ps1') -OutputPath $player -TestOutputPath $tests -TransitionOutputPath $transition | Out-Null
+    $transition = Join-Path $project 'tools\Invoke-BiologyPriorInstallTransition.ps1'
+    & (Join-Path $project 'tools\Build-BiologyUninstaller.ps1') -OutputPath $player -TestOutputPath $tests | Out-Null
     if ($LASTEXITCODE -ne 0) { throw 'Biology uninstaller build helper failed.' }
     if (-not (Test-Path -LiteralPath $player -PathType Leaf) -or (Get-Item -LiteralPath $player).Length -le 0) { throw 'Player-facing Uninstall Biology.exe was not produced.' }
     if (-not (Test-Path -LiteralPath $tests -PathType Leaf)) { throw 'Biology uninstaller safety test executable was not produced.' }
-    if (-not (Test-Path -LiteralPath $transition -PathType Leaf)) { throw 'Receipt-bounded prior-install transition helper was not produced.' }
+    if (-not (Test-Path -LiteralPath $transition -PathType Leaf)) { throw 'Receipt-bounded prior-install transition PowerShell host is missing.' }
 
     & $tests
     if ($LASTEXITCODE -ne 0) { throw "Biology uninstaller core tests failed with exit code $LASTEXITCODE." }
@@ -104,6 +109,10 @@ try {
     $core = Get-Content -Raw -LiteralPath (Join-Path $project 'src\uninstaller\BiologyUninstallCore.cs')
     $program = Get-Content -Raw -LiteralPath (Join-Path $project 'src\uninstaller\BiologyUninstallerProgram.cs')
     $transitionSource = Get-Content -Raw -LiteralPath (Join-Path $project 'src\uninstaller\BiologyPriorInstallTransitionProgram.cs')
+    $transitionRunner = Get-Content -Raw -LiteralPath $transition
+    $transitionCore = Get-Content -Raw -LiteralPath (Join-Path $project 'tools\BiologyPriorInstallTransition.Core.ps1')
+    $recoveryCore = Get-Content -Raw -LiteralPath (Join-Path $project 'tools\BiologyFailedInstallRecovery.Core.ps1')
+    $uninstallerBuilder = Get-Content -Raw -LiteralPath (Join-Path $project 'tools\Build-BiologyUninstaller.ps1')
     $packageBuilder = Get-Content -Raw -LiteralPath (Join-Path $project 'tools\Build-BiologyPackage.ps1')
     foreach ($needle in @(
         'generic-dependency-shared',
@@ -170,6 +179,34 @@ try {
     )) {
         if (-not $transitionSource.Contains($needle)) { throw "Prior-install transition helper lost safety contract: $needle" }
     }
+    foreach ($needle in @(
+        'BiologyPriorInstallTransition.Core.ps1',
+        'New-BiologyPriorInstallTransitionPlan',
+        'Assert-BiologyPriorInstallTransitionPlan',
+        'Invoke-BiologyFailedInstallRecoveryPlan',
+        'No generated transition executable was emitted or launched.'
+    )) {
+        Assert-True ($transitionRunner.Contains($needle)) "PowerShell prior-transition host lost required contract: $needle"
+    }
+    foreach ($needle in @(
+        'mods/Biology',
+        'r6/scripts/CyberpunkRealism',
+        'biology',
+        'Install Biology.ps1',
+        'BiologyReleaseInstall.Core.ps1',
+        'Uninstall Biology.exe',
+        'generic-dependency-shared',
+        'stored-in-save-never-target',
+        'official-redmod-deploy-explicit-root',
+        'Assert-BiologyPriorOwnedNamespace',
+        'receiptFile,relativePath'
+    )) {
+        Assert-True ($transitionCore.Contains($needle)) "PowerShell prior-transition planner lost player-uninstaller parity contract: $needle"
+    }
+    Assert-True ($recoveryCore.Contains('Invoke-BiologyFailedInstallRecoveryPlan')) 'Prior transition lost the pre-existing exact-removal executor it is required to reuse.'
+    Assert-True ($transitionRunner -notmatch '(?i)csc\.exe|Add-Type|-OutputAssembly|BiologyPriorInstallTransition\.exe') 'Prior transition host must not compile, emit, or launch a generated transition executable.'
+    Assert-True ($uninstallerBuilder -notmatch '(?i)TransitionOutputPath|BiologyPriorInstallTransition\.exe') 'Uninstaller builder still exposes the removed generated transition-executable path.'
+
     if ($core -match '(?i)Directory\.Delete\([^\)]*,\s*true\s*\)' -or $core -match '(?i)DeleteDirectory\w*Recursive') { throw 'Player uninstaller contains recursive directory deletion.' }
     if ($program -match '(?i)powershell|pwsh|vortex') { throw 'Player uninstaller unexpectedly invokes a developer/mod-manager tool.' }
 
@@ -188,6 +225,22 @@ try {
     Assert-True (-not (Test-Path -LiteralPath $happy.manifest)) 'Prior Biology receipt remained after successful transition.'
     foreach ($item in $happy.shared) {
         Assert-True (Test-Path -LiteralPath (Join-Path $happy.root ([string]$item.path))) "Shared dependency was removed during prior transition: $($item.path)"
+    }
+
+    # Shared dependency ownership is preserve-only, not identity-pinned. A later
+    # upstream/shared update must survive and must not block retirement of the
+    # receipt-owned Biology candidate.
+    $changedShared = New-PriorInstallFixture (Join-Path $work 'transition-changed-shared') -ChangeSharedAfterReceipt
+    $changedSharedReport = Join-Path $work 'transition-changed-shared-report.txt'
+    $changedSharedExit = Invoke-TransitionFixture $transition $changedShared.root $changedSharedReport
+    Assert-True ($changedSharedExit -eq 0) 'Changed shared dependency incorrectly blocked prior Biology transition.'
+    $changedSharedText = Get-Content -Raw -LiteralPath $changedSharedReport
+    Assert-True ($changedSharedText -match '(?m)^RESULT: PASS\s*$') 'Changed shared dependency transition did not report PASS.'
+    Assert-True (Test-Path -LiteralPath $changedShared.changedShared -PathType Leaf) 'Changed shared dependency was removed.'
+    Assert-True ((Get-Content -Raw -LiteralPath $changedShared.changedShared) -eq 'shared-changed-after-receipt') 'Changed shared dependency bytes were altered.'
+    Assert-True (-not (Test-Path -LiteralPath $changedShared.manifest)) 'Prior Biology receipt remained after changed-shared transition.'
+    foreach ($relative in $changedShared.owned) {
+        Assert-True (-not (Test-Path -LiteralPath (Join-Path $changedShared.root $relative))) "Biology-owned file remained when a shared dependency had changed: $relative"
     }
 
     # Adding another root-level filename to a forged Biology-owned receipt does
@@ -240,14 +293,15 @@ try {
     foreach ($needle in @(
         '=== EXACT COMPILE / RELEASE-SHAPED TARGET BUILD ===',
         '=== COLLISION-SAFE TARGET PREFLIGHT AGAINST CURRENT INSTALL ===',
-        'BiologyPriorInstallTransition.exe',
-        '-TransitionOutputPath',
+        'Invoke-BiologyPriorInstallTransition.ps1',
+        'no generated transition executable is required',
         '=== POST-TRANSITION BIOLOGY-SPECIFIC RESIDUE VERIFICATION ===',
         '=== COLLISION-SAFE INSTALL PREFLIGHT AFTER PRIOR-STATE TRANSITION ===',
         'Target install mutation started:'
     )) {
         Assert-True ($candidate.Contains($needle)) "Attended preparation lost prior-install transition contract: $needle"
     }
+    Assert-True ($candidate -notmatch '(?i)BiologyPriorInstallTransition\.exe|TransitionOutputPath') 'Attended preparation still depends on a generated transition executable.'
     $buildIndex = $candidate.IndexOf('=== EXACT COMPILE / RELEASE-SHAPED TARGET BUILD ===',[StringComparison]::Ordinal)
     $initialPreflightIndex = $candidate.IndexOf('=== COLLISION-SAFE TARGET PREFLIGHT AGAINST CURRENT INSTALL ===',[StringComparison]::Ordinal)
     $transitionIndex = $candidate.IndexOf('=== PRIOR SCHEMA-2 BIOLOGY CANDIDATE TRANSITION ===',[StringComparison]::Ordinal)
@@ -255,7 +309,7 @@ try {
     $secondPreflightIndex = $candidate.IndexOf('=== COLLISION-SAFE INSTALL PREFLIGHT AFTER PRIOR-STATE TRANSITION ===',[StringComparison]::Ordinal)
     Assert-True ($buildIndex -ge 0 -and $buildIndex -lt $initialPreflightIndex -and $initialPreflightIndex -lt $transitionIndex -and $transitionIndex -lt $verifyIndex -and $verifyIndex -lt $secondPreflightIndex) 'Attended preparation no longer protects the prior candidate behind target build/preflight or residue verification.'
 
-    Write-Host 'PASS: player-facing Biology uninstaller and attended prior-install transition share the same schema-2/hash/path authority; package-root ownership is CI-synchronized, exact current root files transition, arbitrary root claims, foreign owned-namespace directory structure, and changed Biology content fail before mutation, and shared dependencies remain preserved.'
+    Write-Host 'PASS: player-facing Biology uninstaller and attended prior-install transition retain the same schema-2/hash/path contract; the attended path reuses the existing PowerShell exact-removal executor with no generated transition EXE, exact current root files transition, arbitrary root claims, foreign owned-namespace directory structure, and changed Biology content fail before mutation, and shared dependencies remain preserved.'
 }
 finally {
     if (Test-Path -LiteralPath $work) { Remove-Item -LiteralPath $work -Recurse -Force }
