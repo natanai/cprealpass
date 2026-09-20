@@ -6,7 +6,6 @@ $ErrorActionPreference = 'Stop'
 
 function Test-BiologyPriorAllowedOwnedPath([string]$RelativePath) {
     $rootFiles = @(
-        'Install Biology.exe',
         'Install Biology.ps1',
         'BiologyReleaseInstall.Core.ps1',
         'INSTALL.txt',

@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "biology-source",
   "name": "Biology development source",
-  "version": "1.0.0-source",
+  "version": "0.1.0-dev.20",
   "status": "Redistribution-safe project-original model/source artifact for CI and offline review; not the playable Biology package and no gameplay activation",
   "gameVersion": "2.31",
   "requiredExternalComponents": [

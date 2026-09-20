@@ -14,7 +14,6 @@ $biologySpecific = @(
     'r6/scripts/CyberpunkRealism',
     'biology',
     'Uninstall Biology.exe',
-    'Install Biology.exe',
     'Install Biology.ps1',
     'BiologyReleaseInstall.Core.ps1',
     'BIOLOGY-VERSION.txt'

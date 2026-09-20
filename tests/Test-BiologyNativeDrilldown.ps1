@@ -76,7 +76,7 @@ Check ($shell.Contains('this.crBiologySelectedArea = gamedataEquipmentArea.Inval
 Check ($actions.Contains('if !this.crBiologyShellMode || !this.CRBiologyInDetail()')) 'Actions can still leak into overview.'
 Check ($actions.Contains('GetItemList(player, items)') -and $actions.Contains('GetItemQuantity(player, itemID)')) 'Carried Biology items are not read from native inventory authority.'
 Check ($actions.Contains('ItemActionsHelper.EatItem') -and $actions.Contains('ItemActionsHelper.DrinkItem')) 'Food/drink does not use native item actions.'
-Check ($actions.Contains('CRBiologySessionAuthority.Body(player.GetGame())') -and $actions.Contains('runtime.UseFieldCare') -and $actions.Contains('CRProfessionalCareRuntime.CompleteForSession(player.GetGame()')) 'Treatment actions no longer use authoritative player-session care runtimes.'
+Check ($actions.Contains('CRBodyRuntime.Get().UseFieldCare') -and $actions.Contains('CRProfessionalCareRuntime.Complete')) 'Treatment actions no longer use authoritative care runtimes.'
 Check (-not $actions.Contains('RemoveItem(')) 'Biology detail manually decrements inventory.'
 
 # Stock Cyberware remains reachable/restorable rather than being replaced by Biology.

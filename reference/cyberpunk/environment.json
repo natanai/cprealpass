@@ -1,14 +1,14 @@
 {
-  "generatedUtc": "2026-09-20T08:10:08.5680612Z",
+  "generatedUtc": "2026-09-15T02:43:38.2359540Z",
   "game": {
     "name": "Cyberpunk 2077",
     "version": "2.31",
     "executableVersion": "3.0.5294808"
   },
   "counts": {
-    "files": 5077,
+    "files": 4967,
     "archives": 57,
-    "redscriptFiles": 65,
+    "redscriptFiles": 0,
     "tweakFiles": 0
   },
   "note": "Generated from the local supported installation. Absolute machine paths intentionally omitted."

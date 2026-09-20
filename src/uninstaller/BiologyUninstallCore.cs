@@ -132,7 +132,6 @@ namespace BiologyUninstall
         };
         private static readonly HashSet<string> BiologyOwnedRootFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
-            "Install Biology.exe",
             "Install Biology.ps1",
             "BiologyReleaseInstall.Core.ps1",
             "INSTALL.txt",
@@ -187,8 +186,6 @@ namespace BiologyUninstall
                 BiologyPlanItem item = new BiologyPlanItem();
                 item.Entry = entry;
                 item.FullPath = full;
-
-                if (Directory.Exists(full)) throw new InvalidDataException("An inventoried file was replaced by a directory: " + relative);
 
                 if (!File.Exists(full))
                 {
@@ -250,7 +247,7 @@ namespace BiologyUninstall
             {
                 throw new InvalidDataException("Ownership receipt contains an unsafe path: " + path);
             }
-            string value = path.Replace('/', '\\');
+            string value = path.Replace('/', '\\').Trim();
             if (value.StartsWith("\\", StringComparison.Ordinal) || Path.IsPathRooted(value))
             {
                 throw new InvalidDataException("Ownership receipt contains a rooted/UNC path: " + path);
@@ -260,9 +257,6 @@ namespace BiologyUninstall
             {
                 throw new InvalidDataException("Ownership receipt contains traversal or an ambiguous path segment: " + path);
             }
-            if (segments.Any(x => x.EndsWith(".", StringComparison.Ordinal) || x.EndsWith(" ", StringComparison.Ordinal) ||
-                x.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 || Regex.IsMatch(x, "^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(\\.|$)", RegexOptions.IgnoreCase)))
-                throw new InvalidDataException("Ownership receipt contains a reserved or ambiguous Windows path: " + path);
             return string.Join("\\", segments);
         }
 
@@ -276,15 +270,7 @@ namespace BiologyUninstall
             {
                 throw new InvalidDataException("Ownership receipt path escapes the game root: " + relativePath);
             }
-            AssertNoReparsePoint(full);
             return full;
-        }
-
-        public static void AssertNoReparsePoint(string fullPath)
-        {
-            for (string probe = Path.GetFullPath(fullPath); !string.IsNullOrEmpty(probe); probe = Path.GetDirectoryName(probe))
-                if ((File.Exists(probe) || Directory.Exists(probe)) && (File.GetAttributes(probe) & FileAttributes.ReparsePoint) != 0)
-                    throw new InvalidDataException("Reparse points are not supported in Biology file operations: " + probe);
         }
 
         public static string ComputeSha256(string path)
@@ -297,7 +283,7 @@ namespace BiologyUninstall
             }
         }
 
-        public static void ValidateManifest(BiologyManifest manifest)
+        private static void ValidateManifest(BiologyManifest manifest)
         {
             if (manifest == null || manifest.schemaVersion != SupportedManifestSchema || !string.Equals(manifest.product, Product, StringComparison.Ordinal))
             {
@@ -326,7 +312,7 @@ namespace BiologyUninstall
             }
         }
 
-        public static void ValidateEntry(BiologyManifestFile entry, string relative)
+        private static void ValidateEntry(BiologyManifestFile entry, string relative)
         {
             if (entry == null || string.IsNullOrWhiteSpace(entry.owner) || string.IsNullOrWhiteSpace(entry.component) || string.IsNullOrWhiteSpace(entry.route))
             {
@@ -386,9 +372,6 @@ namespace BiologyUninstall
         {
             if (plan == null) throw new ArgumentNullException("plan");
             if (options == null) options = new BiologyExecutionOptions();
-            BiologyUninstallPlanner.ResolveSafeChildPath(plan.GameRoot, BiologyUninstallPlanner.ManifestRelativePath);
-            if (BiologyUninstallPlanner.ComputeSha256(plan.ManifestPath) != plan.ManifestSha256)
-                throw new InvalidDataException("Ownership receipt changed after planning; no files removed.");
             BiologyExecutionResult result = new BiologyExecutionResult();
             HashSet<string> parentCandidates = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
@@ -412,7 +395,6 @@ namespace BiologyUninstall
 
                 try
                 {
-                    BiologyUninstallPlanner.ResolveSafeChildPath(plan.GameRoot, item.Entry.path);
                     if (!File.Exists(item.FullPath))
                     {
                         result.Missing.Add(item.Entry.path);
@@ -440,11 +422,6 @@ namespace BiologyUninstall
             // settings-file mutation is needed or permitted here.
             result.Notes.Add("Cyberpunk saves and save-backed Biology preference/state were not targeted.");
 
-            foreach (string owned in new[] { "mods/Biology", "r6/scripts/CyberpunkRealism", "biology" })
-            {
-                try { CheckResidualFiles(plan.GameRoot, owned, result); }
-                catch (Exception ex) { result.Errors.Add("Residual ownership check: " + ex.Message); }
-            }
             bool canRemoveReceipt = result.PreservedChanged.Count == 0 && result.Errors.Count == 0;
             if (canRemoveReceipt)
             {
@@ -452,7 +429,6 @@ namespace BiologyUninstall
                 {
                     if (File.Exists(plan.ManifestPath))
                     {
-                        BiologyUninstallPlanner.ResolveSafeChildPath(plan.GameRoot, BiologyUninstallPlanner.ManifestRelativePath);
                         string currentReceiptHash = BiologyUninstallPlanner.ComputeSha256(plan.ManifestPath);
                         if (string.Equals(currentReceiptHash, plan.ManifestSha256, StringComparison.OrdinalIgnoreCase))
                         {
@@ -490,21 +466,6 @@ namespace BiologyUninstall
             return result;
         }
 
-        private static void CheckResidualFiles(string gameRoot, string relative, BiologyExecutionResult result)
-        {
-            string full = BiologyUninstallPlanner.ResolveSafeChildPath(gameRoot, relative);
-            if (!Directory.Exists(full)) return;
-            foreach (string file in Directory.EnumerateFiles(full))
-            {
-                BiologyUninstallPlanner.AssertNoReparsePoint(file);
-                string local = file.Substring(gameRoot.Length + 1).Replace('\\', '/');
-                if (local.Equals(BiologyUninstallPlanner.ManifestRelativePath, StringComparison.OrdinalIgnoreCase)) continue;
-                result.Errors.Add("Preserved file remains in Biology namespace: " + local);
-            }
-            foreach (string directory in Directory.EnumerateDirectories(full))
-                CheckResidualFiles(gameRoot, directory.Substring(gameRoot.Length + 1), result);
-        }
-
         private static void RemoveOnlyEmptyOwnedParents(string gameRoot, IEnumerable<string> starts, BiologyExecutionResult result)
         {
             string root = Path.GetFullPath(gameRoot).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
@@ -521,7 +482,6 @@ namespace BiologyUninstall
                         break;
                     }
                     if (!Directory.Exists(dir)) break;
-                    BiologyUninstallPlanner.AssertNoReparsePoint(dir);
                     if (Directory.EnumerateFileSystemEntries(dir).Any()) break;
                     try
                     {

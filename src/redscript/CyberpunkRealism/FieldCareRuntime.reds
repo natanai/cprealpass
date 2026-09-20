@@ -6,10 +6,10 @@ module CyberpunkRealism.Integration
 import CyberpunkRealism.Physiology.*
 
 public class CRFieldCareInventory extends IScriptable {
-  // Stock supply mapping; original item identities and names remain unchanged:
+  // Development-owned supply mapping using stock records:
   // 2 dressing -> Medical Gauze junk item; 3 support -> common crafting material.
-  // Common crafting material provides improvised limb support, not bone repair.
-  // Neither action consumes MaxDoc or restores tissue/native Health.
+  // The exact final support item/UX remains an open data-design detail, but this
+  // boundary prevents the MaxDoc inhaler from becoming wound-healing currency.
   public static func Supply(kind: Int32) -> ItemID {
     if kind == 2 {
       return ItemID.CreateQuery(t"Items.GenericJunkItem4");
@@ -33,11 +33,10 @@ public class CRFieldCareInventory extends IScriptable {
     return CRFieldCareInventory.ExecuteForAction(player, plan, state, null);
   }
   public static func ExecuteForAction(player: ref<PlayerPuppet>, plan: ref<CRFieldCarePlan>, state: ref<CRInjuryState>, action: ref<CRFieldCareAction>) -> Int32 {
-    if !IsDefined(player) || !IsDefined(plan) || plan.committed || plan.spending || (plan.kind != 2 && plan.kind != 3) || !CRFieldCareModel.Same(plan.before, state) {
+    if IsDefined(action) && !CRFieldCareActionRuntime.Get().IsCompleting(action) {
       return 0;
     }
-    let care: ref<CRFieldCareActionRuntime> = CRBiologySessionAuthority.FieldCare(player.GetGame());
-    if IsDefined(action) && (!IsDefined(care) || !care.IsCompleting(action)) {
+    if !IsDefined(player) || !IsDefined(plan) || plan.committed || plan.spending || (plan.kind != 2 && plan.kind != 3) || !CRFieldCareModel.Same(plan.before, state) {
       return 0;
     }
     let inventory: ref<TransactionSystem> = GameInstance.GetTransactionSystem(player.GetGame());
@@ -50,7 +49,7 @@ public class CRFieldCareInventory extends IScriptable {
       plan.spending = false;
       return 5;
     }
-    if (!IsDefined(action) || (IsDefined(care) && care.IsCompleting(action))) && CRFieldCareModel.Commit(plan, state) {
+    if (!IsDefined(action) || CRFieldCareActionRuntime.Get().IsCompleting(action)) && CRFieldCareModel.Commit(plan, state) {
       plan.spending = false;
       return 1;
     }

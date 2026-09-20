@@ -8,11 +8,7 @@ Last updated: **2026-09-19**
 The repository is the durable source of truth. Git issues/branches/PRs track implementation state; ChatGPT conversations carry temporary working context. Conversation identity and Git issue/branch identity are intentionally separate.
 
 
-## Current owner override — 2026-09-20
-
-Issue #152 and `docs/handoffs/AUTONOMOUS-FINAL-PRODUCT-COMPLETION.md` authorize a sole local agent on `autonomous/final-product-completion` to finish the entire product. No worker/parent handoff or owner testing wait is required in this run. The historical assignments below do not define active lanes. T007 has already occurred; its source findings are repaired and audited under #152, and the 1.0.0 local release lifecycle has passed. Current gates and exact evidence are in `docs/PRODUCT-COMPLETION-MATRIX.md` and `docs/evidence/AUTONOMOUS-COMPLETION-2026-09-20.md`.
-
-## Historical parent recovery snapshot — 2026-09-19 (T006)
+## Parent recovery snapshot — 2026-09-19 (T006)
 
 - Parent: **P02**, active integration/orchestration under issue #35.
 - Latest completed numbered attended session: **T006**, exact tested source `fbce426fc3305f67f29ec083bfe8c9f644c2572d`; disposition PARTIAL.

@@ -8,11 +8,7 @@ import CyberpunkRealism.Physiology.*
 
 public class CRProfessionalCareRuntime extends IScriptable {
   public static func Complete(region: Int32, kind: Int32) -> Bool {
-    return CRProfessionalCareRuntime.CompleteForSession(GetGameInstance(), region, kind);
-  }
-
-  public static func CompleteForSession(game: GameInstance, region: Int32, kind: Int32) -> Bool {
-    let runtime: ref<CRBodyRuntime> = CRBiologySessionAuthority.Body(game);
+    let runtime: ref<CRBodyRuntime> = CRBodyRuntime.Get();
     let snapshot: ref<CRBodyState>;
     if !IsDefined(runtime) || (kind != 4 && kind != 5) {
       return false;

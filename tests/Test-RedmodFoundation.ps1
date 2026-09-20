@@ -25,7 +25,7 @@ $assembly = ReadText 'docs/REDMOD-INTEGRATED-ASSEMBLY.md'
 $deployHelper = ReadText 'tools/Deploy-BiologyRedmod.ps1'
 
 if ($package.schemaVersion -ne 2 -or $package.product -ne 'Biology' -or $package.packageId -ne 'Biology') { throw 'Unexpected Biology REDmod package contract.' }
-if ($package.supportedGameVersion -ne '2.31' -or $package.status -ne 'local-release') { throw 'Integrated release/game support status drifted.' }
+if ($package.supportedGameVersion -ne '2.31' -or $package.status -ne 'playable-integrated-candidate') { throw 'Integrated candidate/game support status drifted.' }
 if ($package.canonicalBuilder -ne 'tools/Build-BiologyPackage.ps1' -or $package.exactCompileRequiredBeforeArtifact -ne $true) { throw 'Canonical build/exact-compile gate drifted.' }
 if ($package.redmod.packageRoot -ne 'mods/Biology' -or $package.redmod.metadata -ne 'mods/Biology/info.json') { throw 'Biology REDmod identity drifted.' }
 if ($package.redmod.deployHelper -ne 'tools/Deploy-BiologyRedmod.ps1') { throw 'Package contract bypasses the fail-closed deploy helper.' }
