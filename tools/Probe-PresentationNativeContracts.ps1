@@ -119,7 +119,7 @@ $contracts = @(
             '\bclass\s+NameplateVisualsLogicController\b',
             '\bm_nameTextMain\b',
             '\bm_nameFrame\b',
-            '\\bfunction\\s+SetVisualData\\s*\\(',
+            '\bfunction\s+SetVisualData\s*\(',
             '\bfunction\s+SetElementVisibility\s*\(',
             '\bfunction\s+IsAnyElementVisible\s*\(',
             '\bfunction\s+IsQuestTarget\s*\('
