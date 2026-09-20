@@ -54,8 +54,10 @@ Check (-not $sessionPresentation.Contains('Metric("RIGHT BONE INTEGRITY", 100.0'
 # T006 could only prove that the rendered surface looked inert. Whole-percent
 # formatting can conceal real early metabolism, so deliberate detail preserves one
 # decimal while retaining the exact authoritative Float underneath.
-Check ($sessionPresentation.Contains('RoundF(ClampF(value, 0.0, 100.0) * 10.0) / 10.0')) 'Session detail still rounds authoritative percentages to whole integers.'
-Check ($legacyDetail.Contains('RoundF(ClampF(value, 0.0, 100.0) * 10.0) / 10.0')) 'Legacy detail projection disagrees with session detail precision.'
+Check ($sessionPresentation.Contains('Cast<Float>(RoundF(ClampF(value, 0.0, 100.0) * 10.0)) / 10.0')) 'Session detail precision is not using the exact-compile-safe Int32-to-Float cast.'
+Check (-not $sessionPresentation.Contains('RoundF(ClampF(value, 0.0, 100.0) * 10.0) / 10.0')) 'Session detail regressed to invalid Int32/Float division after RoundF.'
+Check ($legacyDetail.Contains('Cast<Float>(RoundF(ClampF(value, 0.0, 100.0) * 10.0)) / 10.0')) 'Legacy detail precision is not using the exact-compile-safe Int32-to-Float cast.'
+Check (-not $legacyDetail.Contains('RoundF(ClampF(value, 0.0, 100.0) * 10.0) / 10.0')) 'Legacy detail regressed to invalid Int32/Float division after RoundF.'
 
 # T007 observability stays Biology-owned, transient, bounded and attended-only.
 # It must diagnose the existing authority, never become save state or external telemetry.
