@@ -36,13 +36,14 @@ private let crBiologyDetailNativeRegion: wref<inkWidget>;
 // -> GridAndSlider -> grid -> scrollRect -> virtualGridContainer
 //
 // Biology must not live inside that scrolling item-grid subtree. Keep Inventory as the
-// native selected-detail lifecycle/opacity authority, but hide the authored
-// cyberwareContainer as one stock content unit while Biology occupies a sibling panel
-// under the same Inventory root. Restore the container's exact prior visibility on exit.
+// native selected-detail lifecycle/opacity authority, but suppress the authored
+// cyberwareContainer as one stock content unit for the whole time Biology owns the
+// shared shell. Native DisplayInventory(false) fades/hides Inventory while Back zooms
+// out; restoring the stock child during that transition leaks it for a rendered frame.
+// Preserve its exact local visibility and restore it only when Cyberware regains mode
+// ownership (or the shared screen is being torn down).
 @addMethod(RipperdocInventoryController)
-public final func CRSetBiologyDetailSurface(active: Bool) -> Void {
-  this.crBiologyDetailSurfaceActive = active;
-
+public final func CRSetBiologyStockContentSuppressed(suppressed: Bool) -> Void {
   let inventoryRoot: ref<inkCompoundWidget> = this.GetRootWidget() as inkCompoundWidget;
   let contentHost: ref<inkWidget> = this.crBiologyCyberwareContentHost;
   if !IsDefined(contentHost) && IsDefined(inventoryRoot) {
@@ -56,7 +57,7 @@ public final func CRSetBiologyDetailSurface(active: Bool) -> Void {
     return;
   }
 
-  if active {
+  if suppressed {
     if !this.crBiologyContentHostVisibilityCaptured {
       this.crBiologyContentHostWasVisible = contentHost.IsVisible();
       this.crBiologyContentHostVisibilityCaptured = true;
@@ -67,6 +68,14 @@ public final func CRSetBiologyDetailSurface(active: Bool) -> Void {
       contentHost.SetVisible(this.crBiologyContentHostWasVisible);
       this.crBiologyContentHostVisibilityCaptured = false;
     }
+  }
+}
+
+@addMethod(RipperdocInventoryController)
+public final func CRSetBiologyDetailSurface(active: Bool) -> Void {
+  this.crBiologyDetailSurfaceActive = active;
+  if active {
+    this.CRSetBiologyStockContentSuppressed(true);
   }
 }
 
@@ -332,8 +341,11 @@ private func DollHover(area: gamedataEquipmentArea) -> Void {
   wrappedMethod(area);
 
   if closingBiologyDetail {
-    inventoryView.CRSetBiologyDetailSurface(false);
+    // Native DisplayInventory(false) owns the Inventory fade/hide transition. Keep the
+    // stock cyberwareContainer suppressed across that transition; only clear Biology's
+    // detail marker here. Mode ownership restores stock content later.
     this.DisplayInventory(false);
+    inventoryView.CRSetBiologyDetailSurface(false);
     this.CRSyncBiologyNodeInteractivity(this.crBiologyShellMode && this.CRBiologyNativeDetailReady());
     this.CRSyncBiologyContentVisibility();
   }
@@ -357,10 +369,12 @@ private func DollSelect(select: Bool) -> Void {
     return;
   }
 
-  this.DisplayInventory(true);
+  // Suppress the stock authored child before native Inventory begins opening so Biology
+  // never exposes Cyberware content on either side of the detail transition.
   if IsDefined(this.m_inventoryView) {
     this.m_inventoryView.CRSetBiologyDetailSurface(true);
   }
+  this.DisplayInventory(true);
   this.AnimateMinigrids();
 }
 
