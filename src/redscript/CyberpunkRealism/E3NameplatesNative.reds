@@ -117,10 +117,10 @@ public final func SetVisualData(puppet: ref<GameObject>, const incomingData: scr
     this.crBiologyE3LoggedVisualData = true;
   }
 
-  // Native name/knowledge data must cross the native SetVisualData boundary unchanged.
-  // Biology's public-display-name fallback is presentation-only and is resolved later,
-  // after native visibility handling, by CRRefreshBiologyE3Nameplate.
-  wrappedMethod(puppet, incomingData, isNewNpc);
+  // Preserve the already-exact-compiled wrapper call shape, but pass the native values
+  // through without Biology enrichment. The public-display-name fallback is
+  // presentation-only and is resolved later, after native visibility handling.
+  wrappedMethod(puppet, data, isNewNpc);
 }
 
 @wrapMethod(NameplateVisualsLogicController)
