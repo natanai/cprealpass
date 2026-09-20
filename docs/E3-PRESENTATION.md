@@ -1,8 +1,22 @@
 # Biology E3-inspired presentation target
 
-Status: canonical visual target / W03.5 native-content-region contract
+Status: canonical visual target / W18.1 engineering-reference continuation
 Last updated: 2026-09-17
-Current worker: W03.5 / issue #97 / parent issue #40
+Current worker: W18.1 / issue #106 / parent issue #40
+
+## W18.1 verified resource-composition rule
+
+W18.1 directly inspected `Biology-Private-ReferenceBundle-20260919-001914-365937cf.zip`. Its exact pinned Project E3 HUD archive has a WolvenKit-verified inventory of 370 actual resource paths, including authored quest/list, D-pad/input-hint, compass, weapon/ammo, player-health, NPC-nameplate, minimap, scanner/quickhack, activity-log and interaction/dialog resource families.
+
+Therefore Biology's E3 preference must not evolve by stacking more runtime-created red geometry around controller roots. Current native widgets/resources own layout and gameplay semantics. Biology runtime geometry is limited to reversible accent chrome on already-proven semantic hosts. If T005 shows a structural mismatch that native child styling cannot solve, the next step is a Biology-owned REDmod/INK resource authored independently for the current 2.31 seam.
+
+This rule preserves the W03.5/W03.6 live wins and does not reintroduce Project E3 as a dependency.
+
+## W18.1 engineering-reference rule
+
+The exact Project E3 2.31.p2 private reference was traced by the predecessor archaeology and is now owned by the W18.1 continuation as a layered implementation: authored archive/INK resources + redscript controller logic + TweakXL record policy, with Mod Settings only as an optional settings surface.
+
+See `E3-REFERENCE-ARCHAEOLOGY.md` for the durable mapping. W18.1 does **not** change the product boundary to “copy Project E3.” It uses Project E3 to identify the real responsibilities and then chooses the smallest current Cyberpunk 2.31 / Biology-owned seam. In particular, W03.5/W03.6 native content-region binding remains intentional, while Project E3 archive bytes/scripts/tweaks remain forbidden from the player artifact.
 
 ## Product decision
 
@@ -219,3 +233,79 @@ This is diagnostic evidence, not layout authority. It exists so a future attende
 ### W03.5 acceptance
 
 Parent-integrated attended evidence must show the `WEAPON // AMMO` treatment traveling with the actual lower-right native weapon region and the quest treatment visibly composed with the right-side native tracker. The prior reticle removal and framed ambient nameplate are regressions if lost. Native modern scanner/quickhack remains a hard preserve.
+
+
+## W03.6 — quest / hotkey native content-region completion
+
+T004 tested exact integrated source `ffa6f64d6c837146d032aaab565d671c932453a2`.
+
+T004 preserves the W03.5 weapon fix and earlier nameplate/reticle wins, but it proves that quest and hotkey presentation need a second semantic-region pass:
+
+- weapon/ammo no longer floats near lower-center and is back with the lower-right native region — KEEP;
+- ambient ordinary-focus framed nameplates remain live — KEEP;
+- the old 112 x 112 two-corner reticle artifact remains absent — KEEP;
+- quest chrome reaches the right-hand tracker region, but only as a small partial marker while the title/objective stack still reads overwhelmingly current/native — FAIL;
+- lower-left Biology chrome visibly overlaps/misaligns with cyan native hotkey/quickslot controls — FAIL.
+
+### Quest completion uses native row content, not a larger guessed overlay
+
+W03.5 correctly moved the quest mount into `m_questTrackerContainer`, but a fixed `OBJECTIVES` label/rail is not enough to transform the whole tracker.
+
+Current 2.31 quest authority exposes the actual visible row components through `QuestTrackerObjectiveLogicController`:
+
+- `m_objectiveTitle : inkTextRef`;
+- `m_trackingIcon : inkWidgetRef`;
+- `m_trackingFrame : inkWidgetRef`.
+
+W03.6 keeps custom chrome mounted only in `m_questTrackerContainer`, replaces the tiny fixed label treatment with a segmented host-relative frame, and styles the actual native quest title plus each spawned native objective row. The objective list itself remains owned by `m_ObjectiveContainer`; Biology never reparents a foreign child into that list.
+
+The quest controller iterates the native objective children only after native `UpdateTrackerData()` completes and calls a Biology presentation helper on each existing `QuestTrackerObjectiveLogicController`. Native Journal data, objective spawning/removal, tracked-state logic, counters, success/failure transitions and animations remain authoritative.
+
+E3 OFF restores the captured native title, objective-text, tracking-icon and tracking-frame tint.
+
+### Hotkey / quickslot semantic host
+
+Current CP2077 2.31 `HotkeysWidgetController` exposes separate editable regions:
+
+- `m_phoneSlot`;
+- `m_carSlot`;
+- `m_radioSlot`;
+- `m_dpadHintsPanel`.
+
+The controller's ordinary consumable/gadget/cyberware/leeroy/time-bank widgets are spawned directly into `m_dpadHintsPanel`. That panel is therefore the narrow semantic host for the quickslot cluster that T004 showed underneath the misaligned Biology chrome.
+
+W03.6 removes the `GetRootCompoundWidget()` mount from `E3HotkeyHudNative.reds`. The Biology frame now fills only `m_dpadHintsPanel`, using the same segmented region language as the quest completion. Phone/car/radio sibling slots remain native and are not covered by a broad root overlay.
+
+No screenshot-derived X/Y compensation is introduced. The native authored panel position and size define Biology's local coordinate space.
+
+### Bounded evidence
+
+Quest and hotkey adapters continue/extend `[Biology:E3]` region traces. For each semantic host they report mount resolution, E3 state, native host size/translation/margins and Biology chrome geometry. These values are evidence only and are never converted into hard-coded global offsets.
+
+The installed-source probe now requires the exact 2.31 quest objective-row fields and the hotkey hierarchy including `m_dpadHintsPanel` plus the native `SpawnFromLocal(inkCompoundRef.Get(m_dpadHintsPanel), ...)` usage.
+
+### W03.6 acceptance
+
+Parent-integrated attended evidence must show:
+
+- the right-hand tracker reads as one E3-composed unit because native title/objective rows visibly participate, not because a larger arbitrary box was added;
+- lower-left segmented chrome follows the actual `m_dpadHintsPanel` quickslot cluster without overlapping phone/car siblings;
+- W03.5 lower-right weapon binding remains correct;
+- framed ambient names remain live;
+- the old reticle artifact stays absent;
+- E3 OFF restores native quest/hotkey styling;
+- the modern scanner/quickhack presentation remains current/native.
+
+
+## W18.1 T005 acceptance boundary
+
+Parent P02 owns T005 on an integrated canonical candidate. W18.1 requires T005 to verify, without rediscovering architecture:
+
+- quest title/objective rows remain composed in the right-hand native tracker and the existing W03.6 treatment is visually coherent;
+- quickslot/D-pad treatment follows `m_dpadHintsPanel` without the T004 overlap;
+- weapon/ammo remains bound to the lower-right native region;
+- ambient framed names remain live, including the already-recorded police/combat scan-enrichment follow-up;
+- the old two-corner reticle artifact remains absent;
+- scanner and quickhack remain the current native 2.31 presentation;
+- E3 OFF yields reversible accent styling while Biology-wide health suppression remains independent;
+- any remaining **structural** HUD mismatch is routed to a Biology-owned authored-resource follow-up rather than another screen-space/runtime-rectangle iteration.
