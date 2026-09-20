@@ -344,3 +344,102 @@ Parent P02 must verify on the integrated canonical candidate:
 - the name text and frame are visually composed together with no detached Biology canvas;
 - modern scanner/quickhack remains current/native;
 - E3 OFF restores captured native name/frame styling and native range.
+
+
+## W20.3 — restore real E3 ON/OFF authority after rejected autonomous release
+
+The autonomous 1.0.0 / PR #153 release is **not** an accepted presentation baseline.
+Owner live testing found that its Biology preference could change state while meaningful
+E3 presentation was absent both ON and OFF. PR #155 restored the complete pre-autonomous
+tree; W20.3 repairs the presentation contract from that recovered source.
+
+### Why the presentation disappeared
+
+The failure is source-explainable rather than a request for another coordinate guess.
+
+PR #153 combined three risky changes:
+
+1. `UseE3FirstPersonHudVisuals` changed from default-ON while
+   `CRRealpassSettings` is not yet attached to requiring the settings system to exist.
+2. Multiple HUD adapters stopped creating their native-hosted Biology frame unless that
+   early read was already ON.
+3. The attempted UISystem refresh callbacks used the Event-suffixed method name instead
+   of REDengine's `FooEvent -> OnFoo` callback convention.
+
+That makes controller initialization order capable of permanently producing a
+presentation-less session. W20.3 restores the pre-autonomous default-ON startup
+semantics, keeps meaningful frames created independently of preference value, and
+reconciles live controllers through a stateless
+`CRBiologyE3PreferenceChangedEvent -> OnCRBiologyE3PreferenceChanged` event when the
+single saved authority attaches, restores or changes.
+
+The event is notification only. It carries no Boolean and creates no second authority.
+Every controller reads `CRRealpassSettings.UseE3FirstPersonHudVisuals`.
+
+### ON contract
+
+E3 ON must visibly exercise the established Biology-owned/current-native seams together:
+
+- lower-left compact Biology chrome;
+- segmented D-pad/quickslot chrome inside native `m_dpadHintsPanel`;
+- quest tracker frame plus native quest/objective-row tint treatment;
+- lower-right weapon/ammo frame plus native weapon/ammo tint treatment;
+- current interaction/activity accent treatment;
+- ordinary native crosshair tint without custom reticle geometry;
+- ambient authored native name/frame treatment where native nameplate policy permits.
+
+A changing ON label without these meaningful paths is a regression.
+
+### OFF contract
+
+E3 OFF must restore current/native presentation in the same session:
+
+- Biology E3 frames hidden;
+- quest/objective, weapon/ammo, activity and crosshair tints restored from the current
+  native state and their capture flags released for future cycles;
+- no uncaptured activity/nameplate letter-case or font-style mutation;
+- name/frame tint, frame opacity/visibility and ambient range restored;
+- native nameplate data is re-applied when preference ownership changes;
+- Biology-wide simulation/no-healthbar policy remains independent.
+
+### Scanner / nameplate contract
+
+Modern scanner and quickhack remain native/current. W20.3 introduces no scanner
+controller or scanner resource hook.
+
+The nameplate controller's existing `m_isScanning` state is used solely to stop the
+ambient projected nameplate from competing with native scanner identity. During scan,
+Biology's ambient fallback is disallowed and the projected `m_displayName` is hidden;
+native detailed scanner identity remains untouched. On scan exit, native nameplate data
+is re-applied and ordinary ambient policy is re-evaluated.
+
+This resolves T007's simultaneous `BEAT COP` / `NC RESIDENT` presentation without
+teaching Biology anything new about the NPC and without writing fallback text into
+native identity data.
+
+### Biology preference control
+
+W20.2's local detail placement is retained exactly in principle:
+`PRESENTATION -> E3 HUD + NAMEPLATES -> ON/OFF`.
+
+T007 proved that placement is visually usable but its click callback could reject the
+event. W20.3 makes the row the only interactive child, removes the brittle current-target
+comparison, writes the single saved setting, refreshes the row immediately and then
+notifies the live HUD.
+
+### Next attended acceptance
+
+The next P02 clean-room milestone should compare the same ordinary-play state ON and OFF
+and verify:
+
+- quest/objective, D-pad/hotkeys and lower-right weapon/ammo are materially E3-styled ON;
+- OFF visibly returns those regions to native/current presentation without stale red
+  tint/frame state;
+- the local Biology preference changes ON <-> OFF on click and remains correct after
+  menu close/reopen and save/reload;
+- ordinary ambient civilian/police names work outside scanner when native policy permits;
+- during scanner, native detailed identity is the only identity treatment (no concurrent
+  generic Biology name);
+- scanner/quickhack remains the current 2.31 interface;
+- the old two-corner reticle artifact remains absent;
+- Biology detail/Back, Biology <-> Cyberware and ordinary Cyberware remain unchanged.
