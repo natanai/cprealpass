@@ -1,7 +1,0 @@
-{
-  "source": "config/red4ext-diagnostics.ini",
-  "destination": "red4ext/config.ini",
-  "component": "project-diagnostics",
-  "expectedPriorSha256": "06478D643528FA9D4DD9C047322AFF4C2AEE668BE2F202B181F3DB86AD1EA865",
-  "replacementReason": "RED4ext generated config observed after successful base smoke test. Preserve original and increase log retention."
-}
