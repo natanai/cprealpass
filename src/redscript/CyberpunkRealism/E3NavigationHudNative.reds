@@ -42,5 +42,6 @@ protected cb func OnInitialize() -> Bool {
 @addMethod(MinimapContainerController)
 protected cb func OnCRBiologyE3PreferenceChanged(evt: ref<CRBiologyE3PreferenceChangedEvent>) -> Bool {
   this.CRRefreshBiologyE3MinimapFrame();
-  return true;
+  // Notification events are broadcast invalidations; do not consume propagation.
+  return false;
 }
