@@ -38,13 +38,16 @@ foreach ($entry in $frameSources) {
     Check (-not ($entry -match 'if\s+enabled\s*\{\s*this\.CRCreateBiologyE3')) 'Rejected lazy E3 frame creation returned.'
 }
 
-# Native UI event naming convention: FooEvent is delivered to OnFoo, not OnFooEvent.
+# Public redscript UISystem references use both callback naming forms for Event types.
+# Keep compatible aliases so this stateless refresh cannot depend on one naming convention.
 foreach ($entry in @($lowerLeft,$hotkey,$navigation,$interaction,$activity,$crosshair,$quest,$weapon,$nameplate)) {
-    Check ($entry.Contains('OnCRBiologyE3PreferenceChanged(evt: ref<CRBiologyE3PreferenceChangedEvent>)')) 'A live E3 controller is not wired to the native preference-change event callback name.'
-    Check (-not $entry.Contains('OnCRBiologyE3PreferenceChangedEvent(')) 'Rejected Event-suffixed callback name returned and would not match native UI event dispatch.'
-    $handlerStart = $entry.IndexOf('protected cb func OnCRBiologyE3PreferenceChanged(')
-    $handlerTail = $entry.Substring($handlerStart)
-    Check ($handlerTail.Contains('return false;')) 'Stateless E3 refresh notification consumes UI-event propagation instead of remaining broadcast-safe.'
+    Check ($entry.Contains('OnCRBiologyE3PreferenceChanged(evt: ref<CRBiologyE3PreferenceChangedEvent>)')) 'A live E3 controller is missing the shortened preference-change event callback alias.'
+    Check ($entry.Contains('OnCRBiologyE3PreferenceChangedEvent(evt: ref<CRBiologyE3PreferenceChangedEvent>)')) 'A live E3 controller is missing the Event-suffixed preference-change callback alias.'
+    $shortStart = $entry.IndexOf('protected cb func OnCRBiologyE3PreferenceChanged(')
+    $eventStart = $entry.IndexOf('protected cb func OnCRBiologyE3PreferenceChangedEvent(')
+    $shortTail = $entry.Substring($shortStart, $eventStart - $shortStart)
+    $eventTail = $entry.Substring($eventStart)
+    Check ($shortTail.Contains('return false;') -and $eventTail.Contains('return false;')) 'Stateless E3 refresh notification aliases consume UI-event propagation instead of remaining broadcast-safe.'
 }
 
 # ---------------------------------------------------------------------------
