@@ -357,21 +357,23 @@ tree; W20.3 repairs the presentation contract from that recovered source.
 
 The failure is source-explainable rather than a request for another coordinate guess.
 
-PR #153 combined three risky changes:
+PR #153 combined the two changes that are sufficient to explain the live regression:
 
 1. `UseE3FirstPersonHudVisuals` changed from default-ON while
    `CRRealpassSettings` is not yet attached to requiring the settings system to exist.
 2. Multiple HUD adapters stopped creating their native-hosted Biology frame unless that
    early read was already ON.
-3. The attempted UISystem refresh callbacks used the Event-suffixed method name instead
-   of REDengine's `FooEvent -> OnFoo` callback convention.
 
 That makes controller initialization order capable of permanently producing a
 presentation-less session. W20.3 restores the pre-autonomous default-ON startup
-semantics, keeps meaningful frames created independently of preference value, and
-reconciles live controllers through a stateless
-`CRBiologyE3PreferenceChangedEvent -> OnCRBiologyE3PreferenceChanged` event when the
-single saved authority attaches, restores or changes.
+semantics and keeps meaningful frames created independently of preference value.
+
+PR #153 also attempted a UISystem refresh event, but W20.3 does **not** attribute the
+regression to its callback suffix. Independent public redscript references use both
+shortened `OnFoo` and Event-suffixed `OnFooEvent` callbacks for queued UI events.
+W20.3 therefore exposes both compatible aliases for its stateless preference-change
+event; each simply re-reads the single saved authority and performs the same idempotent
+refresh.
 
 The event is notification only. It carries no Boolean and creates no second authority.
 Every controller reads `CRRealpassSettings.UseE3FirstPersonHudVisuals`.
