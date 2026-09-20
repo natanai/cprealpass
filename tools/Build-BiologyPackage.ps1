@@ -207,9 +207,9 @@ Add-FileRecord 'UNINSTALL.txt' 'Biology' 'biology-package-metadata' 'REDMOD-NATI
 
 $version = [string]$info.version + '+' + $stamp + '.' + $shortRevision
 $versionText = @(
-    'Biology ' + $version,
-    'Cyberpunk 2077 ' + $gameVersion,
-    'source ' + $revision,
+    ('Biology ' + $version),
+    ('Cyberpunk 2077 ' + $gameVersion),
+    ('source ' + $revision),
     'REDmod package mods/Biology'
 ) -join "`n"
 [IO.File]::WriteAllText((Join-Path $packageRoot 'BIOLOGY-VERSION.txt'),$versionText + "`n",[Text.UTF8Encoding]::new($false))

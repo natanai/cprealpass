@@ -10,6 +10,10 @@ This document describes the current integrated package architecture and direct e
 
 ## What has been proven
 
+The **DEPLOYMENT FOUNDATION ACCEPTED** milestone remains established historical
+evidence. The current local release extends it with source/build/install/startup
+checks while preserving the native observation boundaries below.
+
 The earlier exact integrated candidate built from `8cf045664b5e4d8b4b014edfc98bf2f8eb270ba5` proved exact compilation, installation, official REDmod recognition of `Biology`, and real five-stage REDmod deployment on Cyberpunk 2077 2.31.
 
 W10/W11 then correctly removed Mod Settings, ArchiveXL, and RED4ext from production because Biology no longer has a settings/provider consumer for that stack. A later exact candidate, source revision `68b50ed9e3c629ca252326918dbbb68b9bc35494`, was installed and REDmod-deployed successfully but had no material Biology runtime effect.
