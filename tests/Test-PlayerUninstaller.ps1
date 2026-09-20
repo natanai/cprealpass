@@ -82,7 +82,7 @@ function New-PriorInstallFixture([string]$Root,[switch]$UnexpectedOwnedRoot,[swi
 }
 
 function Invoke-TransitionFixture([string]$TransitionScript,[string]$GameRoot,[string]$ReportPath) {
-    & pwsh -NoLogo -NoProfile -NonInteractive -File $TransitionScript -GameRoot $GameRoot -ReportPath $ReportPath
+    & pwsh -NoLogo -NoProfile -NonInteractive -File $TransitionScript -GameRoot $GameRoot -ReportPath $ReportPath | Out-Null
     return $LASTEXITCODE
 }
 
