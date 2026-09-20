@@ -198,6 +198,38 @@ function New-BiologyPriorInstallTransitionPlan([string]$GameRoot,[string]$Manife
         ownedRoots=$ownedRoots
         manifest=$manifest
         manifestSha256=$receiptHash
+        inventoried=$inventoried
+        knownDirectories=$knownDirectories
+    }
+}
+
+function Assert-BiologyPriorOwnedNamespace($Plan) {
+    foreach ($rootRelative in @($Plan.ownedRoots)) {
+        $rootFull = Resolve-BiologyReleaseChild ([string]$Plan.gameRoot) ([string]$rootRelative)
+        if (-not (Test-Path -LiteralPath $rootFull)) { continue }
+        $rootItem = Get-Item -Force -LiteralPath $rootFull
+        if ($rootItem.Attributes -band [IO.FileAttributes]::ReparsePoint) {
+            throw "Replacement refuses Biology-owned reparse point: $rootRelative"
+        }
+        if (-not $rootItem.PSIsContainer) {
+            throw "Replacement expected Biology-owned directory but found a file: $rootRelative"
+        }
+        foreach ($entry in @(Get-ChildItem -Force -LiteralPath $rootFull -Recurse)) {
+            if ($entry.Attributes -band [IO.FileAttributes]::ReparsePoint) {
+                throw "Replacement refuses reparse point inside Biology-owned root: $(Get-BiologyRecoveryRelative ([string]$Plan.gameRoot) $entry.FullName)"
+            }
+            $relative = Get-BiologyRecoveryRelative ([string]$Plan.gameRoot) $entry.FullName
+            $key = $relative.ToLowerInvariant()
+            if ($entry.PSIsContainer) {
+                if (-not $Plan.knownDirectories.ContainsKey($key)) {
+                    throw "Replacement found an untracked directory inside Biology-owned state: $relative"
+                }
+            } elseif (-not $Plan.inventoried.ContainsKey($key)) {
+                throw "Replacement found untracked content inside Biology-owned state: $relative"
+            } elseif ([string]$Plan.inventoried[$key] -eq 'generic-dependency-shared') {
+                throw "Replacement refuses preserve-only shared content inside a Biology-owned namespace: $relative"
+            }
+        }
     }
 }
 
@@ -220,4 +252,6 @@ function Assert-BiologyPriorInstallTransitionPlan($Plan) {
             throw "Unexpected replacement action: $($item.action)"
         }
     }
+
+    Assert-BiologyPriorOwnedNamespace $Plan
 }
