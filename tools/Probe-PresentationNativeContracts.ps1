@@ -119,6 +119,7 @@ $contracts = @(
             '\bclass\s+NameplateVisualsLogicController\b',
             '\bm_nameTextMain\b',
             '\bm_nameFrame\b',
+            '\\bfunction\\s+SetVisualData\\s*\\(',
             '\bfunction\s+SetElementVisibility\s*\(',
             '\bfunction\s+IsAnyElementVisible\s*\(',
             '\bfunction\s+IsQuestTarget\s*\('
@@ -177,4 +178,4 @@ foreach ($hit in $deduped) {
 }
 
 Write-Host ''
-Write-Host 'PASS: all W03.6 current-controller, quest/hotkey native content-region, crosshair-state, and nameplate-lifecycle contracts were found in the installed official REDmod script tree.' -ForegroundColor Green
+Write-Host 'PASS: all W20.1 current-controller, quest/hotkey native content-region, crosshair-state, and nameplate data/visibility lifecycle contracts were found in the installed official REDmod script tree.' -ForegroundColor Green
