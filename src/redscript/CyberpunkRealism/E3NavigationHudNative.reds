@@ -38,3 +38,9 @@ protected cb func OnInitialize() -> Bool {
   this.CRRefreshBiologyE3MinimapFrame();
   return result;
 }
+
+@addMethod(MinimapContainerController)
+protected cb func OnCRBiologyE3PreferenceChangedEvent(evt: ref<CRBiologyE3PreferenceChangedEvent>) -> Bool {
+  this.CRRefreshBiologyE3MinimapFrame();
+  return true;
+}
