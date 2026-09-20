@@ -61,5 +61,6 @@ public final func EvaluateHealthBarVisibility(isInOverclockedState: Bool) -> Voi
 @addMethod(healthbarWidgetGameController)
 protected cb func OnCRBiologyE3PreferenceChanged(evt: ref<CRBiologyE3PreferenceChangedEvent>) -> Bool {
   this.CRRefreshBiologyE3Hud();
-  return true;
+  // Notification events are broadcast invalidations; do not consume propagation.
+  return false;
 }
