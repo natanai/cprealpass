@@ -23,6 +23,26 @@ public class CRHitEligibility extends IScriptable {
   public let actualHealthDamage: Float;
 }
 
+public class CRCombatProfileReadiness extends IScriptable {
+  // Structural/profile-read failures remain fatal. An otherwise-valid player
+  // profile may retain unmapped equipped protection only when downstream damage
+  // is conservatively capped by the already-computed native physical channel.
+  // NPC appearance protection remains mapped-or-rejected.
+  public static func Ready(impact: ref<CRImpactState>, unresolvedProtection: Int32, unmappedProtection: Int32, playerTarget: Bool) -> Bool {
+    if !CRImpactModel.ValidState(impact) || unresolvedProtection < 0 || unresolvedProtection > 64 || unmappedProtection < 0 || unmappedProtection > 32 {
+      return false;
+    }
+    if unresolvedProtection > 0 {
+      return false;
+    }
+    return playerTarget || unmappedProtection == 0;
+  }
+
+  public static func RequiresNativePhysicalCap(unmappedProtection: Int32, playerTarget: Bool) -> Bool {
+    return playerTarget && unmappedProtection > 0 && unmappedProtection <= 32;
+  }
+}
+
 public class CRHitModel extends IScriptable {
   public static func AddShape(contact: ref<CRHitContact>, region: Int32, material: Int32, protection: Bool, special: Bool) -> Bool {
     if !IsDefined(contact) || region < 0 || region > 6 || material < 0 || material > 4 {
