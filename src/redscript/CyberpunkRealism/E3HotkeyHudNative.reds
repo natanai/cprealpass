@@ -88,7 +88,7 @@ protected cb func OnInitialize() -> Bool {
 }
 
 @addMethod(HotkeysWidgetController)
-protected cb func OnCRBiologyE3PreferenceChangedEvent(evt: ref<CRBiologyE3PreferenceChangedEvent>) -> Bool {
+protected cb func OnCRBiologyE3PreferenceChanged(evt: ref<CRBiologyE3PreferenceChangedEvent>) -> Bool {
   this.CRRefreshBiologyE3HotkeyFrame();
   return true;
 }
