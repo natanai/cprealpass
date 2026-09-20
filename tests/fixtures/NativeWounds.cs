@@ -50,6 +50,7 @@ public class gameHitEvent {
 public class SDamageDealt {}
 public class CRCombatProfileSample {
     public bool referenceReady = true;
+    public bool nativePhysicalCap;
     public CRImpactState referenceImpact;
     public CRArmorWearPlan armorWear;
 }
