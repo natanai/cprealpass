@@ -3,6 +3,10 @@
 // W03.4 keeps this surface deliberately sparse. The attended W03.3 root wash produced
 // a large red slab behind the native hotkey/biomonitor area; compact chrome now carries
 // the same presentation language without pretending the whole controller is a panel.
+//
+// W20.3 deliberately creates the frame independent of the current preference value.
+// The rejected autonomous release made creation conditional on an early saved-settings
+// read and live testing showed the entire E3 surface could then remain absent.
 module CyberpunkRealism.Presentation
 
 import CyberpunkRealism.Settings.*
@@ -52,4 +56,10 @@ protected cb func OnUpdateHealthBarVisibility() -> Bool {
 public final func EvaluateHealthBarVisibility(isInOverclockedState: Bool) -> Void {
   wrappedMethod(isInOverclockedState);
   this.CRRefreshBiologyE3Hud();
+}
+
+@addMethod(healthbarWidgetGameController)
+protected cb func OnCRBiologyE3PreferenceChangedEvent(evt: ref<CRBiologyE3PreferenceChangedEvent>) -> Bool {
+  this.CRRefreshBiologyE3Hud();
+  return true;
 }
