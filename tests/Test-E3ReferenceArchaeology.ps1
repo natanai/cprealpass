@@ -107,7 +107,7 @@ Check ($hotkey.Contains('this.m_dpadHintsPanel') -and -not $hotkey.Contains('thi
 Check (-not $crosshair.Contains('private let crBiologyE3FocusFrame') -and -not $crosshair.Contains('SetName(n"CRBiologyE3FocusFrame")')) 'W18.1 reintroduced the attended reticle artifact owner.'
 Check ($nameplate.Contains('this.m_nameTextMain') -and $nameplate.Contains('this.m_nameFrame') -and $identity.Contains('CRPublicAmbientNameAllowed')) 'W20.1 discarded the live authored ambient-name lifecycle.'
 Check (-not $nameplate.Contains('CRBiologyE3IdentityChrome') -and -not $nameplate.Contains('Vector2(340.0, 46.0)')) 'W20.1 regressed to detached runtime nameplate geometry after W18.1 authored-resource archaeology.'
-Check (-not $nameplate.Contains('data.name = ambientName') -and $nameplate.Contains('wrappedMethod(puppet, incomingData, isNewNpc)')) 'W20.1 regressed native scanner/name authority by writing presentation fallback into SetVisualData input.'
+Check (-not $nameplate.Contains('data.name = ambientName') -and $nameplate.Contains('wrappedMethod(puppet, data, isNewNpc)')) 'W20.1 regressed native scanner/name authority by writing presentation fallback into SetVisualData input.'
 
 $combined = @($quest,$weapon,$hotkey,$crosshair,$nameplate,$identity) -join [Environment]::NewLine
 foreach ($forbidden in @('module ProjectE3','import ProjectE3','basegame_3e_demo_hud.archive','r6/tweaks/Project E3 - HUD')) {
