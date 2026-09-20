@@ -64,3 +64,10 @@ protected cb func OnCRBiologyE3PreferenceChanged(evt: ref<CRBiologyE3PreferenceC
   // Notification events are broadcast invalidations; do not consume propagation.
   return false;
 }
+
+@addMethod(healthbarWidgetGameController)
+protected cb func OnCRBiologyE3PreferenceChangedEvent(evt: ref<CRBiologyE3PreferenceChangedEvent>) -> Bool {
+  this.CRRefreshBiologyE3Hud();
+  // Notification events are broadcast invalidations; do not consume propagation.
+  return false;
+}
