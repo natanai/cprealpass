@@ -176,6 +176,12 @@ public class CRBiologySessionPresentation extends IScriptable {
     result.showEat = meters.nutrition < 70.0;
     result.effects = CRBiologySessionPresentation.Effects(game);
     result.hasEffects = !Equals(result.effects, "");
+    runtime.TestPresentationRead("overview");
+    let testStatus: String = runtime.TestStatus();
+    if !Equals(testStatus, "") {
+      result.effects = CRBiologySessionPresentation.AddToken(result.effects, testStatus);
+      result.hasEffects = true;
+    }
 
     let conditions: String = "";
     let region: Int32 = 1;
@@ -204,7 +210,9 @@ public class CRBiologySessionPresentation extends IScriptable {
   }
 
   private static func PercentText(value: Float) -> String {
-    return ToString(RoundF(ClampF(value, 0.0, 100.0))) + "%";
+    // Whole-percent rounding made genuine early body progression look exactly
+    // healthy. Preserve one decimal without changing the authoritative value.
+    return ToString(RoundF(ClampF(value, 0.0, 100.0) * 10.0) / 10.0) + "%";
   }
 
   private static func IntegrityText(damage: Float) -> String {
@@ -366,6 +374,14 @@ public class CRBiologySessionPresentation extends IScriptable {
       }
     }
 
+    runtime.TestPresentationRead("detail-" + result.title);
+    let testStatus: String = runtime.TestStatus();
+    if !Equals(testStatus, "") {
+      if !Equals(result.summary, "") {
+        result.summary += "\n";
+      }
+      result.summary += testStatus;
+    }
     result.valid = true;
     return result;
   }
