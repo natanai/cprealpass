@@ -104,7 +104,7 @@ Check ($availability -match '(?s)public static func EnsureActive\(game: GameInst
 # Normal time, wait, and sleep all feed the same persistent body/input authority.
 Check ($runtime.Contains('CRBodyInputs.Time(this.inputs, hours, exertion, sleeping);')) 'Elapsed/sleep time no longer enters the authoritative body input queue.'
 Check ($runtime.Contains('CRBodyInputs.Drain(this.inputs, this.body, this.config);')) 'Time progression no longer drains into the persistent body.'
-Check ($runtime.Contains('CRClockModel.Observe(this.clock, this.WorldSeconds(), this.SimSeconds(), this.NativeStateAllowed(false))')) 'Normal play-time observation path disappeared.'
+Check ($runtime.Contains('let allowed: Bool = this.NativeStateAllowed(false);') -and $runtime.Contains('CRClockModel.Observe(this.clock, this.WorldSeconds(), this.SimSeconds(), allowed)')) 'Normal play-time observation path disappeared.'
 Check ($runtime.Contains('CRClockModel.FinishSkip(this.clock, this.WorldSeconds(), this.SimSeconds(), hoursRequested)')) 'Committed wait/sleep clock path disappeared.'
 Check ($hooks.Contains('runtime = CRBiologySessionAuthority.Body(player.GetGame());')) 'Wait/sleep UI no longer resolves the player-session body authority.'
 Check ($hooks.Contains('runtime.MarkNextTimeSkipAsWait();')) 'Wait classification no longer reaches the body authority.'
