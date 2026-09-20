@@ -2,7 +2,7 @@
 
 Status: **canonical numbered live-test index**  
 Last updated: **2026-09-19**  
-Next unallocated live test ID: **T006**
+Next unallocated live test ID: **T007**
 
 This file is the parent-owned chronological authority for owner-run live Cyberpunk attended sessions. It is intentionally compact. Open the linked completed record for detail.
 
@@ -25,6 +25,7 @@ Before a live launch, parent creates/updates a GitHub `[T###]` tracking issue so
 | **T003** | 2026-09-18 | `67593bfbb12b4a6ebcec7042066d48b4f5fac427` | **PARTIAL** | Listener/session PASS. Biology selected anatomy works but detail telemetry disappears entirely -> W02.5/#96. E3 nameplate + old reticle fix improved, but WEAPON // AMMO chrome is detached and quest tracker remains untreated -> W03.5/#97. |
 | **T004** | 2026-09-18 | `ffa6f64d6c837146d032aaab565d671c932453a2` | **PARTIAL** | Listener/session PASS across two observed launch cycles. Biology breadcrumb proves `MOUNTED` but detail remains blank -> post-mount W02.6. E3 quest/weapon now reach their native regions, but quest treatment is still tiny/partial and lower-left hotkey chrome is visibly mis-composed -> W03.6. |
 | **T005** | 2026-09-19 | `a5818db6596e335824d75f596fc8204cc419de4f` | **PARTIAL** | Session/startup PASS; runtime visible and E3 materially improved. Back transition flashes stock Cyberware -> W19.1/#133; nameplate frame + police scan identity -> W20.1/#134; live Health loss not reflected in Biology injury state -> W21.1/#135. Persistence sequence remains open on #41. |
+| **T006** | 2026-09-19 | `fbce426fc3305f67f29ec083bfe8c9f644c2572d` | **PARTIAL** | W22 replacement path + session/startup PASS; Biology detail/Back flash fixed (KEEP). Biology stats remain inert -> W21.2/#143/#41. E3 preference clipped/unusable -> W20.2/#144/#40. Persistence and remaining identity acceptance stay open. |
 
 ## Records
 
@@ -33,6 +34,7 @@ Before a live launch, parent creates/updates a GitHub `[T###]` tracking issue so
 - `T003-2026-09-18-67593bfb-native-region-e3-followup.md`
 - `T004-2026-09-18-ffa6f64d-post-mount-e3-region-followup.md`
 - `T005-2026-09-19-a5818db6-integrated-reference-followup.md`
+- `T006-2026-09-19-fbce426f-body-state-preference-followup.md`
 
 ## Pre-numbering history
 
