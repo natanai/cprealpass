@@ -27,60 +27,54 @@ Check (-not $probe.Contains("`$targetResourceHash = '13533725445430520621'")) 'W
 Check (-not $probe.Contains("`$cli,'archive',`$archiveRoot,'--list'")) 'W02.4 probe still passes the non-recursive archive root to WolvenKit archive.'
 Check (-not $probe.Contains("`$cli,'unbundle',`$archiveRoot")) 'W02.4 probe still passes the non-recursive archive root to WolvenKit unbundle.'
 
-# T002 disproved the W02.3 assumption that RipperdocInventoryController's root owns
-# authored content placement. The stock item region is the editable virtual-grid child.
-Check ($followup.Contains('inkVirtualCompoundRef.Get(this.m_virtualGridContainer)')) 'W02.4 does not resolve the native Cyberware item-region widget.'
-Check ($followup.Contains('public final func CRMountBiologyDetailInNativeRegion(target: ref<inkWidget>) -> Bool')) 'W02.4 native detail-region mount adapter is missing.'
+# Current 2.31 archaeology resolves the authored selected-content hierarchy:
+# Inventory -> cyberwareContainer -> GridAndSlider -> grid -> scrollRect ->
+# virtualGridContainer. Biology must bind to the direct cyberwareContainer seam and
+# must not treat the scrolling virtual-grid subtree as a generic content host.
+Check ($followup.Contains('private final func CRFindBiologyAuthoredContentHost(inventoryRoot: ref<inkCompoundWidget>) -> ref<inkWidget>')) 'W17.1 authored content-host resolver is missing.'
+Check ($followup.Contains('Equals(child.GetName(), n"cyberwareContainer")')) 'W17.1 does not resolve the exact authored cyberwareContainer by name.'
+Check ($followup.Contains('let contentPanel: ref<inkVerticalPanel> = contentHost as inkVerticalPanel;')) 'W17.1 does not verify the authored content host is the expected vertical-panel layout family.'
+Check ($followup.Contains('public final func CRMountBiologyDetailInAuthoredContentHost(target: ref<inkWidget>) -> Bool')) 'W17.1 authored content-host mount adapter is missing.'
+Check ($followup.Contains('target.Reparent(inventoryRoot, -1);')) 'Biology detail is not mounted as a sibling of cyberwareContainer under the Inventory lifecycle root.'
+Check ($followup.Contains('this.crBiologyDetailNativeRegion = contentHost;')) 'W17.1 diagnostics do not retain the authored content-host identity.'
+Check ($followup.Contains('this.crBiologyDetailMountStatus = "CONTENT_HOST_MOUNTED";')) 'W17.1 does not expose positive authored-host mount evidence.'
+Check (-not $followup.Contains('CRFindBiologyDetailRegionParent')) 'Obsolete virtual-grid parent discovery still exists.'
+Check (-not $followup.Contains('inkVirtualCompoundRef.Get(this.m_virtualGridContainer)')) 'Biology still treats the virtualized item-list child as a layout authority.'
 
-# Biology placement must still come from native authored POSITIONING geometry, not
-# a reconstructed screen-space offset. T004 proved that copying the virtualized grid's
-# FIXED content extent onto a normal vertical panel is not a valid visibility contract,
-# so W02.6 deliberately owns its content sizing via fit-to-content.
+# Placement is copied from the live authored cyberwareContainer, not reconstructed from
+# its known 800/300 resource margins and not inferred from screenshots.
 foreach ($needle in @(
-    'target.SetAnchor(nativeRegion.GetAnchor());',
-    'target.SetAnchorPoint(nativeRegion.GetAnchorPoint());',
-    'target.SetHAlign(nativeRegion.GetHAlign());',
-    'target.SetVAlign(nativeRegion.GetVAlign());',
-    'target.SetMargin(nativeRegion.GetMargin());',
-    'target.SetPadding(nativeRegion.GetPadding());',
-    'target.SetTranslation(nativeRegion.GetTranslation());')) {
-    Check ($followup.Contains($needle)) "Native detail-region positioning copy missing: $needle"
+    'target.SetAnchor(contentHost.GetAnchor());',
+    'target.SetAnchorPoint(contentHost.GetAnchorPoint());',
+    'target.SetHAlign(contentHost.GetHAlign());',
+    'target.SetVAlign(contentHost.GetVAlign());',
+    'target.SetMargin(contentHost.GetMargin());',
+    'target.SetPadding(contentHost.GetPadding());',
+    'target.SetTranslation(contentHost.GetTranslation());')) {
+    Check ($followup.Contains($needle)) "Authored content-host positioning copy missing: $needle"
 }
-Check ($followup.Contains('target.SetFitToContent(true);')) 'W02.6 detail panel does not size from its real content after MOUNTED.'
-Check (-not $followup.Contains('target.SetSizeRule(nativeRegion.GetSizeRule());')) 'W02.6 still copies the virtual grid size rule onto a non-virtual Biology panel.'
-Check (-not $followup.Contains('target.SetSizeCoefficient(nativeRegion.GetSizeCoefficient());')) 'W02.6 still copies the virtual grid size coefficient onto Biology.'
-Check (-not $followup.Contains('target.SetSize(nativeRegion.GetSize());')) 'W02.6 still copies the virtual grid fixed extent onto Biology.'
+Check ($followup.Contains('target.SetFitToContent(true);')) 'Biology detail panel does not size from its real content.'
+Check (-not $followup.Contains('inkMargin(800.0, 300.0')) 'W17.1 hard-codes serialized native margins instead of reading live authored geometry.'
+Check (-not $shell.Contains('this.crBiologyNativeContent.SetAnchor(inkEAnchor.TopLeft);')) 'Biology detail forces a screen-origin TopLeft fallback.'
+Check (-not $shell.Contains('this.crBiologyNativeContent.SetMargin(inkMargin(0.0, 42.0, 0.0, 0.0));')) 'Biology detail carries the disproven W02.3 fixed top-left margin.'
+Check (-not $shell.Contains('this.crBiologyNativeContent.SetSize(Vector2(720.0, 0.0));')) 'Biology detail still overrides the authored content region with the old fixed width.'
 
-Check (-not $shell.Contains('this.crBiologyNativeContent.SetAnchor(inkEAnchor.TopLeft);')) 'Biology detail still forces the screen-origin TopLeft anchor.'
-Check (-not $shell.Contains('this.crBiologyNativeContent.SetMargin(inkMargin(0.0, 42.0, 0.0, 0.0));')) 'Biology detail still carries the disproven W02.3 fixed top-left margin.'
-Check (-not $shell.Contains('this.crBiologyNativeContent.SetSize(Vector2(720.0, 0.0));')) 'Biology detail still overrides the native content-region size with the W02.3 fixed width.'
+# The stock content subtree is hidden/restored as one authored unit while Inventory
+# remains the native show/hide/opacity authority.
+Check ($followup.Contains('this.crBiologyContentHostWasVisible = contentHost.IsVisible();')) 'W17.1 does not capture stock cyberwareContainer visibility.'
+Check ($followup.Contains('contentHost.SetVisible(false);')) 'W17.1 does not suppress stock cyberwareContainer during Biology detail.'
+Check ($followup.Contains('contentHost.SetVisible(this.crBiologyContentHostWasVisible);')) 'W17.1 does not restore stock cyberwareContainer exactly.'
+Check ($shell.Contains('this.m_inventoryView.CRMountBiologyDetailInAuthoredContentHost(this.crBiologyNativeContent);')) 'Biology detail-time sync does not revalidate the authored host.'
+Check ($shell.Contains('detailLayoutReady = this.CRSyncBiologyNativeContentLayout();')) 'Biology detail visibility is not gated on live authored-host resolution.'
+Check ($shell.Contains('this.crBiologyNativeContent.SetVisible(detail && detailLayoutReady);')) 'Biology can display when authored-host resolution fails.'
 
-# The attended 2.31 INK proves m_virtualGridContainer is nested. Biology must locate
-# the compound that directly owns that widget and become its sibling, so copied local
-# geometry is interpreted in the same native coordinate space while the inventory root
-# still remains the visibility/opacity ancestor.
-Check ($followup.Contains('private final func CRFindBiologyDetailRegionParent(parent: ref<inkCompoundWidget>, nativeRegion: ref<inkWidget>) -> ref<inkCompoundWidget>')) 'W02.4 does not search the native inventory subtree for the virtual-grid parent.'
-Check ($followup.Contains('while i < parent.GetNumChildren()')) 'W02.4 native-parent search does not traverse compound children.'
-Check ($followup.Contains('let child: wref<inkWidget> = parent.GetWidgetByIndex(i);')) 'W02.4 native-parent search does not use vanilla child traversal.'
-Check ($followup.Contains('if child == nativeRegion')) 'W02.4 native-parent search does not identify the actual virtual-grid child.'
-Check ($followup.Contains('target.Reparent(nativeParent, -1);')) 'W02.4 does not mount Biology beside the native virtual grid.'
-Check ($shell.Contains('this.crBiologyNativeContent = new inkVerticalPanel();')) 'Biology detail panel is not retained independently of the initialization-time mount.'
-Check ($shell.Contains('this.m_inventoryView.CRMountBiologyDetailInNativeRegion(this.crBiologyNativeContent);')) 'Biology detail-time sync does not revalidate the native-parent mount.'
-Check (-not $shell.Contains('nativeContentParent = this.m_inventoryView.GetRootWidget() as inkCompoundWidget;')) 'Biology still mounts detail directly under the zero-margin inventory root.'
+# Preserve selected-system identity, native anatomy focus, Back, and ordinary Cyberware.
+Check ($shell.Contains('this.crBiologySelectedArea = area;') -and $shell.Contains('this.m_filterArea = area;')) 'W17.1 disturbed selected-system identity.'
+Check ($followup.Contains('Equals(area, this.crBiologySelectedArea)') -and $followup.Contains('this.DisplayInventory(true);')) 'W17.1 disturbed correct-anatomy native detail entry.'
+Check ($shell.Contains('CRBiologySessionPresentation.Detail(player.GetGame(), this.crBiologySelectedArea)')) 'W17.1 disturbed authoritative detail binding.'
+Check ($sync.Contains('if this.CRHandleBiologyBack()')) 'W17.1 disturbed native Back routing.'
+Check ($followup.Contains('CRSetBiologyDetailSurface(false);') -and $followup.Contains('this.DisplayInventory(false);')) 'W17.1 disturbed native detail close/restoration.'
+Check ($shell.Contains('inkWidgetRef.SetVisible(this.m_gridContainer, true);')) 'W17.1 disturbed stock Cyberware restoration.'
+Check (-not $followup.Contains('CRBodyRuntime')) 'W17.1 layout adapter absorbed body-runtime authority.'
 
-# Re-read geometry at detail depth. If the native child cannot be resolved, fail closed
-# instead of making the telemetry visible at root/screen origin.
-Check ($shell.Contains('private final func CRSyncBiologyNativeContentLayout() -> Bool')) 'Biology lacks a detail-time native geometry refresh.'
-Check ($shell.Contains('detailLayoutReady = this.CRSyncBiologyNativeContentLayout();')) 'Biology detail visibility is not retried/gated on native geometry resolution at detail depth.'
-Check ($shell.Contains('this.crBiologyNativeContent.SetVisible(detail && detailLayoutReady);')) 'Biology can still display detail when native layout resolution fails.'
-
-# Preserve W02.2 selected-system identity, native focus, Back, and stock Cyberware.
-Check ($shell.Contains('this.crBiologySelectedArea = area;') -and $shell.Contains('this.m_filterArea = area;')) 'W02.4 disturbed selected-system identity.'
-Check ($followup.Contains('Equals(area, this.crBiologySelectedArea)') -and $followup.Contains('this.DisplayInventory(true);')) 'W02.4 disturbed correct-anatomy native detail entry.'
-Check ($shell.Contains('CRBiologySessionPresentation.Detail(player.GetGame(), this.crBiologySelectedArea)')) 'W02.4 disturbed authoritative detail binding.'
-Check ($sync.Contains('if this.CRHandleBiologyBack()')) 'W02.4 disturbed native Back routing.'
-Check ($followup.Contains('CRSetBiologyDetailSurface(false);') -and $followup.Contains('this.DisplayInventory(false);')) 'W02.4 disturbed native detail close/restoration.'
-Check ($shell.Contains('inkWidgetRef.SetVisible(this.m_gridContainer, true);')) 'W02.4 disturbed stock Cyberware restoration.'
-Check (-not $followup.Contains('CRBodyRuntime')) 'W02.4 layout adapter absorbed runtime authority.'
-
-Write-Host "PASS: $script:checks W02.4 native-detail-region geometry checks."
+Write-Host "PASS: $script:checks W17.1 authored Biology detail-region checks."

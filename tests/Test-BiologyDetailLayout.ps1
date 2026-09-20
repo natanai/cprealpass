@@ -10,20 +10,20 @@ $shell = Text 'BiologyCyberwareShell.reds'
 $followup = Text 'BiologyLiveShellFollowupNative.reds'
 $sync = Text 'BiologyModeSyncNative.reds'
 
-# T002 plus the attended 2.31 INK probe proved the inventory-controller root is a
-# zero-margin Fill lifecycle container while m_virtualGridContainer is nested under an
-# additional authored parent. Biology must mount beside that native child before copying
-# its LOCAL layout values; direct root parenting is the exact failure being repaired.
+# W17.1 source/resource archaeology proves the selected-content seam is the direct
+# Inventory child cyberwareContainer. The deeper GridAndSlider/scrollRect/virtualGrid
+# subtree is item-list implementation only.
 Check ($shell.Contains('this.crBiologyNativeContent = new inkVerticalPanel();')) 'Biology detail creation does not retain a retryable native-content panel.'
-Check ($shell.Contains('this.m_inventoryView.CRMountBiologyDetailInNativeRegion(this.crBiologyNativeContent);')) 'Biology detail does not revalidate native-region placement at detail depth.'
-Check ($followup.Contains('target.Reparent(nativeParent, -1);')) 'Biology detail is not mounted as a sibling of the native virtual grid.'
-Check (-not $shell.Contains('nativeContentParent = this.m_inventoryView.GetRootWidget() as inkCompoundWidget;')) 'Biology detail still mounts directly under the zero-margin inventory root.'
-Check (-not $shell.Contains('let nativeContentParent: ref<inkCompoundWidget> = inkCompoundRef.Get(this.m_inventoryViewAnchor) as inkCompoundWidget;')) 'Biology detail still mounts beside the native inventory controller under m_inventoryViewAnchor.'
+Check ($shell.Contains('this.m_inventoryView.CRMountBiologyDetailInAuthoredContentHost(this.crBiologyNativeContent);')) 'Biology detail does not revalidate authored content-host placement at detail depth.'
+Check ($followup.Contains('Equals(child.GetName(), n"cyberwareContainer")')) 'Biology detail does not resolve the authored selected-content container.'
+Check ($followup.Contains('target.Reparent(inventoryRoot, -1);')) 'Biology detail is not a sibling of cyberwareContainer under the Inventory lifecycle root.'
+Check ($followup.Contains('let contentPanel: ref<inkVerticalPanel> = contentHost as inkVerticalPanel;')) 'Biology does not verify same-family vertical-panel host semantics.'
+Check (-not $followup.Contains('inkVirtualCompoundRef.Get(this.m_virtualGridContainer)')) 'Biology still uses the virtualized item list as layout authority.'
 Check (-not $shell.Contains('this.crBiologyNativeContent.SetAnchor(inkEAnchor.TopLeft);')) 'Biology detail still forces a screen-origin TopLeft anchor.'
 Check (-not $shell.Contains('this.crBiologyNativeContent.SetMargin(inkMargin(0.0, 42.0, 0.0, 0.0));')) 'Biology detail still uses the disproven W02.3 fixed root-relative offset.'
 Check ($shell.Contains('this.crBiologyNativeContent.SetFitToContent(true);')) 'Biology detail container does not size itself from its title/summary/metric children.'
-Check ($followup.Contains('target.SetFitToContent(true);')) 'Native-region sync does not preserve Biology-owned fit-to-content sizing.'
-Check (-not $followup.Contains('target.SetSize(nativeRegion.GetSize());')) 'Virtual-grid fixed extent still overrides Biology content sizing.'
+Check ($followup.Contains('target.SetFitToContent(true);')) 'Authored-host sync does not preserve Biology-owned fit-to-content sizing.'
+Check ($followup.Contains('target.SetMargin(contentHost.GetMargin());')) 'Biology detail no longer derives placement from the live authored content host.'
 
 # Functional hierarchy only: title, summary, metric rows, then contextual actions.
 # Broad visual redesign remains deliberately deferred.
@@ -45,4 +45,4 @@ Check ($followup.Contains('CRSetBiologyDetailSurface(false);') -and $followup.Co
 Check ($shell.Contains('inkWidgetRef.SetVisible(this.m_gridContainer, true);') -and $shell.Contains('this.UpdateTitle(this.GetAreaHeader(area));')) 'Stock Cyberware category contents/titles are no longer restorable.'
 Check (-not $shell.Contains('CRBodyRuntime.Get().')) 'W02.3 layout work absorbed body-runtime authority.'
 
-Write-Host "PASS: $script:checks W02.4 Biology native detail layout checks."
+Write-Host "PASS: $script:checks W17.1 Biology authored detail layout checks."
