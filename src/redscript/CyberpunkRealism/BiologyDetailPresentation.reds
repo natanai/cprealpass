@@ -30,7 +30,7 @@ public class CRBiologyDetailPresentation extends IScriptable {
   }
 
   private static func PercentText(value: Float) -> String {
-    return ToString(RoundF(ClampF(value, 0.0, 100.0))) + "%";
+    return ToString(RoundF(ClampF(value, 0.0, 100.0) * 10.0) / 10.0) + "%";
   }
 
   private static func IntegrityText(damage: Float) -> String {
