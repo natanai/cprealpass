@@ -123,7 +123,7 @@
     "the player-facing package contains only roots actually required by that exact build",
     "redscript and standalone cybercmd are the only retained generic runtime dependencies and are tracked per file; cybercmd only executes redscript's scc.toml startup compilation task",
     "the supported player/parent install path stages the release outside the game root and runs the Biology collision-safe installer; blind ZIP merge is not supported while standalone cybercmd carries shared ASI-loader files",
-    "byte-identical existing global.ini/version.dll are accepted as compatible and preserved; a non-identical copy fails closed before mutation because compatibility cannot be proven; only cybercmd.asi is replaceable",
+    "all pre-existing shared files, including cybercmd.asi/global.ini/version.dll, must be byte-identical; conflicting files fail closed before mutation",
     "the REDmod-owned Biology activation marker remains the sole whole-mod activation authority; redscript/cybercmd plumbing is non-authoritative",
     "the public artifact never includes developer deployment receipts, reports, staging, saves, game executables, stock game archives or local ReferenceMods payload",
     "full Steam reinstall is exceptional clean-room/recovery, not the normal Biology uninstall path"

@@ -152,7 +152,7 @@
     },
     {
       "root": "bin/x64/plugins",
-      "condition": "Exact pinned cybercmd.asi task runner is inventoried/preserved and is the only standalone-cybercmd file Biology may replace during collision-safe install/update; root is never recursively Biology-owned."
+      "condition": "Exact pinned cybercmd.asi task runner is inventoried and preserved when byte-identical; conflicting shared files fail preflight. The root is never recursively Biology-owned."
     },
     {
       "root": "bin/x64",
@@ -181,7 +181,7 @@
     "redscript-startup-task-runner-must-be-packaged-with-current-scc-toml",
     "shared-standalone-cybercmd-global-ini-and-version-dll-must-never-be-silently-overwritten",
     "shared-standalone-cybercmd-collision-must-fail-before-any-game-file-mutation",
-    "only-cybercmd-asi-may-be-replaced-by-the-standalone-cybercmd-install-path",
+    "all-conflicting-shared-files-including-cybercmd-asi-fail-preflight",
     "unknown-collision-must-fail-closed-for-assisted-updates",
     "changed-owned-file-must-not-be-auto-deleted",
     "blocked-component-must-not-be-present",
@@ -206,19 +206,15 @@
   "acceptedDirectGameGates": [
     "official REDmod tool/version/deploy module",
     "Biology package recognition on Cyberpunk 2077 2.31",
-    "real five-stage REDmod deployment using corrected explicit-root helper"
+    "real five-stage REDmod deployment using corrected explicit-root helper",
+    "65-source exact compile and 86-file artifact policy at source cf1bc0994cfc",
+    "packaged cybercmd/redscript startup regenerated current configured output",
+    "actual native EXE upgrade/reinstall/uninstall/clean reinstall; official REDmod refresh removed Biology activation; 9 shared files and 143 unrelated hashes preserved"
   ],
   "remainingDirectGameGates": [
-    "standalone cybercmd executes redscript scc.toml and regenerates the configured r6/cache/modded/final.redscripts for the exact installed candidate",
-    "REDmod activation marker exact-compiles/deploys in the combined candidate",
-    "REDlauncher Enable mods ON activates Biology",
-    "REDlauncher Enable mods OFF yields Biology-inactive native behavior while shared redscript/cybercmd infrastructure remains non-authoritative",
-    "E3 preference can be edited in the Biology body shell and persists across save/reload",
-    "OFF-to-ON relaunch restores Biology while preserving E3 preference/state",
-    "Uninstall Biology.exe removes exact Biology-owned payload and official REDmod refresh leaves no stale Biology activation",
-    "changed-file refusal and another-REDmod preservation on a real supported install",
-    "safe REDmod overlap/precedence fixture",
-    "attended body/runtime/UI/presentation/gameplay acceptance"
+    "rendered UI and actual REDlauncher Enable mods ON/OFF checkbox operation",
+    "in-save body/combat progression and E3 preference save/reload persistence",
+    "native quest/performance and representative other-mod overlap observation"
   ],
   "rules": [
     "The repository root is not a player package.",
@@ -227,7 +223,7 @@
     "Shared framework/game roots are never deleted wholesale.",
     "The retained generic runtime is limited to redscript plus standalone cybercmd, with exact current consumers recorded in manifest/dependency-graph.json.",
     "The supported parent/player package install route stages the release outside the game root and runs the collision-safe Biology installer; blind Expand-Archive/copy merge into the game root is not supported for standalone cybercmd.",
-    "Existing byte-identical standalone-cybercmd global.ini/version.dll are preserved; non-identical copies fail before mutation because compatibility is unproven; only cybercmd.asi may be replaced.",
+    "All pre-existing shared dependency files, including cybercmd.asi, must be byte-identical; conflicting files fail preflight before mutation.",
     "cybercmd is startup compilation plumbing only and must never become Biology activation or gameplay authority.",
     "The playable builder may read the installed supported game for version/exact compilation but may not deploy or modify it.",
     "If ownership/hash/path safety cannot be proven, automatic deletion or protected shared-loader replacement fails closed.",

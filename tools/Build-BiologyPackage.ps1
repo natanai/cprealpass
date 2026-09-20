@@ -255,7 +255,8 @@ $provenance = [ordered]@{
     )
     removedDependencies = @('mod-settings','archivexl','red4ext','tweakxl','codeware','input-loader','darkfuture','project-e3-hud')
     sourceModsRequired = @()
-    directGameGatesRemaining = @('current configured final.redscripts regeneration via standalone cybercmd','launcher ON marker/behavior','launcher OFF vanilla behavior','E3 preference body-shell edit + save/reload persistence','self-contained uninstaller hard removal + REDmod refresh','PKG-05 safe overlap/precedence fixture')
+    localLifecycleEvidence = 'docs/evidence/AUTONOMOUS-COMPLETION-2026-09-20.md; exact artifact/source/installed receipt reconciliation is in the local release report'
+    directGameGatesRemaining = @('rendered UI and actual REDlauncher checkbox ON/OFF behavior','E3 preference body-shell edit + native save/reload persistence','in-save body/combat/quest/performance observation','PKG-05 safe overlap/precedence fixture')
 }
 Write-JsonFile $provenance (Join-Path $biologyDir 'provenance.json')
 Add-FileRecord 'biology/provenance.json' 'Biology' 'biology-package-metadata' 'REDMOD-NATIVE' 'biology-owned'

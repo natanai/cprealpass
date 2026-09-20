@@ -111,16 +111,15 @@
   "acceptedDirectGameEvidence": [
     "official REDmod executable/version/module contract on Cyberpunk 2077 2.31",
     "official REDmod recognition of mods/Biology",
-    "real five-stage REDmod deployment with explicit game root"
+    "real five-stage REDmod deployment with explicit game root",
+    "65-source exact compile and 86-file artifact policy at source cf1bc0994cfc",
+    "packaged cybercmd/redscript startup regenerated current configured output",
+    "actual native EXE upgrade/reinstall/uninstall/clean reinstall; official REDmod refresh removed Biology activation; 9 shared files and 143 unrelated hashes preserved"
   ],
   "remainingDirectGameGates": [
-    "combined-candidate launcher activation marker exact compile/deploy",
-    "launcher ON Biology behavior",
-    "launcher OFF vanilla behavior with supplemental runtime still installed",
-    "normal OFF/ON relaunch persistence",
-    "self-contained hard uninstall plus REDmod refresh",
-    "safe REDmod overlap/precedence fixture",
-    "attended body/runtime/UI/presentation/gameplay acceptance"
+    "rendered UI and actual REDlauncher Enable mods ON/OFF checkbox operation",
+    "in-save body/combat progression and E3 preference save/reload persistence",
+    "native quest/performance and representative other-mod overlap observation"
   ],
   "rules": [
     "mods/Biology is the authoritative first-party REDmod package identity and launcher activation authority.",
