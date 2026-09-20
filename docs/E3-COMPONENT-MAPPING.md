@@ -200,11 +200,17 @@ HUD controller initializes
 -> later visible preference state does not reconstruct the missing presentation tree
 ```
 
-The rejected release also attempted a UISystem refresh event, but its handlers were named
-`OnCRBiologyE3PreferenceChangedEvent`. REDengine's redscript UI-event convention removes
-the `Event` suffix from the callback name (`FooEvent -> OnFoo`). W20.3 uses
-`CRBiologyE3PreferenceChangedEvent -> OnCRBiologyE3PreferenceChanged` and keeps the
-event stateless: every controller re-reads the one saved Boolean.
+The rejected release also attempted a UISystem refresh event. Independent public
+redscript archaeology shows that working UISystem consumers use **both** callback naming
+forms: some Event types dispatch to a shortened `OnFoo` callback, while others use the
+full Event-suffixed `OnFooEvent` form. Callback suffix choice is therefore **not**
+treated as the proven regression cause.
+
+W20.3 makes refresh delivery tolerant of that mixed ecosystem by exposing compatible
+`OnCRBiologyE3PreferenceChanged` and
+`OnCRBiologyE3PreferenceChangedEvent` aliases on each live presentation controller.
+Both perform the same idempotent refresh and return false so the stateless notification
+can continue propagating. Every controller still re-reads the one saved Boolean.
 
 W20.3 therefore preserves the default-ON startup read until save authority attaches,
 always creates each Biology-owned frame in its already-proven native host, and uses the
