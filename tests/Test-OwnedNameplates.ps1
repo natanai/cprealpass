@@ -15,6 +15,8 @@ Check ($source.Contains('wref<NPCPuppet> = puppet as NPCPuppet')) 'Ambient ident
 Check (-not $source.Contains('npc.IsCharacterCivilian()')) 'W03.3 still excludes police/combatants from the ambient public-name path.'
 Check ($source.Contains('npc.IsAttached()')) 'Ambient identity helper does not require an attached live NPC.'
 Check ($source.Contains('this.IsQuestTarget()')) 'Ambient identity helper does not respect the native quest-target state.'
+Check ($source.Contains('this.crBiologyE3ScannerActive')) 'Ambient identity helper does not yield projected fallback ownership while native scanner detail is active.'
+Check ($source.Contains('this.m_forceHide') -and $source.Contains('this.m_npcNamesEnabled')) 'Ambient identity helper ignores native controller visibility policy.'
 Check ($source.Contains('npc.GetBoolFromCharacterTweak("hide_nametag")')) 'Ambient identity helper ignores the character hide-name flag.'
 Check ($source.Contains('GetAllBlackboardDefs().Puppet.HideNameplate')) 'Ambient identity helper ignores the dynamic native hide-nameplate flag.'
 Check ($source.Contains('character.UiNameplate()')) 'Ambient identity helper no longer respects native nameplate record authority.'
@@ -29,4 +31,4 @@ foreach ($forbidden in @('SetVisible(', 'SetTintColor(', 'm_nameTextMain', 'm_na
     Check (-not $source.Contains($forbidden)) "Identity helper gained presentation/simulation ownership: $forbidden"
 }
 
-Write-Host "PASS: $script:checks W03.3 ambient identity checks; native identity wins, civilian/police/combatant public display names are ordinary-look capable without scanner gating, and hidden/alternative/quest/disabled-nameplate policy remains protected."
+Write-Host "PASS: $script:checks W20.3 ambient identity checks; native identity wins, civilian/police/combatant public display names remain ordinary-look capable outside scanner, and scanner/hidden/alternative/quest/disabled-nameplate policy remains protected."
