@@ -15,7 +15,7 @@ function Write-FixtureFile([string]$Root,[string]$Relative,[string]$Content) {
     return $path
 }
 
-function New-PriorInstallFixture([string]$Root,[switch]$UnexpectedOwnedRoot,[switch]$ChangeOwnedAfterReceipt) {
+function New-PriorInstallFixture([string]$Root,[switch]$UnexpectedOwnedRoot,[switch]$ChangeOwnedAfterReceipt,[switch]$ChangeSharedAfterReceipt) {
     New-Item -ItemType Directory -Force -Path (Join-Path $Root 'bin\x64') | Out-Null
     New-Item -ItemType Directory -Force -Path (Join-Path $Root 'r6') | Out-Null
     [IO.File]::WriteAllText((Join-Path $Root 'bin\x64\Cyberpunk2077.exe'),'fixture-game',[Text.UTF8Encoding]::new($false))
@@ -75,9 +75,14 @@ function New-PriorInstallFixture([string]$Root,[switch]$UnexpectedOwnedRoot,[swi
     if ($ChangeOwnedAfterReceipt) {
         [IO.File]::WriteAllText($changedPath,'changed-after-receipt',[Text.UTF8Encoding]::new($false))
     }
+    $changedSharedPath = Join-Path $Root ([string]$shared[0].path)
+    if ($ChangeSharedAfterReceipt) {
+        [IO.File]::WriteAllText($changedSharedPath,'shared-changed-after-receipt',[Text.UTF8Encoding]::new($false))
+    }
 
     return [pscustomobject]@{
-        root=$Root; manifest=$manifestPath; owned=@($owned); shared=@($shared); unexpected=$unexpectedPath; changed=$changedPath
+        root=$Root; manifest=$manifestPath; owned=@($owned); shared=@($shared); unexpected=$unexpectedPath
+        changed=$changedPath; changedShared=$changedSharedPath
     }
 }
 
@@ -220,6 +225,22 @@ try {
     Assert-True (-not (Test-Path -LiteralPath $happy.manifest)) 'Prior Biology receipt remained after successful transition.'
     foreach ($item in $happy.shared) {
         Assert-True (Test-Path -LiteralPath (Join-Path $happy.root ([string]$item.path))) "Shared dependency was removed during prior transition: $($item.path)"
+    }
+
+    # Shared dependency ownership is preserve-only, not identity-pinned. A later
+    # upstream/shared update must survive and must not block retirement of the
+    # receipt-owned Biology candidate.
+    $changedShared = New-PriorInstallFixture (Join-Path $work 'transition-changed-shared') -ChangeSharedAfterReceipt
+    $changedSharedReport = Join-Path $work 'transition-changed-shared-report.txt'
+    $changedSharedExit = Invoke-TransitionFixture $transition $changedShared.root $changedSharedReport
+    Assert-True ($changedSharedExit -eq 0) 'Changed shared dependency incorrectly blocked prior Biology transition.'
+    $changedSharedText = Get-Content -Raw -LiteralPath $changedSharedReport
+    Assert-True ($changedSharedText -match '(?m)^RESULT: PASS\s*$') 'Changed shared dependency transition did not report PASS.'
+    Assert-True (Test-Path -LiteralPath $changedShared.changedShared -PathType Leaf) 'Changed shared dependency was removed.'
+    Assert-True ((Get-Content -Raw -LiteralPath $changedShared.changedShared) -eq 'shared-changed-after-receipt') 'Changed shared dependency bytes were altered.'
+    Assert-True (-not (Test-Path -LiteralPath $changedShared.manifest)) 'Prior Biology receipt remained after changed-shared transition.'
+    foreach ($relative in $changedShared.owned) {
+        Assert-True (-not (Test-Path -LiteralPath (Join-Path $changedShared.root $relative))) "Biology-owned file remained when a shared dependency had changed: $relative"
     }
 
     # Adding another root-level filename to a forged Biology-owned receipt does
