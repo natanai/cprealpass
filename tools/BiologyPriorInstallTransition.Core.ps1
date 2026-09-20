@@ -149,7 +149,7 @@ function New-BiologyPriorInstallTransitionPlan([string]$GameRoot,[string]$Manife
     }
 
     $filePlan = [Collections.Generic.List[object]]::new()
-    foreach ($owned in @($ownedFiles.Values | Sort-Object relativePath)) {
+    foreach ($owned in @($ownedFiles.Values | Sort-Object receiptFile,relativePath)) {
         $destination = Resolve-BiologyReleaseChild $GameRoot ([string]$owned.relativePath)
         $current = Get-BiologyReleaseExistingHash $destination
         if ($null -eq $current) {
