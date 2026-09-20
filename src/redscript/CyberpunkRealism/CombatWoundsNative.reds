@@ -10,6 +10,9 @@ public class CRNativeWoundPlan extends IScriptable {
   public let material: Int32;
   public let wound: ref<CRImpactWound>;
   public let proposedPhysical: Float;
+  // Bounded per-hit evidence for the conservative unknown-player-protection path.
+  public let nativePhysicalBeforePrepare: Float;
+  public let nativePhysicalCap: Bool;
   public let consumed: Bool = false;
   public let committed: Bool = false;
   public let armorCommitted: Bool = false;
@@ -113,12 +116,18 @@ public class CRNativeWoundBridge extends IScriptable {
     let plan: ref<CRNativeWoundPlan>;
     let maximumHealth: Float;
     let proposal: Float;
+    let appliedPhysical: Float;
+    let nativePhysical: Float;
     let npc: ref<NPCPuppet>;
     if !CRCombatRuntimePolicy.Enabled() || !IsDefined(hit) || hit.projectionPipeline || hit.crWoundPrepared || !CRBodyRuntime.Get().CanAcceptCombatInjury() {
       return;
     }
     hit.crWoundPrepared = true;
-    if !IsDefined(hit.attackData) || !IsDefined(hit.target) || !(hit.attackComputed.GetAttackValue(gamedataDamageType.Physical) > 0.0) {
+    if !IsDefined(hit.attackData) || !IsDefined(hit.target) {
+      return;
+    }
+    nativePhysical = hit.attackComputed.GetAttackValue(gamedataDamageType.Physical);
+    if !(nativePhysical > 0.0) {
       return;
     }
     sample = CRNativeHitAdapter.Read(hit, emptyLosses);
@@ -142,11 +151,20 @@ public class CRNativeWoundBridge extends IScriptable {
     plan.material = sample.contact.material;
     plan.wound = wound;
     plan.proposedPhysical = proposal;
+    plan.nativePhysicalBeforePrepare = nativePhysical;
+    plan.nativePhysicalCap = sample.profiles.nativePhysicalCap;
     plan.armorWear = sample.profiles.armorWear;
     hit.crWoundPlan = plan;
     // Only the physical channel changes. This executes after RPG/source/armor
     // modifiers but BEFORE one-shot protection, boss caps and resource handling.
-    hit.attackComputed.SetAttackValue(proposal, gamedataDamageType.Physical);
+    // When player equipment includes unmapped protection, never increase the
+    // already-computed native physical channel: the final/proposed ratio will
+    // conservatively scale the accepted wound after actual Health loss.
+    appliedPhysical = proposal;
+    if plan.nativePhysicalCap {
+      appliedPhysical = MinF(proposal, nativePhysical);
+    }
+    hit.attackComputed.SetAttackValue(appliedPhysical, gamedataDamageType.Physical);
   }
 
   public static func Commit(hit: ref<gameHitEvent>, sample: ref<CRNativeHitSample>) -> Bool {
