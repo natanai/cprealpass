@@ -41,6 +41,19 @@ Check ($source.Contains('public final func IsAnyElementVisible() -> Bool') -and 
 Check ($source.Contains('this.c_DisplayRangeNotAggressive = 10.0') -and $source.Contains('this.c_MaxDisplayRangeNotAggressive = 20.0')) 'Known-good ambient display range was lost.'
 Check ($source.Contains('SNameplateRangesData.GetDisplayRangeNotAggressive()') -and $source.Contains('SNameplateRangesData.GetMaxDisplayRangeNotAggressive()')) 'E3 OFF cannot restore native display range.'
 
+# T007: scanner/native detailed identity owns scanner context. Biology may not leave an
+# ambient projected fallback visible beside the native detailed scanner panel.
+Check ($source.Contains('public let crBiologyE3ScannerActive: Bool;')) 'Nameplate visuals do not track native scanner ownership.'
+Check ($source.Contains('this.m_isScanning') -and $source.Contains('CRSyncBiologyE3IdentityOwner')) 'NpcNameplate controller does not synchronize Biology ambient ownership to native scanning state.'
+Check ($source.Contains('inkWidgetRef.SetVisible(this.m_displayName, false);')) 'Scanner entry does not suppress the conflicting ambient projected name surface.'
+Check ($identity.Contains('this.crBiologyE3ScannerActive')) 'Public ambient fallback is still allowed during scanner ownership.'
+Check ($identity.Contains('this.m_forceHide') -and $identity.Contains('this.m_npcNamesEnabled')) 'Ambient fallback ignores native force-hide/name-enable policy.'
+Check ($source.Contains('CRRestoreBiologyE3NameplateStyle')) 'Nameplate styling has no explicit per-cycle native restoration helper.'
+Check ($source.Contains('this.crBiologyE3HasNativeNameTint = false;') -and $source.Contains('this.crBiologyE3HasNativeFrameStyle = false;')) 'Nameplate native-style capture survives across cycles and can restore stale state.'
+Check (-not $source.Contains('SetLetterCase(') -and -not $source.Contains('SetFontStyle(')) 'Nameplate mutates text style that has no reversible native capture path.'
+Check ($source.Contains('this.SetVisualData(this.crBiologyE3LastPuppet, this.crBiologyE3LastData);')) 'Scanner/preference ownership change does not re-run native identity from unchanged native data.'
+Check (-not $source.Contains('data.name =')) 'Biology writes presentation fallback into native identity data.'
+
 # Scanner/quickhack remains native/current.
 foreach ($forbidden in @('ScannerGameController','ScannerDetailsGameController','ScannerNPCHeaderGameController','quickhackWidgetGameController','QuickHackGameController','scanner.inkwidget','scanner_hud.inkwidget')) {
     Check (-not $source.Contains($forbidden)) "W20.1 crossed the modern scanner/quickhack boundary: $forbidden"
