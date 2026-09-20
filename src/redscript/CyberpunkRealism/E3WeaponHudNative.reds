@@ -193,5 +193,6 @@ private func SetRosterSlotData() -> Void {
 @addMethod(WeaponRosterGameController)
 protected cb func OnCRBiologyE3PreferenceChanged(evt: ref<CRBiologyE3PreferenceChangedEvent>) -> Bool {
   this.CRRefreshBiologyE3WeaponFrame();
-  return true;
+  // Notification events are broadcast invalidations; do not consume propagation.
+  return false;
 }
