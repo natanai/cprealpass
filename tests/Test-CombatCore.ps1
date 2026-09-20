@@ -60,6 +60,17 @@ foreach($mass in @(4,8,16)){foreach($speed in @(0,100,400,900)){foreach($diamete
  $script:scenarios++
 }}}}}
 Check ($script:scenarios -eq 432) 'Impact sweep did not cover expected cases'
+# Profile readiness distinguishes structural failure from unmapped player gear.
+# Unknown player protection is allowed only with a conservative native-physical cap;
+# NPC appearance protection stays mapped-or-rejected.
+$readyImpact=[CRImpactModel]::Begin($p)
+Check ([CRCombatProfileReadiness]::Ready($readyImpact,0,2,$true)) 'Unmapped player protection vetoed an otherwise-valid ballistic profile'
+Check ([CRCombatProfileReadiness]::RequiresNativePhysicalCap(2,$true)) 'Unmapped player protection did not require native physical capping'
+Check (-not [CRCombatProfileReadiness]::Ready($readyImpact,0,1,$false)) 'Unmapped NPC protection became routable'
+Check (-not [CRCombatProfileReadiness]::RequiresNativePhysicalCap(1,$false)) 'NPC protection incorrectly selected the player fallback'
+Check (-not [CRCombatProfileReadiness]::Ready($readyImpact,1,0,$true)) 'Structural protection read failure became routable'
+Check ([CRCombatProfileReadiness]::Ready($readyImpact,0,0,$false) -and -not [CRCombatProfileReadiness]::RequiresNativePhysicalCap(0,$true)) 'Fully mapped protection unexpectedly requires fallback'
+
 # Contact fixtures represent native mapped metadata, not synthetic physics hits.
 $c=[CRHitContact]::new();$g=[CRHitEligibility]::new();$g.ranged=$true;$g.targetSupported=$true;$g.actualHealthDamage=10
 [CRHitModel]::AddShape($c,2,2,$true,$false)|Out-Null
