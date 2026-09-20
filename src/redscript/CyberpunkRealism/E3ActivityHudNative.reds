@@ -56,5 +56,6 @@ public final func SetText(const displayText: script_ref<String>) -> Void {
 @addMethod(activityLogEntryLogicController)
 protected cb func OnCRBiologyE3PreferenceChanged(evt: ref<CRBiologyE3PreferenceChangedEvent>) -> Bool {
   this.CRRefreshBiologyE3Activity();
-  return true;
+  // Notification events are broadcast invalidations; do not consume propagation.
+  return false;
 }
