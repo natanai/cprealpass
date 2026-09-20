@@ -21,11 +21,7 @@ public class CRRealpassSettings extends ScriptableSystem {
   public persistent let e3FirstPersonHudVisuals: Bool = true;
 
   public static func Get(game: GameInstance) -> ref<CRRealpassSettings> {
-    let container: ref<ScriptableSystemsContainer> = GameInstance.GetScriptableSystemsContainer(game);
-    if !IsDefined(container) {
-      return null;
-    }
-    return container.Get(n"CyberpunkRealism.Settings.CRRealpassSettings") as CRRealpassSettings;
+    return GameInstance.GetScriptableSystemsContainer(game).Get(n"CyberpunkRealism.Settings.CRRealpassSettings") as CRRealpassSettings;
   }
 
   // REDlauncher activation authority is deliberately outside persistent settings.
@@ -71,13 +67,13 @@ public class CRRealpassSettings extends ScriptableSystem {
 
   public static func SetE3FirstPersonHudVisuals(game: GameInstance, enabled: Bool) -> Bool {
     let settings: ref<CRRealpassSettings> = CRRealpassSettings.Get(game);
+    let ui: ref<UISystem> = GameInstance.GetUISystem(game);
     if !CRRealpassSettings.IsEnabled(game) || !IsDefined(settings) {
       return false;
     }
 
     if !Equals(settings.e3FirstPersonHudVisuals, enabled) {
       settings.e3FirstPersonHudVisuals = enabled;
-      let ui: ref<UISystem> = GameInstance.GetUISystem(game);
       if IsDefined(ui) {
         ui.QueueEvent(new CRBiologyE3PreferenceChangedEvent());
       }
