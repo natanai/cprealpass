@@ -56,6 +56,8 @@ private final func CRCreateBiologyE3HotkeyFrame() -> Void {
 private final func CRRefreshBiologyE3HotkeyFrame() -> Void {
   let enabled: Bool = CRRealpassSettings.UseE3FirstPersonHudVisuals(GetGameInstance());
 
+  // Always resolve/create the native-hosted frame when the controller exists. Visibility
+  // is the preference. This avoids the rejected autonomous lazy-create startup failure.
   this.CRCreateBiologyE3HotkeyFrame();
 
   if IsDefined(this.crBiologyE3HotkeyFrame) {
@@ -83,4 +85,10 @@ protected cb func OnInitialize() -> Bool {
   CRBiologyE3Primitives.Trace("HotkeysWidgetController.OnInitialize");
   this.CRRefreshBiologyE3HotkeyFrame();
   return result;
+}
+
+@addMethod(HotkeysWidgetController)
+protected cb func OnCRBiologyE3PreferenceChangedEvent(evt: ref<CRBiologyE3PreferenceChangedEvent>) -> Bool {
+  this.CRRefreshBiologyE3HotkeyFrame();
+  return true;
 }
