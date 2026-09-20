@@ -8,6 +8,18 @@ Last updated: **2026-09-19**
 The repository is the durable source of truth. Git issues/branches/PRs track implementation state; ChatGPT conversations carry temporary working context. Conversation identity and Git issue/branch identity are intentionally separate.
 
 
+## Parent recovery snapshot — 2026-09-19 (T006)
+
+- Parent: **P02**, active integration/orchestration under issue #35.
+- Latest completed numbered attended session: **T006**, exact tested source `fbce426fc3305f67f29ec083bfe8c9f644c2572d`; disposition PARTIAL.
+- T006 operational preparation/session: PASS. W22 Application Control-safe replacement path is live-proven.
+- **KEEP:** W19.1 transition fix — no stock Cyberware grid flash; drill-down/Back reported flawless.
+- **W21.2 / #143** — `agent/body-stats-live-authority-followup`; Biology authoritative stats remain inert / 100%.
+- **W20.2 / #144** — `agent/biology-e3-preference-placement-followup`; E3 HUD preference clipped/unusable at top-right.
+- Issue #41 remains open for meaningful changed-state progression and WAIT/save-reload/SLEEP continuity.
+- Issue #40 remains open for usable E3 preference plus remaining civilian/police identity acceptance.
+- Next unallocated live test ID: **T007**, blocked until W21.2 and W20.2 are READY-PARENT and integrated.
+
 ## Parent recovery snapshot — 2026-09-19
 
 - Parent: **P02**, active integration/orchestration under issue #35.
@@ -122,6 +134,8 @@ Existing conversations do not need retroactive renaming; this ledger maps their 
 
 | Thread ID | Current visible title / alias | Role / goal | Thread state | Lane work state | GitHub / branch | Parent routing note |
 |---|---|---|---|---|---|---|
+| **W21.2** | runtime follow-up | T006 Biology authoritative stat/body-state progression | **ACTIVE** | **IN-PROGRESS** | Issue #143; `agent/body-stats-live-authority-followup`; handoff `docs/handoffs/W21.2-BODY-STATS-LIVE-AUTHORITY.md` | Continue W21 causal chain and distinguish runtime progression vs combat vs projection. |
+| **W20.2** | presentation follow-up | T006 Biology E3 preference placement/usability | **ACTIVE** | **IN-PROGRESS** | Issue #144; `agent/biology-e3-preference-placement-followup`; handoff `docs/handoffs/W20.2-BIOLOGY-E3-PREFERENCE-PLACEMENT.md` | Move save-backed E3 preference into stable Biology layout. |
 | **P02.1** | `P02 — Integration Orchestrator` | Parent / integration orchestrator | **ACTIVE** | **IN-PROGRESS** | Issue #35; branch `parent/p02-orchestration` / parent evidence branches as needed | Owns merge review, private-reference evidence routing, T005 findings, and T006 integration. |
 | **W21.1** | new worker conversation | Player combat injury routing after T005 | **ACTIVE** | **IN-PROGRESS** | Issue #135; `agent/combat-injury-routing-followup`; handoff `docs/handoffs/W21.1-COMBAT-INJURY-ROUTING.md` | Prove exact staged combat gate and first broken native hit -> Biology injury boundary. No gameplay request; P02 owns T006. |
 | **W20.1** | new worker conversation | E3 nameplate authored alignment + police scan identity authority | **ACTIVE** | **IN-PROGRESS** | Issue #134; `agent/e3-nameplate-identity-followup`; handoff `docs/handoffs/W20.1-E3-NAMEPLATE-IDENTITY.md` | Fix structural frame alignment and one-way native discovered identity -> ambient nameplate enrichment. |
