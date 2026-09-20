@@ -127,9 +127,10 @@ private final func CRCreateBiologyE3QuestFrame() -> Void {
 
 @addMethod(QuestTrackerGameController)
 private final func CRRestoreBiologyE3QuestStyle() -> Void {
+  let title: ref<inkText> = inkTextRef.Get(this.m_QuestTitle) as inkText;
   this.CRRefreshBiologyE3ObjectiveStyles(false);
-  if this.crBiologyE3HasNativeQuestTitleTint {
-    inkTextRef.SetTintColor(this.m_QuestTitle, this.crBiologyE3NativeQuestTitleTint);
+  if IsDefined(title) && this.crBiologyE3HasNativeQuestTitleTint {
+    title.SetTintColor(this.crBiologyE3NativeQuestTitleTint);
   }
   this.crBiologyE3HasNativeQuestTitleTint = false;
 }
