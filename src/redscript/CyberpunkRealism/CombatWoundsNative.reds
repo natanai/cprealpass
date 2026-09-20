@@ -235,7 +235,8 @@ public class CRNativeWoundBridge extends IScriptable {
     }
     plan = hit.crWoundPlan;
     if !IsDefined(plan) || plan.consumed {
-      CRNativeWoundBridge.Diagnose(runtime, "commit-no-plan", sample, sample.nativePhysicalHealthDamage);
+      // Preserve the more specific Prepare rejection as the last attended
+      // diagnostic instead of replacing it with a generic no-plan outcome.
       return false;
     }
     plan.consumed = true;
