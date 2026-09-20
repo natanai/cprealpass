@@ -51,5 +51,6 @@ protected cb func OnUpdateInteraction(argValue: Variant) -> Bool {
 @addMethod(interactionWidgetGameController)
 protected cb func OnCRBiologyE3PreferenceChanged(evt: ref<CRBiologyE3PreferenceChangedEvent>) -> Bool {
   this.CRRefreshBiologyE3InteractionFrame();
-  return true;
+  // Notification events are broadcast invalidations; do not consume propagation.
+  return false;
 }
