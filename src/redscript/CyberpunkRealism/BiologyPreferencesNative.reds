@@ -1,14 +1,14 @@
 // Biology-owned presentation preference inside the authored Biology detail region.
 //
 // T006 proved that a free-floating TopRight text control attached to the fullscreen
-// RipperDocGameController root is clipped and effectively unusable. Keep the one
-// legitimate save-backed preference, but make it a normal Biology detail subsection:
-// it is a child of CRBiologyNativeContent, which W17.1 mounts under the native
-// RipperdocInventoryController lifecycle as a sibling of authored cyberwareContainer.
+// RipperDocGameController root is clipped and effectively unusable. W20.2 moved the one
+// legitimate save-backed preference into CRBiologyNativeContent. T007 then proved the
+// placement is live-good but the row click was discarded by child/current-target event
+// routing. W20.3 preserves the local layout and repairs only ownership/authority.
 //
-// The row owns a 680x48 local hit target. It never reconstructs screen-space position,
-// never registers a second settings provider, and never becomes an authority separate
-// from CRRealpassSettings.
+// The 680x48 row is the sole interactive target. Decorative children are explicitly
+// non-interactive so mouse/controller pointer delivery reaches the registered row. The
+// row writes only CRRealpassSettings and never becomes a second state authority.
 module CyberpunkRealism.Presentation
 
 import CyberpunkRealism.Settings.*
@@ -34,6 +34,7 @@ private final func CRBiologyE3PreferenceText(text: String, name: CName, size: In
   widget.SetFontStyle(n"Medium");
   widget.SetFontSize(size);
   widget.SetFitToContent(true);
+  widget.SetInteractive(false);
   return widget;
 }
 
@@ -43,7 +44,15 @@ public final func CRRefreshBiologyE3Preference() -> Void {
     return;
   }
 
-  let enabled: Bool = CRRealpassSettings.UseE3FirstPersonHudVisuals(GetGameInstance());
+  let player: wref<GameObject> = this.GetPlayerControlledObject();
+  if !IsDefined(player) || !IsDefined(CRRealpassSettings.Get(player.GetGame())) {
+    this.crBiologyE3PreferenceValue.SetText("UNAVAILABLE");
+    this.crBiologyE3PreferenceValue.SetOpacity(0.68);
+    this.crBiologyE3PreferenceBackground.SetOpacity(0.10);
+    return;
+  }
+
+  let enabled: Bool = CRRealpassSettings.UseE3FirstPersonHudVisuals(player.GetGame());
   this.crBiologyE3PreferenceValue.SetText(enabled ? "ON" : "OFF");
   this.crBiologyE3PreferenceValue.SetOpacity(enabled ? 1.0 : 0.68);
   this.crBiologyE3PreferenceBackground.SetOpacity(0.10);
@@ -51,7 +60,8 @@ public final func CRRefreshBiologyE3Preference() -> Void {
 
 @addMethod(RipperDocGameController)
 public final func CRMountBiologyE3PreferenceInNativeContent(host: ref<inkVerticalPanel>) -> Void {
-  if !CRRealpassSettings.IsEnabled(GetGameInstance()) || !IsDefined(host) {
+  let player: wref<GameObject> = this.GetPlayerControlledObject();
+  if !IsDefined(player) || !CRRealpassSettings.IsEnabled(player.GetGame()) || !IsDefined(host) {
     return;
   }
 
@@ -80,6 +90,7 @@ public final func CRMountBiologyE3PreferenceInNativeContent(host: ref<inkVertica
     background.SetSize(Vector2(680.0, 44.0));
     background.SetTranslation(0.0, 2.0);
     background.SetOpacity(0.10);
+    background.SetInteractive(false);
     background.Reparent(row, -1);
 
     let label: ref<inkText> = this.CRBiologyE3PreferenceText("E3 HUD + NAMEPLATES", n"CRBiologyE3PreferenceLabel", 18);
@@ -110,26 +121,32 @@ public final func CRResetBiologyE3Preference() -> Void {
 
 @addMethod(RipperDocGameController)
 protected cb func OnCRBiologyE3PreferenceToggle(evt: ref<inkPointerEvent>) -> Bool {
-  if !CRRealpassSettings.IsEnabled(GetGameInstance())
+  let player: wref<GameObject> = this.GetPlayerControlledObject();
+  if !IsDefined(player)
+    || !CRRealpassSettings.IsEnabled(player.GetGame())
     || !this.CRBiologyInDetail()
     || !IsDefined(evt)
     || !evt.IsAction(n"click")
-    || evt.IsHandled()
-    || evt.GetCurrentTarget() != this.crBiologyE3PreferenceRow {
+    || evt.IsHandled() {
     return false;
   }
 
-  CRRealpassSettings.ToggleE3FirstPersonHudVisuals(GetGameInstance());
+  // The callback is registered only on the row. Decorative children are not
+  // interactive, so rejecting bubbled events by GetCurrentTarget() would recreate
+  // T007's live click failure.
+  let written: Bool = CRRealpassSettings.ToggleE3FirstPersonHudVisuals(player.GetGame());
   this.CRRefreshBiologyE3Preference();
+  if !written {
+    return false;
+  }
+
   evt.Handle();
   return true;
 }
 
 @addMethod(RipperDocGameController)
 protected cb func OnCRBiologyE3PreferenceHoverOver(evt: ref<inkPointerEvent>) -> Bool {
-  if !IsDefined(evt)
-    || evt.GetCurrentTarget() != this.crBiologyE3PreferenceRow
-    || !IsDefined(this.crBiologyE3PreferenceBackground) {
+  if !IsDefined(evt) || !IsDefined(this.crBiologyE3PreferenceBackground) {
     return false;
   }
   this.crBiologyE3PreferenceBackground.SetOpacity(0.18);
@@ -138,9 +155,7 @@ protected cb func OnCRBiologyE3PreferenceHoverOver(evt: ref<inkPointerEvent>) ->
 
 @addMethod(RipperDocGameController)
 protected cb func OnCRBiologyE3PreferenceHoverOut(evt: ref<inkPointerEvent>) -> Bool {
-  if !IsDefined(evt)
-    || evt.GetCurrentTarget() != this.crBiologyE3PreferenceRow
-    || !IsDefined(this.crBiologyE3PreferenceBackground) {
+  if !IsDefined(evt) || !IsDefined(this.crBiologyE3PreferenceBackground) {
     return false;
   }
   this.crBiologyE3PreferenceBackground.SetOpacity(0.10);
