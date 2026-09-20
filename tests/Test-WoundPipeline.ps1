@@ -39,6 +39,22 @@ Reset
 $small=Hit;$large=Hit;$large.target.game.stats.maximumHealth=10000;$large.attackComputed.physical=9000
 [CRNativeWoundBridge]::Prepare($small);[CRNativeWoundBridge]::Prepare($large)
 Check ($small.crWoundPlan.wound.tissueDamage -eq $large.crWoundPlan.wound.tissueDamage -and [Math]::Abs($large.crWoundPlan.proposedPhysical/$small.crWoundPlan.proposedPhysical-100) -lt 0.001) 'Level/HP inflation changed the physical wound or preserved a sponge health pool'
+# Player-only fallback for unmapped equipped protection preserves the existing
+# native physical result as a conservative ceiling instead of vetoing the wound
+# or replacing native protection semantics with an invented armor mapping.
+Reset
+$unknownProtection=Hit
+$unknownProtection.attackComputed.physical=1
+$unknownProtection.sample.profiles.nativePhysicalCap=$true
+[CRNativeWoundBridge]::Prepare($unknownProtection)
+$unknownPlan=$unknownProtection.crWoundPlan
+$unknownApplied=$unknownProtection.attackComputed.physical
+Check ($null -ne $unknownPlan -and $unknownPlan.nativePhysicalCap -and $unknownPlan.nativePhysicalBeforePrepare -eq 1) 'Unmapped player protection did not preserve bounded native-cap evidence'
+Check ($unknownPlan.proposedPhysical -gt $unknownApplied -and $unknownApplied -eq 1) 'Unmapped player protection increased native physical damage or failed to retain the native ceiling'
+$unknownExpected=$unknownPlan.wound.tissueDamage*($unknownApplied/$unknownPlan.proposedPhysical)
+Check ([NativeWoundFixture]::Finish($unknownProtection,$unknownApplied,$unknownApplied)) 'Native-capped unmapped player hit failed to commit'
+Check ([Math]::Abs([CRBodyRuntime]::Get().body.injuries.torso.tissueDamage-$unknownExpected) -lt 0.00001) 'Native physical cap did not proportionally constrain the accepted wound'
+
 Reset
 $capped=[NativeWoundFixture]::Hit($true,2,1,4,900);[CRNativeWoundBridge]::Prepare($capped);$w=$capped.crWoundPlan.wound;$proposal=$capped.crWoundPlan.proposedPhysical
 Check ([NativeWoundFixture]::Finish($capped,$proposal*0.2,$proposal*0.2)) 'Native-capped hit failed to commit'
