@@ -42,6 +42,9 @@ foreach ($entry in $frameSources) {
 foreach ($entry in @($lowerLeft,$hotkey,$navigation,$interaction,$activity,$crosshair,$quest,$weapon,$nameplate)) {
     Check ($entry.Contains('OnCRBiologyE3PreferenceChanged(evt: ref<CRBiologyE3PreferenceChangedEvent>)')) 'A live E3 controller is not wired to the native preference-change event callback name.'
     Check (-not $entry.Contains('OnCRBiologyE3PreferenceChangedEvent(')) 'Rejected Event-suffixed callback name returned and would not match native UI event dispatch.'
+    $handlerStart = $entry.IndexOf('protected cb func OnCRBiologyE3PreferenceChanged(')
+    $handlerTail = $entry.Substring($handlerStart)
+    Check ($handlerTail.Contains('return false;')) 'Stateless E3 refresh notification consumes UI-event propagation instead of remaining broadcast-safe.'
 }
 
 # ---------------------------------------------------------------------------
