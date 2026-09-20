@@ -261,5 +261,6 @@ protected cb func OnIsEnabledChange(val: Int32) -> Bool {
 @addMethod(NpcNameplateGameController)
 protected cb func OnCRBiologyE3PreferenceChanged(evt: ref<CRBiologyE3PreferenceChangedEvent>) -> Bool {
   this.CRSyncBiologyE3NameplateOwner();
-  return true;
+  // Notification events are broadcast invalidations; do not consume propagation.
+  return false;
 }
