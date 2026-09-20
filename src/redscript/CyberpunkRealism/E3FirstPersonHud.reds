@@ -27,7 +27,9 @@ private final func CRCreateBiologyE3Hud() -> Void {
 
 @addMethod(healthbarWidgetGameController)
 private final func CRRefreshBiologyE3Hud() -> Void {
-  this.CRCreateBiologyE3Hud();
+  if CRRealpassSettings.UseE3FirstPersonHudVisuals(GetGameInstance()) {
+    this.CRCreateBiologyE3Hud();
+  }
   if IsDefined(this.crBiologyE3HudFrame) {
     this.crBiologyE3HudFrame.SetVisible(CRRealpassSettings.UseE3FirstPersonHudVisuals(GetGameInstance()));
   }
@@ -52,4 +54,10 @@ protected cb func OnUpdateHealthBarVisibility() -> Bool {
 public final func EvaluateHealthBarVisibility(isInOverclockedState: Bool) -> Void {
   wrappedMethod(isInOverclockedState);
   this.CRRefreshBiologyE3Hud();
+}
+
+@addMethod(healthbarWidgetGameController)
+protected cb func OnCRBiologyE3PreferenceChangedEvent(evt: ref<CRBiologyE3PreferenceChangedEvent>) -> Bool {
+  this.CRRefreshBiologyE3Hud();
+  return true;
 }

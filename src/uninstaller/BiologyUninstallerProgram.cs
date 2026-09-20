@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 
@@ -10,17 +11,34 @@ namespace BiologyUninstall
     internal static class BiologyUninstallerProgram
     {
         [STAThread]
-        private static void Main(string[] args)
+        private static int Main(string[] args)
         {
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
+            bool command = HasFlag(args, "--uninstall");
             try
             {
+                if (command)
+                {
+                    string root = BiologyUninstallPlanner.ValidateGameRoot(GetArgument(args, "--game-root="));
+                    string executable = Path.GetFullPath(Application.ExecutablePath);
+                    if (executable.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+                        throw new InvalidOperationException("For command-line uninstall, run the same packaged Uninstall Biology.exe from the extracted release folder outside the game.");
+                    BiologyUninstallForm.EnsureGameStopped();
+                    BiologyUninstallPlan plan = BiologyUninstallPlanner.Build(root, Path.Combine(root, "biology", "build-manifest.json"));
+                    BiologyManifestFile binary = plan.Manifest.files.Single(f => string.Equals(f.path, BiologyUninstallPlanner.ExpectedBinary, StringComparison.OrdinalIgnoreCase));
+                    if (!string.Equals(BiologyUninstallPlanner.ComputeSha256(executable), binary.sha256, StringComparison.OrdinalIgnoreCase))
+                        throw new InvalidDataException("Use the exact uninstaller belonging to the installed release.");
+                    BiologyExecutionResult result = BiologyUninstallExecutor.Execute(plan, new BiologyExecutionOptions { SkipRedmodRefresh = true });
+                    BiologyUninstallForm.FinalizeResidualAndRedmodState(root, result);
+                    Console.WriteLine(BiologyUninstallForm.BuildExecutionReport(result));
+                    return result.BiologyPayloadFullyRemoved ? 0 : 2;
+                }
+                Application.EnableVisualStyles();
+                Application.SetCompatibleTextRenderingDefault(false);
                 bool tempMode = HasFlag(args, "--temp");
                 if (!tempMode)
                 {
                     RelaunchFromTemporaryCopy();
-                    return;
+                    return 0;
                 }
 
                 string gameRoot = GetArgument(args, "--game-root=");
@@ -29,17 +47,13 @@ namespace BiologyUninstall
                     throw new InvalidDataException("The temporary uninstaller did not receive the Cyberpunk 2077 game root.");
                 }
                 Application.Run(new BiologyUninstallForm(gameRoot));
+                return 0;
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Biology uninstall refused", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                if (HasFlag(args, "--temp"))
-                {
-                    ScheduleTemporarySelfDelete(Application.ExecutablePath);
-                }
+                if (command) Console.Error.WriteLine(ex.Message);
+                else MessageBox.Show(ex.Message, "Biology uninstall refused", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return 1;
             }
         }
 
@@ -56,6 +70,7 @@ namespace BiologyUninstall
             string manifest = Path.Combine(gameRoot, "biology", "build-manifest.json");
             BiologyUninstallPlanner.Build(gameRoot, manifest);
 
+            RemovePreviousTemporaryCopies(executable);
             string temp = Path.Combine(Path.GetTempPath(), "Biology-Uninstall-" + Guid.NewGuid().ToString("N") + ".exe");
             File.Copy(executable, temp, false);
             ProcessStartInfo psi = new ProcessStartInfo();
@@ -65,26 +80,23 @@ namespace BiologyUninstall
             Process.Start(psi);
         }
 
-        private static void ScheduleTemporarySelfDelete(string executable)
+        private static void RemovePreviousTemporaryCopies(string executable)
         {
-            try
+            // No shell/sidecar helper. A previous, closed temporary copy can be
+            // removed only if its name and bytes match this exact uninstaller.
+            string expected = BiologyUninstallPlanner.ComputeSha256(executable);
+            foreach (string candidate in Directory.EnumerateFiles(Path.GetTempPath(), "Biology-Uninstall-*.exe"))
             {
-                ProcessStartInfo psi = new ProcessStartInfo();
-                psi.FileName = Environment.GetEnvironmentVariable("ComSpec") ?? "cmd.exe";
-                psi.UseShellExecute = false;
-                psi.CreateNoWindow = true;
-                psi.WindowStyle = ProcessWindowStyle.Hidden;
-                psi.Arguments = "/c timeout /t 2 /nobreak >nul & del /f /q \"" + executable.Replace("\"", "\"\"") + "\"";
-                Process.Start(psi);
-            }
-            catch
-            {
-                // The temporary copy is outside the game and carries no user data.
-                // Failure to remove it must not turn a completed safe uninstall into
-                // a destructive retry against the game directory.
+                try
+                {
+                    if (!System.Text.RegularExpressions.Regex.IsMatch(Path.GetFileName(candidate), "^Biology-Uninstall-[0-9a-f]{32}\\.exe$")) continue;
+                    BiologyUninstallPlanner.AssertNoReparsePoint(candidate);
+                    if (BiologyUninstallPlanner.ComputeSha256(candidate) == expected) File.Delete(candidate);
+                }
+                catch (IOException) { }
+                catch (UnauthorizedAccessException) { }
             }
         }
-
         private static bool HasFlag(string[] args, string flag)
         {
             foreach (string arg in args)
@@ -218,7 +230,7 @@ namespace BiologyUninstall
                 // being redeployed during a conservative partial uninstall.
                 options.SkipRedmodRefresh = true;
                 BiologyExecutionResult result = BiologyUninstallExecutor.Execute(plan, options);
-                FinalizeResidualAndRedmodState(result);
+                FinalizeResidualAndRedmodState(gameRoot, result);
                 report.Text = BuildExecutionReport(result);
                 summary.Text = result.BiologyPayloadFullyRemoved
                     ? "Biology-owned payload removal finished and REDmod state was refreshed safely."
@@ -232,7 +244,7 @@ namespace BiologyUninstall
             }
         }
 
-        private void FinalizeResidualAndRedmodState(BiologyExecutionResult result)
+        internal static void FinalizeResidualAndRedmodState(string gameRoot, BiologyExecutionResult result)
         {
             string biologyRedmod = Path.Combine(gameRoot, "mods", "Biology");
             string biologyScripts = Path.Combine(gameRoot, "r6", "scripts", "CyberpunkRealism");
@@ -267,7 +279,7 @@ namespace BiologyUninstall
             if (!result.Errors.Contains(message)) result.Errors.Add(message);
         }
 
-        private static void EnsureGameStopped()
+        internal static void EnsureGameStopped()
         {
             Process[] processes = Process.GetProcessesByName("Cyberpunk2077");
             try
@@ -301,7 +313,7 @@ namespace BiologyUninstall
             return builder.ToString();
         }
 
-        private static string BuildExecutionReport(BiologyExecutionResult result)
+        internal static string BuildExecutionReport(BiologyExecutionResult result)
         {
             StringBuilder builder = new StringBuilder();
             builder.AppendLine("BIOLOGY UNINSTALL REPORT");

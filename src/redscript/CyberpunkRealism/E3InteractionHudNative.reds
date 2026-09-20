@@ -27,7 +27,9 @@ private final func CRCreateBiologyE3InteractionFrame() -> Void {
 @addMethod(interactionWidgetGameController)
 private final func CRRefreshBiologyE3InteractionFrame() -> Void {
   let enabled: Bool = CRRealpassSettings.UseE3FirstPersonHudVisuals(GetGameInstance());
-  this.CRCreateBiologyE3InteractionFrame();
+  if enabled {
+    this.CRCreateBiologyE3InteractionFrame();
+  }
   if IsDefined(this.crBiologyE3InteractionFrame) {
     this.crBiologyE3InteractionFrame.SetVisible(enabled);
   }
@@ -46,4 +48,10 @@ protected cb func OnUpdateInteraction(argValue: Variant) -> Bool {
   let result: Bool = wrappedMethod(argValue);
   this.CRRefreshBiologyE3InteractionFrame();
   return result;
+}
+
+@addMethod(interactionWidgetGameController)
+protected cb func OnCRBiologyE3PreferenceChangedEvent(evt: ref<CRBiologyE3PreferenceChangedEvent>) -> Bool {
+  this.CRRefreshBiologyE3InteractionFrame();
+  return true;
 }

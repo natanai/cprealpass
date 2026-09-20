@@ -6,13 +6,19 @@
 // native save lifecycle of a ScriptableSystem rather than an external settings mod.
 module CyberpunkRealism.Settings
 
+public class CRBiologyE3PreferenceChangedEvent extends Event {}
+
 public class CRRealpassSettings extends ScriptableSystem {
   // CRRealpassSettings remains a compatibility identifier during the product rename.
   // ScriptableSystem persistent fields are serialized with the current game save.
   public persistent let e3FirstPersonHudVisuals: Bool = true;
 
   public static func Get(game: GameInstance) -> ref<CRRealpassSettings> {
-    return GameInstance.GetScriptableSystemsContainer(game).Get(n"CyberpunkRealism.Settings.CRRealpassSettings") as CRRealpassSettings;
+    let container: ref<ScriptableSystemsContainer> = GameInstance.GetScriptableSystemsContainer(game);
+    if !IsDefined(container) {
+      return null;
+    }
+    return container.Get(n"CyberpunkRealism.Settings.CRRealpassSettings") as CRRealpassSettings;
   }
 
   // REDlauncher activation authority is deliberately outside persistent settings.
@@ -32,20 +38,29 @@ public class CRRealpassSettings extends ScriptableSystem {
   public static func UseE3FirstPersonHudVisuals(game: GameInstance) -> Bool {
     let settings: ref<CRRealpassSettings> = CRRealpassSettings.Get(game);
     return CRRealpassSettings.IsEnabled(game)
-      && (!IsDefined(settings) || settings.e3FirstPersonHudVisuals);
+      && IsDefined(settings) && settings.e3FirstPersonHudVisuals;
   }
 
   public static func SetE3FirstPersonHudVisuals(game: GameInstance, enabled: Bool) -> Bool {
     let settings: ref<CRRealpassSettings> = CRRealpassSettings.Get(game);
-    if !IsDefined(settings) {
-      return true;
+    if !CRRealpassSettings.IsEnabled(game) || !IsDefined(settings) {
+      return false;
     }
-    settings.e3FirstPersonHudVisuals = enabled;
-    return settings.e3FirstPersonHudVisuals;
+    if !Equals(settings.e3FirstPersonHudVisuals, enabled) {
+      settings.e3FirstPersonHudVisuals = enabled;
+      // Native UI event delivery refreshes existing HUD controllers even when their
+      // quest/weapon/hotkey data has not changed. The event carries no second state.
+      GameInstance.GetUISystem(game).QueueEvent(new CRBiologyE3PreferenceChangedEvent());
+    }
+    // Return write success, not the value: a successful OFF write is also success.
+    return Equals(settings.e3FirstPersonHudVisuals, enabled);
   }
 
   public static func ToggleE3FirstPersonHudVisuals(game: GameInstance) -> Bool {
-    let next: Bool = !CRRealpassSettings.UseE3FirstPersonHudVisuals(game);
-    return CRRealpassSettings.SetE3FirstPersonHudVisuals(game, next);
+    let settings: ref<CRRealpassSettings> = CRRealpassSettings.Get(game);
+    if !IsDefined(settings) {
+      return false;
+    }
+    return CRRealpassSettings.SetE3FirstPersonHudVisuals(game, !settings.e3FirstPersonHudVisuals);
   }
 }

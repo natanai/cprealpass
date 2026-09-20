@@ -93,14 +93,28 @@ private final func CRCreateBiologyE3WeaponFrame() -> Void {
 }
 
 @addMethod(WeaponRosterGameController)
+private final func CRRestoreBiologyE3WeaponTints() -> Void {
+  if !this.crBiologyE3HasNativeWeaponTints {
+    return;
+  }
+  inkTextRef.SetTintColor(this.m_weaponName, this.crBiologyE3NativeWeaponNameTint);
+  inkTextRef.SetTintColor(this.m_weaponCurrentAmmo, this.crBiologyE3NativeCurrentAmmoTint);
+  inkTextRef.SetTintColor(this.m_weaponTotalAmmo, this.crBiologyE3NativeTotalAmmoTint);
+  this.crBiologyE3HasNativeWeaponTints = false;
+}
+
+@addMethod(WeaponRosterGameController)
 private final func CRRefreshBiologyE3WeaponFrame() -> Void {
   let enabled: Bool = CRRealpassSettings.UseE3FirstPersonHudVisuals(GetGameInstance());
   let nameText: ref<inkText>;
   let currentAmmoText: ref<inkText>;
   let totalAmmoText: ref<inkText>;
 
-  this.CRCreateBiologyE3WeaponFrame();
-  this.CRCaptureBiologyE3WeaponTints();
+  this.CRRestoreBiologyE3WeaponTints();
+  if enabled {
+    this.CRCreateBiologyE3WeaponFrame();
+    this.CRCaptureBiologyE3WeaponTints();
+  }
 
   if IsDefined(this.crBiologyE3WeaponFrame) {
     this.crBiologyE3WeaponFrame.SetVisible(enabled);
@@ -159,6 +173,13 @@ protected cb func OnInitialize() -> Bool {
 
 @wrapMethod(WeaponRosterGameController)
 private func SetRosterSlotData() -> Void {
+  this.CRRestoreBiologyE3WeaponTints();
   wrappedMethod();
   this.CRRefreshBiologyE3WeaponFrame();
+}
+
+@addMethod(WeaponRosterGameController)
+protected cb func OnCRBiologyE3PreferenceChangedEvent(evt: ref<CRBiologyE3PreferenceChangedEvent>) -> Bool {
+  this.CRRefreshBiologyE3WeaponFrame();
+  return true;
 }

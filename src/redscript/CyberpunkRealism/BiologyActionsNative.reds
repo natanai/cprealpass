@@ -5,6 +5,7 @@ module CyberpunkRealism.Presentation
 
 import CyberpunkRealism.Integration.*
 import CyberpunkRealism.Physiology.*
+import CyberpunkRealism.Settings.*
 
 @addField(RipperDocGameController)
 private let crBioActionsPanel: ref<inkVerticalPanel>;
@@ -70,7 +71,8 @@ private final func CRBioActionButton(text: String, name: CName) -> ref<inkText> 
 
 @addMethod(RipperDocGameController)
 private final func CRBioCreateActions() -> Void {
-  if IsDefined(this.crBioActionsPanel) {
+  let player: wref<GameObject> = this.GetPlayerControlledObject();
+  if !IsDefined(player) || !CRRealpassSettings.IsEnabled(player.GetGame()) || IsDefined(this.crBioActionsPanel) {
     return;
   }
 

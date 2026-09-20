@@ -56,7 +56,9 @@ private final func CRCreateBiologyE3HotkeyFrame() -> Void {
 private final func CRRefreshBiologyE3HotkeyFrame() -> Void {
   let enabled: Bool = CRRealpassSettings.UseE3FirstPersonHudVisuals(GetGameInstance());
 
-  this.CRCreateBiologyE3HotkeyFrame();
+  if enabled {
+    this.CRCreateBiologyE3HotkeyFrame();
+  }
 
   if IsDefined(this.crBiologyE3HotkeyFrame) {
     this.crBiologyE3HotkeyFrame.SetVisible(enabled);
@@ -83,4 +85,10 @@ protected cb func OnInitialize() -> Bool {
   CRBiologyE3Primitives.Trace("HotkeysWidgetController.OnInitialize");
   this.CRRefreshBiologyE3HotkeyFrame();
   return result;
+}
+
+@addMethod(HotkeysWidgetController)
+protected cb func OnCRBiologyE3PreferenceChangedEvent(evt: ref<CRBiologyE3PreferenceChangedEvent>) -> Bool {
+  this.CRRefreshBiologyE3HotkeyFrame();
+  return true;
 }

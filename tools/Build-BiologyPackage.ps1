@@ -147,6 +147,9 @@ foreach ($component in @($dependencyComponents | Sort-Object)) {
 # package root, so parent and player installation semantics cannot diverge.
 $installerSource = Join-Path $project 'tools\Install-BiologyRelease.ps1'
 $installerCoreSource = Join-Path $project 'tools\BiologyReleaseInstall.Core.ps1'
+$installerBinary = Join-Path $packageRoot 'Install Biology.exe'
+& "$PSScriptRoot\Build-BiologyInstaller.ps1" -OutputPath $installerBinary | Out-Null
+Add-FileRecord 'Install Biology.exe' 'Biology' 'biology-player-installer' 'REDMOD-NATIVE' 'biology-owned'
 Copy-IntoPackage $installerSource 'Install Biology.ps1' (Get-Sha256 $installerSource) 'Biology' 'biology-player-installer' 'REDMOD-NATIVE' 'biology-owned'
 Copy-IntoPackage $installerCoreSource 'BiologyReleaseInstall.Core.ps1' (Get-Sha256 $installerCoreSource) 'Biology' 'biology-player-installer' 'REDMOD-NATIVE' 'biology-owned'
 
@@ -159,9 +162,8 @@ Cyberpunk 2077 2.31
 INSTALL
 1. Close Cyberpunk 2077.
 2. Extract this package to a temporary/staging folder OUTSIDE the Cyberpunk 2077 game root. DO NOT extract/copy the package directly into the Cyberpunk 2077 game root.
-3. From that extracted package folder, run "Install Biology.ps1" and provide your Cyberpunk 2077 game root when prompted/required by PowerShell, for example:
-   powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\Install Biology.ps1" -GameRoot "C:\Games\Steam\steamapps\common\Cyberpunk 2077"
-4. The installer verifies every inventoried package hash before writing. Existing byte-identical bin\x64\global.ini and bin\x64\version.dll are preserved; a non-identical existing copy fails closed before mutation. Only bin\x64\plugins\cybercmd.asi may be replaced by the standalone cybercmd path.
+3. Double-click "Install Biology.exe" in the extracted folder. Select your Cyberpunk 2077 folder and click Install Biology. No PowerShell installation or security-policy change is required.
+4. The installer verifies every inventoried package hash before writing. Shared dependency files must be absent or byte-identical. Upgrades replace only unchanged files owned by the previous Biology receipt; conflicts stop before changes. A failed transaction restores its prior files when they have not changed concurrently.
 5. Verify mods\Biology\info.json is present.
 6. Use the supported REDlauncher/store REDmod flow with Enable mods ON.
 7. Launch normally through Steam.
@@ -179,7 +181,7 @@ PLAYER ENABLE/DISABLE CONTRACT
 UNINSTALL
 Double-click "Uninstall Biology.exe" in the Cyberpunk 2077 game root. No PowerShell, Git, Vortex, mod manager, or game reinstall is required. The uninstaller removes only exact-hash Biology-owned payload, preserves changed/ambiguous files, preserves the shared redscript/cybercmd dependencies, and never targets saves. Because the E3 preference lives in Biology save state, uninstall leaves it untouched together with the save.
 
-Build/CI is not live acceptance. The parent integration thread must still prove that the exact installed candidate regenerates r6\cache\modded\final.redscripts on launch, then record attended launcher ON/OFF/relaunch and E3 preference save/reload behavior for this exact architecture.
+The release evidence distinguishes compile/model/lifecycle checks from native gameplay and save-reload observations.
 '@
 [IO.File]::WriteAllText((Join-Path $packageRoot 'INSTALL.txt'),$installText.TrimStart() + "`n",[Text.UTF8Encoding]::new($false))
 Add-FileRecord 'INSTALL.txt' 'Biology' 'biology-package-metadata' 'REDMOD-NATIVE' 'biology-owned'
@@ -296,9 +298,10 @@ $manifest = [ordered]@{
         redmodRefresh = 'official-redmod-deploy-explicit-root'
     }
     install = [ordered]@{
+        playerBinary = 'Install Biology.exe'
         playerScript = 'Install Biology.ps1'
         coreScript = 'BiologyReleaseInstall.Core.ps1'
-        sharedLoaderPolicy = 'bin/x64/global.ini and bin/x64/version.dll: create when absent, preserve when byte-identical, fail closed before mutation when non-identical; bin/x64/plugins/cybercmd.asi is the only cybercmd path that may be replaced'
+        sharedLoaderPolicy = 'All shared dependencies: create when absent, preserve when byte-identical, refuse conflicting files before mutation'
         directZipMergeSupported = $false
     }
     metadataHashRule = 'SHA256SUMS.txt hashes every finalized payload file except itself and biology/build-manifest.json. The schema-2 owner receipt inventories and hashes every removable/preserved payload file, and the uninstaller re-hashes the receipt during execution.'
@@ -313,7 +316,7 @@ foreach ($entry in @($manifest.files)) {
 }
 $binaryEntry = @($manifest.files | Where-Object path -eq 'Uninstall Biology.exe')
 if ($binaryEntry.Count -ne 1 -or $binaryEntry[0].replacePolicy -ne 'biology-owned') { throw 'Player uninstaller is not exact-hash Biology-owned payload.' }
-foreach ($installerPath in @('Install Biology.ps1','BiologyReleaseInstall.Core.ps1')) {
+foreach ($installerPath in @('Install Biology.exe','Install Biology.ps1','BiologyReleaseInstall.Core.ps1')) {
     $installerEntry = @($manifest.files | Where-Object path -eq $installerPath)
     if ($installerEntry.Count -ne 1 -or $installerEntry[0].component -ne 'biology-player-installer' -or $installerEntry[0].replacePolicy -ne 'biology-owned') { throw "Player collision-safe installer payload is not exact-hash Biology-owned: $installerPath" }
 }

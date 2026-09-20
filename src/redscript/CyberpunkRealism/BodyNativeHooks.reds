@@ -4,6 +4,41 @@ module CyberpunkRealism.Integration
 
 import CyberpunkRealism.Settings.*
 
+// Player physiology uses the player's native state machine, not NPC scene
+// participation. SceneSystem.IsEntityInScene is an actor/dialogue query, not a
+// player gameplay/pause predicate. The 2.31 HighLevel transitions distinguish
+// full/staged gameplay and swimming from limited/cinematic scene tiers.
+public class CRPlayerBodyLifecycle extends IScriptable {
+  public static func Allowed(player: ref<PlayerPuppet>, allowMenu: Bool) -> Bool {
+    let state: ref<IBlackboard>;
+    let ui: ref<IBlackboard>;
+    let tier: Int32;
+    if !IsDefined(player) || !CRRealpassSettings.IsEnabled(player.GetGame())
+      || !player.IsAttached() || player.IsReplacer() || player.IsDead()
+      || ScriptedPuppet.IsDefeated(player) {
+      return false;
+    }
+    state = player.GetPlayerStateMachineBlackboard();
+    if !IsDefined(state) {
+      return false;
+    }
+    tier = state.GetInt(GetAllBlackboardDefs().PlayerStateMachine.HighLevel);
+    if tier != EnumInt(gamePSMHighLevel.SceneTier1)
+      && tier != EnumInt(gamePSMHighLevel.SceneTier2)
+      && tier != EnumInt(gamePSMHighLevel.Swimming) {
+      return false;
+    }
+    // Care selected in the paused Biology screen may enqueue a real action;
+    // ordinary time, combat and timed care always use the stricter gameplay path.
+    if allowMenu {
+      return true;
+    }
+    ui = GameInstance.GetBlackboardSystem(player.GetGame()).Get(GetAllBlackboardDefs().UI_System);
+    return IsDefined(ui) && !ui.GetBool(GetAllBlackboardDefs().UI_System.IsInMenu)
+      && !GameInstance.GetTimeSystem(player.GetGame()).IsPausedState();
+  }
+}
+
 public class CRBodyRuntimeMasterPolicy extends IScriptable {
   public static func Enabled() -> Bool {
     return CRBodyRuntimePolicy.Enabled() && CRRealpassSettings.IsEnabled(GetGameInstance());
@@ -96,11 +131,13 @@ protected func ProcessStatusEffects(const actionEffects: script_ref<array<wref<O
     return;
   }
 
-  // Intentionally do NOT call wrappedMethod for MaxDoc: that is the point at which
-  // vanilla FirstAidWhiff health-regeneration effects would be applied. Charge use,
-  // animation and hotkey refresh remain native in UseHealChargeAction.CompleteAction.
+  // Suppress native healing only after Biology accepts its replacement effect.
+  // Charge use, animation and hotkey refresh remain native in CompleteAction.
   painRuntime = CRBiologySessionAuthority.Pain(gameInstance);
-  if IsDefined(painRuntime) && painRuntime.UseMaxDoc() {
+  if !IsDefined(painRuntime) || !painRuntime.UseMaxDoc() {
+    wrappedMethod(actionEffects, gameInstance);
+    return;
+  } else {
     // Consumable use is an explicit state boundary. Reconstruct transient weapon/
     // intoxication feedback now rather than waiting for a later injury/body refresh;
     // no independent pain polling timer is introduced.

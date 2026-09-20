@@ -60,7 +60,7 @@ public final func CRRefreshBiologyE3ObjectiveStyle(enabled: Bool) -> Void {
   let trackingIcon: ref<inkWidget> = inkWidgetRef.Get(this.m_trackingIcon);
   let trackingFrame: ref<inkWidget> = inkWidgetRef.Get(this.m_trackingFrame);
 
-  if !this.crBiologyE3HasObjectiveStyle
+  if enabled && !this.crBiologyE3HasObjectiveStyle
     && IsDefined(title)
     && IsDefined(trackingIcon)
     && IsDefined(trackingFrame) {
@@ -82,6 +82,7 @@ public final func CRRefreshBiologyE3ObjectiveStyle(enabled: Bool) -> Void {
     title.SetTintColor(this.crBiologyE3NativeObjectiveTitleTint);
     trackingIcon.SetTintColor(this.crBiologyE3NativeTrackingIconTint);
     trackingFrame.SetTintColor(this.crBiologyE3NativeTrackingFrameTint);
+    this.crBiologyE3HasObjectiveStyle = false;
   }
 }
 
@@ -125,12 +126,24 @@ private final func CRCreateBiologyE3QuestFrame() -> Void {
 }
 
 @addMethod(QuestTrackerGameController)
+private final func CRRestoreBiologyE3QuestStyle() -> Void {
+  this.CRRefreshBiologyE3ObjectiveStyles(false);
+  if this.crBiologyE3HasNativeQuestTitleTint {
+    inkTextRef.SetTintColor(this.m_QuestTitle, this.crBiologyE3NativeQuestTitleTint);
+  }
+  this.crBiologyE3HasNativeQuestTitleTint = false;
+}
+
+@addMethod(QuestTrackerGameController)
 private final func CRRefreshBiologyE3QuestFrame() -> Void {
   let enabled: Bool = CRRealpassSettings.UseE3FirstPersonHudVisuals(GetGameInstance());
   let title: ref<inkText>;
 
-  this.CRCreateBiologyE3QuestFrame();
-  this.CRCaptureBiologyE3QuestTitleTint();
+  this.CRRestoreBiologyE3QuestStyle();
+  if enabled {
+    this.CRCreateBiologyE3QuestFrame();
+    this.CRCaptureBiologyE3QuestTitleTint();
+  }
   this.CRRefreshBiologyE3ObjectiveStyles(enabled);
 
   if IsDefined(this.crBiologyE3QuestFrame) {
@@ -173,6 +186,13 @@ protected cb func OnInitialize() -> Bool {
 
 @wrapMethod(QuestTrackerGameController)
 private func UpdateTrackerData() -> Void {
+  this.CRRestoreBiologyE3QuestStyle();
   wrappedMethod();
   this.CRRefreshBiologyE3QuestFrame();
+}
+
+@addMethod(QuestTrackerGameController)
+protected cb func OnCRBiologyE3PreferenceChangedEvent(evt: ref<CRBiologyE3PreferenceChangedEvent>) -> Bool {
+  this.CRRefreshBiologyE3QuestFrame();
+  return true;
 }

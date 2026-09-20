@@ -219,12 +219,11 @@ try {
         Assert-True ($text -notmatch 'Expand-Archive\s+-LiteralPath\s+\$(artifactZip|zip)\s+-DestinationPath\s+\$(GameRoot|game)\s+-Force') "$relativeTool still force-expands the release ZIP into the game root."
     }
 
-    # The ownership receipt stays last and uses the same explicit action model.
+    # The public script delegates to the exact packaged native installer.
+    # Executable transaction/receipt ordering is exercised by PlayerInstaller.
     $installer = Get-Content -Raw -LiteralPath (Join-Path $root 'tools\Install-BiologyRelease.ps1')
-    $payloadInvoke = $installer.IndexOf('Invoke-BiologyReleaseInstallPlan -Plan $plan',[StringComparison]::Ordinal)
-    $receiptPublish = $installer.IndexOf('Copy-BiologyReleaseVerified -Source $manifestPath',[StringComparison]::Ordinal)
-    Assert-True ($payloadInvoke -ge 0 -and $receiptPublish -gt $payloadInvoke) 'Ownership receipt is not published strictly after payload execution.'
-    Assert-True ($installer -match '-Action \$manifestAction -ExpectedPriorHash \$manifestPriorHash') 'Ownership receipt does not use explicit create/replace action semantics.'
+    Assert-True ($installer.Contains('Install Biology.exe') -and $installer.Contains('--check') -and $installer.Contains('--install')) 'Script and player install routes do not share the packaged binary.'
+    Assert-True ($installer -notmatch 'Invoke-BiologyReleaseInstallPlan|Copy-BiologyReleaseVerified') 'Public script retains a second file mutation authority.'
 
     # Recovery bootstrap must remain exact-evidence-bound, worktree-aware,
     # failure-durable, and incapable of deployment/game launch.

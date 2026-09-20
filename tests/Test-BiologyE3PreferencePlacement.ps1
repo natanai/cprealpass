@@ -36,8 +36,8 @@ Check ($preference.Contains('row.RegisterToCallback(n"OnRelease", this, n"OnCRBi
 Check ($preference.Contains('row.RegisterToCallback(n"OnHoverOver"') -and $preference.Contains('row.RegisterToCallback(n"OnHoverOut"')) 'Preference lacks hover affordance on its actual hit target.'
 
 # Single authority + bounded lifecycle.
-Check ($preference.Contains('CRRealpassSettings.UseE3FirstPersonHudVisuals(GetGameInstance())')) 'Preference does not read the canonical saved authority.'
-Check ($preference.Contains('CRRealpassSettings.ToggleE3FirstPersonHudVisuals(GetGameInstance())')) 'Preference does not write through the canonical saved authority.'
+Check ($preference.Contains('CRRealpassSettings.UseE3FirstPersonHudVisuals(player.GetGame())')) 'Preference does not read the player-session saved authority.'
+Check ($preference.Contains('CRRealpassSettings.ToggleE3FirstPersonHudVisuals(player.GetGame())')) 'Preference does not write through the player-session saved authority.'
 Check ($preference.Contains('this.CRBiologyInDetail()')) 'Preference callback is not bounded to Biology detail ownership.'
 Check ($shell.Contains('this.CRResetBiologyE3Preference();')) 'Shared Ripperdoc teardown does not clear preference widget references.'
 Check (-not ($preference -match '(?i)ModSettings|ArchiveXL|RED4ext|Project E3')) 'W20.2 introduced a forbidden external runtime/settings dependency.'

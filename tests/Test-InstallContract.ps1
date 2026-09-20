@@ -8,7 +8,7 @@ if ($contract.installModel -ne 'game-root-shaped-redmod-first') { throw 'Install
 if ($contract.playerFlow.normalLaunch -ne 'Steam' -or $contract.playerFlow.permanentLauncher -ne $false) { throw 'Normal play must use Steam without a permanent Biology launcher.' }
 if ($contract.playerFlow.vanillaPlay -notmatch '(?i)Enable mods OFF') { throw 'Install contract lost launcher-off vanilla-play target.' }
 if ($contract.playerFlow.uninstall -notmatch 'Uninstall Biology\.exe') { throw 'Install contract lost self-contained hard uninstall.' }
-if ($contract.playerFlow.firstInstall -notmatch '(?i)Install Biology\.ps1' -or $contract.playerFlow.update -notmatch '(?i)global\.ini.*version\.dll.*fail') { throw 'Player install/update flow does not route through the collision-safe standalone-cybercmd installer.' }
+if ($contract.playerFlow.firstInstall -notmatch '(?i)Install Biology\.exe' -or $contract.playerFlow.update -notmatch '(?i)shared.*fail before mutation') { throw 'Player install/update flow does not route through the collision-safe native installer.' }
 
 if ($contract.ownerManifest.path -ne 'biology/build-manifest.json' -or $contract.ownerManifest.biologyOwnerValue -ne 'Biology') { throw 'Biology owner manifest identity drifted.' }
 if ($contract.ownerManifest.approvedDependencyOwnerPrefix -ne 'upstream:') { throw 'Approved dependency ownership convention drifted.' }
@@ -23,7 +23,7 @@ $installer = $contract.installer
 if ($installer.entryScript -ne 'Install Biology.ps1' -or $installer.coreScript -ne 'BiologyReleaseInstall.Core.ps1') { throw 'Collision-safe Biology player installer identity drifted.' }
 if ($installer.packageMustBeStagedOutsideGameRoot -ne $true -or $installer.preflightAllInventoriedHashesBeforeMutation -ne $true -or $installer.directZipMergeSupported -ne $false) { throw 'Player installer staging/preflight/direct-merge safety contract drifted.' }
 if ($installer.sharedStandaloneCybercmdPolicy.'bin/x64/global.ini' -notmatch 'preserve-if-byte-identical.*fail-closed-before-mutation' -or $installer.sharedStandaloneCybercmdPolicy.'bin/x64/version.dll' -notmatch 'preserve-if-byte-identical.*fail-closed-before-mutation') { throw 'Shared standalone cybercmd loader/config collision policy drifted.' }
-if ($installer.sharedStandaloneCybercmdPolicy.'bin/x64/plugins/cybercmd.asi' -ne 'create-preserve-or-replace') { throw 'cybercmd.asi must remain the only replaceable standalone-cybercmd path.' }
+if ($installer.binary -ne 'Install Biology.exe' -or $installer.sharedStandaloneCybercmdPolicy.'bin/x64/plugins/cybercmd.asi' -notmatch 'fail-closed-before-mutation') { throw 'Native installer must preserve incompatible shared cybercmd files.' }
 
 $uninstaller = $contract.uninstaller
 if ($uninstaller.targetExecutable -ne 'Uninstall Biology.exe' -or $uninstaller.selfContained -ne $true) { throw 'Self-contained Biology uninstaller target drifted.' }
@@ -39,7 +39,7 @@ if ($contract.stateAndSaves.destructiveStateResetByToggle -ne $false) { throw 'A
 if ($contract.stateAndSaves.e3PreferencePersistence -notmatch '(?i)ScriptableSystem.*save|save.*ScriptableSystem') { throw 'Install contract does not record replacement E3 persistence authority.' }
 
 $preflight = @($contract.preflight)
-foreach ($required in @('game-must-be-closed-for-installer-or-uninstaller-writes','supported-game-version-must-match-release-metadata','artifact-sha256-and-file-manifest-must-verify','redscript-startup-task-runner-must-be-present-in-release','standalone-cybercmd-global-ini-and-version-dll-must-never-be-silently-overwritten','only-cybercmd-asi-may-be-replaced-within-standalone-cybercmd-payload','shared-loader-collision-must-fail-before-any-game-file-mutation','unknown-collision-must-fail-closed-for-assisted-updates','changed-owned-file-must-not-be-auto-deleted','blocked-component-must-not-be-present','retired-settings-stack-must-not-be-present')) { if ($preflight -notcontains $required) { throw "Install/uninstall preflight safety gate missing: $required" } }
+foreach ($required in @('game-must-be-closed-for-installer-or-uninstaller-writes','supported-game-version-must-match-release-metadata','artifact-sha256-and-file-manifest-must-verify','redscript-startup-task-runner-must-be-present-in-release','standalone-cybercmd-global-ini-and-version-dll-must-never-be-silently-overwritten','all-shared-dependency-conflicts-must-fail-before-mutation','shared-loader-collision-must-fail-before-any-game-file-mutation','unknown-collision-must-fail-closed-for-assisted-updates','changed-owned-file-must-not-be-auto-deleted','blocked-component-must-not-be-present','retired-settings-stack-must-not-be-present')) { if ($preflight -notcontains $required) { throw "Install/uninstall preflight safety gate missing: $required" } }
 
 $roots = @($contract.runtimeRoots)
 foreach ($required in @('mods/Biology','r6/scripts','engine/tools','r6/config/cybercmd','bin/x64')) { if ($roots -notcontains $required) { throw "Required runtime root missing: $required" } }
