@@ -260,7 +260,10 @@ try {
     New-Item -ItemType Directory -Force -Path $artifactRoot | Out-Null
     Add-Evidence ''
     Add-Evidence '=== EXACT COMPILE / RELEASE-SHAPED TARGET BUILD ==='
-    $build = Invoke-NativeSafe 'pwsh' @('-NoLogo','-NoProfile','-File',(Join-Path $worktree 'tools\Build-BiologyPackage.ps1'),'-GameRoot',$GameRoot,'-OutputRoot',$artifactRoot)
+    # Managed attended candidates deliberately enable the existing bounded,
+    # in-memory Biology diagnostic surface. Ordinary/release package builds retain
+    # the default diagnostics-off policy.
+    $build = Invoke-NativeSafe 'pwsh' @('-NoLogo','-NoProfile','-File',(Join-Path $worktree 'tools\Build-BiologyPackage.ps1'),'-GameRoot',$GameRoot,'-OutputRoot',$artifactRoot,'-Diagnostics')
     Record-Process 'Build-BiologyPackage.ps1' $build
     if ($build.ExitCode -ne 0) { throw "Biology release-shaped build/exact compile failed with exit code $($build.ExitCode)." }
 
