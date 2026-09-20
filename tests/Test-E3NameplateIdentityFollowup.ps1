@@ -48,7 +48,7 @@ foreach ($forbidden in @('ScannerGameController','ScannerDetailsGameController',
 
 Check ($mapping.Contains('W20.1 — T005 nameplate structure and identity-authority correction')) 'Durable component mapping lacks W20.1 authority correction.'
 Check ($presentation.Contains('W20.1 — T005 authored nameplate and one-way identity authority')) 'Canonical E3 presentation contract lacks W20.1 correction.'
-Check ($mapping.Contains('native discovered identity') -and $mapping.Contains('presentation fallback only')) 'Mapping does not preserve one-way native identity authority.'
+Check ($mapping.Contains('discovered identity -> unmodified native values') -and $mapping.Contains('presentation fallback only')) 'Mapping does not preserve one-way native identity authority.'
 Check ($presentation.Contains('Biology generic ambient fallback -> native SetVisualData / scanner knowledge')) 'Presentation contract does not explicitly forbid backward fallback flow.'
 
 Write-Host "PASS: $script:checks W20.1 nameplate checks; native identity input is untouched, public fallback is presentation-only, authored native name/frame geometry owns structure, scanner remains native, and E3 OFF restoration is preserved."
