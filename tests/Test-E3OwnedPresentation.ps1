@@ -101,10 +101,13 @@ Check ($source.identity.Contains('CRPublicAmbientNameAllowed')) 'W03.3 ambient i
 Check (-not $source.identity.Contains('npc.IsCharacterCivilian()')) 'Police/combatants were re-excluded from ambient identity.'
 Check ($source.nameplate.Contains('public final func IsAnyElementVisible() -> Bool')) 'Native nameplate-root visibility repair was lost.'
 Check ($source.nameplate.Contains('CRBiologyE3ShouldShowAmbientName')) 'Ambient identity no longer participates in the native visible-element gate.'
-Check ($source.nameplate.Contains('CRBiologyE3IdentityChrome')) 'W03.4 nameplate is still only red text without a dedicated compact identity frame.'
-Check ($source.nameplate.Contains('Vector2(340.0, 46.0)')) 'Nameplate chrome is not constrained to the intended compact projected identity envelope.'
+Check (-not $source.nameplate.Contains('CRBiologyE3IdentityChrome')) 'T005-F02 detached controller-root identity canvas survived W20.1.'
+Check (-not $source.nameplate.Contains('Vector2(340.0, 46.0)')) 'T005-F02 fixed 340x46 nameplate geometry survived W20.1.'
+Check (-not $source.nameplate.Contains('new inkCanvas()')) 'W20.1 nameplate repair still creates parallel runtime canvas geometry instead of using authored native nameplate structure.'
+Check (-not $source.nameplate.Contains('data.name = ambientName')) 'T005-F03 Biology still writes its ambient fallback into native NPCNextToTheCrosshair data.'
+Check ($source.nameplate.Contains('wrappedMethod(puppet, data, isNewNpc)')) 'W20.1 lost the exact-compiled native SetVisualData wrapper call shape.'
 Check ($source.nameplate.Contains('crBiologyE3NativeNameTint') -and $source.nameplate.Contains('crBiologyE3NativeFrameTint')) 'E3 OFF cannot restore native name/frame styling.'
-Check ($source.nameplate.Contains('this.m_nameTextMain') -and $source.nameplate.Contains('this.m_nameFrame')) 'W03.4 stopped using native nameplate text/frame authority.'
+Check ($source.nameplate.Contains('this.m_nameTextMain') -and $source.nameplate.Contains('this.m_nameFrame')) 'W20.1 stopped using authored native nameplate text/frame authority.'
 Check ($source.nameplate.Contains('this.c_DisplayRangeNotAggressive = 10.0') -and $source.nameplate.Contains('this.c_MaxDisplayRangeNotAggressive = 20.0')) 'Proven ambient range behavior was lost.'
 Check ($source.nameplate.Contains('SNameplateRangesData.GetDisplayRangeNotAggressive()') -and $source.nameplate.Contains('SNameplateRangesData.GetMaxDisplayRangeNotAggressive()')) 'E3 OFF cannot restore native ambient range.'
 foreach ($forbidden in @('m_healthbarWidget','m_damagePreviewWidget','currentHealth','maximumHealth','StatPoolType.Health')) {
@@ -160,4 +163,4 @@ foreach ($file in @('E3FirstPersonHud.reds','E3QuestHudNative.reds','E3Navigatio
     Check ($allowed -contains $file) "W03.4 native presentation seam is not registered in the 2.31 boundary allowlist: $file"
 }
 
-Write-Host "PASS: $script:checks W03.6 E3 quest/hotkey content-region checks; quest native rows and m_dpadHintsPanel own the visible composition, no controller-root/global-offset regression was introduced, and prior weapon/nameplate/reticle/scanner boundaries remain protected."
+Write-Host "PASS: $script:checks W20.1 E3 presentation checks; native nameplate data remains authoritative, authored name/frame structure owns composition, and prior quest/hotkey/weapon/reticle/scanner boundaries remain protected."

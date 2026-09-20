@@ -1,9 +1,11 @@
 // Biology-owned ambient identity resolver for the E3-inspired nameplate layer.
 //
-// Native NPCNextToTheCrosshair.name always wins. When it is empty, W03.3 permits the
-// entity's already-public GetDisplayName() for ordinary attached NPCs, including
-// civilians, police and ordinary combatants. Hidden, alternative, disabled-nameplate
-// and quest-target policy remains native-authoritative. Scanner state is not required.
+// Native NPCNextToTheCrosshair.name always wins. When it is empty, Biology may render
+// the entity's already-public GetDisplayName() for ordinary attached NPCs, including
+// civilians, police and ordinary combatants. That fallback is presentation-only: it
+// must never be written back into NPCNextToTheCrosshair or scanner/native knowledge.
+// Hidden, alternative, disabled-nameplate and quest-target policy remains
+// native-authoritative. Scanner state is not required.
 module CyberpunkRealism.Presentation
 
 import CyberpunkRealism.Settings.*

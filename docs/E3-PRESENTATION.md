@@ -309,3 +309,38 @@ Parent P02 owns T005 on an integrated canonical candidate. W18.1 requires T005 t
 - scanner and quickhack remain the current native 2.31 presentation;
 - E3 OFF yields reversible accent styling while Biology-wide health suppression remains independent;
 - any remaining **structural** HUD mismatch is routed to a Biology-owned authored-resource follow-up rather than another screen-space/runtime-rectangle iteration.
+
+
+## W20.1 — T005 authored nameplate and one-way identity authority
+
+T005 tested exact integrated source `a5818db6596e335824d75f596fc8204cc419de4f` on Cyberpunk 2077 2.31. The broader E3 presentation and modern scanner remain KEEP, but two nameplate assumptions are superseded.
+
+### Structural authority
+
+The fixed 340 x 46 `CRBiologyE3IdentityChrome` canvas is removed. T005 showed that controller-root runtime geometry can sit visibly apart from the actual authored name. Biology now treats native `m_nameTextMain` and `m_nameFrame` as one authored structural unit and limits itself to reversible style changes on those widgets.
+
+This follows W18.1's direct Project E3 archaeology: authored resource hierarchy owns structure; runtime rectangles are at most accent chrome. W20.1 does not copy Project E3 resources and does not add a Project E3 runtime dependency.
+
+### Identity authority
+
+Biology no longer writes its public `GetDisplayName()` fallback into a local `NPCNextToTheCrosshair` copy before calling native `SetVisualData`.
+
+The required flow is:
+
+`native discovered identity -> native nameplate/scanner authority -> ambient E3 presentation`.
+
+The forbidden flow is:
+
+`Biology generic ambient fallback -> native SetVisualData / scanner knowledge`.
+
+The fallback remains presentation-only. After native visibility/data handling, Biology may render `GetDisplayName()` only when native incoming identity is still empty and existing hidden/quest/alternative/disabled-nameplate policy permits it.
+
+### T006 boundary
+
+Parent P02 must verify on the integrated canonical candidate:
+
+- ordinary civilians retain ambient identity before scanner;
+- police/combatants can start generic if native data is generic, but scanner-discovered specific identity remains authoritative on later focus/recheck;
+- the name text and frame are visually composed together with no detached Biology canvas;
+- modern scanner/quickhack remains current/native;
+- E3 OFF restores captured native name/frame styling and native range.

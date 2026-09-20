@@ -55,6 +55,7 @@ $tests = @(
     'Test-PainArchitecture.ps1',
     'Test-OwnedNameplates.ps1',
     'Test-E3OwnedPresentation.ps1',
+    'Test-E3NameplateIdentityFollowup.ps1',
     'Test-E3ReferenceArchaeology.ps1',
     'Test-DistributionContract.ps1',
     'Test-InstallContract.ps1',
