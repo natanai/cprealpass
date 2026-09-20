@@ -1,7 +1,7 @@
 # Player disable / uninstall contract
 
-Status: **IMPLEMENTED; W13 startup-compiler repair integrated in source — attended acceptance remains parent-owned**  
-Issues: #44, #61, #68  
+Status: **IMPLEMENTED; current completion/evidence is tracked under owner-authorized #152**
+Issues: #44, #61, #68
 Target game: Cyberpunk 2077 `2.31`
 
 ## Product contract
@@ -46,7 +46,7 @@ Items.BiologyLauncherActivationMarker.stackable = true
 
 The save-persistent E3 presentation preference remains subordinate to `IsEnabled`; it is not a second activation mechanism. redscript and cybercmd may compile/load the loose scripts, but only the REDmod marker may activate Biology behavior.
 
-Parent integration still owns attended proof that the exact repaired candidate regenerates its compiled REDscript output and that the activation marker disappears/reappears as expected through supported REDlauncher OFF/ON flow.
+The autonomous completion run records exact startup/deployment and lifecycle evidence. Native behavior and preference save/reload observations remain separately scoped; see `evidence/AUTONOMOUS-COMPLETION-2026-09-20.md`.
 
 ## Self-contained E3 preference
 
@@ -145,7 +145,7 @@ The package builder requires cybercmd's exact three-file standalone payload (`gl
 
 `tests/Test-SelfContainedSettings.ps1` independently asserts that production settings/uninstaller source contains no Mod Settings provider path/adapter, the public preference surface remains exactly one Boolean, launcher activation remains separate, release staging is exactly redscript + cybercmd, and the three retired settings-stack dependencies remain absent from active distribution/install contracts.
 
-## Attended checks still required
+## Native observations and final local evidence
 
 Cloud CI and source contracts do **not** close live acceptance. Parent integration owns attended integration acceptance of an exact release-shaped repaired artifact, including:
 

@@ -9,6 +9,14 @@ import CyberpunkRealism.Integration.*
 import CyberpunkRealism.Physiology.*
 
 public class CRBiologySessionPresentation extends IScriptable {
+  public static func ConditionForSession(game: GameInstance, region: Int32) -> ref<CRConditionDescriptor> {
+    let runtime: ref<CRBodyRuntime> = CRBiologySessionAuthority.Body(game);
+    if !IsDefined(runtime) || !runtime.OwnsNeeds() {
+      return new CRConditionDescriptor();
+    }
+    return CRBiologySessionPresentation.Condition(game, runtime.GetBodySnapshot(), region);
+  }
+
   private static func AddToken(text: String, token: String) -> String {
     if Equals(token, "") {
       return text;

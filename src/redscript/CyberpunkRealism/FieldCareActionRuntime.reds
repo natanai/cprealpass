@@ -34,9 +34,9 @@ public class CRFieldCareActionRuntime extends ScriptableSystem {
   public func Status() -> String {
     return this.status;
   }
-  private static func InMenu() -> Bool {
-    let board: ref<IBlackboard> = GameInstance.GetBlackboardSystem(GetGameInstance()).Get(GetAllBlackboardDefs().UI_System);
-    return IsDefined(board) && board.GetBool(GetAllBlackboardDefs().UI_System.IsInMenu);
+  private func InMenu() -> Bool {
+    let board: ref<IBlackboard> = GameInstance.GetBlackboardSystem(this.GetGameInstance()).Get(GetAllBlackboardDefs().UI_System);
+    return !IsDefined(board) || board.GetBool(GetAllBlackboardDefs().UI_System.IsInMenu);
   }
   public static func HandsAvailable(player: ref<PlayerPuppet>) -> Bool {
     let board: ref<IBlackboard>;
@@ -45,6 +45,9 @@ public class CRFieldCareActionRuntime extends ScriptableSystem {
       return false;
     }
     board = player.GetPlayerStateMachineBlackboard();
+    if !IsDefined(board) {
+      return false;
+    }
     weapon = IntEnum<gamePSMRangedWeaponStates>(board.GetInt(GetAllBlackboardDefs().PlayerStateMachine.Weapon));
     if !Equals(weapon, gamePSMRangedWeaponStates.Default) && !Equals(weapon, gamePSMRangedWeaponStates.Ready) && !Equals(weapon, gamePSMRangedWeaponStates.Safe) && !Equals(weapon, gamePSMRangedWeaponStates.NoAmmo) {
       return false;
@@ -52,8 +55,9 @@ public class CRFieldCareActionRuntime extends ScriptableSystem {
     return board.GetInt(GetAllBlackboardDefs().PlayerStateMachine.MeleeWeapon) == 0 && board.GetInt(GetAllBlackboardDefs().PlayerStateMachine.Consumable) == 0 && board.GetInt(GetAllBlackboardDefs().PlayerStateMachine.CombatGadget) == 0 && board.GetInt(GetAllBlackboardDefs().PlayerStateMachine.LeftHandCyberware) == 0 && !Equals(IntEnum<gamePSMUpperBodyStates>(board.GetInt(GetAllBlackboardDefs().PlayerStateMachine.UpperBody)), gamePSMUpperBodyStates.Aim);
   }
   private func CompletionContext() -> Bool {
-    let player: ref<PlayerPuppet> = GameInstance.GetPlayerSystem(GetGameInstance()).GetLocalPlayerMainGameObject() as PlayerPuppet;
-    return CRBodyRuntime.Get().CanContinueFieldCare() && !CRFieldCareActionRuntime.InMenu() && CRFieldCareActionRuntime.HandsAvailable(player) && Vector4.Length(player.GetVelocity()) <= 0.25 && Vector4.DistanceSquared(player.GetWorldPosition(), this.origin) <= 0.5625;
+    let player: ref<PlayerPuppet> = GameInstance.GetPlayerSystem(this.GetGameInstance()).GetLocalPlayerMainGameObject() as PlayerPuppet;
+    let runtime: ref<CRBodyRuntime> = CRBiologySessionAuthority.Body(this.GetGameInstance());
+    return IsDefined(runtime) && IsDefined(player) && runtime.CanContinueFieldCare() && !this.InMenu() && CRFieldCareActionRuntime.HandsAvailable(player) && Vector4.Length(player.GetVelocity()) <= 0.25 && Vector4.DistanceSquared(player.GetWorldPosition(), this.origin) <= 0.5625;
   }
   public func IsCompleting(action: ref<CRFieldCareAction>) -> Bool {
     return this.completing && IsDefined(action) && Equals(this.action, action) && action.stage == 3 && this.CompletionContext();
@@ -62,12 +66,15 @@ public class CRFieldCareActionRuntime extends ScriptableSystem {
     let warning: SimpleScreenMessage;
     warning.isShown = true;
     warning.duration = duration;
-    warning.message = "realpass  |  " + message;
-    GameInstance.GetBlackboardSystem(GetGameInstance()).Get(GetAllBlackboardDefs().UI_Notifications).SetVariant(GetAllBlackboardDefs().UI_Notifications.WarningMessage, ToVariant(warning), true);
+    warning.message = "Biology  |  " + message;
+    let board: ref<IBlackboard> = GameInstance.GetBlackboardSystem(this.GetGameInstance()).Get(GetAllBlackboardDefs().UI_Notifications);
+    if IsDefined(board) {
+      board.SetVariant(GetAllBlackboardDefs().UI_Notifications.WarningMessage, ToVariant(warning), true);
+    }
   }
   private func Unschedule() -> Void {
     if this.pending {
-      GameInstance.GetDelaySystem(GetGameInstance()).CancelCallback(this.delay);
+      GameInstance.GetDelaySystem(this.GetGameInstance()).CancelCallback(this.delay);
       this.pending = false;
     }
   }
@@ -80,7 +87,7 @@ public class CRFieldCareActionRuntime extends ScriptableSystem {
     callback.owner = this;
     callback.action = this.action;
     callback.sample = this.action.samples + 1;
-    this.delay = GameInstance.GetDelaySystem(GetGameInstance()).DelayCallback(callback, 0.25, false);
+    this.delay = GameInstance.GetDelaySystem(this.GetGameInstance()).DelayCallback(callback, 0.25, false);
     if Equals(this.delay, GetInvalidDelayID()) {
       this.Cancel(false);
       return;
@@ -88,7 +95,7 @@ public class CRFieldCareActionRuntime extends ScriptableSystem {
     this.pending = true;
   }
   public func OnMenuBoundary() -> Void {
-    if IsDefined(this.action) && this.action.stage == 2 && CRFieldCareActionRuntime.InMenu() {
+    if IsDefined(this.action) && this.action.stage == 2 && this.InMenu() {
       this.Cancel(false);
     }
   }
@@ -110,15 +117,16 @@ public class CRFieldCareActionRuntime extends ScriptableSystem {
   public func Begin(region: Int32, kind: Int32) -> Int32 {
     let player: ref<PlayerPuppet>;
     let body: ref<CRBodyState>;
-    if this.Active() || !CRBodyRuntime.Get().CanUseFieldCare() {
+    let runtime: ref<CRBodyRuntime> = CRBiologySessionAuthority.Body(this.GetGameInstance());
+    if this.Active() || !IsDefined(runtime) || !runtime.CanUseFieldCare() {
       return 0;
     }
-    CRBodyRuntime.Get().Observe();
-    body = CRBodyRuntime.Get().GetBodySnapshot();
+    runtime.Observe();
+    body = runtime.GetBodySnapshot();
     if !IsDefined(body) || !CRFieldCareModel.CanHelp(body.injuries, region, kind) {
       return 6;
     }
-    player = GameInstance.GetPlayerSystem(GetGameInstance()).GetLocalPlayerMainGameObject() as PlayerPuppet;
+    player = GameInstance.GetPlayerSystem(this.GetGameInstance()).GetLocalPlayerMainGameObject() as PlayerPuppet;
     if CRFieldCareInventory.Count(player, kind) < 1 {
       return 2;
     }
@@ -138,11 +146,17 @@ public class CRFieldCareActionRuntime extends ScriptableSystem {
     let moving: Bool;
     let result: Int32;
     let outcome: Int32;
+    let runtime: ref<CRBodyRuntime>;
     if !IsDefined(action) || !Equals(this.action, action) || this.completing || !this.pending || sample != action.samples + 1 {
       return;
     }
     this.pending = false;
-    player = GameInstance.GetPlayerSystem(GetGameInstance()).GetLocalPlayerMainGameObject() as PlayerPuppet;
+    runtime = CRBiologySessionAuthority.Body(this.GetGameInstance());
+    if !IsDefined(runtime) {
+      this.Cancel(false);
+      return;
+    }
+    player = GameInstance.GetPlayerSystem(this.GetGameInstance()).GetLocalPlayerMainGameObject() as PlayerPuppet;
     moving = !IsDefined(player);
     if IsDefined(player) {
       moving = Vector4.Length(player.GetVelocity()) > 0.25;
@@ -150,7 +164,7 @@ public class CRFieldCareActionRuntime extends ScriptableSystem {
         moving = true;
       }
     }
-    result = CRFieldCareActionModel.Sample(action, GameInstance.GetSimTime(GetGameInstance()).ToFloat(), CRBodyRuntime.Get().CanUseFieldCare() && CRFieldCareActionRuntime.HandsAvailable(player), CRFieldCareActionRuntime.InMenu(), moving);
+    result = CRFieldCareActionModel.Sample(action, GameInstance.GetSimTime(this.GetGameInstance()).ToFloat(), runtime.CanUseFieldCare() && CRFieldCareActionRuntime.HandsAvailable(player), this.InMenu(), moving);
     if result == 0 {
       this.Cancel(true);
       return;
@@ -162,7 +176,7 @@ public class CRFieldCareActionRuntime extends ScriptableSystem {
     }
     if result == 4 {
       this.completing = true;
-      outcome = CRBodyRuntime.Get().CommitFieldCare(action);
+      outcome = runtime.CommitFieldCare(action);
       this.completing = false;
       this.action = null;
       this.Unschedule();

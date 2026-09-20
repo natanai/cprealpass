@@ -8,6 +8,7 @@ if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'Run-CI.ps1 requires PowerShe
 $tests = @(
     'Test-PlayerLifecycleAndPreferences.ps1',
     'Test-PlayerInstaller.ps1',
+    'Test-ActivationHookAudit.ps1',
     'Test-PowerShellSyntax.ps1',
     'Test-CiSuiteHygiene.ps1',
     'Test-ActiveGuidanceHygiene.ps1',

@@ -82,13 +82,14 @@ public class CRInjuryProvenanceRuntime extends ScriptableSystem {
   }
 
   private func OnAttach() -> Void {
-    this.Prune();
+    if CRBodyRuntimeMasterPolicy.Enabled(this.GetGameInstance()) && this.schemaVersion == 1 {
+      this.Prune();
+    }
   }
 
   private func OnRestored(saveVersion: Int32, gameVersion: Int32) -> Void {
-    if this.schemaVersion != 1 {
-      ArrayClear(this.recent);
-      this.schemaVersion = 1;
+    if !CRBodyRuntimeMasterPolicy.Enabled(this.GetGameInstance()) || this.schemaVersion != 1 {
+      return;
     }
     this.Prune();
   }
@@ -97,6 +98,9 @@ public class CRInjuryProvenanceRuntime extends ScriptableSystem {
     let profile: ref<CRCombatProfileSample>;
     let impact: ref<CRImpactState>;
     let entry: ref<CRInjuryProvenance>;
+    if !CRBodyRuntimeMasterPolicy.Enabled(this.GetGameInstance()) || this.schemaVersion != 1 {
+      return false;
+    }
     if !IsDefined(sample) || !sample.targetIsPlayer || !IsDefined(sample.contact) || !CRWoundModel.HasInjury(wound) || !IsDefined(sample.profiles) {
       return false;
     }

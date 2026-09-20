@@ -85,3 +85,36 @@ No game install, removal or launch has happened yet in this run. Package lifecyc
 main-menu smoke, final ZIP inventory, final CI and release revision remain open.
 No saved game has been opened or changed. Model/compile checks do not establish
 native UI event delivery, save serialization, rendered behavior or combat feel.
+
+## Whole-product audit checkpoint
+
+Checkpoint `e86f101343a578fad4cc422abe50d78732270a66` passed all 87 then-current
+CI suites. Its release-shaped package contains 86 verified files and passed the
+native installer's read-only preflight against the existing T007 installation.
+No game mutation was performed at that checkpoint.
+
+The subsequent source audit bound timed field care, inventory debits, clinical
+care, condition projections, wounds and blood loss to the actual native player's
+GameInstance. Missing systems fail closed. Supplies are shown using native item
+display names; native item identities are unchanged. Pain state initializes only
+after a valid active body snapshot. Injury provenance preserves unknown schemas
+and does not prune persistent data while launcher activation is OFF.
+
+`manifest/activation-hook-audit.json` inventories all 62 wrappers and 25 additive
+native event/callback entry points. The new CI gate rejects an unreviewed change
+to this inventory. It also checks E3 restoration ordering and care session usage.
+The body ScriptableSystem attach/restore callbacks reset transient clocks only;
+detach invalidates callbacks and clears owned effects. Care detach/restore cancels
+its transient action. Provenance attach/restore is activation/schema guarded.
+Armor, pain, injury effects and settings have no automatic persistent-mutation
+attach/restore callback. Body activation remains the clock/timer authority.
+
+All 65 sources exact-compiled in `autonomous-audit-7`. A read-only installed 2.31
+contract audit passed native seam policy and recorded 301 hook declarations
+(including helper methods and fields), distinct from the 87 native entry points.
+The game base hash is
+`2119046F3F3466206D8A16A4803B0EF0F3C90926AB689F9ABBD5B8E42E28EE86`.
+Uninstaller fixtures now pass 46 checks, including changed-receipt refusal before
+mutation and receipt retention for untracked residual files. Native installer
+fixtures remain 31 passing checks plus a real junction refusal; player preflight
+also requires installed official REDmod tools matching 2.31.

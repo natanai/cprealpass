@@ -25,6 +25,7 @@ internal static class BiologyUninstallCoreTests
             TestBiologyOwnedAllowlist(Path.Combine(root, "allowlist"));
             TestSaveBackedPreferencePolicy(Path.Combine(root, "save-policy"));
             TestRedmodRefreshEvaluation();
+            TestReceiptChangeAndResidualEvidence(Path.Combine(root, "receipt-residual"));
             Console.WriteLine("PASS: " + checks + " Biology uninstall planner/executor safety checks.");
         }
         finally
@@ -59,6 +60,23 @@ internal static class BiologyUninstallCoreTests
         Check(Directory.Exists(Path.Combine(root, "r6", "scripts")), "shared r6/scripts directory was removed");
         Check(result.ReceiptDeleted && !File.Exists(manifestPath), "clean uninstall did not remove the validated ownership receipt");
         Check(result.Notes.Exists(x => x.IndexOf("save-backed Biology preference", StringComparison.OrdinalIgnoreCase) >= 0), "uninstaller did not report save-backed preference preservation");
+    }
+
+    private static void TestReceiptChangeAndResidualEvidence(string root)
+    {
+        PrepareGameRoot(root);
+        string owned = WriteFile(root, "mods/Biology/info.json", "owned");
+        BiologyManifestFile entry = Entry("mods/Biology/info.json", owned, "Biology", "identity", BiologyUninstallPlanner.BiologyOwnedPolicy);
+        string receipt = WriteManifest(root, new[] { entry }, "Biology");
+        BiologyUninstallPlan plan = BiologyUninstallPlanner.Build(root, receipt);
+        File.AppendAllText(receipt, " ");
+        ExpectFailure(delegate { BiologyUninstallExecutor.Execute(plan, new BiologyExecutionOptions { SkipRedmodRefresh = true }); }, "Changed receipt did not stop before mutation");
+        Check(File.Exists(owned), "Changed receipt still removed owned content");
+        plan = BiologyUninstallPlanner.Build(root, receipt);
+        string residual = WriteFile(root, "mods/Biology/custom.txt", "preserve");
+        BiologyExecutionResult result = BiologyUninstallExecutor.Execute(plan, new BiologyExecutionOptions { SkipRedmodRefresh = true });
+        Check(File.Exists(residual) && File.Exists(receipt) && !result.ReceiptDeleted, "Residual namespace lost ownership evidence");
+        Check(!result.BiologyPayloadFullyRemoved && result.Errors.Count > 0, "Residual namespace reported full removal");
     }
 
     private static void TestChangedBiologyIsPreserved(string root)

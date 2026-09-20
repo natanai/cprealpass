@@ -62,9 +62,28 @@ private final func CRBioActionText(text: String, name: CName, size: Int32) -> re
 }
 
 @addMethod(RipperDocGameController)
+private final func CRBioCondition(region: Int32) -> ref<CRConditionDescriptor> {
+  let player: wref<GameObject> = this.GetPlayerControlledObject();
+  if !IsDefined(player) {
+    return new CRConditionDescriptor();
+  }
+  return CRBiologySessionPresentation.ConditionForSession(player.GetGame(), region);
+}
+
+@addMethod(RipperDocGameController)
+private final func CRBioSupplyLabel(kind: Int32) -> String {
+  let record: wref<Item_Record> = TweakDBInterface.GetItemRecord(ItemID.GetTDBID(CRFieldCareInventory.Supply(kind)));
+  if !IsDefined(record) {
+    return "SUPPLY UNAVAILABLE";
+  }
+  return "1 " + GetLocalizedItemNameByCName(record.DisplayName());
+}
+
+@addMethod(RipperDocGameController)
 private final func CRBioActionButton(text: String, name: CName) -> ref<inkText> {
   let widget: ref<inkText> = this.CRBioActionText(text, name, 18);
   widget.SetInteractive(true);
+  widget.SetWrappingAtPosition(420.0);
   widget.SetOpacity(0.88);
   return widget;
 }
@@ -127,10 +146,10 @@ private final func CRBioCreateActions() -> Void {
     region += 1;
   }
 
-  this.crBioDress = this.CRBioActionButton("[ APPLY DRESSING ]", n"CRBioDress");
+  this.crBioDress = this.CRBioActionButton("[ APPLY DRESSING / " + this.CRBioSupplyLabel(2) + " ]", n"CRBioDress");
   this.crBioDress.RegisterToCallback(n"OnRelease", this, n"OnCRBioCare");
   this.crBioDress.Reparent(this.crBioActionsPanel, -1);
-  this.crBioSupport = this.CRBioActionButton("[ SUPPORT LIMB ]", n"CRBioSupport");
+  this.crBioSupport = this.CRBioActionButton("[ SUPPORT LIMB / " + this.CRBioSupplyLabel(3) + " ]", n"CRBioSupport");
   this.crBioSupport.RegisterToCallback(n"OnRelease", this, n"OnCRBioCare");
   this.crBioSupport.Reparent(this.crBioActionsPanel, -1);
   this.crBioClinical = this.CRBioActionButton("[ CLINICAL CARE ]", n"CRBioClinical");
@@ -175,7 +194,7 @@ private final func CRBioRegionAllowedForSelectedArea(region: Int32) -> Bool {
 private final func CRBioFirstCondition() -> Int32 {
   let region: Int32 = 1;
   while region <= 6 {
-    let descriptor: ref<CRConditionDescriptor> = CRConditionPresentation.Current(region);
+    let descriptor: ref<CRConditionDescriptor> = this.CRBioCondition(region);
     if this.CRBioRegionAllowedForSelectedArea(region) && IsDefined(descriptor) && descriptor.valid && descriptor.hasCondition {
       return region;
     }
@@ -240,7 +259,7 @@ private final func CRBioRefreshItems() -> Void {
     return;
   }
 
-  let player: ref<PlayerPuppet> = GameInstance.GetPlayerSystem(GetGameInstance()).GetLocalPlayerMainGameObject() as PlayerPuppet;
+  let player: ref<PlayerPuppet> = this.GetPlayerControlledObject() as PlayerPuppet;
   if !IsDefined(player) {
     this.crBioActionStatus.SetText("Inventory is unavailable.");
     return;
@@ -249,7 +268,7 @@ private final func CRBioRefreshItems() -> Void {
   // Enumerate actual carried stacks from Cyberpunk's transaction system. The action
   // is only surfaced if the same ItemID also has a real native eat/drink/consume path.
   let items: array<wref<gameItemData>>;
-  GameInstance.GetTransactionSystem(GetGameInstance()).GetItemList(player, items);
+  GameInstance.GetTransactionSystem(player.GetGame()).GetItemList(player, items);
   let i: Int32 = 0;
   let shown: Int32 = 0;
   while i < ArraySize(items) && shown < ArraySize(this.crBioItemRows) {
@@ -268,7 +287,7 @@ private final func CRBioRefreshItems() -> Void {
         }
         matches = matches && this.CRBioItemHasNativeAction(itemID);
         if matches {
-          let quantity: Int32 = GameInstance.GetTransactionSystem(GetGameInstance()).GetItemQuantity(player, itemID);
+          let quantity: Int32 = GameInstance.GetTransactionSystem(player.GetGame()).GetItemQuantity(player, itemID);
           this.crBioItemRows[shown].SetText("[ " + GetLocalizedItemNameByCName(record.DisplayName()) + "  x" + ToString(quantity) + " ]");
           this.crBioItemRows[shown].SetVisible(true);
           ArrayPush(this.crBioItemIDs, itemID);
@@ -312,7 +331,12 @@ public final func CRRefreshBiologyActions() -> Void {
     return;
   }
 
-  let view: ref<CRBiologyViewModel> = CRBiologyPresentation.Current();
+  let player: wref<GameObject> = this.GetPlayerControlledObject();
+  if !IsDefined(player) {
+    this.crBioActionsPanel.SetVisible(false);
+    return;
+  }
+  let view: ref<CRBiologyViewModel> = CRBiologySessionPresentation.Current(player.GetGame());
   let intake: Bool = this.CRBioAreaAllowsIntake();
   let showEat: Bool = intake && IsDefined(view) && view.valid && view.showEat;
   let showDrink: Bool = intake && IsDefined(view) && view.valid && view.showDrink;
@@ -323,7 +347,7 @@ public final func CRRefreshBiologyActions() -> Void {
   let i: Int32 = 0;
   let descriptor: ref<CRConditionDescriptor>;
   while i < ArraySize(this.crBioConditionRows) {
-    descriptor = CRConditionPresentation.Current(i + 1);
+    descriptor = this.CRBioCondition(i + 1);
     let active: Bool = this.CRBioRegionAllowedForSelectedArea(i + 1)
       && IsDefined(descriptor)
       && descriptor.valid
@@ -340,10 +364,10 @@ public final func CRRefreshBiologyActions() -> Void {
   if this.crBioSelectedRegion < 1 || !this.CRBioRegionAllowedForSelectedArea(this.crBioSelectedRegion) {
     this.crBioSelectedRegion = this.CRBioFirstCondition();
   }
-  descriptor = CRConditionPresentation.Current(this.crBioSelectedRegion);
+  descriptor = this.CRBioCondition(this.crBioSelectedRegion);
   if !IsDefined(descriptor) || !descriptor.valid || !descriptor.hasCondition {
     this.crBioSelectedRegion = this.CRBioFirstCondition();
-    descriptor = CRConditionPresentation.Current(this.crBioSelectedRegion);
+    descriptor = this.CRBioCondition(this.crBioSelectedRegion);
   }
 
   let hasCondition: Bool = IsDefined(descriptor) && descriptor.valid && descriptor.hasCondition;
@@ -388,7 +412,7 @@ protected cb func OnCRBioItem(evt: ref<inkPointerEvent>) -> Bool {
   let i: Int32 = 0;
   while i < ArraySize(this.crBioItemRows) && i < ArraySize(this.crBioItemIDs) {
     if target == this.crBioItemRows[i] {
-      let player: ref<PlayerPuppet> = GameInstance.GetPlayerSystem(GetGameInstance()).GetLocalPlayerMainGameObject() as PlayerPuppet;
+      let player: ref<PlayerPuppet> = this.GetPlayerControlledObject() as PlayerPuppet;
       if this.CRBioUseNativeItemAction(player, this.crBioItemIDs[i]) {
         this.crBioActionStatus.SetText("Used the selected carried item through its normal Cyberpunk item action.");
       } else {
@@ -428,8 +452,16 @@ protected cb func OnCRBioCondition(evt: ref<inkPointerEvent>) -> Bool {
 
 @addMethod(RipperDocGameController)
 private final func CRBioCareFeedback(result: Int32) -> String {
+  let player: wref<GameObject> = this.GetPlayerControlledObject();
+  let care: ref<CRFieldCareActionRuntime>;
+  if IsDefined(player) {
+    care = CRBiologySessionAuthority.FieldCare(player.GetGame());
+  }
+  if !IsDefined(care) {
+    return "Field care is unavailable.";
+  }
   switch result {
-    case 8: return CRFieldCareActionRuntime.Get().Status();
+    case 8: return care.Status();
     case 2: return "Required field-care supplies are unavailable. Nothing was consumed.";
     case 6: return "That field treatment no longer helps this condition.";
   }
@@ -455,7 +487,16 @@ protected cb func OnCRBioCare(evt: ref<inkPointerEvent>) -> Bool {
   }
 
   // Field-care runtime owns inventory checks, timed action state and consumption.
-  let result: Int32 = CRBodyRuntime.Get().UseFieldCare(this.crBioSelectedRegion, kind);
+  let player: wref<GameObject> = this.GetPlayerControlledObject();
+  if !IsDefined(player) {
+    return false;
+  }
+  let runtime: ref<CRBodyRuntime> = CRBiologySessionAuthority.Body(player.GetGame());
+  if !IsDefined(runtime) {
+    this.crBioActionStatus.SetText("Body state is unavailable. Nothing was consumed.");
+    return false;
+  }
+  let result: Int32 = runtime.UseFieldCare(this.crBioSelectedRegion, kind);
   this.crBioActionStatus.SetText(this.CRBioCareFeedback(result));
   this.CRRefreshBiologyActions();
   this.CRRefreshBiologyDetail();
@@ -483,7 +524,11 @@ protected cb func OnCRBioProfessional(evt: ref<inkPointerEvent>) -> Bool {
     }
   }
 
-  if CRProfessionalCareRuntime.Complete(this.crBioSelectedRegion, kind) {
+  let player: wref<GameObject> = this.GetPlayerControlledObject();
+  if !IsDefined(player) {
+    return false;
+  }
+  if CRProfessionalCareRuntime.CompleteForSession(player.GetGame(), this.crBioSelectedRegion, kind) {
     this.crBioActionStatus.SetText(kind == 4 ? "Clinical care completed. Biological recovery still takes body time." : "Cyberware repair completed for this region.");
   } else {
     this.crBioActionStatus.SetText("Professional care could not be completed. No injury state changed.");

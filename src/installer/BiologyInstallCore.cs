@@ -134,6 +134,9 @@ namespace BiologyInstall
         {
             string binary = BiologyUninstallPlanner.ResolveSafeChildPath(gameRoot, "bin/x64/Cyberpunk2077.exe");
             if (FileVersionInfo.GetVersionInfo(binary).ProductVersion != "2.31") throw new InvalidDataException("Biology supports Cyberpunk 2077 2.31. The selected game version differs.");
+            string redmod = BiologyUninstallPlanner.ResolveSafeChildPath(gameRoot, "tools/redmod/bin/redMod.exe");
+            if (!File.Exists(redmod)) throw new InvalidDataException("Install the official REDmod tools for Cyberpunk 2077 before installing Biology.");
+            if (FileVersionInfo.GetVersionInfo(redmod).ProductVersion != "2.31") throw new InvalidDataException("The official REDmod tools must match Cyberpunk 2077 2.31.");
         }
         private sealed class Written
         {
