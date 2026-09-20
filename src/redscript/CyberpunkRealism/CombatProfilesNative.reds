@@ -10,7 +10,13 @@ public class CRCombatProfileSample extends IScriptable {
   public let projectile: ref<CRProjectileSpec>;
   public let referenceImpact: ref<CRImpactState>;
   public let referenceReady: Bool;
+  // Structural/read failures remain fatal readiness failures.
   public let unresolvedProtection: Int32;
+  // Valid equipped records without a Biology protection profile are tracked
+  // separately. Player hits may defer conservatively to the native physical
+  // channel for these records; NPC appearance protection remains fail-closed.
+  public let unmappedProtection: Int32;
+  public let nativePhysicalCap: Bool;
   public let protectionRecords: array<TweakDBID>;
   public let equippedItemIDs: array<ItemID>;
   public let knownLayers: Int32;
@@ -88,6 +94,7 @@ public class CRCombatProfilesNative extends IScriptable {
 
   private static func AddProtection(sample: ref<CRCombatProfileSample>, record: TweakDBID, region: Int32, item: ItemID) -> Void {
     let layer: ref<CRProtectionLayer>;
+    let profile: ref<CRProtectionProfile>;
     let beforeJ: Float;
     if sample.equipmentVisited >= 32 {
       sample.unresolvedProtection += 1;
@@ -95,8 +102,16 @@ public class CRCombatProfilesNative extends IScriptable {
     }
     sample.equipmentVisited += 1;
     ArrayPush(sample.protectionRecords, record);
+    // Keep "unmapped" distinct from malformed/read failure. For a player this
+    // can later defer to the already-computed native physical channel instead
+    // of vetoing every wound solely because unrelated gear lacks a profile.
+    profile = CRCombatProfilesNative.Protection(record);
+    if !IsDefined(profile) || !profile.mapped {
+      sample.unmappedProtection += 1;
+      return;
+    }
     // Read persistent condition; preparation itself never commits wear.
-    layer = CRCoverageModel.Layer(CRCombatProfilesNative.Protection(record), region, 1.0);
+    layer = CRCoverageModel.Layer(profile, region, 1.0);
     if !IsDefined(layer) {
       sample.unresolvedProtection += 1;
       return;
@@ -208,7 +223,8 @@ public class CRCombatProfilesNative extends IScriptable {
         sample.unresolvedProtection += 1;
       }
     }
-    sample.referenceReady = sample.unresolvedProtection == 0 && CRImpactModel.ValidState(sample.referenceImpact);
+    sample.referenceReady = CRCombatProfileReadiness.Ready(sample.referenceImpact, sample.unresolvedProtection, sample.unmappedProtection, IsDefined(player));
+    sample.nativePhysicalCap = sample.referenceReady && CRCombatProfileReadiness.RequiresNativePhysicalCap(sample.unmappedProtection, IsDefined(player));
     return sample;
   }
 }

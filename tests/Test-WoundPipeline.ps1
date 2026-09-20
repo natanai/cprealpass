@@ -3,6 +3,8 @@
 $project=Get-ProjectRoot
 $nativePath=Join-Path $project 'src/redscript/CyberpunkRealism/CombatWoundsNative.reds'
 $native=Get-Content -Raw $nativePath
+$profilesPath=Join-Path $project 'src/redscript/CyberpunkRealism/CombatProfilesNative.reds'
+$profilesNative=Get-Content -Raw $profilesPath
 $classes=foreach($name in @('CRNativeWoundPlan','CRNPCInjuryBridge','CRNativeWoundBridge')){
  $match=[regex]::Match($native,'(?m)^public class '+$name+' extends IScriptable')
  if(-not $match.Success){throw "Missing native class $name"}
@@ -20,6 +22,10 @@ $code=[regex]::Replace($code,'\bEntityID\b','string')
 Add-Type -TypeDefinition ($code+(Get-Content -Raw "$PSScriptRoot/fixtures/NativeWounds.cs"))
 $script:checks=0
 function Check($condition,$message){if(-not $condition){throw $message};$script:checks++}
+Check ($profilesNative.Contains('public let unmappedProtection: Int32;')) 'Native profile reader does not distinguish unmapped protection from structural failure'
+Check ($profilesNative.Contains('CRCombatProfileReadiness.Ready(sample.referenceImpact, sample.unresolvedProtection, sample.unmappedProtection, IsDefined(player))')) 'Native profile reader bypasses the shared readiness policy'
+Check ($profilesNative.Contains('CRCombatProfileReadiness.RequiresNativePhysicalCap(sample.unmappedProtection, IsDefined(player))')) 'Unmapped player gear is not bound to native physical capping'
+Check (-not $profilesNative.Contains('sample.referenceReady = sample.unresolvedProtection == 0 &&')) 'Legacy all-or-nothing profile readiness veto remains active'
 function Hit($player=$true,$region=2,$material=1){[NativeWoundFixture]::Hit($player,$region,$material,8,360)}
 function Reset { [CRBodyRuntime]::instance=[CRBodyRuntime]::new();[CRCombatRuntimePolicy]::enabled=$true }
 Reset
@@ -39,6 +45,22 @@ Reset
 $small=Hit;$large=Hit;$large.target.game.stats.maximumHealth=10000;$large.attackComputed.physical=9000
 [CRNativeWoundBridge]::Prepare($small);[CRNativeWoundBridge]::Prepare($large)
 Check ($small.crWoundPlan.wound.tissueDamage -eq $large.crWoundPlan.wound.tissueDamage -and [Math]::Abs($large.crWoundPlan.proposedPhysical/$small.crWoundPlan.proposedPhysical-100) -lt 0.001) 'Level/HP inflation changed the physical wound or preserved a sponge health pool'
+# Player-only fallback for unmapped equipped protection preserves the existing
+# native physical result as a conservative ceiling instead of vetoing the wound
+# or replacing native protection semantics with an invented armor mapping.
+Reset
+$unknownProtection=Hit
+$unknownProtection.attackComputed.physical=1
+$unknownProtection.sample.profiles.nativePhysicalCap=$true
+[CRNativeWoundBridge]::Prepare($unknownProtection)
+$unknownPlan=$unknownProtection.crWoundPlan
+$unknownApplied=$unknownProtection.attackComputed.physical
+Check ($null -ne $unknownPlan -and $unknownPlan.nativePhysicalCap -and $unknownPlan.nativePhysicalBeforePrepare -eq 1) 'Unmapped player protection did not preserve bounded native-cap evidence'
+Check ($unknownPlan.proposedPhysical -gt $unknownApplied -and $unknownApplied -eq 1) 'Unmapped player protection increased native physical damage or failed to retain the native ceiling'
+$unknownExpected=$unknownPlan.wound.tissueDamage*($unknownApplied/$unknownPlan.proposedPhysical)
+Check ([NativeWoundFixture]::Finish($unknownProtection,$unknownApplied,$unknownApplied)) 'Native-capped unmapped player hit failed to commit'
+Check ([Math]::Abs([CRBodyRuntime]::Get().body.injuries.torso.tissueDamage-$unknownExpected) -lt 0.00001) 'Native physical cap did not proportionally constrain the accepted wound'
+
 Reset
 $capped=[NativeWoundFixture]::Hit($true,2,1,4,900);[CRNativeWoundBridge]::Prepare($capped);$w=$capped.crWoundPlan.wound;$proposal=$capped.crWoundPlan.proposedPhysical
 Check ([NativeWoundFixture]::Finish($capped,$proposal*0.2,$proposal*0.2)) 'Native-capped hit failed to commit'
@@ -162,5 +184,5 @@ foreach($case in @('full-stop','native-protection','protected','projection','una
 }
 Reset;$h=Hit;$h.sample.profiles.armorWear=[CRArmorWearPlan]::new();[CRNativeWoundBridge]::Prepare($h)
 Check (-not [NativeWoundFixture]::Finish($h,0,0) -and -not $h.crWoundPlan.armorCommitted) 'Downstream damage nullification wore armor'
-Write-JsonFile ([ordered]@{testedAtUtc=[DateTime]::UtcNow.ToString('o');passed=$true;assertions=$script:checks;parameterScenarios=$scenarios;sources=@(($paths+@($nativePath))|ForEach-Object{[ordered]@{path=$_;sha256=(Get-Sha256 $_)}});fixtureSha256=Get-Sha256 "$PSScriptRoot/fixtures/NativeWounds.cs";scope='Actual original wound model and native prepare/commit/NPC methods translated to float32 C#, with typed native boundaries. Covers damage output, cap reconciliation, eligibility, exactly-once commitment, NPC schema/region handling and body/field-care chronology. Hit metadata/equipment reads, native cap execution, saves/streaming, engine effects and calibration remain unverified.'}) (Join-Path $project 'reports/wound-pipeline-tests.json')
+Write-JsonFile ([ordered]@{testedAtUtc=[DateTime]::UtcNow.ToString('o');passed=$true;assertions=$script:checks;parameterScenarios=$scenarios;sources=@(($paths+@($nativePath,$profilesPath))|ForEach-Object{[ordered]@{path=$_;sha256=(Get-Sha256 $_)}});fixtureSha256=Get-Sha256 "$PSScriptRoot/fixtures/NativeWounds.cs";scope='Actual original wound model and native prepare/commit/NPC methods translated to float32 C#, with typed native boundaries. Covers damage output, cap reconciliation, eligibility, exactly-once commitment, NPC schema/region handling and body/field-care chronology. Hit metadata/equipment reads, native cap execution, saves/streaming, engine effects and calibration remain unverified.'}) (Join-Path $project 'reports/wound-pipeline-tests.json')
 Write-Host "PASS: $script:checks wound pipeline checks and $scenarios parameter scenarios."
