@@ -49,7 +49,7 @@ protected cb func OnUpdateInteraction(argValue: Variant) -> Bool {
 }
 
 @addMethod(interactionWidgetGameController)
-protected cb func OnCRBiologyE3PreferenceChangedEvent(evt: ref<CRBiologyE3PreferenceChangedEvent>) -> Bool {
+protected cb func OnCRBiologyE3PreferenceChanged(evt: ref<CRBiologyE3PreferenceChangedEvent>) -> Bool {
   this.CRRefreshBiologyE3InteractionFrame();
   return true;
 }
