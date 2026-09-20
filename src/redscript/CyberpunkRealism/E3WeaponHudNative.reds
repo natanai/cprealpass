@@ -94,13 +94,23 @@ private final func CRCreateBiologyE3WeaponFrame() -> Void {
 
 @addMethod(WeaponRosterGameController)
 private final func CRRestoreBiologyE3WeaponTints() -> Void {
+  let nameText: ref<inkText> = inkTextRef.Get(this.m_weaponName) as inkText;
+  let currentAmmoText: ref<inkText> = inkTextRef.Get(this.m_weaponCurrentAmmo) as inkText;
+  let totalAmmoText: ref<inkText> = inkTextRef.Get(this.m_weaponTotalAmmo) as inkText;
+
   if !this.crBiologyE3HasNativeWeaponTints {
     return;
   }
 
-  inkTextRef.SetTintColor(this.m_weaponName, this.crBiologyE3NativeWeaponNameTint);
-  inkTextRef.SetTintColor(this.m_weaponCurrentAmmo, this.crBiologyE3NativeCurrentAmmoTint);
-  inkTextRef.SetTintColor(this.m_weaponTotalAmmo, this.crBiologyE3NativeTotalAmmoTint);
+  if IsDefined(nameText) {
+    nameText.SetTintColor(this.crBiologyE3NativeWeaponNameTint);
+  }
+  if IsDefined(currentAmmoText) {
+    currentAmmoText.SetTintColor(this.crBiologyE3NativeCurrentAmmoTint);
+  }
+  if IsDefined(totalAmmoText) {
+    totalAmmoText.SetTintColor(this.crBiologyE3NativeTotalAmmoTint);
+  }
   this.crBiologyE3HasNativeWeaponTints = false;
 }
 
