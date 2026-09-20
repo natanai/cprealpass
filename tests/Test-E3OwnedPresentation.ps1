@@ -105,7 +105,7 @@ Check (-not $source.nameplate.Contains('CRBiologyE3IdentityChrome')) 'T005-F02 d
 Check (-not $source.nameplate.Contains('Vector2(340.0, 46.0)')) 'T005-F02 fixed 340x46 nameplate geometry survived W20.1.'
 Check (-not $source.nameplate.Contains('new inkCanvas()')) 'W20.1 nameplate repair still creates parallel runtime canvas geometry instead of using authored native nameplate structure.'
 Check (-not $source.nameplate.Contains('data.name = ambientName')) 'T005-F03 Biology still writes its ambient fallback into native NPCNextToTheCrosshair data.'
-Check ($source.nameplate.Contains('wrappedMethod(puppet, incomingData, isNewNpc)')) 'W20.1 does not pass native SetVisualData identity input through untouched.'
+Check ($source.nameplate.Contains('wrappedMethod(puppet, data, isNewNpc)')) 'W20.1 lost the exact-compiled native SetVisualData wrapper call shape.'
 Check ($source.nameplate.Contains('crBiologyE3NativeNameTint') -and $source.nameplate.Contains('crBiologyE3NativeFrameTint')) 'E3 OFF cannot restore native name/frame styling.'
 Check ($source.nameplate.Contains('this.m_nameTextMain') -and $source.nameplate.Contains('this.m_nameFrame')) 'W20.1 stopped using authored native nameplate text/frame authority.'
 Check ($source.nameplate.Contains('this.c_DisplayRangeNotAggressive = 10.0') -and $source.nameplate.Contains('this.c_MaxDisplayRangeNotAggressive = 20.0')) 'Proven ambient range behavior was lost.'
