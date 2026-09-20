@@ -77,10 +77,13 @@ public class CRBodyRuntime {
     public CRBodyConfig config = new CRBodyConfig();
     public CRBodyState body;
     public CRBodyInputQueue queue = new CRBodyInputQueue();
+    public int diagnosticEvents;
+    public string lastDiagnosticStage = "";
     public CRBodyRuntime() { body = CRBodyModel.Create(config); }
     public static CRBodyRuntime Get() { return instance; }
     public void RefreshInjuryEffects() {}
     public void Observe() {}
+    public void TestCombatStage(string stage,int region,int material,int shapeCount,float value) { diagnosticEvents++; lastDiagnosticStage=stage; }
     public CRBodyConfig GetBodyConfig() { return config; }
     public bool CanAcceptCombatInjury() { return allowed; }
     public bool RecordInjury(int region,float tissue,float bone,float chrome,float external,float internalBleed) {
