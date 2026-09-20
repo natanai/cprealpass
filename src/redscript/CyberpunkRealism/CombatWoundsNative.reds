@@ -114,25 +114,59 @@ public class CRNativeWoundBridge extends IScriptable {
     let emptyLosses: array<SDamageDealt>;
     let wound: ref<CRImpactWound>;
     let plan: ref<CRNativeWoundPlan>;
+    let runtime: ref<CRBodyRuntime>;
     let maximumHealth: Float;
     let proposal: Float;
     let appliedPhysical: Float;
     let nativePhysical: Float;
     let npc: ref<NPCPuppet>;
-    if !CRCombatRuntimePolicy.Enabled() || !IsDefined(hit) || hit.projectionPipeline || hit.crWoundPrepared || !CRBodyRuntime.Get().CanAcceptCombatInjury() {
+    let playerTarget: Bool = false;
+    if !CRCombatRuntimePolicy.Enabled() || !IsDefined(hit) || hit.projectionPipeline || hit.crWoundPrepared {
+      return;
+    }
+    runtime = CRBodyRuntime.Get();
+    if !IsDefined(runtime) {
+      return;
+    }
+    if !runtime.CanAcceptCombatInjury() {
+      if IsDefined(hit.target) && hit.target.IsPlayer() {
+        runtime.TestCombatStage("prepare-body-gate", 0, 0, 0, 0.0);
+      }
       return;
     }
     hit.crWoundPrepared = true;
     if !IsDefined(hit.attackData) || !IsDefined(hit.target) {
       return;
     }
+    playerTarget = hit.target.IsPlayer();
+    if playerTarget {
+      runtime.TestCombatStage("prepare-enter", 0, 0, 0, 0.0);
+    }
     nativePhysical = hit.attackComputed.GetAttackValue(gamedataDamageType.Physical);
     if !(nativePhysical > 0.0) {
+      if playerTarget {
+        runtime.TestCombatStage("prepare-no-physical", 0, 0, 0, nativePhysical);
+      }
       return;
     }
     sample = CRNativeHitAdapter.Read(hit, emptyLosses);
     hit.crPreparedHit = sample;
-    if !CRHitModel.CanProcess(sample.contact, sample.eligibility) || !IsDefined(sample.profiles) || !sample.profiles.referenceReady {
+    if !IsDefined(sample) || !IsDefined(sample.contact) {
+      if playerTarget {
+        runtime.TestCombatStage("prepare-contact-missing", 0, 0, 0, nativePhysical);
+      }
+      return;
+    }
+    if !CRHitModel.CanProcess(sample.contact, sample.eligibility) {
+      if playerTarget {
+        runtime.TestCombatStage("prepare-contact-rejected", sample.contact.region, sample.contact.material, sample.contact.shapeCount, nativePhysical);
+      }
+      return;
+    }
+    if !IsDefined(sample.profiles) || !sample.profiles.referenceReady {
+      if playerTarget {
+        runtime.TestCombatStage("prepare-profile-rejected", sample.contact.region, sample.contact.material, sample.contact.shapeCount, nativePhysical);
+      }
       return;
     }
     npc = hit.target as NPCPuppet;
@@ -143,6 +177,9 @@ public class CRNativeWoundBridge extends IScriptable {
     maximumHealth = GameInstance.GetStatsSystem(hit.target.GetGame()).GetStatValue(Cast<StatsObjectID>(hit.target.GetEntityID()), gamedataStatType.Health);
     proposal = CRWoundModel.NativeDamage(wound, maximumHealth);
     if proposal < 0.0 {
+      if playerTarget {
+        runtime.TestCombatStage("prepare-anatomy-rejected", sample.contact.region, sample.contact.material, sample.contact.shapeCount, proposal);
+      }
       return;
     }
     plan = new CRNativeWoundPlan();
@@ -165,34 +202,61 @@ public class CRNativeWoundBridge extends IScriptable {
       appliedPhysical = MinF(proposal, nativePhysical);
     }
     hit.attackComputed.SetAttackValue(appliedPhysical, gamedataDamageType.Physical);
+    if playerTarget {
+      runtime.TestCombatStage("prepare-ready", sample.contact.region, sample.contact.material, sample.contact.shapeCount, appliedPhysical);
+    }
   }
 
   public static func Commit(hit: ref<gameHitEvent>, sample: ref<CRNativeHitSample>) -> Bool {
     let wound: ref<CRImpactWound>;
     let plan: ref<CRNativeWoundPlan>;
-    if !CRCombatRuntimePolicy.Enabled() || !IsDefined(hit) || hit.projectionPipeline || !IsDefined(sample) || !CRBodyRuntime.Get().CanAcceptCombatInjury() {
+    let runtime: ref<CRBodyRuntime>;
+    if !CRCombatRuntimePolicy.Enabled() || !IsDefined(hit) || hit.projectionPipeline || !IsDefined(sample) {
+      return false;
+    }
+    runtime = CRBodyRuntime.Get();
+    if !IsDefined(runtime) {
+      return false;
+    }
+    if !runtime.CanAcceptCombatInjury() {
+      if sample.targetIsPlayer {
+        runtime.TestCombatStage("commit-body-gate", sample.contact.region, sample.contact.material, sample.contact.shapeCount, sample.eligibility.actualHealthDamage);
+      }
       return false;
     }
     plan = hit.crWoundPlan;
     if !IsDefined(plan) || plan.consumed {
+      if sample.targetIsPlayer {
+        runtime.TestCombatStage("commit-no-plan", sample.contact.region, sample.contact.material, sample.contact.shapeCount, sample.eligibility.actualHealthDamage);
+      }
       return false;
     }
     plan.consumed = true;
     if !CRHitModel.CanProcess(sample.contact, sample.eligibility) || NotEquals(plan.targetID, sample.targetID) || plan.region != sample.contact.region || plan.material != sample.contact.material {
+      if sample.targetIsPlayer {
+        runtime.TestCombatStage("commit-mismatch", sample.contact.region, sample.contact.material, sample.contact.shapeCount, sample.eligibility.actualHealthDamage);
+      }
       return false;
     }
     if CRArmorWearModel.Accepted(plan.proposedPhysical, hit.attackComputed.GetAttackValue(gamedataDamageType.Physical), sample.nativePhysicalHealthDamage, sample.physicalHealthEvaluated, sample.contact.hasProtectionLayer) {
       plan.armorCommitted = CRArmorWearBridge.Commit(plan.armorWear);
     }
     if !CRHitModel.CanRoute(sample.contact, sample.eligibility) {
+      if sample.targetIsPlayer {
+        runtime.TestCombatStage("commit-no-health-loss", sample.contact.region, sample.contact.material, sample.contact.shapeCount, sample.eligibility.actualHealthDamage);
+      }
       return false;
     }
     wound = CRWoundModel.Accepted(plan.wound, plan.proposedPhysical, hit.attackComputed.GetAttackValue(gamedataDamageType.Physical), sample.nativePhysicalHealthDamage);
     if !CRWoundModel.HasInjury(wound) {
+      if sample.targetIsPlayer {
+        runtime.TestCombatStage("commit-no-injury", sample.contact.region, sample.contact.material, sample.contact.shapeCount, sample.nativePhysicalHealthDamage);
+      }
       return false;
     }
     if sample.targetIsPlayer {
-      plan.committed = CRBodyRuntime.Get().RecordInjury(wound.region, wound.tissueDamage, wound.boneDamage, wound.cyberwareDamage, wound.externalBleedMlPerHour, wound.internalBleedMlPerHour);
+      runtime.TestCombatStage("commit-ready", sample.contact.region, sample.contact.material, sample.contact.shapeCount, sample.nativePhysicalHealthDamage);
+      plan.committed = runtime.RecordInjury(wound.region, wound.tissueDamage, wound.boneDamage, wound.cyberwareDamage, wound.externalBleedMlPerHour, wound.internalBleedMlPerHour);
       if plan.committed {
         // Provenance is explanatory metadata only. A metadata failure must never
         // roll back or veto an already accepted physical wound.
