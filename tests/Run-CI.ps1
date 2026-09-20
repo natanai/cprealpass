@@ -47,6 +47,7 @@ $tests = @(
     'Test-BiologyNativeDetailRegion.ps1',
     'Test-BiologyDetailLiveVisibility.ps1',
     'Test-BiologyDetailPostMountVisibility.ps1',
+    'Test-BiologyBackTransition.ps1',
     'Test-BiologyRuntimeLifecycle.ps1',
     'Test-BodyRuntimeAuthority.ps1',
     'Test-BodyRuntimePersistence.ps1',
