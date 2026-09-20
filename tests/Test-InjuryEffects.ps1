@@ -68,12 +68,17 @@ Check ([CRInjuryEffectsBridge]::Apply($actor,$injury,$c,$true) -and $stats.Count
 $old=$actor.weapon;$actor.weapon=$null
 Check ([CRInjuryEffectsBridge]::Apply($actor,$injury,$c,$true) -and $stats.Count($old.id) -eq 0 -and $stats.Count($actor.id) -eq 3) 'Unequipping erased actor penalties or retained weapon penalties'
 Check ([CRInjuryEffectsBridge]::Apply($actor,$healthy,$c,$true) -and $stats.Count($actor.id) -eq 0) 'Recovery failed to remove actor impairment'
-foreach($case in @('disabled','scene','dead','defeated','detached','replacer','invalid')){
+# Player scene membership is not a physiology lifecycle veto. T007 proved the
+# generic NPC scene predicate could block the same player authority used by time
+# and combat, so player effects must stay tied to the player lifecycle adapter.
+Reset;$actor=[CREffectsFixture]::game.playerSystem.player;$stats=[CREffectsFixture]::game.stats;$injury=[CREffectsFixture]::Injured()
+[CREffectsFixture]::game.scene.script.actors.Add($actor.id)|Out-Null
+Check ([CRInjuryEffectsBridge]::Apply($actor,$injury,$c,$true) -and $stats.Count($actor.id) -eq 3) 'Player scene membership incorrectly vetoed Biology impairment'
+foreach($case in @('disabled','dead','defeated','detached','replacer','invalid')){
  Reset;$actor=[CREffectsFixture]::game.playerSystem.player;$stats=[CREffectsFixture]::game.stats;$injury=[CREffectsFixture]::Injured();$enabled=$true
  [CRInjuryEffectsBridge]::Apply($actor,$injury,$c,$true)|Out-Null
  switch($case){
   'disabled'{$enabled=$false}
-  'scene'{[CREffectsFixture]::game.scene.script.actors.Add($actor.id)|Out-Null}
   'dead'{$actor.dead=$true}
   'defeated'{$actor.defeated=$true}
   'detached'{$actor.attached=$false}

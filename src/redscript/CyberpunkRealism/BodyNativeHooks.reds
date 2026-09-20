@@ -4,6 +4,31 @@ module CyberpunkRealism.Integration
 
 import CyberpunkRealism.Settings.*
 
+// Player physiology is owned by the local player's actual attachment/life and
+// pause/menu lifecycle. NPC SceneSystem membership is intentionally not reused
+// here: the local player can participate in native scenes while remaining the
+// same authoritative physiological actor.
+public class CRPlayerBodyLifecycle extends IScriptable {
+  public static func Allowed(player: ref<PlayerPuppet>, allowMenu: Bool) -> Bool {
+    let ui: ref<IBlackboard>;
+    if !IsDefined(player) || !CRRealpassSettings.IsEnabled(player.GetGame())
+      || !player.IsAttached() || player.IsReplacer() || player.IsDead()
+      || ScriptedPuppet.IsDefeated(player) {
+      return false;
+    }
+    // Native inventory/body actions may complete while their UI pauses gameplay.
+    // The event itself is authoritative, so those callers opt into menu access.
+    if allowMenu {
+      return true;
+    }
+    ui = GameInstance.GetBlackboardSystem(player.GetGame()).Get(GetAllBlackboardDefs().UI_System);
+    return IsDefined(ui)
+      && !ui.GetBool(GetAllBlackboardDefs().UI_System.IsInMenu)
+      && !GameInstance.GetTimeSystem(player.GetGame()).IsPausedState();
+  }
+}
+
+
 public class CRBodyRuntimeMasterPolicy extends IScriptable {
   public static func Enabled() -> Bool {
     return CRBodyRuntimePolicy.Enabled() && CRRealpassSettings.IsEnabled(GetGameInstance());

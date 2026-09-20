@@ -49,7 +49,14 @@ public class ScriptedPuppet : GameObject {
     public bool IsDead() { return dead; }
     public bool IsAttached() { return attached; }
     public bool IsReplacer() { return replacer; }
+    public bool IsPlayer() { return this is PlayerPuppet; }
     public static bool IsDefeated(ScriptedPuppet actor) { return actor.defeated; }
+}
+public class PlayerPuppet : ScriptedPuppet {}
+public static class CRPlayerBodyLifecycle {
+    public static bool Allowed(PlayerPuppet player, bool allowMenu) {
+        return player != null && player.attached && !player.replacer && !player.dead && !player.defeated;
+    }
 }
 public enum gamedataNPCType { Human, Android }
 public class NPCPuppet : ScriptedPuppet {
@@ -93,7 +100,7 @@ public static class CREffectsFixture {
     public static void Erase<T>(System.Collections.Generic.List<T> list,int index) { list.RemoveAt(index); }
     public static void Reset() {
         config = new CRBodyConfig(); CRBodyRuntime.pendingHours=0; CRBodyRuntime.observeCalls=0; game = new ScriptingGame(); runtime = new CRInjuryEffectsRuntime(); CRCombatRuntimePolicy.enabled = true;
-        game.playerSystem.player = new ScriptedPuppet {weapon = new WeaponObject()};
+        game.playerSystem.player = new PlayerPuppet {weapon = new WeaponObject()};
     }
     public static CRInjuryState Injured() {
         var state = CRInjuryModel.Create();

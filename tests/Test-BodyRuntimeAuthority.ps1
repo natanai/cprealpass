@@ -57,13 +57,15 @@ foreach ($systemMethod in @('Pain','FieldCare','Provenance','InjuryEffects')) {
 # the tick callback carries the already-resolved authoritative instance.
 foreach ($required in @(
     'GetPlayerSystem\(this\.GetGameInstance\(\)\)',
-    'GetBlackboardSystem\(this\.GetGameInstance\(\)\)',
     'GetTimeSystem\(this\.GetGameInstance\(\)\)',
     'GetSimTime\(this\.GetGameInstance\(\)\)',
     'GetDelaySystem\(this\.GetGameInstance\(\)\)'
 )) {
     Check ($runtime -match $required) "Session-owned body runtime path missing: $required"
 }
+Check ($runtime -match 'CRPlayerBodyLifecycle\.Allowed\(this\.Player\(\), allowMenu\)') 'Body runtime does not delegate player eligibility to the shared player-session lifecycle adapter.'
+Check ($nativeHooks -match 'GetBlackboardSystem\(player\.GetGame\(\)\)') 'Player lifecycle adapter does not use the authoritative player session for menu state.'
+Check ($nativeHooks -match 'GetTimeSystem\(player\.GetGame\(\)\)\.IsPausedState\(\)') 'Player lifecycle adapter does not use the authoritative player session for pause state.'
 Check ($runtime -match 'public let crOwner: wref<CRBodyRuntime>') 'Tick callback does not carry the authoritative body instance.'
 Check ($runtime -match 'this\.crOwner\.HandleTick\(this\.generation\)') 'Tick callback still rediscovers the body globally.'
 Check ($runtime -match 'callback\.crOwner = this') 'Scheduled tick does not retain the owning CRBodyRuntime.'
