@@ -1,12 +1,24 @@
 # Biology parent/worker thread ledger
 
 Status: **canonical active conversation/lane registry**  
-Last updated: **2026-09-18**
+Last updated: **2026-09-19**
 
 > **MANDATORY:** Read this file together with `docs/AGENT-OPERATING-PATTERNS.md` before creating a new worker conversation, routing another assignment into an existing worker conversation, replacing a conversation that has become too long, or handing parent/orchestrator responsibility to a new conversation.
 
 The repository is the durable source of truth. Git issues/branches/PRs track implementation state; ChatGPT conversations carry temporary working context. Conversation identity and Git issue/branch identity are intentionally separate.
 
+
+## Parent recovery snapshot — 2026-09-19
+
+- Parent: **P02**, active integration/orchestration under issue #35.
+- Latest completed numbered attended session: **T005**, exact tested source `a5818db6596e335824d75f596fc8204cc419de4f`; disposition PARTIAL. See `docs/test-runs/TEST-LEDGER.md` and `T005-2026-09-19-a5818db6-integrated-reference-followup.md`.
+- T005 operational listener/startup: PASS. Gameplay findings: Biology Back briefly exposes stock Cyberware content; E3 nameplate frame remains detached; police scan identity can regress toward generic `NC RESIDENT`; live native Health loss did not produce visible Biology injury change.
+- **W19.1 / #133** — `agent/biology-back-transition-followup`; handoff `docs/handoffs/W19.1-BIOLOGY-BACK-TRANSITION.md`.
+- **W20.1 / #134** — `agent/e3-nameplate-identity-followup`; handoff `docs/handoffs/W20.1-E3-NAMEPLATE-IDENTITY.md`.
+- **W21.1 / #135** — `agent/combat-injury-routing-followup`; handoff `docs/handoffs/W21.1-COMBAT-INJURY-ROUTING.md`.
+- W17.1 / PR #110 and W18.1 / PR #111 are merged on canonical main; their private-reference archaeology gates are closed.
+- Issue #41 remains open: body runtime is materially present, but combat-injury routing and WAIT/save-reload/SLEEP continuity are not live-accepted.
+- Next unallocated live test ID: **T006**, blocked until W19.1/W20.1/W21.1 are READY-PARENT and integrated.
 
 ## Parent recovery snapshot — 2026-09-18
 
@@ -110,7 +122,13 @@ Existing conversations do not need retroactive renaming; this ledger maps their 
 
 | Thread ID | Current visible title / alias | Role / goal | Thread state | Lane work state | GitHub / branch | Parent routing note |
 |---|---|---|---|---|---|---|
-| **P01.2** | `[P01.2] PARENT — Integration Orchestrator` | Parent / integration orchestrator | **ACTIVE** | **IN-PROGRESS** | Issue #35; read `docs/handoffs/PARENT-P01.2.md` first | Parent owns merge/integration, attended execution, durable evidence ingestion, and routing. W13-W15.1 implementation is merged; W15.2 is the active release/evidence-lifecycle follow-up. |
+| **P02** | `P02 — Integration Orchestrator` | Parent / integration orchestrator | **ACTIVE** | **IN-PROGRESS** | Issue #35; branch `parent/p02-orchestration` / parent evidence branches as needed | Owns merge review, private-reference evidence routing, T005 findings, and T006 integration. |
+| **W21.1** | new worker conversation | Player combat injury routing after T005 | **ACTIVE** | **IN-PROGRESS** | Issue #135; `agent/combat-injury-routing-followup`; handoff `docs/handoffs/W21.1-COMBAT-INJURY-ROUTING.md` | Prove exact staged combat gate and first broken native hit -> Biology injury boundary. No gameplay request; P02 owns T006. |
+| **W20.1** | new worker conversation | E3 nameplate authored alignment + police scan identity authority | **ACTIVE** | **IN-PROGRESS** | Issue #134; `agent/e3-nameplate-identity-followup`; handoff `docs/handoffs/W20.1-E3-NAMEPLATE-IDENTITY.md` | Fix structural frame alignment and one-way native discovered identity -> ambient nameplate enrichment. |
+| **W19.1** | new worker conversation | Biology detail -> Back stock-content flash | **ACTIVE** | **IN-PROGRESS** | Issue #133; `agent/biology-back-transition-followup`; handoff `docs/handoffs/W19.1-BIOLOGY-BACK-TRANSITION.md` | Repair lifecycle ordering without timers; preserve W17 authored host and ordinary Cyberware. |
+| **W18.1** | Project E3 archaeology continuation | Full Project E3 private-bundle archaeology + current-main reconciliation | **USABLE** | **MERGED** | Issue #106 closed; PR #111 merged; `agent/e3-reference-archaeology-integration`; final head `251de8b5c911b2fea4201e77a8797020e16c0d70` | Direct E3 source/archive archaeology is durable; W20 consumes it for the T005 nameplate follow-up. |
+| **W17.1** | Biology Cyberware reference archaeology | Current-2.31 authored Ripperdoc hierarchy + Biology content-host repair | **USABLE** | **MERGED** | Issue #107 closed; PR #110 merged; `agent/biology-ui-reference-archaeology`; final head `c926ad2a89d4e7e4c37031a6e85a5eee0c55d365` | Authored `Inventory -> cyberwareContainer` seam is KEEP; W19 owns only transition flash. |
+| **P01.2** | `[P01.2] PARENT — Integration Orchestrator` | Prior parent / integration orchestrator | **TOO-LONG** | **CLOSED** | Issue #35; historical handoff | Superseded by P02. Retain as historical continuity only; do not route new work here. |
 | **W15.2** | existing W15 worker conversation | Managed operator evidence lifecycle: repo-backed handoff state, ZIP-independent recovery evidence, and fail-closed local cleanup | **ACTIVE** | **IN-PROGRESS** | Issue #74; PR #75; `agent/operator-evidence-lifecycle`; handoff `docs/handoffs/W15.2-OPERATOR-EVIDENCE-LIFECYCLE.md` | Second sequential assignment in worker conversation W15. It intentionally reuses W15.1 recovery context while keeping a distinct issue/branch/PR. Parent P01.2 owns merge and attended recovery/cleanup. |
 | **W15.1** | `[W15.1] RELEASE — Failed-Install Recovery ZIP Validation Repair` | Accept ordinary safe ZIP directory entries without weakening failed-install recovery validation | **USABLE** | **MERGED** | Issue #72; PR #73 merged; `agent/failed-install-recovery-zip-validation`; worker head `5e7ee3611104f68213c095d7fc54821a1d7a511f` | First assignment in the same W15 conversation. Retained as immediately useful recovery context; W15.2 is a new issue/branch in that same conversation, not a replacement chat. |
 | **W14.1** | `[W14.1] RELEASE — Collision-Safe Installer Create-Path Repair` | Repair guarded installer create execution and provide exact failed-install recovery | **USABLE** | **MERGED** | Issue #70; PR #71 merged; `agent/release-installer-create-repair`; worker head `48d8f630a9ba24f5f2b339886a5c1bcfff6c559b` | W14 implementation is merged. Its attended first-install failure and recovery boundary are provenance for W15.1/W15.2; do not reopen its create/replace design in W15.2. |
@@ -130,6 +148,21 @@ Existing conversations do not need retroactive renaming; this ledger maps their 
 | **W01.1** | `Thread 1 — REDmod foundation` | Original REDmod package/deployment foundation | **USABLE** | **MERGED** | Issue #28; PR #31; historical branch `agent/redmod-foundation` | Foundation work is already on main. |
 
 ## Current integration relationship
+
+```text
+P02 parent
+  |
+  +-- W17.1 / PR #110 MERGED
+  |     `-- current-2.31 Biology authored content-host repair
+  +-- W18.1 / PR #111 MERGED
+  |     `-- Project E3 source/archive archaeology + current-native presentation
+  +-- T005 PARTIAL
+  |     +-- W19.1 / #133 ACTIVE — Biology Back stock-content flash
+  |     +-- W20.1 / #134 ACTIVE — nameplate structure + police scan identity
+  |     `-- W21.1 / #135 ACTIVE — player hit -> Biology injury routing
+  |
+  `-- next parent gate: integrate W19/W20/W21, then allocate T006 with #41 persistence acceptance
+```
 
 ```text
 P01.2 parent
