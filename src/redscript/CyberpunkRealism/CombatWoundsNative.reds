@@ -257,7 +257,7 @@ public class CRNativeWoundBridge extends IScriptable {
     }
     if sample.targetIsPlayer {
       CRNativeWoundBridge.Diagnose(runtime, "commit-ready", sample, sample.nativePhysicalHealthDamage);
-      plan.committed = runtime.RecordInjury(wound.region, wound.tissueDamage, wound.boneDamage, wound.cyberwareDamage, wound.externalBleedMlPerHour, wound.internalBleedMlPerHour);
+      plan.committed = CRBodyRuntime.Get().RecordInjury(wound.region, wound.tissueDamage, wound.boneDamage, wound.cyberwareDamage, wound.externalBleedMlPerHour, wound.internalBleedMlPerHour);
       if plan.committed {
         // Provenance is explanatory metadata only. A metadata failure must never
         // roll back or veto an already accepted physical wound.
