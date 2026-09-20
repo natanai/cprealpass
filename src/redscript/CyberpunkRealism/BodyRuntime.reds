@@ -49,6 +49,16 @@ public class CRBodyRuntime extends ScriptableSystem {
   private let testSnapshotCount: Int32 = 0;
   private let testLastSim: Float = 0.0;
   private let testLastSnapshot: String;
+  // W21.2/T007 attended diagnostics are transient and bounded. They never become
+  // save state, a second physiology authority, or an external telemetry stream.
+  private let testTickCount: Int32 = 0;
+  private let testProgressCount: Int32 = 0;
+  private let testLastObservedHours: Float = 0.0;
+  private let testLastNativeAllowed: Bool = false;
+  private let testCombatEventCount: Int32 = 0;
+  private let testLastCombat: String;
+  private let testPresentationCount: Int32 = 0;
+  private let testLastPresentation: String;
 
   public static func Get() -> ref<CRBodyRuntime> {
     return GameInstance.GetScriptableSystemsContainer(GetGameInstance()).Get(NameOf<CRBodyRuntime>()) as CRBodyRuntime;
@@ -100,6 +110,17 @@ public class CRBodyRuntime extends ScriptableSystem {
     this.nextSkipFromWaitMenu = false;
     this.tickGeneration += 1;
     this.tickScheduled = false;
+    this.testSnapshotCount = 0;
+    this.testLastSim = 0.0;
+    this.testLastSnapshot = "";
+    this.testTickCount = 0;
+    this.testProgressCount = 0;
+    this.testLastObservedHours = 0.0;
+    this.testLastNativeAllowed = false;
+    this.testCombatEventCount = 0;
+    this.testLastCombat = "";
+    this.testPresentationCount = 0;
+    this.testLastPresentation = "";
   }
 
   public func Activate() -> Void {
@@ -269,7 +290,15 @@ public class CRBodyRuntime extends ScriptableSystem {
     if !this.running || !IsDefined(this.clock) || !IsDefined(this.inputs) || !IsDefined(this.body) {
       return;
     }
-    let hours: Float = CRClockModel.Observe(this.clock, this.WorldSeconds(), this.SimSeconds(), this.NativeStateAllowed(false));
+    let allowed: Bool = this.NativeStateAllowed(false);
+    let hours: Float = CRClockModel.Observe(this.clock, this.WorldSeconds(), this.SimSeconds(), allowed);
+    if CRBodyTestPolicy.Diagnostics() {
+      this.testLastNativeAllowed = allowed;
+      this.testLastObservedHours = hours;
+      if hours > 0.0 && this.testProgressCount < 1000000 {
+        this.testProgressCount += 1;
+      }
+    }
     this.ApplyHours(hours, false, this.Exertion());
     if this.OwnsLocalizedInjuries() && !this.inputs.faulted {
       effects = CRBiologySessionAuthority.InjuryEffects(this.GetGameInstance());
@@ -299,6 +328,9 @@ public class CRBodyRuntime extends ScriptableSystem {
       return;
     }
     this.tickScheduled = false;
+    if CRBodyTestPolicy.Diagnostics() && this.testTickCount < 1000000 {
+      this.testTickCount += 1;
+    }
     this.Observe();
     this.ScheduleTick();
   }
@@ -371,6 +403,7 @@ public class CRBodyRuntime extends ScriptableSystem {
 
   public func RecordInjury(region: Int32, tissue: Float, bone: Float, cyberware: Float, externalBleed: Float, internalBleed: Float) -> Bool {
     if !this.CanAcceptCombatInjury() {
+      this.TestCombatStage("record-rejected", region, 0, 0, tissue);
       return false;
     }
     this.Observe();
@@ -382,6 +415,9 @@ public class CRBodyRuntime extends ScriptableSystem {
     if accepted {
       CRBodyInputs.Drain(this.inputs, this.body, this.config);
       this.Publish();
+      this.TestCombatStage("record-accepted", region, 0, 0, tissue);
+    } else {
+      this.TestCombatStage("record-input-rejected", region, 0, 0, tissue);
     }
     return accepted;
   }
@@ -489,11 +525,31 @@ public class CRBodyRuntime extends ScriptableSystem {
 
   // Attended diagnostics remain in-memory only. No external log, watcher, file,
   // timer service or telemetry process is created by the diagnostic surface.
+  public func TestCombatStage(stage: String, region: Int32, material: Int32, shapeCount: Int32, value: Float) -> Void {
+    if !CRBodyTestPolicy.Diagnostics() {
+      return;
+    }
+    if this.testCombatEventCount < 10000 {
+      this.testCombatEventCount += 1;
+    }
+    this.testLastCombat = stage + " r=" + ToString(region) + " m=" + ToString(material) + " shapes=" + ToString(shapeCount) + " v=" + ToString(value);
+  }
+
+  public func TestPresentationRead(surface: String) -> Void {
+    if !CRBodyTestPolicy.Diagnostics() || !IsDefined(this.body) {
+      return;
+    }
+    if this.testPresentationCount < 10000 {
+      this.testPresentationCount += 1;
+    }
+    this.testLastPresentation = surface + " body=" + ToString(this.body.elapsedHours) + "h tissue=" + ToString(CRInjuryModel.TissueBurden(this.body.injuries));
+  }
+
   public func TestStatus() -> String {
     if !CRBodyTestPolicy.Diagnostics() || !IsDefined(this.clock) || !IsDefined(this.body) || !IsDefined(this.inputs) {
       return "";
     }
-    return "TEST CLOCK | Last rate " + ToString(this.clock.lastObservedRatio) + "x | Body hours " + ToString(this.body.elapsedHours) + " | Meals/drinks " + ToString(this.inputs.appliedIntakes) + " | Queue " + ToString(this.inputs.count) + " | Fault " + ToString(this.inputs.faulted);
+    return "T007 AUTH | ticks " + ToString(this.testTickCount) + " progressed " + ToString(this.testProgressCount) + " allowed " + ToString(this.testLastNativeAllowed) + " dt " + ToString(this.testLastObservedHours) + "h rate " + ToString(this.clock.lastObservedRatio) + "x | body " + ToString(this.body.elapsedHours) + "h | combat " + ToString(this.testCombatEventCount) + " " + this.testLastCombat + " | view " + ToString(this.testPresentationCount) + " " + this.testLastPresentation + " | queue " + ToString(this.inputs.count) + " fault " + ToString(this.inputs.faulted);
   }
 
   public func TestSnapshot(event: String) -> Void {

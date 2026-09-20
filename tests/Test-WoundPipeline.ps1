@@ -17,7 +17,7 @@ $generated=Join-Path $project ('staging/native-wound-test-'+[guid]::NewGuid().To
 [IO.File]::WriteAllText($generated,($classes -join "`n"))
 $paths=@('NPCBodyModel','ArmorWearModel','ImpactModel','HitModel','WoundModel','InjuryModel','BodyModel','SleepModel','BodyInputs','FieldCareModel')|ForEach-Object{Join-Path $project "src/redscript/CyberpunkRealism/$_.reds"}
 $code=Convert-RedscriptCore ($paths+@($generated))
-$code=$code.Replace('array emptyLosses<SDamageDealt>;','SDamageDealt[] emptyLosses = new SDamageDealt[0];').Replace('Cast<StatsObjectID>','').Replace('NotEquals(','NativeWoundFixture.NotEquals(')
+$code=$code.Replace('array emptyLosses<SDamageDealt>;','SDamageDealt[] emptyLosses = new SDamageDealt[0];').Replace('Cast<StatsObjectID>','').Replace('NotEquals(','NativeWoundFixture.NotEquals(').Replace('String','string')
 $code=[regex]::Replace($code,'\bEntityID\b','string')
 Add-Type -TypeDefinition ($code+(Get-Content -Raw "$PSScriptRoot/fixtures/NativeWounds.cs"))
 $script:checks=0
@@ -32,11 +32,13 @@ Reset
 $hit=Hit
 [CRNativeWoundBridge]::Prepare($hit)
 Check ($null -ne $hit.crWoundPlan -and $hit.attackComputed.thermal -eq 7) 'Mapped physical proposal missing or nonphysical channel overwritten'
+Check ([CRBodyRuntime]::Get().lastDiagnosticStage -eq 'prepare-ready') 'Accepted player proposal did not expose its bounded Prepare stage'
 $proposal=$hit.crWoundPlan.proposedPhysical;$expected=$hit.crWoundPlan.wound.tissueDamage
 Check ($proposal -gt 0 -and [CRBodyRuntime]::Get().queue.appliedWounds -eq 0) 'Preparation applied an unaccepted wound'
 [CRNativeWoundBridge]::Prepare($hit)
 Check ($hit.crWoundPlan.proposedPhysical -eq $proposal) 'Repeated preparation changed a proposal'
 Check ([NativeWoundFixture]::Finish($hit,$proposal,$proposal)) 'Accepted hit did not commit a player wound'
+Check ([CRBodyRuntime]::Get().lastDiagnosticStage -eq 'commit-ready') 'Accepted player hit did not expose its bounded Commit stage'
 $body=[CRBodyRuntime]::Get().body
 Check ($body.injuries.torso.tissueDamage -eq $expected -and [CRBodyRuntime]::Get().queue.appliedWounds -eq 1) 'Player wound did not reach ordered shared-body inputs'
 Check (-not [NativeWoundFixture]::Finish($hit,$proposal,$proposal) -and [CRBodyRuntime]::Get().queue.appliedWounds -eq 1) 'Repeated post-damage notification committed twice'
@@ -95,6 +97,7 @@ foreach($case in @('disabled','inactive-body','projection','protected','unmapped
  }
  $old=$h.attackComputed.physical;[CRNativeWoundBridge]::Prepare($h)
  Check ($null -eq $h.crWoundPlan -and $h.attackComputed.physical -eq $old -and $h.attackComputed.thermal -eq 7) "Ineligible proposal changed damage: $case"
+ if($case -eq 'armor-body'){Check ([CRBodyRuntime]::Get().lastDiagnosticStage -eq 'prepare-anatomy-rejected') 'Armor-body rejection is not distinguishable in attended diagnostics'}
 }
 Reset
 $blocked=Hit;$layer=[CRProtectionLayer]::new();$layer.covered=$true;$layer.resistanceJPerMm2=1000

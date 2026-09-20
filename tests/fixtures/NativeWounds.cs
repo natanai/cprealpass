@@ -15,9 +15,11 @@ public class StatsSystem {
 }
 public class GameObject {
     public string id = "fixture-target";
+    public bool player;
     public ScriptingGame game = new ScriptingGame();
     public string GetEntityID() { return id; }
     public ScriptingGame GetGame() { return game; }
+    public bool IsPlayer() { return player; }
 }
 public class NPCPuppet : GameObject {
     public bool replacer;
@@ -77,10 +79,13 @@ public class CRBodyRuntime {
     public CRBodyConfig config = new CRBodyConfig();
     public CRBodyState body;
     public CRBodyInputQueue queue = new CRBodyInputQueue();
+    public int diagnosticEvents;
+    public string lastDiagnosticStage = "";
     public CRBodyRuntime() { body = CRBodyModel.Create(config); }
     public static CRBodyRuntime Get() { return instance; }
     public void RefreshInjuryEffects() {}
     public void Observe() {}
+    public void TestCombatStage(string stage,int region,int material,int shapeCount,float value) { diagnosticEvents++; lastDiagnosticStage=stage; }
     public CRBodyConfig GetBodyConfig() { return config; }
     public bool CanAcceptCombatInjury() { return allowed; }
     public bool RecordInjury(int region,float tissue,float bone,float chrome,float external,float internalBleed) {
@@ -108,7 +113,7 @@ public class CRInjuryProvenanceRuntime {
 public static class NativeWoundFixture {
     public static bool NotEquals<T>(T a, T b) { return !object.Equals(a,b); }
     public static gameHitEvent Hit(bool player, int region = 2, int material = 1, float mass = 8, float speed = 360) {
-        var hit = new gameHitEvent { target = player ? new GameObject() : new NPCPuppet() };
+        var hit = new gameHitEvent { target = player ? new GameObject { player=true } : new NPCPuppet { player=false } };
         hit.sample = new CRNativeHitSample {
             targetID = hit.target.id, targetIsPlayer = player,
             contact = new CRHitContact { region=region, material=material, bodyFound=true, shapeCount=1 },

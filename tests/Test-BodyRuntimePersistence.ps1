@@ -17,8 +17,11 @@ $runtime = Read-Project 'src/redscript/CyberpunkRealism/BodyRuntime.reds'
 $authority = Read-Project 'src/redscript/CyberpunkRealism/BodyRuntimeAuthority.reds'
 $availability = Read-Project 'src/redscript/CyberpunkRealism/BiologyRuntimeAvailability.reds'
 $sessionPresentation = Read-Project 'src/redscript/CyberpunkRealism/BiologySessionPresentation.reds'
+$legacyDetail = Read-Project 'src/redscript/CyberpunkRealism/BiologyDetailPresentation.reds'
 $shell = Read-Project 'src/redscript/CyberpunkRealism/BiologyCyberwareShell.reds'
 $hooks = Read-Project 'src/redscript/CyberpunkRealism/BodyNativeHooks.reds'
+$attendedBootstrap = Read-Project 'tools/Bootstrap-BiologyPostTransitionCandidate.ps1'
+$packageBuilder = Read-Project 'tools/Build-BiologyPackage.ps1'
 
 # Authority provenance: deliberate Biology detail must be a projection of the one
 # persistent CRBodyRuntime, not a menu-owned or static substitute.
@@ -48,6 +51,31 @@ Check (-not $sessionPresentation.Contains('Metric("RIGHT LEG FUNCTION", 100.0'))
 Check (-not $sessionPresentation.Contains('Metric("LEFT BONE INTEGRITY", 100.0')) 'Left bone integrity regressed to a static healthy placeholder.'
 Check (-not $sessionPresentation.Contains('Metric("RIGHT BONE INTEGRITY", 100.0')) 'Right bone integrity regressed to a static healthy placeholder.'
 
+# T006 could only prove that the rendered surface looked inert. Whole-percent
+# formatting can conceal real early metabolism, so deliberate detail preserves one
+# decimal while retaining the exact authoritative Float underneath.
+Check ($sessionPresentation.Contains('RoundF(ClampF(value, 0.0, 100.0) * 10.0) / 10.0')) 'Session detail still rounds authoritative percentages to whole integers.'
+Check ($legacyDetail.Contains('RoundF(ClampF(value, 0.0, 100.0) * 10.0) / 10.0')) 'Legacy detail projection disagrees with session detail precision.'
+
+# T007 observability stays Biology-owned, transient, bounded and attended-only.
+# It must diagnose the existing authority, never become save state or external telemetry.
+foreach ($field in @('testTickCount','testProgressCount','testLastObservedHours','testLastNativeAllowed','testCombatEventCount','testLastCombat','testPresentationCount','testLastPresentation')) {
+    Check ($runtime -match ('private let ' + $field + ':')) "T007 diagnostic field is not transient: $field"
+    Check (-not ($runtime -match ('private persistent let ' + $field + ':'))) "T007 diagnostic field became save-persistent: $field"
+}
+Check ($runtime.Contains('public func TestCombatStage(')) 'Combat boundary diagnostic surface is missing.'
+Check ($runtime.Contains('public func TestPresentationRead(')) 'Presentation readback diagnostic surface is missing.'
+Check ($runtime.Contains('if !CRBodyTestPolicy.Diagnostics()')) 'Attended diagnostic surface is not policy-gated.'
+Check ($runtime.Contains('this.testCombatEventCount < 10000')) 'Combat diagnostics are not bounded.'
+Check ($runtime.Contains('this.testPresentationCount < 10000')) 'Presentation diagnostics are not bounded.'
+Check ($sessionPresentation.Contains('runtime.TestPresentationRead("overview");')) 'Overview does not mark authoritative presentation readback.'
+Check ($sessionPresentation.Contains('runtime.TestPresentationRead("detail-" + result.title);')) 'Detail does not mark authoritative presentation readback.'
+Check ($sessionPresentation.Contains('let testStatus: String = runtime.TestStatus();')) 'Attended projection cannot surface bounded authority status.'
+Check ($attendedBootstrap -match "Build-BiologyPackage\.ps1'.*'-Diagnostics'") 'Managed attended candidate does not enable bounded Biology diagnostics.'
+Check ($packageBuilder -match '\[switch\]\$Diagnostics') 'Package builder lost explicit diagnostics switch.'
+Check ($packageBuilder.Contains('if ($Diagnostics) { $profileArgs.Diagnostics = $true }')) 'Package builder no longer keeps diagnostics opt-in.'
+Check (-not ($packageBuilder -match '\[switch\]\$Diagnostics\s*=\s*\$true')) 'Ordinary Biology package builds default diagnostics on.'
+
 # Menu close/reopen is a presentation lifecycle only. Teardown may clear widgets but
 # must not suspend, replace, or reset the body authority.
 $uninit = [regex]::Match($shell,'(?s)@wrapMethod\(RipperDocGameController\)\s*protected cb func OnUninitialize\(\) -> Bool \{(?<body>.*?)return wrappedMethod\(\);\s*\}')
@@ -76,7 +104,7 @@ Check ($availability -match '(?s)public static func EnsureActive\(game: GameInst
 # Normal time, wait, and sleep all feed the same persistent body/input authority.
 Check ($runtime.Contains('CRBodyInputs.Time(this.inputs, hours, exertion, sleeping);')) 'Elapsed/sleep time no longer enters the authoritative body input queue.'
 Check ($runtime.Contains('CRBodyInputs.Drain(this.inputs, this.body, this.config);')) 'Time progression no longer drains into the persistent body.'
-Check ($runtime.Contains('CRClockModel.Observe(this.clock, this.WorldSeconds(), this.SimSeconds(), this.NativeStateAllowed(false))')) 'Normal play-time observation path disappeared.'
+Check ($runtime.Contains('let allowed: Bool = this.NativeStateAllowed(false);') -and $runtime.Contains('CRClockModel.Observe(this.clock, this.WorldSeconds(), this.SimSeconds(), allowed)')) 'Normal play-time observation path disappeared.'
 Check ($runtime.Contains('CRClockModel.FinishSkip(this.clock, this.WorldSeconds(), this.SimSeconds(), hoursRequested)')) 'Committed wait/sleep clock path disappeared.'
 Check ($hooks.Contains('runtime = CRBiologySessionAuthority.Body(player.GetGame());')) 'Wait/sleep UI no longer resolves the player-session body authority.'
 Check ($hooks.Contains('runtime.MarkNextTimeSkipAsWait();')) 'Wait classification no longer reaches the body authority.'
