@@ -50,8 +50,9 @@ public class CRRealpassSettings extends ScriptableSystem {
 
   private func CRNotifyE3PresentationChanged() -> Void {
     let game: GameInstance = this.GetGameInstance();
-    if CRRealpassSettings.IsEnabled(game) {
-      GameInstance.GetUISystem(game).QueueEvent(new CRBiologyE3PreferenceChangedEvent());
+    let ui: ref<UISystem> = GameInstance.GetUISystem(game);
+    if CRRealpassSettings.IsEnabled(game) && IsDefined(ui) {
+      ui.QueueEvent(new CRBiologyE3PreferenceChangedEvent());
     }
   }
 
@@ -76,7 +77,10 @@ public class CRRealpassSettings extends ScriptableSystem {
 
     if !Equals(settings.e3FirstPersonHudVisuals, enabled) {
       settings.e3FirstPersonHudVisuals = enabled;
-      GameInstance.GetUISystem(game).QueueEvent(new CRBiologyE3PreferenceChangedEvent());
+      let ui: ref<UISystem> = GameInstance.GetUISystem(game);
+      if IsDefined(ui) {
+        ui.QueueEvent(new CRBiologyE3PreferenceChangedEvent());
+      }
     }
 
     // Return write success rather than the Boolean value itself. OFF is a successful
