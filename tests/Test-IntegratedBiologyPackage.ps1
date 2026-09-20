@@ -24,7 +24,7 @@ $script:checks = 0
 function Check($condition,[string]$message) { if (-not $condition) { throw $message }; $script:checks++ }
 
 Check ($package.schemaVersion -eq 2) 'Integrated REDmod package schema drifted.'
-Check ($package.status -eq 'playable-integrated-candidate') 'Package lost playable integrated candidate status.'
+Check ($package.status -eq 'local-release') 'Package lost local-release status.'
 Check ($package.canonicalBuilder -eq 'tools/Build-BiologyPackage.ps1') 'Canonical builder is not Build-BiologyPackage.ps1.'
 Check ($package.exactCompileRequiredBeforeArtifact -eq $true) 'Exact compilation is not a package-emission requirement.'
 Check ($package.redmod.packageRoot -eq 'mods/Biology') 'Official REDmod identity is not mods/Biology.'
@@ -54,8 +54,8 @@ Check ($builder.Contains("preferencePolicy = 'stored-in-save-never-target'")) 'P
 Check ($builder.Contains("removedDependencies = @('mod-settings','archivexl','red4ext'")) 'Package provenance does not record settings-stack removal.'
 Check (-not $builder.Contains('$expectedRetained = @(''redscript'',''red4ext''')) 'Retired RED4ext remains expected by the playable builder.'
 
-Check ($installer -match 'New-BiologyReleaseInstallPlan') 'Player installer does not preflight the complete release plan.'
-Check ($installer -match 'Invoke-BiologyReleaseInstallPlan') 'Player installer does not apply the verified release plan.'
+Check ($installer.Contains('Install Biology.exe') -and $installer.Contains('--check')) 'Developer installer does not invoke the packaged native preflight.'
+Check ($installer.Contains('--install') -and $builder.Contains('Build-BiologyInstaller.ps1')) 'Player installer and automation do not share the verified native transaction.'
 Check ($installerCore -match "'bin/x64/global\.ini'" -and $installerCore -match "'bin/x64/version\.dll'") 'Installer core lost protected shared standalone-cybercmd paths.'
 Check ($installerCore -match "'bin/x64/plugins/cybercmd\.asi'") 'Installer core lost the only replaceable standalone-cybercmd path.'
 Check ($installerCore -match 'will not overwrite an existing non-identical file') 'Installer core does not fail closed on non-identical shared loader/config.'
@@ -91,8 +91,8 @@ Check (@($install.preferences.publicControls).Count -eq 1 -and $install.preferen
 Check ($install.launcherActivation.publicMasterPreference -eq $false) 'Install contract still exposes redundant in-game master preference.'
 Check ($install.ownerManifest.path -eq 'biology/build-manifest.json' -and $install.ownerManifest.schemaVersion -eq 2) 'Install contract lost exact owner manifest.'
 Check ($install.playerInstaller.entryScript -eq 'Install Biology.ps1' -and $install.playerInstaller.directZipMergeSupported -eq $false) 'REDmod install contract does not require collision-safe player installation.'
-Check ($install.playerInstaller.sharedStandaloneCybercmdPolicy.'bin/x64/global.ini' -match 'fail-before-mutation' -and $install.playerInstaller.sharedStandaloneCybercmdPolicy.'bin/x64/version.dll' -match 'fail-before-mutation') 'REDmod install contract lost protected shared-loader collision behavior.'
-Check ($install.playerInstaller.sharedStandaloneCybercmdPolicy.'bin/x64/plugins/cybercmd.asi' -eq 'create-preserve-or-replace') 'REDmod install contract lost cybercmd.asi replacement allowance.'
+Check ($install.playerInstaller.sharedStandaloneCybercmdPolicy.'bin/x64/global.ini' -match 'fail-closed-before-mutation' -and $install.playerInstaller.sharedStandaloneCybercmdPolicy.'bin/x64/version.dll' -match 'fail-closed-before-mutation') 'REDmod install contract lost protected shared-loader collision behavior.'
+Check ($install.playerInstaller.binary -eq 'Install Biology.exe' -and $install.playerInstaller.sharedStandaloneCybercmdPolicy.'bin/x64/plugins/cybercmd.asi' -match 'fail-closed-before-mutation') 'Native installer must preserve incompatible shared cybercmd files.'
 Check ($install.playerUninstaller.binary -eq 'Uninstall Biology.exe') 'Install contract lost player uninstaller.'
 Check ($install.launcherActivation.signal -eq 'Items.BiologyLauncherActivationMarker.stackable') 'Install contract lost launcher activation signal.'
 

@@ -25,7 +25,9 @@ private final func CRCreateBiologyE3MinimapFrame() -> Void {
 @addMethod(MinimapContainerController)
 private final func CRRefreshBiologyE3MinimapFrame() -> Void {
   let enabled: Bool = CRRealpassSettings.UseE3FirstPersonHudVisuals(GetGameInstance());
-  this.CRCreateBiologyE3MinimapFrame();
+  if enabled {
+    this.CRCreateBiologyE3MinimapFrame();
+  }
   if IsDefined(this.crBiologyE3MinimapFrame) {
     this.crBiologyE3MinimapFrame.SetVisible(enabled);
   }
@@ -37,4 +39,10 @@ protected cb func OnInitialize() -> Bool {
   CRBiologyE3Primitives.Trace("MinimapContainerController.OnInitialize");
   this.CRRefreshBiologyE3MinimapFrame();
   return result;
+}
+
+@addMethod(MinimapContainerController)
+protected cb func OnCRBiologyE3PreferenceChangedEvent(evt: ref<CRBiologyE3PreferenceChangedEvent>) -> Bool {
+  this.CRRefreshBiologyE3MinimapFrame();
+  return true;
 }

@@ -410,7 +410,7 @@ try{
     } else {
         Write-Host 'PHASE 1/4 — Native Biology/Cyberware companion not requested.' -ForegroundColor DarkGray
     }
-    if($IncludeBiologyNativeUi){
+    if($IncludeBiologyNativeUi -and $nativeUi.status -ne 'failed-transparent'){
         Write-Host '[TOOLING] Verifying reusable WolvenKit/.NET cache for reference archive inventory...' -ForegroundColor Cyan
         $script:referenceArchiveToolchain = & (Join-Path $PSScriptRoot 'Acquire-ArchiveToolchain.ps1') -CacheRoot (Join-Path $LibraryPath '_tooling')
         Write-Host '[TOOLING] Verified reusable archive toolchain is ready.' -ForegroundColor Cyan

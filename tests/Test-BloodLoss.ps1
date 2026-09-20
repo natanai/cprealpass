@@ -13,6 +13,7 @@ $generated=Join-Path $project ('staging/blood-loss-test-'+[guid]::NewGuid().ToSt
 [IO.File]::WriteAllText($generated,$s)
 $paths=@('BloodLossModel','InjuryModel','BodyModel','SleepModel','NPCBodyModel','FieldCareModel')|ForEach-Object{Join-Path $project "src/redscript/CyberpunkRealism/$_.reds"}
 $code=Convert-RedscriptCore ($paths+@($generated))
+$code=$code.Replace('CRBiologySessionAuthority.Body(actor.GetGame())','CRBodyRuntime.Get()')
 $code=$code.Replace('CRLosses','SDamageDealt[]').Replace('CRValues','float[]').Replace('Cast<StatsObjectID>','').Replace('NotEquals(','CRBloodFixture.NotEquals(').Replace('ArraySize(','CRBloodFixture.Size(')
 $code=[regex]::Replace($code,'\b[nt]"','"')
 $code=$code.Replace('CRBossLosses','System.Collections.Generic.List<SDamageDealt>').Replace('ArrayClear(','CRBossFixture.Clear(').Replace('public class StatPoolsManager :','public partial class StatPoolsManager :')

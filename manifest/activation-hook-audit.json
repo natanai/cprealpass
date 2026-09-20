@@ -1,0 +1,616 @@
+{
+  "schemaVersion": 1,
+  "gameVersion": "2.31",
+  "scope": "Reviewed production native wrappers and additive On* event/callback entry points. Pure added helper methods inherit their reviewed caller gates; ScriptableSystem lifecycles are documented separately. No replaceMethod allowed. Source coverage is not live launcher observation.",
+  "hooks": [
+    {
+      "source": "BiologyActionsNative.reds",
+      "kind": "wrapMethod",
+      "owner": "RipperDocGameController",
+      "method": "OnInitialize",
+      "activationRoute": "CRBioCreateActions requires player-session launcher activation; callbacks require the owned Biology detail state; teardown clears owned widgets."
+    },
+    {
+      "source": "BiologyActionsNative.reds",
+      "kind": "wrapMethod",
+      "owner": "RipperDocGameController",
+      "method": "OnUninitialize",
+      "activationRoute": "CRBioCreateActions requires player-session launcher activation; callbacks require the owned Biology detail state; teardown clears owned widgets."
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "kind": "wrapMethod",
+      "owner": "MenuHubLogicController",
+      "method": "SetMenusData",
+      "activationRoute": "CRRealpassSettings.IsEnabled gates labels and shell creation; inactive initialization clears mode; teardown restores only captured stock content."
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "kind": "wrapMethod",
+      "owner": "RipperDocGameController",
+      "method": "OnInitialize",
+      "activationRoute": "CRRealpassSettings.IsEnabled gates labels and shell creation; inactive initialization clears mode; teardown restores only captured stock content."
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "kind": "wrapMethod",
+      "owner": "RipperDocGameController",
+      "method": "OnUninitialize",
+      "activationRoute": "CRRealpassSettings.IsEnabled gates labels and shell creation; inactive initialization clears mode; teardown restores only captured stock content."
+    },
+    {
+      "source": "BiologyLiveShellFollowupNative.reds",
+      "kind": "wrapMethod",
+      "owner": "RipperDocGameController",
+      "method": "DollHover",
+      "activationRoute": "crBiologyShellMode is transient and created only by enabled shell initialization; inactive attach callbacks check IsEnabled; native methods always execute."
+    },
+    {
+      "source": "BiologyLiveShellFollowupNative.reds",
+      "kind": "wrapMethod",
+      "owner": "RipperDocGameController",
+      "method": "DollSelect",
+      "activationRoute": "crBiologyShellMode is transient and created only by enabled shell initialization; inactive attach callbacks check IsEnabled; native methods always execute."
+    },
+    {
+      "source": "BiologyLiveShellFollowupNative.reds",
+      "kind": "wrapMethod",
+      "owner": "RipperDocGameController",
+      "method": "OnMinigridSpawned",
+      "activationRoute": "crBiologyShellMode is transient and created only by enabled shell initialization; inactive attach callbacks check IsEnabled; native methods always execute."
+    },
+    {
+      "source": "BiologyLiveShellFollowupNative.reds",
+      "kind": "wrapMethod",
+      "owner": "RipperDocGameController",
+      "method": "OnInitialize",
+      "activationRoute": "crBiologyShellMode is transient and created only by enabled shell initialization; inactive attach callbacks check IsEnabled; native methods always execute."
+    },
+    {
+      "source": "BiologyModeSyncNative.reds",
+      "kind": "wrapMethod",
+      "owner": "RipperdocSelectorController",
+      "method": "SwitchIndicator",
+      "activationRoute": "Enabled shell initializes transient detail/selector state; callbacks intercept only that state; native callbacks execute otherwise; absent owned mode bar is a no-op."
+    },
+    {
+      "source": "BiologyModeSyncNative.reds",
+      "kind": "wrapMethod",
+      "owner": "RipperDocGameController",
+      "method": "OnMinigridSpawned",
+      "activationRoute": "Enabled shell initializes transient detail/selector state; callbacks intercept only that state; native callbacks execute otherwise; absent owned mode bar is a no-op."
+    },
+    {
+      "source": "BiologyModeSyncNative.reds",
+      "kind": "wrapMethod",
+      "owner": "RipperDocGameController",
+      "method": "DisplayInventory",
+      "activationRoute": "Enabled shell initializes transient detail/selector state; callbacks intercept only that state; native callbacks execute otherwise; absent owned mode bar is a no-op."
+    },
+    {
+      "source": "BiologyModeSyncNative.reds",
+      "kind": "wrapMethod",
+      "owner": "RipperDocGameController",
+      "method": "OnSelectorChange",
+      "activationRoute": "Enabled shell initializes transient detail/selector state; callbacks intercept only that state; native callbacks execute otherwise; absent owned mode bar is a no-op."
+    },
+    {
+      "source": "BiologyModeSyncNative.reds",
+      "kind": "wrapMethod",
+      "owner": "RipperDocGameController",
+      "method": "OnBack",
+      "activationRoute": "Enabled shell initializes transient detail/selector state; callbacks intercept only that state; native callbacks execute otherwise; absent owned mode bar is a no-op."
+    },
+    {
+      "source": "BiologyModeSyncNative.reds",
+      "kind": "wrapMethod",
+      "owner": "RipperDocGameController",
+      "method": "OnInitialize",
+      "activationRoute": "Enabled shell initializes transient detail/selector state; callbacks intercept only that state; native callbacks execute otherwise; absent owned mode bar is a no-op."
+    },
+    {
+      "source": "BiologyRadialHubNative.reds",
+      "kind": "wrapMethod",
+      "owner": "HubMenuUtility",
+      "method": "CreateMenuData",
+      "activationRoute": "CRRealpassSettings.IsEnabled gates all native label changes after wrappedMethod."
+    },
+    {
+      "source": "BiologyRadialHubNative.reds",
+      "kind": "wrapMethod",
+      "owner": "gameuiInventoryGameController",
+      "method": "OnSetUserData",
+      "activationRoute": "CRRealpassSettings.IsEnabled gates all native label changes after wrappedMethod."
+    },
+    {
+      "source": "BiologyRadialHubNative.reds",
+      "kind": "wrapMethod",
+      "owner": "RadialMenuHubLogicController",
+      "method": "SetMenusData",
+      "activationRoute": "CRRealpassSettings.IsEnabled gates all native label changes after wrappedMethod."
+    },
+    {
+      "source": "BloodLossNative.reds",
+      "kind": "wrapMethod",
+      "owner": "DamageSystem",
+      "method": "PreProcess",
+      "activationRoute": "Only Biology-marked transient delivery can intercept. Current/Admit requires CRCombatRuntimePolicy and shared body admission; ordinary native hits pass through."
+    },
+    {
+      "source": "BloodLossNative.reds",
+      "kind": "wrapMethod",
+      "owner": "StatPoolsManager",
+      "method": "ApplyDamage",
+      "activationRoute": "Only Biology-marked transient delivery can intercept. Current/Admit requires CRCombatRuntimePolicy and shared body admission; ordinary native hits pass through."
+    },
+    {
+      "source": "BodyInteractionRuntime.reds",
+      "kind": "wrapMethod",
+      "owner": "PlayerPuppet",
+      "method": "OnStatusEffectApplied",
+      "activationRoute": "CRBodyRuntimeMasterPolicy.Enabled(player session) plus defined session body; completion rechecks CanUseBodyInteraction and one-shot action ownership."
+    },
+    {
+      "source": "BodyInteractionRuntime.reds",
+      "kind": "wrapMethod",
+      "owner": "ToiletControllerPS",
+      "method": "GetActions",
+      "activationRoute": "CRBodyRuntimeMasterPolicy.Enabled(player session) plus defined session body; completion rechecks CanUseBodyInteraction and one-shot action ownership."
+    },
+    {
+      "source": "BodyNativeHooks.reds",
+      "kind": "wrapMethod",
+      "owner": "PlayerPuppet",
+      "method": "OnGameAttached",
+      "activationRoute": "Explicit player/action session MasterPolicy Enabled/Ready; native calls preserved except accepted MaxDoc analgesia; time skip brackets only authoritative body."
+    },
+    {
+      "source": "BodyNativeHooks.reds",
+      "kind": "wrapMethod",
+      "owner": "ConsumeAction",
+      "method": "CompleteAction",
+      "activationRoute": "Explicit player/action session MasterPolicy Enabled/Ready; native calls preserved except accepted MaxDoc analgesia; time skip brackets only authoritative body."
+    },
+    {
+      "source": "BodyNativeHooks.reds",
+      "kind": "wrapMethod",
+      "owner": "UseHealChargeAction",
+      "method": "ProcessStatusEffects",
+      "activationRoute": "Explicit player/action session MasterPolicy Enabled/Ready; native calls preserved except accepted MaxDoc analgesia; time skip brackets only authoritative body."
+    },
+    {
+      "source": "BodyNativeHooks.reds",
+      "kind": "wrapMethod",
+      "owner": "HubTimeSkipController",
+      "method": "OnTimeSkipButtonPressed",
+      "activationRoute": "Explicit player/action session MasterPolicy Enabled/Ready; native calls preserved except accepted MaxDoc analgesia; time skip brackets only authoritative body."
+    },
+    {
+      "source": "BodyNativeHooks.reds",
+      "kind": "wrapMethod",
+      "owner": "TimeskipGameController",
+      "method": "OnInitialize",
+      "activationRoute": "Explicit player/action session MasterPolicy Enabled/Ready; native calls preserved except accepted MaxDoc analgesia; time skip brackets only authoritative body."
+    },
+    {
+      "source": "BodyNativeHooks.reds",
+      "kind": "wrapMethod",
+      "owner": "TimeskipGameController",
+      "method": "Apply",
+      "activationRoute": "Explicit player/action session MasterPolicy Enabled/Ready; native calls preserved except accepted MaxDoc analgesia; time skip brackets only authoritative body."
+    },
+    {
+      "source": "CombatNativeBridge.reds",
+      "kind": "wrapMethod",
+      "owner": "DamageSystem",
+      "method": "SendDamageEvents",
+      "activationRoute": "CRCombatRuntimePolicy.Enabled gates new injury observation; marked blood-loss acknowledgments update transient bookkeeping only."
+    },
+    {
+      "source": "CombatWoundsNative.reds",
+      "kind": "wrapMethod",
+      "owner": "DamageSystem",
+      "method": "ProcessOneShotProtection",
+      "activationRoute": "Prepare/Commit require CRCombatRuntimePolicy plus authoritative body acceptance; native protection remains wrapped; no wound without reported native Health loss."
+    },
+    {
+      "source": "E3ActivityHudNative.reds",
+      "kind": "wrapMethod",
+      "owner": "activityLogEntryLogicController",
+      "method": "OnInitialize",
+      "activationRoute": "UseE3FirstPersonHudVisuals requires launcher marker and saved preference; restore owned tint before native updates; inactive untouched colors stay native."
+    },
+    {
+      "source": "E3ActivityHudNative.reds",
+      "kind": "wrapMethod",
+      "owner": "activityLogEntryLogicController",
+      "method": "SetText",
+      "activationRoute": "UseE3FirstPersonHudVisuals requires launcher marker and saved preference; restore owned tint before native updates; inactive untouched colors stay native."
+    },
+    {
+      "source": "E3CrosshairHudNative.reds",
+      "kind": "wrapMethod",
+      "owner": "gameuiCrosshairBaseGameController",
+      "method": "OnInitialize",
+      "activationRoute": "UseE3FirstPersonHudVisuals gates tint; restore before native state transitions; no captured tint means OFF is a no-op."
+    },
+    {
+      "source": "E3CrosshairHudNative.reds",
+      "kind": "wrapMethod",
+      "owner": "gameuiCrosshairBaseGameController",
+      "method": "OnCrosshairStateChange",
+      "activationRoute": "UseE3FirstPersonHudVisuals gates tint; restore before native state transitions; no captured tint means OFF is a no-op."
+    },
+    {
+      "source": "E3FirstPersonHud.reds",
+      "kind": "wrapMethod",
+      "owner": "healthbarWidgetGameController",
+      "method": "OnInitialize",
+      "activationRoute": "UseE3FirstPersonHudVisuals gates chrome creation/visibility; native HUD state always runs; only owned child is hidden on OFF."
+    },
+    {
+      "source": "E3FirstPersonHud.reds",
+      "kind": "wrapMethod",
+      "owner": "healthbarWidgetGameController",
+      "method": "OnUpdateHealthBarVisibility",
+      "activationRoute": "UseE3FirstPersonHudVisuals gates chrome creation/visibility; native HUD state always runs; only owned child is hidden on OFF."
+    },
+    {
+      "source": "E3FirstPersonHud.reds",
+      "kind": "wrapMethod",
+      "owner": "healthbarWidgetGameController",
+      "method": "EvaluateHealthBarVisibility",
+      "activationRoute": "UseE3FirstPersonHudVisuals gates chrome creation/visibility; native HUD state always runs; only owned child is hidden on OFF."
+    },
+    {
+      "source": "E3HotkeyHudNative.reds",
+      "kind": "wrapMethod",
+      "owner": "HotkeysWidgetController",
+      "method": "OnInitialize",
+      "activationRoute": "UseE3FirstPersonHudVisuals gates chrome creation/visibility on authored quick-slot host; native children and key behavior preserved."
+    },
+    {
+      "source": "E3InteractionHudNative.reds",
+      "kind": "wrapMethod",
+      "owner": "interactionWidgetGameController",
+      "method": "OnInitialize",
+      "activationRoute": "UseE3FirstPersonHudVisuals gates owned frame creation/visibility; native choices, timing and input preserved."
+    },
+    {
+      "source": "E3InteractionHudNative.reds",
+      "kind": "wrapMethod",
+      "owner": "interactionWidgetGameController",
+      "method": "OnUpdateInteraction",
+      "activationRoute": "UseE3FirstPersonHudVisuals gates owned frame creation/visibility; native choices, timing and input preserved."
+    },
+    {
+      "source": "E3NameplatesNative.reds",
+      "kind": "wrapMethod",
+      "owner": "NameplateVisualsLogicController",
+      "method": "SetVisualData",
+      "activationRoute": "UseE3FirstPersonHudVisuals plus CRPublicAmbientNameAllowed and native scanner ownership; unchanged native data; restore captured styles before native updates."
+    },
+    {
+      "source": "E3NameplatesNative.reds",
+      "kind": "wrapMethod",
+      "owner": "NameplateVisualsLogicController",
+      "method": "SetElementVisibility",
+      "activationRoute": "UseE3FirstPersonHudVisuals plus CRPublicAmbientNameAllowed and native scanner ownership; unchanged native data; restore captured styles before native updates."
+    },
+    {
+      "source": "E3NameplatesNative.reds",
+      "kind": "wrapMethod",
+      "owner": "NameplateVisualsLogicController",
+      "method": "IsAnyElementVisible",
+      "activationRoute": "UseE3FirstPersonHudVisuals plus CRPublicAmbientNameAllowed and native scanner ownership; unchanged native data; restore captured styles before native updates."
+    },
+    {
+      "source": "E3NameplatesNative.reds",
+      "kind": "wrapMethod",
+      "owner": "NpcNameplateGameController",
+      "method": "OnInitialize",
+      "activationRoute": "UseE3FirstPersonHudVisuals plus CRPublicAmbientNameAllowed and native scanner ownership; unchanged native data; restore captured styles before native updates."
+    },
+    {
+      "source": "E3NameplatesNative.reds",
+      "kind": "wrapMethod",
+      "owner": "NpcNameplateGameController",
+      "method": "OnScreenProjectionUpdate",
+      "activationRoute": "UseE3FirstPersonHudVisuals plus CRPublicAmbientNameAllowed and native scanner ownership; unchanged native data; restore captured styles before native updates."
+    },
+    {
+      "source": "E3NameplatesNative.reds",
+      "kind": "wrapMethod",
+      "owner": "NpcNameplateGameController",
+      "method": "OnIsEnabledChange",
+      "activationRoute": "UseE3FirstPersonHudVisuals plus CRPublicAmbientNameAllowed and native scanner ownership; unchanged native data; restore captured styles before native updates."
+    },
+    {
+      "source": "E3NavigationHudNative.reds",
+      "kind": "wrapMethod",
+      "owner": "MinimapContainerController",
+      "method": "OnInitialize",
+      "activationRoute": "UseE3FirstPersonHudVisuals gates owned frame creation/visibility; native minimap semantics preserved."
+    },
+    {
+      "source": "E3QuestHudNative.reds",
+      "kind": "wrapMethod",
+      "owner": "QuestTrackerGameController",
+      "method": "OnInitialize",
+      "activationRoute": "UseE3FirstPersonHudVisuals gates chrome/tint; restore owned styles before native UpdateTrackerData; no Journal mutation."
+    },
+    {
+      "source": "E3QuestHudNative.reds",
+      "kind": "wrapMethod",
+      "owner": "QuestTrackerGameController",
+      "method": "UpdateTrackerData",
+      "activationRoute": "UseE3FirstPersonHudVisuals gates chrome/tint; restore owned styles before native UpdateTrackerData; no Journal mutation."
+    },
+    {
+      "source": "E3WeaponHudNative.reds",
+      "kind": "wrapMethod",
+      "owner": "WeaponRosterGameController",
+      "method": "OnInitialize",
+      "activationRoute": "UseE3FirstPersonHudVisuals gates chrome/tint; restore owned tints before native roster updates; no ammo/weapon mutation."
+    },
+    {
+      "source": "E3WeaponHudNative.reds",
+      "kind": "wrapMethod",
+      "owner": "WeaponRosterGameController",
+      "method": "SetRosterSlotData",
+      "activationRoute": "UseE3FirstPersonHudVisuals gates chrome/tint; restore owned tints before native roster updates; no ammo/weapon mutation."
+    },
+    {
+      "source": "InjuryEffectsNative.reds",
+      "kind": "wrapMethod",
+      "owner": "ScriptedPuppet",
+      "method": "OnGameAttached",
+      "activationRoute": "OnGameAttached validates saved NPC schema; Register requires enabled combat policy and live NPC lifecycle, resolves the explicit session body, and adds only weak transient bookkeeping."
+    },
+    {
+      "source": "NoHealthbars.reds",
+      "kind": "wrapMethod",
+      "owner": "healthbarWidgetGameController",
+      "method": "OnInitialize",
+      "activationRoute": "CRHealthbarPresentationPolicy delegates to launcher IsEnabled; OFF wraps native health visibility with no Biology suppression."
+    },
+    {
+      "source": "NoHealthbars.reds",
+      "kind": "wrapMethod",
+      "owner": "healthbarWidgetGameController",
+      "method": "OnUpdateHealthBarVisibility",
+      "activationRoute": "CRHealthbarPresentationPolicy delegates to launcher IsEnabled; OFF wraps native health visibility with no Biology suppression."
+    },
+    {
+      "source": "NoHealthbars.reds",
+      "kind": "wrapMethod",
+      "owner": "healthbarWidgetGameController",
+      "method": "EvaluateHealthBarVisibility",
+      "activationRoute": "CRHealthbarPresentationPolicy delegates to launcher IsEnabled; OFF wraps native health visibility with no Biology suppression."
+    },
+    {
+      "source": "NoHealthbars.reds",
+      "kind": "wrapMethod",
+      "owner": "healthbarWidgetGameController",
+      "method": "EvaluateOvershieldBarVisibility",
+      "activationRoute": "CRHealthbarPresentationPolicy delegates to launcher IsEnabled; OFF wraps native health visibility with no Biology suppression."
+    },
+    {
+      "source": "NoHealthbars.reds",
+      "kind": "wrapMethod",
+      "owner": "NameplateVisualsLogicController",
+      "method": "UpdateHealthbarVisibility",
+      "activationRoute": "CRHealthbarPresentationPolicy delegates to launcher IsEnabled; OFF wraps native health visibility with no Biology suppression."
+    },
+    {
+      "source": "NoHealthbars.reds",
+      "kind": "wrapMethod",
+      "owner": "NameplateVisualsLogicController",
+      "method": "SetVisualData",
+      "activationRoute": "CRHealthbarPresentationPolicy delegates to launcher IsEnabled; OFF wraps native health visibility with no Biology suppression."
+    },
+    {
+      "source": "NoHealthbars.reds",
+      "kind": "wrapMethod",
+      "owner": "BossHealthBarGameController",
+      "method": "ShowBossHealthBar",
+      "activationRoute": "CRHealthbarPresentationPolicy delegates to launcher IsEnabled; OFF wraps native health visibility with no Biology suppression."
+    },
+    {
+      "source": "NoHealthbars.reds",
+      "kind": "wrapMethod",
+      "owner": "CompanionHealthBarGameController",
+      "method": "OnFlatheadStatusChanged",
+      "activationRoute": "CRHealthbarPresentationPolicy delegates to launcher IsEnabled; OFF wraps native health visibility with no Biology suppression."
+    },
+    {
+      "source": "PainNativeEffects.reds",
+      "kind": "wrapMethod",
+      "owner": "PlayerPuppet",
+      "method": "OnDetach",
+      "activationRoute": "Detach clears only owned modifier/VFX handles regardless of activation; wrapped native detach always executes."
+    },
+    {
+      "source": "PhysicalOutfits.reds",
+      "kind": "wrapMethod",
+      "owner": "EquipmentSystemPlayerData",
+      "method": "EquipWardrobeSet",
+      "activationRoute": "CRPhysicalOutfitPolicy.Enabled delegates to launcher IsEnabled; OFF/invalid/protected requests execute native wardrobe path."
+    },
+    {
+      "source": "BiologyActionsNative.reds",
+      "kind": "addMethod",
+      "owner": "RipperDocGameController",
+      "method": "OnCRBioPicker",
+      "activationRoute": "CRBioCreateActions requires player-session launcher activation; callbacks require the owned Biology detail state; teardown clears owned widgets."
+    },
+    {
+      "source": "BiologyActionsNative.reds",
+      "kind": "addMethod",
+      "owner": "RipperDocGameController",
+      "method": "OnCRBioItem",
+      "activationRoute": "CRBioCreateActions requires player-session launcher activation; callbacks require the owned Biology detail state; teardown clears owned widgets."
+    },
+    {
+      "source": "BiologyActionsNative.reds",
+      "kind": "addMethod",
+      "owner": "RipperDocGameController",
+      "method": "OnCRBioCondition",
+      "activationRoute": "CRBioCreateActions requires player-session launcher activation; callbacks require the owned Biology detail state; teardown clears owned widgets."
+    },
+    {
+      "source": "BiologyActionsNative.reds",
+      "kind": "addMethod",
+      "owner": "RipperDocGameController",
+      "method": "OnCRBioCare",
+      "activationRoute": "CRBioCreateActions requires player-session launcher activation; callbacks require the owned Biology detail state; teardown clears owned widgets."
+    },
+    {
+      "source": "BiologyActionsNative.reds",
+      "kind": "addMethod",
+      "owner": "RipperDocGameController",
+      "method": "OnCRBioProfessional",
+      "activationRoute": "CRBioCreateActions requires player-session launcher activation; callbacks require the owned Biology detail state; teardown clears owned widgets."
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "kind": "addMethod",
+      "owner": "CyberwareInventoryMiniGrid",
+      "method": "OnCRBiologyRelease",
+      "activationRoute": "CRRealpassSettings.IsEnabled gates labels and shell creation; inactive initialization clears mode; teardown restores only captured stock content."
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "kind": "addMethod",
+      "owner": "CyberwareInventoryMiniGrid",
+      "method": "OnCRBiologyHoverOver",
+      "activationRoute": "CRRealpassSettings.IsEnabled gates labels and shell creation; inactive initialization clears mode; teardown restores only captured stock content."
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "kind": "addMethod",
+      "owner": "CyberwareInventoryMiniGrid",
+      "method": "OnCRBiologyHoverOut",
+      "activationRoute": "CRRealpassSettings.IsEnabled gates labels and shell creation; inactive initialization clears mode; teardown restores only captured stock content."
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "kind": "addMethod",
+      "owner": "RipperDocGameController",
+      "method": "OnCRBiologyModeToggle",
+      "activationRoute": "CRRealpassSettings.IsEnabled gates labels and shell creation; inactive initialization clears mode; teardown restores only captured stock content."
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "kind": "addMethod",
+      "owner": "RipperDocGameController",
+      "method": "OnCRBiologyAreaHoverEvent",
+      "activationRoute": "CRRealpassSettings.IsEnabled gates labels and shell creation; inactive initialization clears mode; teardown restores only captured stock content."
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "kind": "addMethod",
+      "owner": "RipperDocGameController",
+      "method": "OnCRBiologyAreaHoverOutEvent",
+      "activationRoute": "CRRealpassSettings.IsEnabled gates labels and shell creation; inactive initialization clears mode; teardown restores only captured stock content."
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "kind": "addMethod",
+      "owner": "RipperDocGameController",
+      "method": "OnCRBiologyAreaSelectEvent",
+      "activationRoute": "CRRealpassSettings.IsEnabled gates labels and shell creation; inactive initialization clears mode; teardown restores only captured stock content."
+    },
+    {
+      "source": "BiologyPreferencesNative.reds",
+      "kind": "addMethod",
+      "owner": "RipperDocGameController",
+      "method": "OnCRBiologyE3PreferenceToggle",
+      "activationRoute": "Toggle requires player-session launcher activation, detail ownership and a real successful saved-setting write; hover affects only the owned preference row."
+    },
+    {
+      "source": "BiologyPreferencesNative.reds",
+      "kind": "addMethod",
+      "owner": "RipperDocGameController",
+      "method": "OnCRBiologyE3PreferenceHoverOver",
+      "activationRoute": "Toggle requires player-session launcher activation, detail ownership and a real successful saved-setting write; hover affects only the owned preference row."
+    },
+    {
+      "source": "BiologyPreferencesNative.reds",
+      "kind": "addMethod",
+      "owner": "RipperDocGameController",
+      "method": "OnCRBiologyE3PreferenceHoverOut",
+      "activationRoute": "Toggle requires player-session launcher activation, detail ownership and a real successful saved-setting write; hover affects only the owned preference row."
+    },
+    {
+      "source": "BodyInteractionRuntime.reds",
+      "kind": "addMethod",
+      "owner": "ToiletControllerPS",
+      "method": "OnCRUseToilet",
+      "activationRoute": "CRBodyRuntimeMasterPolicy.Enabled(player session) plus defined session body; completion rechecks CanUseBodyInteraction and one-shot action ownership."
+    },
+    {
+      "source": "BodyInteractionRuntime.reds",
+      "kind": "addMethod",
+      "owner": "Toilet",
+      "method": "OnCRUseToilet",
+      "activationRoute": "CRBodyRuntimeMasterPolicy.Enabled(player session) plus defined session body; completion rechecks CanUseBodyInteraction and one-shot action ownership."
+    },
+    {
+      "source": "E3ActivityHudNative.reds",
+      "kind": "addMethod",
+      "owner": "activityLogEntryLogicController",
+      "method": "OnCRBiologyE3PreferenceChangedEvent",
+      "activationRoute": "UseE3FirstPersonHudVisuals requires launcher marker and saved preference; restore owned tint before native updates; inactive untouched colors stay native."
+    },
+    {
+      "source": "E3CrosshairHudNative.reds",
+      "kind": "addMethod",
+      "owner": "gameuiCrosshairBaseGameController",
+      "method": "OnCRBiologyE3PreferenceChangedEvent",
+      "activationRoute": "UseE3FirstPersonHudVisuals gates tint; restore before native state transitions; no captured tint means OFF is a no-op."
+    },
+    {
+      "source": "E3FirstPersonHud.reds",
+      "kind": "addMethod",
+      "owner": "healthbarWidgetGameController",
+      "method": "OnCRBiologyE3PreferenceChangedEvent",
+      "activationRoute": "UseE3FirstPersonHudVisuals gates chrome creation/visibility; native HUD state always runs; only owned child is hidden on OFF."
+    },
+    {
+      "source": "E3HotkeyHudNative.reds",
+      "kind": "addMethod",
+      "owner": "HotkeysWidgetController",
+      "method": "OnCRBiologyE3PreferenceChangedEvent",
+      "activationRoute": "UseE3FirstPersonHudVisuals gates chrome creation/visibility on authored quick-slot host; native children and key behavior preserved."
+    },
+    {
+      "source": "E3InteractionHudNative.reds",
+      "kind": "addMethod",
+      "owner": "interactionWidgetGameController",
+      "method": "OnCRBiologyE3PreferenceChangedEvent",
+      "activationRoute": "UseE3FirstPersonHudVisuals gates owned frame creation/visibility; native choices, timing and input preserved."
+    },
+    {
+      "source": "E3NavigationHudNative.reds",
+      "kind": "addMethod",
+      "owner": "MinimapContainerController",
+      "method": "OnCRBiologyE3PreferenceChangedEvent",
+      "activationRoute": "UseE3FirstPersonHudVisuals gates owned frame creation/visibility; native minimap semantics preserved."
+    },
+    {
+      "source": "E3QuestHudNative.reds",
+      "kind": "addMethod",
+      "owner": "QuestTrackerGameController",
+      "method": "OnCRBiologyE3PreferenceChangedEvent",
+      "activationRoute": "UseE3FirstPersonHudVisuals gates chrome/tint; restore owned styles before native UpdateTrackerData; no Journal mutation."
+    },
+    {
+      "source": "E3WeaponHudNative.reds",
+      "kind": "addMethod",
+      "owner": "WeaponRosterGameController",
+      "method": "OnCRBiologyE3PreferenceChangedEvent",
+      "activationRoute": "UseE3FirstPersonHudVisuals gates chrome/tint; restore owned tints before native roster updates; no ammo/weapon mutation."
+    }
+  ]
+}

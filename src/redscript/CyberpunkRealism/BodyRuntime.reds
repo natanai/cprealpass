@@ -124,7 +124,7 @@ public class CRBodyRuntime extends ScriptableSystem {
   }
 
   public func Activate() -> Void {
-    if !CRBodyRuntimePolicy.Enabled() {
+    if !CRBodyRuntimeMasterPolicy.Enabled(this.GetGameInstance()) {
       return;
     }
     this.ResetTransientState();
@@ -190,7 +190,7 @@ public class CRBodyRuntime extends ScriptableSystem {
   public func OwnsNeeds() -> Bool {
     // Ownership survives temporary menu/cinematic suspension; the saved body is
     // never refilled merely because progression is paused.
-    return CRBodyRuntimePolicy.Enabled() && this.bodySchemaVersion == 2 && IsDefined(this.body) && this.body.initialized;
+    return CRBodyRuntimeMasterPolicy.Enabled(this.GetGameInstance()) && this.bodySchemaVersion == 2 && IsDefined(this.body) && this.body.initialized;
   }
 
   public func OwnsLocalizedInjuries() -> Bool {
@@ -241,7 +241,7 @@ public class CRBodyRuntime extends ScriptableSystem {
 
   private func NativeStateAllowed(allowMenu: Bool) -> Bool {
     let player: ref<PlayerPuppet> = this.Player();
-    if !this.running || !CRInjuryEffectsBridge.Allowed(player, true) {
+    if !this.running || !CRPlayerBodyLifecycle.Allowed(player, allowMenu) {
       return false;
     }
     return allowMenu || !this.InMenu();
@@ -287,6 +287,10 @@ public class CRBodyRuntime extends ScriptableSystem {
 
   public func Observe() -> Void {
     let effects: ref<CRInjuryEffectsRuntime>;
+    if !CRBodyRuntimeMasterPolicy.Enabled(this.GetGameInstance()) {
+      this.Suspend();
+      return;
+    }
     if !this.running || !IsDefined(this.clock) || !IsDefined(this.inputs) || !IsDefined(this.body) {
       return;
     }

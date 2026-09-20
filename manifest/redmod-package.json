@@ -5,7 +5,7 @@
   "foundationBaseRevision": "6fab5ba706e2a10387bb8629cccdb0868533bb97",
   "integratedBaseRevision": "bfd6f7469139c64f0b9185724619a37e4ced5eca",
   "supportedGameVersion": "2.31",
-  "status": "playable-integrated-candidate",
+  "status": "local-release",
   "canonicalBuilder": "tools/Build-BiologyPackage.ps1",
   "canonicalBuildCommand": "pwsh ./tools/Build-BiologyPackage.ps1",
   "exactCompileRequiredBeforeArtifact": true,
@@ -25,7 +25,9 @@
       "productVersion": "2.31",
       "deployModulePresent": true,
       "explicitRootRequiredByBiologyTooling": true,
-      "modsDirectoryBaseline": [".stub"],
+      "modsDirectoryBaseline": [
+        ".stub"
+      ],
       "biologyRecognitionProven": true,
       "biologyFiveStageDeploymentProven": true
     },
@@ -68,29 +70,18 @@
       "launcherOff": "may remain loaded; Biology hooks fail closed through CRRealpassSettings",
       "reason": "Biology runtime/presentation use narrow additive/wrapper seams whose whole-file REDmod replacement would broaden patch/conflict surface."
     },
-    "mod-settings": {
+    "cybercmd": {
       "includedByIntegratedArtifact": true,
-      "status": "temporary-retained-blocker",
-      "route": "REMOVE/RETHINK",
-      "launcherOff": "may remain loaded; saved enabled=true cannot override absent REDmod marker",
-      "reason": "Current persistent provider for the existing two provider-neutral preferences; remove when a smaller accepted provider or boundary replaces it."
-    },
-    "archivexl": {
-      "includedByIntegratedArtifact": true,
-      "status": "temporary-transitive",
-      "route": "REMOVE/RETHINK",
-      "launcherOff": "may remain loaded; not activation authority",
-      "reason": "Retained only because the current Mod Settings adapter depends on it."
-    },
-    "red4ext": {
-      "includedByIntegratedArtifact": true,
-      "status": "temporary-transitive",
-      "route": "REMOVE/RETHINK",
-      "launcherOff": "loader may remain active; not activation authority",
-      "reason": "Retained only as transitive plumbing for ArchiveXL/Mod Settings; Biology has no project-owned RED4ext plugin."
+      "status": "required-current-runtime",
+      "route": "REDSCRIPT-STARTUP",
+      "launcherOff": "May load; never Biology activation authority",
+      "reason": "Standalone 0.0.13 executes pinned redscript InvokeScc startup compilation without RED4ext or CET."
     }
   },
   "removedRuntimeDependencies": [
+    "mod-settings",
+    "archivexl",
+    "red4ext",
     "tweakxl",
     "codeware",
     "input-loader",
@@ -106,29 +97,29 @@
     "checksums": "SHA256SUMS.txt",
     "installInstructions": "INSTALL.txt",
     "uninstallInstructions": "UNINSTALL.txt",
-    "playerUninstaller": "Uninstall Biology.exe"
+    "playerUninstaller": "Uninstall Biology.exe",
+    "playerInstaller": "Install Biology.exe"
   },
   "uninstallPolicy": {
     "biologyOwned": "delete exact-hash, allowlisted Biology paths only",
     "genericDependencies": "preserve",
     "changedFiles": "preserve/refuse automatic deletion",
     "saves": "never target",
-    "preferences": "preserve by default; optional Biology section removal only",
+    "preferences": "Stored in Cyberpunk saves; never targeted",
     "redmodRefresh": "official redMod.exe deploy with explicit root; no recursive shared-cache deletion"
   },
   "acceptedDirectGameEvidence": [
     "official REDmod executable/version/module contract on Cyberpunk 2077 2.31",
     "official REDmod recognition of mods/Biology",
-    "real five-stage REDmod deployment with explicit game root"
+    "real five-stage REDmod deployment with explicit game root",
+    "65-source exact compile and 86-file artifact policy at source cf1bc0994cfc",
+    "packaged cybercmd/redscript startup regenerated current configured output",
+    "actual native EXE upgrade/reinstall/uninstall/clean reinstall; official REDmod refresh removed Biology activation; 9 shared files and 143 unrelated hashes preserved"
   ],
   "remainingDirectGameGates": [
-    "combined-candidate launcher activation marker exact compile/deploy",
-    "launcher ON Biology behavior",
-    "launcher OFF vanilla behavior with supplemental runtime still installed",
-    "normal OFF/ON relaunch persistence",
-    "self-contained hard uninstall plus REDmod refresh",
-    "safe REDmod overlap/precedence fixture",
-    "attended body/runtime/UI/presentation/gameplay acceptance"
+    "rendered UI and actual REDlauncher Enable mods ON/OFF checkbox operation",
+    "in-save body/combat progression and E3 preference save/reload persistence",
+    "native quest/performance and representative other-mod overlap observation"
   ],
   "rules": [
     "mods/Biology is the authoritative first-party REDmod package identity and launcher activation authority.",
@@ -138,7 +129,7 @@
     "Generic dependency files are inventoried for collision/update safety but preserved by normal player uninstall.",
     "No Dark Future or Project E3 executing content may enter the package.",
     "No stock Cyberpunk executable, archive, script bundle, save, settings file, or other proprietary game payload may enter the package.",
-    "Mod Settings/ArchiveXL/RED4ext remain temporary current-candidate dependencies only while a current accepted preference consumer justifies them.",
-    "CI and exact compilation are not live-game acceptance; each remaining direct-game gate stays open until the parent integration thread records it."
+    "Mod Settings/ArchiveXL/RED4ext are absent; settings are Biology-owned save state and UI.",
+    "CI/exact compilation and local lifecycle evidence are distinct from native gameplay/save/render acceptance; record their actual scopes in completion evidence."
   ]
 }

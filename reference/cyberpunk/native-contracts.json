@@ -1,0 +1,2140 @@
+{
+  "schemaVersion": 1,
+  "generatedUtc": "2026-09-20T08:10:09.8054794Z",
+  "sourceRevision": "e86f101343a578fad4cc422abe50d78732270a66",
+  "gameVersion": "2.31",
+  "baseScriptBundleSha256": "2119046F3F3466206D8A16A4803B0EF0F3C90926AB689F9ABBD5B8E42E28EE86",
+  "nativeSeamPolicyGameVersion": "2.31",
+  "hookCount": 301,
+  "hookFingerprintSha256": "C8FB566C0C55A91EC100003C16F3ED5E62036A663F570B1467B82377CF3E5CC3",
+  "sentinels": [
+    {
+      "path": "bin/x64/Cyberpunk2077.exe",
+      "sizeBytes": 59945608,
+      "sha256": "A7DE82945C03E041FC7339FCF9066224D98DB2F5D80FEA50F7947BB350A60991",
+      "lastWriteUtc": "2026-09-15T15:30:34.6868886Z"
+    },
+    {
+      "path": "r6/cache/final.redscripts",
+      "sizeBytes": 16035530,
+      "sha256": "2119046F3F3466206D8A16A4803B0EF0F3C90926AB689F9ABBD5B8E42E28EE86",
+      "lastWriteUtc": "2026-09-15T15:30:34.7021522Z"
+    },
+    {
+      "path": "r6/cache/tweakdb.bin",
+      "sizeBytes": 42028033,
+      "sha256": "918F0ACFC3F3174B29B5C10B463DFB106B603118C85D24456204A1E2A2AC13F9",
+      "lastWriteUtc": "2026-09-15T15:30:34.7021522Z"
+    }
+  ],
+  "hooks": [
+    {
+      "source": "ArmorWearNative.reds",
+      "sourceSha256": "A9D58FEBD405430418F0E4489B818F92CCCE65308328194972F916A7A00BD708",
+      "annotation": "@addField",
+      "target": "NPCPuppet",
+      "declaration": "public persistent let crArmorCondition: ref<CRArmorCondition>;"
+    },
+    {
+      "source": "ArmorWearNative.reds",
+      "sourceSha256": "A9D58FEBD405430418F0E4489B818F92CCCE65308328194972F916A7A00BD708",
+      "annotation": "@addField",
+      "target": "NPCPuppet",
+      "declaration": "public persistent let crArmorSchema: Int32;"
+    },
+    {
+      "source": "BiologyActionsNative.reds",
+      "sourceSha256": "9214C75D0557A033B3F879D15FB64D5E87610F5942C03732B85675A21E7AD31F",
+      "annotation": "@addField",
+      "target": "RipperDocGameController",
+      "declaration": "private let crBioActionsPanel: ref<inkVerticalPanel>;"
+    },
+    {
+      "source": "BiologyActionsNative.reds",
+      "sourceSha256": "9214C75D0557A033B3F879D15FB64D5E87610F5942C03732B85675A21E7AD31F",
+      "annotation": "@addField",
+      "target": "RipperDocGameController",
+      "declaration": "private let crBioEat: ref<inkText>;"
+    },
+    {
+      "source": "BiologyActionsNative.reds",
+      "sourceSha256": "9214C75D0557A033B3F879D15FB64D5E87610F5942C03732B85675A21E7AD31F",
+      "annotation": "@addField",
+      "target": "RipperDocGameController",
+      "declaration": "private let crBioDrink: ref<inkText>;"
+    },
+    {
+      "source": "BiologyActionsNative.reds",
+      "sourceSha256": "9214C75D0557A033B3F879D15FB64D5E87610F5942C03732B85675A21E7AD31F",
+      "annotation": "@addField",
+      "target": "RipperDocGameController",
+      "declaration": "private let crBioItemRows: array<ref<inkText>>;"
+    },
+    {
+      "source": "BiologyActionsNative.reds",
+      "sourceSha256": "9214C75D0557A033B3F879D15FB64D5E87610F5942C03732B85675A21E7AD31F",
+      "annotation": "@addField",
+      "target": "RipperDocGameController",
+      "declaration": "private let crBioItemIDs: array<ItemID>;"
+    },
+    {
+      "source": "BiologyActionsNative.reds",
+      "sourceSha256": "9214C75D0557A033B3F879D15FB64D5E87610F5942C03732B85675A21E7AD31F",
+      "annotation": "@addField",
+      "target": "RipperDocGameController",
+      "declaration": "private let crBioPickerMode: Int32;"
+    },
+    {
+      "source": "BiologyActionsNative.reds",
+      "sourceSha256": "9214C75D0557A033B3F879D15FB64D5E87610F5942C03732B85675A21E7AD31F",
+      "annotation": "@addField",
+      "target": "RipperDocGameController",
+      "declaration": "private let crBioConditionsHeading: ref<inkText>;"
+    },
+    {
+      "source": "BiologyActionsNative.reds",
+      "sourceSha256": "9214C75D0557A033B3F879D15FB64D5E87610F5942C03732B85675A21E7AD31F",
+      "annotation": "@addField",
+      "target": "RipperDocGameController",
+      "declaration": "private let crBioConditionRows: array<ref<inkText>>;"
+    },
+    {
+      "source": "BiologyActionsNative.reds",
+      "sourceSha256": "9214C75D0557A033B3F879D15FB64D5E87610F5942C03732B85675A21E7AD31F",
+      "annotation": "@addField",
+      "target": "RipperDocGameController",
+      "declaration": "private let crBioSelectedRegion: Int32;"
+    },
+    {
+      "source": "BiologyActionsNative.reds",
+      "sourceSha256": "9214C75D0557A033B3F879D15FB64D5E87610F5942C03732B85675A21E7AD31F",
+      "annotation": "@addField",
+      "target": "RipperDocGameController",
+      "declaration": "private let crBioDress: ref<inkText>;"
+    },
+    {
+      "source": "BiologyActionsNative.reds",
+      "sourceSha256": "9214C75D0557A033B3F879D15FB64D5E87610F5942C03732B85675A21E7AD31F",
+      "annotation": "@addField",
+      "target": "RipperDocGameController",
+      "declaration": "private let crBioSupport: ref<inkText>;"
+    },
+    {
+      "source": "BiologyActionsNative.reds",
+      "sourceSha256": "9214C75D0557A033B3F879D15FB64D5E87610F5942C03732B85675A21E7AD31F",
+      "annotation": "@addField",
+      "target": "RipperDocGameController",
+      "declaration": "private let crBioClinical: ref<inkText>;"
+    },
+    {
+      "source": "BiologyActionsNative.reds",
+      "sourceSha256": "9214C75D0557A033B3F879D15FB64D5E87610F5942C03732B85675A21E7AD31F",
+      "annotation": "@addField",
+      "target": "RipperDocGameController",
+      "declaration": "private let crBioMechanical: ref<inkText>;"
+    },
+    {
+      "source": "BiologyActionsNative.reds",
+      "sourceSha256": "9214C75D0557A033B3F879D15FB64D5E87610F5942C03732B85675A21E7AD31F",
+      "annotation": "@addField",
+      "target": "RipperDocGameController",
+      "declaration": "private let crBioActionStatus: ref<inkText>;"
+    },
+    {
+      "source": "BiologyActionsNative.reds",
+      "sourceSha256": "9214C75D0557A033B3F879D15FB64D5E87610F5942C03732B85675A21E7AD31F",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "private final func CRBioActionText(text: String, name: CName, size: Int32) -> ref<inkText> {"
+    },
+    {
+      "source": "BiologyActionsNative.reds",
+      "sourceSha256": "9214C75D0557A033B3F879D15FB64D5E87610F5942C03732B85675A21E7AD31F",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "private final func CRBioCondition(region: Int32) -> ref<CRConditionDescriptor> {"
+    },
+    {
+      "source": "BiologyActionsNative.reds",
+      "sourceSha256": "9214C75D0557A033B3F879D15FB64D5E87610F5942C03732B85675A21E7AD31F",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "private final func CRBioSupplyLabel(kind: Int32) -> String {"
+    },
+    {
+      "source": "BiologyActionsNative.reds",
+      "sourceSha256": "9214C75D0557A033B3F879D15FB64D5E87610F5942C03732B85675A21E7AD31F",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "private final func CRBioActionButton(text: String, name: CName) -> ref<inkText> {"
+    },
+    {
+      "source": "BiologyActionsNative.reds",
+      "sourceSha256": "9214C75D0557A033B3F879D15FB64D5E87610F5942C03732B85675A21E7AD31F",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "private final func CRBioCreateActions() -> Void {"
+    },
+    {
+      "source": "BiologyActionsNative.reds",
+      "sourceSha256": "9214C75D0557A033B3F879D15FB64D5E87610F5942C03732B85675A21E7AD31F",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "private final func CRBioAreaAllowsIntake() -> Bool {"
+    },
+    {
+      "source": "BiologyActionsNative.reds",
+      "sourceSha256": "9214C75D0557A033B3F879D15FB64D5E87610F5942C03732B85675A21E7AD31F",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "private final func CRBioRegionAllowedForSelectedArea(region: Int32) -> Bool {"
+    },
+    {
+      "source": "BiologyActionsNative.reds",
+      "sourceSha256": "9214C75D0557A033B3F879D15FB64D5E87610F5942C03732B85675A21E7AD31F",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "private final func CRBioFirstCondition() -> Int32 {"
+    },
+    {
+      "source": "BiologyActionsNative.reds",
+      "sourceSha256": "9214C75D0557A033B3F879D15FB64D5E87610F5942C03732B85675A21E7AD31F",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "private final func CRBioHideItemRows() -> Void {"
+    },
+    {
+      "source": "BiologyActionsNative.reds",
+      "sourceSha256": "9214C75D0557A033B3F879D15FB64D5E87610F5942C03732B85675A21E7AD31F",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "private final func CRBioItemHasNativeAction(itemID: ItemID) -> Bool {"
+    },
+    {
+      "source": "BiologyActionsNative.reds",
+      "sourceSha256": "9214C75D0557A033B3F879D15FB64D5E87610F5942C03732B85675A21E7AD31F",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "private final func CRBioUseNativeItemAction(player: wref<GameObject>, itemID: ItemID) -> Bool {"
+    },
+    {
+      "source": "BiologyActionsNative.reds",
+      "sourceSha256": "9214C75D0557A033B3F879D15FB64D5E87610F5942C03732B85675A21E7AD31F",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "private final func CRBioRefreshItems() -> Void {"
+    },
+    {
+      "source": "BiologyActionsNative.reds",
+      "sourceSha256": "9214C75D0557A033B3F879D15FB64D5E87610F5942C03732B85675A21E7AD31F",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "public final func CRRefreshBiologyActions() -> Void {"
+    },
+    {
+      "source": "BiologyActionsNative.reds",
+      "sourceSha256": "9214C75D0557A033B3F879D15FB64D5E87610F5942C03732B85675A21E7AD31F",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "protected cb func OnCRBioPicker(evt: ref<inkPointerEvent>) -> Bool {"
+    },
+    {
+      "source": "BiologyActionsNative.reds",
+      "sourceSha256": "9214C75D0557A033B3F879D15FB64D5E87610F5942C03732B85675A21E7AD31F",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "protected cb func OnCRBioItem(evt: ref<inkPointerEvent>) -> Bool {"
+    },
+    {
+      "source": "BiologyActionsNative.reds",
+      "sourceSha256": "9214C75D0557A033B3F879D15FB64D5E87610F5942C03732B85675A21E7AD31F",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "protected cb func OnCRBioCondition(evt: ref<inkPointerEvent>) -> Bool {"
+    },
+    {
+      "source": "BiologyActionsNative.reds",
+      "sourceSha256": "9214C75D0557A033B3F879D15FB64D5E87610F5942C03732B85675A21E7AD31F",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "private final func CRBioCareFeedback(result: Int32) -> String {"
+    },
+    {
+      "source": "BiologyActionsNative.reds",
+      "sourceSha256": "9214C75D0557A033B3F879D15FB64D5E87610F5942C03732B85675A21E7AD31F",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "protected cb func OnCRBioCare(evt: ref<inkPointerEvent>) -> Bool {"
+    },
+    {
+      "source": "BiologyActionsNative.reds",
+      "sourceSha256": "9214C75D0557A033B3F879D15FB64D5E87610F5942C03732B85675A21E7AD31F",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "protected cb func OnCRBioProfessional(evt: ref<inkPointerEvent>) -> Bool {"
+    },
+    {
+      "source": "BiologyActionsNative.reds",
+      "sourceSha256": "9214C75D0557A033B3F879D15FB64D5E87610F5942C03732B85675A21E7AD31F",
+      "annotation": "@wrapMethod",
+      "target": "RipperDocGameController",
+      "declaration": "protected cb func OnInitialize() -> Bool {"
+    },
+    {
+      "source": "BiologyActionsNative.reds",
+      "sourceSha256": "9214C75D0557A033B3F879D15FB64D5E87610F5942C03732B85675A21E7AD31F",
+      "annotation": "@wrapMethod",
+      "target": "RipperDocGameController",
+      "declaration": "protected cb func OnUninitialize() -> Bool {"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@wrapMethod",
+      "target": "MenuHubLogicController",
+      "declaration": "public final func SetMenusData(menuData: ref<MenuDataBuilder>, perkPoints: Int32, attrPoints: Int32) -> Void {"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addField",
+      "target": "CyberwareInventoryMiniGrid",
+      "declaration": "private let crBiologyMode: Bool;"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addField",
+      "target": "CyberwareInventoryMiniGrid",
+      "declaration": "private let crBiologyCallbacksInstalled: Bool;"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addMethod",
+      "target": "CyberwareInventoryMiniGrid",
+      "declaration": "public final func CRBiologyArea() -> gamedataEquipmentArea {"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addMethod",
+      "target": "CyberwareInventoryMiniGrid",
+      "declaration": "private final func CRInstallBiologyCallbacks() -> Void {"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addMethod",
+      "target": "CyberwareInventoryMiniGrid",
+      "declaration": "public final func CRSetBiologyMode(active: Bool) -> Void {"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addMethod",
+      "target": "CyberwareInventoryMiniGrid",
+      "declaration": "public final func CRSetBiologyOverviewNodeVisible(visible: Bool) -> Void {"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addMethod",
+      "target": "CyberwareInventoryMiniGrid",
+      "declaration": "protected cb func OnCRBiologyRelease(evt: ref<inkPointerEvent>) -> Bool {"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addMethod",
+      "target": "CyberwareInventoryMiniGrid",
+      "declaration": "protected cb func OnCRBiologyHoverOver(evt: ref<inkPointerEvent>) -> Bool {"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addMethod",
+      "target": "CyberwareInventoryMiniGrid",
+      "declaration": "protected cb func OnCRBiologyHoverOut(evt: ref<inkPointerEvent>) -> Bool {"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addField",
+      "target": "RipperDocGameController",
+      "declaration": "private let crBiologyShellMode: Bool;"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addField",
+      "target": "RipperDocGameController",
+      "declaration": "private let crBiologyModeBar: ref<inkHorizontalPanel>;"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addField",
+      "target": "RipperDocGameController",
+      "declaration": "private let crBiologyModeButton: ref<inkText>;"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addField",
+      "target": "RipperDocGameController",
+      "declaration": "private let crCyberwareModeButton: ref<inkText>;"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addField",
+      "target": "RipperDocGameController",
+      "declaration": "private let crBiologyOverview: ref<inkVerticalPanel>;"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addField",
+      "target": "RipperDocGameController",
+      "declaration": "private let crBiologyOverviewText: ref<inkText>;"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addField",
+      "target": "RipperDocGameController",
+      "declaration": "private let crBiologyNativeContent: ref<inkVerticalPanel>;"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addField",
+      "target": "RipperDocGameController",
+      "declaration": "private let crBiologyDetailTitle: ref<inkText>;"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addField",
+      "target": "RipperDocGameController",
+      "declaration": "private let crBiologyDetailSummary: ref<inkText>;"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addField",
+      "target": "RipperDocGameController",
+      "declaration": "private let crBiologyDetailContentStatus: String;"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addField",
+      "target": "RipperDocGameController",
+      "declaration": "private let crBiologyMetricRows: array<ref<inkCanvas>>;"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addField",
+      "target": "RipperDocGameController",
+      "declaration": "private let crBiologyMetricLabels: array<ref<inkText>>;"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addField",
+      "target": "RipperDocGameController",
+      "declaration": "private let crBiologyMetricBackgrounds: array<ref<inkRectangle>>;"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addField",
+      "target": "RipperDocGameController",
+      "declaration": "private let crBiologyMetricFills: array<ref<inkRectangle>>;"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addField",
+      "target": "RipperDocGameController",
+      "declaration": "private let crBiologyMetricValues: array<ref<inkText>>;"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addField",
+      "target": "RipperDocGameController",
+      "declaration": "private let crBiologySelectedArea: gamedataEquipmentArea;"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "private final func CRShellText(text: String, name: CName, size: Int32) -> ref<inkText> {"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "private final func CRShellWrappedText(text: String, name: CName, size: Int32, width: Float) -> ref<inkText> {"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "private final func CRShellModeAction(text: String, name: CName) -> ref<inkText> {"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "private final func CRCreateMetricRow(index: Int32) -> Void {"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "private final func CRCreateBiologyShell() -> Void {"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "public final func CRBiologyInDetail() -> Bool {"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "public final func CRBodyShellInDetail() -> Bool {"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "private final func CRSetStockMetersVisible(visible: Bool) -> Void {"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "private final func CRSetCategoryMode(biology: Bool) -> Void {"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "private final func CRSetBiologyOverviewNodesVisible(visible: Bool) -> Void {"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "public final func CRMountBiologyActionsInNativeContent() -> Void {"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "private final func CRSelectBiologyConditionForArea(area: gamedataEquipmentArea) -> Void {"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "public final func CRConstrainBiologyActionsToSelectedArea() -> Void {"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "public final func CRSyncBiologyModeSwitcher() -> Void {"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "private final func CRSyncBiologyNativeContentLayout() -> Bool {"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "private final func CRBiologyDetailPostMountStatus(layoutReady: Bool) -> String {"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "private final func CRSyncBiologyContentVisibility() -> Void {"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "public final func CRRefreshBiologyOverview() -> Void {"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "private final func CRHideMetricRows() -> Void {"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "private final func CRRefreshBiologyDetail() -> Void {"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "private final func CREnterBiologyDetail(area: gamedataEquipmentArea) -> Bool {"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "public final func CRHandleBiologySelectorChange(evt: ref<RipperdocSelectorChangeEvent>) -> Bool {"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "public final func CRHandleBiologyBack() -> Bool {"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "public final func CRApplyBiologyShellMode(biology: Bool) -> Void {"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "protected cb func OnCRBiologyModeToggle(evt: ref<inkPointerEvent>) -> Bool {"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "protected cb func OnCRBiologyAreaHoverEvent(evt: ref<CRBiologyAreaHoverEvent>) -> Bool {"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "protected cb func OnCRBiologyAreaHoverOutEvent(evt: ref<CRBiologyAreaHoverOutEvent>) -> Bool {"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "protected cb func OnCRBiologyAreaSelectEvent(evt: ref<CRBiologyAreaSelectEvent>) -> Bool {"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@wrapMethod",
+      "target": "RipperDocGameController",
+      "declaration": "protected cb func OnInitialize() -> Bool {"
+    },
+    {
+      "source": "BiologyCyberwareShell.reds",
+      "sourceSha256": "9C0964A003D98779629645EBB9A2CFCBB49DC7F421B6E37C5849EE7ED2C34BE6",
+      "annotation": "@wrapMethod",
+      "target": "RipperDocGameController",
+      "declaration": "protected cb func OnUninitialize() -> Bool {"
+    },
+    {
+      "source": "BiologyLiveShellFollowupNative.reds",
+      "sourceSha256": "8D47D10033EF2F9F09ECBF464B836002038418C7DD51FBCCFB83EC9C24E3CF6D",
+      "annotation": "@addField",
+      "target": "RipperdocInventoryController",
+      "declaration": "private let crBiologyDetailSurfaceActive: Bool;"
+    },
+    {
+      "source": "BiologyLiveShellFollowupNative.reds",
+      "sourceSha256": "8D47D10033EF2F9F09ECBF464B836002038418C7DD51FBCCFB83EC9C24E3CF6D",
+      "annotation": "@addField",
+      "target": "RipperdocInventoryController",
+      "declaration": "private let crBiologyContentHostVisibilityCaptured: Bool;"
+    },
+    {
+      "source": "BiologyLiveShellFollowupNative.reds",
+      "sourceSha256": "8D47D10033EF2F9F09ECBF464B836002038418C7DD51FBCCFB83EC9C24E3CF6D",
+      "annotation": "@addField",
+      "target": "RipperdocInventoryController",
+      "declaration": "private let crBiologyContentHostWasVisible: Bool;"
+    },
+    {
+      "source": "BiologyLiveShellFollowupNative.reds",
+      "sourceSha256": "8D47D10033EF2F9F09ECBF464B836002038418C7DD51FBCCFB83EC9C24E3CF6D",
+      "annotation": "@addField",
+      "target": "RipperdocInventoryController",
+      "declaration": "private let crBiologyCyberwareContentHost: wref<inkWidget>;"
+    },
+    {
+      "source": "BiologyLiveShellFollowupNative.reds",
+      "sourceSha256": "8D47D10033EF2F9F09ECBF464B836002038418C7DD51FBCCFB83EC9C24E3CF6D",
+      "annotation": "@addField",
+      "target": "RipperdocInventoryController",
+      "declaration": "private let crBiologyDetailMountStatus: String;"
+    },
+    {
+      "source": "BiologyLiveShellFollowupNative.reds",
+      "sourceSha256": "8D47D10033EF2F9F09ECBF464B836002038418C7DD51FBCCFB83EC9C24E3CF6D",
+      "annotation": "@addField",
+      "target": "RipperdocInventoryController",
+      "declaration": "private let crBiologyDetailNativeParent: wref<inkCompoundWidget>;"
+    },
+    {
+      "source": "BiologyLiveShellFollowupNative.reds",
+      "sourceSha256": "8D47D10033EF2F9F09ECBF464B836002038418C7DD51FBCCFB83EC9C24E3CF6D",
+      "annotation": "@addField",
+      "target": "RipperdocInventoryController",
+      "declaration": "private let crBiologyDetailNativeRegion: wref<inkWidget>;"
+    },
+    {
+      "source": "BiologyLiveShellFollowupNative.reds",
+      "sourceSha256": "8D47D10033EF2F9F09ECBF464B836002038418C7DD51FBCCFB83EC9C24E3CF6D",
+      "annotation": "@addMethod",
+      "target": "RipperdocInventoryController",
+      "declaration": "public final func CRSetBiologyStockContentSuppressed(suppressed: Bool) -> Void {"
+    },
+    {
+      "source": "BiologyLiveShellFollowupNative.reds",
+      "sourceSha256": "8D47D10033EF2F9F09ECBF464B836002038418C7DD51FBCCFB83EC9C24E3CF6D",
+      "annotation": "@addMethod",
+      "target": "RipperdocInventoryController",
+      "declaration": "public final func CRSetBiologyDetailSurface(active: Bool) -> Void {"
+    },
+    {
+      "source": "BiologyLiveShellFollowupNative.reds",
+      "sourceSha256": "8D47D10033EF2F9F09ECBF464B836002038418C7DD51FBCCFB83EC9C24E3CF6D",
+      "annotation": "@addMethod",
+      "target": "RipperdocInventoryController",
+      "declaration": "public final func CRBiologyDetailSurfaceActive() -> Bool {"
+    },
+    {
+      "source": "BiologyLiveShellFollowupNative.reds",
+      "sourceSha256": "8D47D10033EF2F9F09ECBF464B836002038418C7DD51FBCCFB83EC9C24E3CF6D",
+      "annotation": "@addMethod",
+      "target": "RipperdocInventoryController",
+      "declaration": "private final func CRFindBiologyAuthoredContentHost(inventoryRoot: ref<inkCompoundWidget>) -> ref<inkWidget> {"
+    },
+    {
+      "source": "BiologyLiveShellFollowupNative.reds",
+      "sourceSha256": "8D47D10033EF2F9F09ECBF464B836002038418C7DD51FBCCFB83EC9C24E3CF6D",
+      "annotation": "@addMethod",
+      "target": "RipperdocInventoryController",
+      "declaration": "private final func CRBiologyDirectParentOwnsWidget(parent: ref<inkCompoundWidget>, target: ref<inkWidget>) -> Bool {"
+    },
+    {
+      "source": "BiologyLiveShellFollowupNative.reds",
+      "sourceSha256": "8D47D10033EF2F9F09ECBF464B836002038418C7DD51FBCCFB83EC9C24E3CF6D",
+      "annotation": "@addMethod",
+      "target": "RipperdocInventoryController",
+      "declaration": "public final func CRBiologyDetailMountStatus() -> String {"
+    },
+    {
+      "source": "BiologyLiveShellFollowupNative.reds",
+      "sourceSha256": "8D47D10033EF2F9F09ECBF464B836002038418C7DD51FBCCFB83EC9C24E3CF6D",
+      "annotation": "@addMethod",
+      "target": "RipperdocInventoryController",
+      "declaration": "private final func CRBiologyChildIndex(parent: ref<inkCompoundWidget>, target: ref<inkWidget>) -> Int32 {"
+    },
+    {
+      "source": "BiologyLiveShellFollowupNative.reds",
+      "sourceSha256": "8D47D10033EF2F9F09ECBF464B836002038418C7DD51FBCCFB83EC9C24E3CF6D",
+      "annotation": "@addMethod",
+      "target": "RipperdocInventoryController",
+      "declaration": "public final func CRBiologyDetailPostMountStatus(target: ref<inkWidget>) -> String {"
+    },
+    {
+      "source": "BiologyLiveShellFollowupNative.reds",
+      "sourceSha256": "8D47D10033EF2F9F09ECBF464B836002038418C7DD51FBCCFB83EC9C24E3CF6D",
+      "annotation": "@addMethod",
+      "target": "RipperdocInventoryController",
+      "declaration": "public final func CRMountBiologyDetailInAuthoredContentHost(target: ref<inkWidget>) -> Bool {"
+    },
+    {
+      "source": "BiologyLiveShellFollowupNative.reds",
+      "sourceSha256": "8D47D10033EF2F9F09ECBF464B836002038418C7DD51FBCCFB83EC9C24E3CF6D",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "private final func CRBiologyNativeDetailReady() -> Bool {"
+    },
+    {
+      "source": "BiologyLiveShellFollowupNative.reds",
+      "sourceSha256": "8D47D10033EF2F9F09ECBF464B836002038418C7DD51FBCCFB83EC9C24E3CF6D",
+      "annotation": "@wrapMethod",
+      "target": "RipperDocGameController",
+      "declaration": "private func DollHover(area: gamedataEquipmentArea) -> Void {"
+    },
+    {
+      "source": "BiologyLiveShellFollowupNative.reds",
+      "sourceSha256": "8D47D10033EF2F9F09ECBF464B836002038418C7DD51FBCCFB83EC9C24E3CF6D",
+      "annotation": "@wrapMethod",
+      "target": "RipperDocGameController",
+      "declaration": "private func DollSelect(select: Bool) -> Void {"
+    },
+    {
+      "source": "BiologyLiveShellFollowupNative.reds",
+      "sourceSha256": "8D47D10033EF2F9F09ECBF464B836002038418C7DD51FBCCFB83EC9C24E3CF6D",
+      "annotation": "@wrapMethod",
+      "target": "RipperDocGameController",
+      "declaration": "protected cb func OnMinigridSpawned(widget: ref<inkWidget>, userData: ref<IScriptable>) -> Bool {"
+    },
+    {
+      "source": "BiologyLiveShellFollowupNative.reds",
+      "sourceSha256": "8D47D10033EF2F9F09ECBF464B836002038418C7DD51FBCCFB83EC9C24E3CF6D",
+      "annotation": "@wrapMethod",
+      "target": "RipperDocGameController",
+      "declaration": "protected cb func OnInitialize() -> Bool {"
+    },
+    {
+      "source": "BiologyModeSyncNative.reds",
+      "sourceSha256": "C6890EC191F443A341B09DFA7DDA0B64ADE9B7F4BE2AC9FF70FDEA6966D28A27",
+      "annotation": "@addField",
+      "target": "CyberwareInventoryMiniGrid",
+      "declaration": "private let crBiologyStockLabelCallbacksSuspended: Bool;"
+    },
+    {
+      "source": "BiologyModeSyncNative.reds",
+      "sourceSha256": "C6890EC191F443A341B09DFA7DDA0B64ADE9B7F4BE2AC9FF70FDEA6966D28A27",
+      "annotation": "@addMethod",
+      "target": "CyberwareInventoryMiniGrid",
+      "declaration": "public final func CRSetBiologyLabelInteractive(active: Bool) -> Void {"
+    },
+    {
+      "source": "BiologyModeSyncNative.reds",
+      "sourceSha256": "C6890EC191F443A341B09DFA7DDA0B64ADE9B7F4BE2AC9FF70FDEA6966D28A27",
+      "annotation": "@addField",
+      "target": "RipperdocSelectorController",
+      "declaration": "private let crBiologyDetailMode: Bool;"
+    },
+    {
+      "source": "BiologyModeSyncNative.reds",
+      "sourceSha256": "C6890EC191F443A341B09DFA7DDA0B64ADE9B7F4BE2AC9FF70FDEA6966D28A27",
+      "annotation": "@addField",
+      "target": "RipperdocSelectorController",
+      "declaration": "private let crBiologyStockNames: array<String>;"
+    },
+    {
+      "source": "BiologyModeSyncNative.reds",
+      "sourceSha256": "C6890EC191F443A341B09DFA7DDA0B64ADE9B7F4BE2AC9FF70FDEA6966D28A27",
+      "annotation": "@addField",
+      "target": "RipperdocSelectorController",
+      "declaration": "private let crBiologyStockNamesCaptured: Bool;"
+    },
+    {
+      "source": "BiologyModeSyncNative.reds",
+      "sourceSha256": "C6890EC191F443A341B09DFA7DDA0B64ADE9B7F4BE2AC9FF70FDEA6966D28A27",
+      "annotation": "@addMethod",
+      "target": "RipperdocSelectorController",
+      "declaration": "private final func CRBiologySelectorIndexSupported(index: Int32) -> Bool {"
+    },
+    {
+      "source": "BiologyModeSyncNative.reds",
+      "sourceSha256": "C6890EC191F443A341B09DFA7DDA0B64ADE9B7F4BE2AC9FF70FDEA6966D28A27",
+      "annotation": "@addMethod",
+      "target": "RipperdocSelectorController",
+      "declaration": "private final func CRCaptureBiologySelectorStockNames() -> Void {"
+    },
+    {
+      "source": "BiologyModeSyncNative.reds",
+      "sourceSha256": "C6890EC191F443A341B09DFA7DDA0B64ADE9B7F4BE2AC9FF70FDEA6966D28A27",
+      "annotation": "@addMethod",
+      "target": "RipperdocSelectorController",
+      "declaration": "public final func CRSetBiologyDetailMode(active: Bool) -> Void {"
+    },
+    {
+      "source": "BiologyModeSyncNative.reds",
+      "sourceSha256": "C6890EC191F443A341B09DFA7DDA0B64ADE9B7F4BE2AC9FF70FDEA6966D28A27",
+      "annotation": "@addMethod",
+      "target": "RipperdocSelectorController",
+      "declaration": "public final func CRSetBiologyLayoutDiagnostic(status: String) -> Void {"
+    },
+    {
+      "source": "BiologyModeSyncNative.reds",
+      "sourceSha256": "C6890EC191F443A341B09DFA7DDA0B64ADE9B7F4BE2AC9FF70FDEA6966D28A27",
+      "annotation": "@addMethod",
+      "target": "RipperdocSelectorController",
+      "declaration": "private final func CRNextBiologySelectorIndex(current: Int32, toNext: Bool) -> Int32 {"
+    },
+    {
+      "source": "BiologyModeSyncNative.reds",
+      "sourceSha256": "C6890EC191F443A341B09DFA7DDA0B64ADE9B7F4BE2AC9FF70FDEA6966D28A27",
+      "annotation": "@wrapMethod",
+      "target": "RipperdocSelectorController",
+      "declaration": "private func SwitchIndicator(toNext: Bool) -> Void {"
+    },
+    {
+      "source": "BiologyModeSyncNative.reds",
+      "sourceSha256": "C6890EC191F443A341B09DFA7DDA0B64ADE9B7F4BE2AC9FF70FDEA6966D28A27",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "private final func CRSyncBiologyNodeInteractivity(active: Bool) -> Void {"
+    },
+    {
+      "source": "BiologyModeSyncNative.reds",
+      "sourceSha256": "C6890EC191F443A341B09DFA7DDA0B64ADE9B7F4BE2AC9FF70FDEA6966D28A27",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "private final func CRSyncSpawnedBiologyNode(widget: ref<inkWidget>) -> Void {"
+    },
+    {
+      "source": "BiologyModeSyncNative.reds",
+      "sourceSha256": "C6890EC191F443A341B09DFA7DDA0B64ADE9B7F4BE2AC9FF70FDEA6966D28A27",
+      "annotation": "@wrapMethod",
+      "target": "RipperDocGameController",
+      "declaration": "protected cb func OnMinigridSpawned(widget: ref<inkWidget>, userData: ref<IScriptable>) -> Bool {"
+    },
+    {
+      "source": "BiologyModeSyncNative.reds",
+      "sourceSha256": "C6890EC191F443A341B09DFA7DDA0B64ADE9B7F4BE2AC9FF70FDEA6966D28A27",
+      "annotation": "@wrapMethod",
+      "target": "RipperDocGameController",
+      "declaration": "private func DisplayInventory(visible: Bool) -> Void {"
+    },
+    {
+      "source": "BiologyModeSyncNative.reds",
+      "sourceSha256": "C6890EC191F443A341B09DFA7DDA0B64ADE9B7F4BE2AC9FF70FDEA6966D28A27",
+      "annotation": "@wrapMethod",
+      "target": "RipperDocGameController",
+      "declaration": "protected cb func OnSelectorChange(evt: ref<RipperdocSelectorChangeEvent>) -> Bool {"
+    },
+    {
+      "source": "BiologyModeSyncNative.reds",
+      "sourceSha256": "C6890EC191F443A341B09DFA7DDA0B64ADE9B7F4BE2AC9FF70FDEA6966D28A27",
+      "annotation": "@wrapMethod",
+      "target": "RipperDocGameController",
+      "declaration": "protected cb func OnBack(userData: ref<IScriptable>) -> Bool {"
+    },
+    {
+      "source": "BiologyModeSyncNative.reds",
+      "sourceSha256": "C6890EC191F443A341B09DFA7DDA0B64ADE9B7F4BE2AC9FF70FDEA6966D28A27",
+      "annotation": "@wrapMethod",
+      "target": "RipperDocGameController",
+      "declaration": "protected cb func OnInitialize() -> Bool {"
+    },
+    {
+      "source": "BiologyPreferencesNative.reds",
+      "sourceSha256": "D0094FB01E3695FADECDCB1086CCE6448F6E0A276CAB76388BE6F1516EBF990E",
+      "annotation": "@addField",
+      "target": "RipperDocGameController",
+      "declaration": "private let crBiologyE3PreferencePanel: ref<inkVerticalPanel>;"
+    },
+    {
+      "source": "BiologyPreferencesNative.reds",
+      "sourceSha256": "D0094FB01E3695FADECDCB1086CCE6448F6E0A276CAB76388BE6F1516EBF990E",
+      "annotation": "@addField",
+      "target": "RipperDocGameController",
+      "declaration": "private let crBiologyE3PreferenceRow: ref<inkCanvas>;"
+    },
+    {
+      "source": "BiologyPreferencesNative.reds",
+      "sourceSha256": "D0094FB01E3695FADECDCB1086CCE6448F6E0A276CAB76388BE6F1516EBF990E",
+      "annotation": "@addField",
+      "target": "RipperDocGameController",
+      "declaration": "private let crBiologyE3PreferenceBackground: ref<inkRectangle>;"
+    },
+    {
+      "source": "BiologyPreferencesNative.reds",
+      "sourceSha256": "D0094FB01E3695FADECDCB1086CCE6448F6E0A276CAB76388BE6F1516EBF990E",
+      "annotation": "@addField",
+      "target": "RipperDocGameController",
+      "declaration": "private let crBiologyE3PreferenceValue: ref<inkText>;"
+    },
+    {
+      "source": "BiologyPreferencesNative.reds",
+      "sourceSha256": "D0094FB01E3695FADECDCB1086CCE6448F6E0A276CAB76388BE6F1516EBF990E",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "private final func CRBiologyE3PreferenceText(text: String, name: CName, size: Int32) -> ref<inkText> {"
+    },
+    {
+      "source": "BiologyPreferencesNative.reds",
+      "sourceSha256": "D0094FB01E3695FADECDCB1086CCE6448F6E0A276CAB76388BE6F1516EBF990E",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "public final func CRRefreshBiologyE3Preference() -> Void {"
+    },
+    {
+      "source": "BiologyPreferencesNative.reds",
+      "sourceSha256": "D0094FB01E3695FADECDCB1086CCE6448F6E0A276CAB76388BE6F1516EBF990E",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "public final func CRMountBiologyE3PreferenceInNativeContent(host: ref<inkVerticalPanel>) -> Void {"
+    },
+    {
+      "source": "BiologyPreferencesNative.reds",
+      "sourceSha256": "D0094FB01E3695FADECDCB1086CCE6448F6E0A276CAB76388BE6F1516EBF990E",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "public final func CRResetBiologyE3Preference() -> Void {"
+    },
+    {
+      "source": "BiologyPreferencesNative.reds",
+      "sourceSha256": "D0094FB01E3695FADECDCB1086CCE6448F6E0A276CAB76388BE6F1516EBF990E",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "protected cb func OnCRBiologyE3PreferenceToggle(evt: ref<inkPointerEvent>) -> Bool {"
+    },
+    {
+      "source": "BiologyPreferencesNative.reds",
+      "sourceSha256": "D0094FB01E3695FADECDCB1086CCE6448F6E0A276CAB76388BE6F1516EBF990E",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "protected cb func OnCRBiologyE3PreferenceHoverOver(evt: ref<inkPointerEvent>) -> Bool {"
+    },
+    {
+      "source": "BiologyPreferencesNative.reds",
+      "sourceSha256": "D0094FB01E3695FADECDCB1086CCE6448F6E0A276CAB76388BE6F1516EBF990E",
+      "annotation": "@addMethod",
+      "target": "RipperDocGameController",
+      "declaration": "protected cb func OnCRBiologyE3PreferenceHoverOut(evt: ref<inkPointerEvent>) -> Bool {"
+    },
+    {
+      "source": "BiologyRadialHubNative.reds",
+      "sourceSha256": "FE0B2668BEF913E78C667375C362889F759AD7B974E3372F4955C1B73328B094",
+      "annotation": "@addMethod",
+      "target": "MenuDataBuilder",
+      "declaration": "public final func CRRelabelBiologyDestination() -> Void {"
+    },
+    {
+      "source": "BiologyRadialHubNative.reds",
+      "sourceSha256": "FE0B2668BEF913E78C667375C362889F759AD7B974E3372F4955C1B73328B094",
+      "annotation": "@wrapMethod",
+      "target": "HubMenuUtility",
+      "declaration": "public static func CreateMenuData(player: wref<PlayerPuppet>) -> ref<MenuDataBuilder> {"
+    },
+    {
+      "source": "BiologyRadialHubNative.reds",
+      "sourceSha256": "FE0B2668BEF913E78C667375C362889F759AD7B974E3372F4955C1B73328B094",
+      "annotation": "@wrapMethod",
+      "target": "gameuiInventoryGameController",
+      "declaration": "protected cb func OnSetUserData(userData: ref<IScriptable>) -> Bool {"
+    },
+    {
+      "source": "BiologyRadialHubNative.reds",
+      "sourceSha256": "FE0B2668BEF913E78C667375C362889F759AD7B974E3372F4955C1B73328B094",
+      "annotation": "@wrapMethod",
+      "target": "RadialMenuHubLogicController",
+      "declaration": "public final func SetMenusData(menuData: ref<MenuDataBuilder>, tarotIsBlocked: Bool, mapIsBlocked: Bool, perkPoints: Int32, attrPoints: Int32) -> Void {"
+    },
+    {
+      "source": "BloodLossNative.reds",
+      "sourceSha256": "3CC9C693C30BF96DEE6DC3BE8082100F5FAF0FDF5BB171AC9F1DA6EE0D13A6A3",
+      "annotation": "@addField",
+      "target": "ScriptedPuppet",
+      "declaration": "public let crBloodLossCursor: ref<CRBloodLossCursor>;"
+    },
+    {
+      "source": "BloodLossNative.reds",
+      "sourceSha256": "3CC9C693C30BF96DEE6DC3BE8082100F5FAF0FDF5BB171AC9F1DA6EE0D13A6A3",
+      "annotation": "@addField",
+      "target": "gameHitEvent",
+      "declaration": "public let crBloodLossDelivery: ref<CRBloodLossDelivery>;"
+    },
+    {
+      "source": "BloodLossNative.reds",
+      "sourceSha256": "3CC9C693C30BF96DEE6DC3BE8082100F5FAF0FDF5BB171AC9F1DA6EE0D13A6A3",
+      "annotation": "@wrapMethod",
+      "target": "DamageSystem",
+      "declaration": "private final func PreProcess(hitEvent: ref<gameHitEvent>, cache: ref<CacheData>) -> Bool {"
+    },
+    {
+      "source": "BloodLossNative.reds",
+      "sourceSha256": "3CC9C693C30BF96DEE6DC3BE8082100F5FAF0FDF5BB171AC9F1DA6EE0D13A6A3",
+      "annotation": "@wrapMethod",
+      "target": "StatPoolsManager",
+      "declaration": "public final static func ApplyDamage(hitEvent: ref<gameHitEvent>, forReal: Bool, out valuesLost: [SDamageDealt]) -> Void {"
+    },
+    {
+      "source": "BodyInteractionRuntime.reds",
+      "sourceSha256": "F34EF3961F8A55013E6784F2DAEE53B8457C2EB5DD114EE9E0F7664E7C671791",
+      "annotation": "@wrapMethod",
+      "target": "PlayerPuppet",
+      "declaration": "protected cb func OnStatusEffectApplied(evt: ref<ApplyStatusEffectEvent>) -> Bool {"
+    },
+    {
+      "source": "BodyInteractionRuntime.reds",
+      "sourceSha256": "F34EF3961F8A55013E6784F2DAEE53B8457C2EB5DD114EE9E0F7664E7C671791",
+      "annotation": "@addField",
+      "target": "ToiletControllerPS",
+      "declaration": "private let crBodyUseActive: Bool = false;"
+    },
+    {
+      "source": "BodyInteractionRuntime.reds",
+      "sourceSha256": "F34EF3961F8A55013E6784F2DAEE53B8457C2EB5DD114EE9E0F7664E7C671791",
+      "annotation": "@wrapMethod",
+      "target": "ToiletControllerPS",
+      "declaration": "public func GetActions(out actions: array<ref<DeviceAction>>, context: GetActionsContext) -> Bool {"
+    },
+    {
+      "source": "BodyInteractionRuntime.reds",
+      "sourceSha256": "F34EF3961F8A55013E6784F2DAEE53B8457C2EB5DD114EE9E0F7664E7C671791",
+      "annotation": "@addMethod",
+      "target": "ToiletControllerPS",
+      "declaration": "public final func OnCRUseToilet(evt: ref<CRUseToilet>) -> EntityNotificationType {"
+    },
+    {
+      "source": "BodyInteractionRuntime.reds",
+      "sourceSha256": "F34EF3961F8A55013E6784F2DAEE53B8457C2EB5DD114EE9E0F7664E7C671791",
+      "annotation": "@addMethod",
+      "target": "Toilet",
+      "declaration": "protected cb func OnCRUseToilet(evt: ref<CRUseToilet>) -> Bool {"
+    },
+    {
+      "source": "BodyNativeHooks.reds",
+      "sourceSha256": "8603EB8395744E7308291BC319968B2D8B83CBC71D0E0B0BC2A2A6189D91C85E",
+      "annotation": "@wrapMethod",
+      "target": "PlayerPuppet",
+      "declaration": "protected cb func OnGameAttached() -> Bool {"
+    },
+    {
+      "source": "BodyNativeHooks.reds",
+      "sourceSha256": "8603EB8395744E7308291BC319968B2D8B83CBC71D0E0B0BC2A2A6189D91C85E",
+      "annotation": "@wrapMethod",
+      "target": "ConsumeAction",
+      "declaration": "public func CompleteAction(gameInstance: GameInstance) -> Void {"
+    },
+    {
+      "source": "BodyNativeHooks.reds",
+      "sourceSha256": "8603EB8395744E7308291BC319968B2D8B83CBC71D0E0B0BC2A2A6189D91C85E",
+      "annotation": "@wrapMethod",
+      "target": "UseHealChargeAction",
+      "declaration": "protected func ProcessStatusEffects(const actionEffects: script_ref<array<wref<ObjectActionEffect_Record>>>, gameInstance: GameInstance) -> Void {"
+    },
+    {
+      "source": "BodyNativeHooks.reds",
+      "sourceSha256": "8603EB8395744E7308291BC319968B2D8B83CBC71D0E0B0BC2A2A6189D91C85E",
+      "annotation": "@wrapMethod",
+      "target": "HubTimeSkipController",
+      "declaration": "protected cb func OnTimeSkipButtonPressed(e: ref<inkPointerEvent>) -> Bool {"
+    },
+    {
+      "source": "BodyNativeHooks.reds",
+      "sourceSha256": "8603EB8395744E7308291BC319968B2D8B83CBC71D0E0B0BC2A2A6189D91C85E",
+      "annotation": "@addField",
+      "target": "TimeskipGameController",
+      "declaration": "private let crRealpassSleeping: Bool;"
+    },
+    {
+      "source": "BodyNativeHooks.reds",
+      "sourceSha256": "8603EB8395744E7308291BC319968B2D8B83CBC71D0E0B0BC2A2A6189D91C85E",
+      "annotation": "@wrapMethod",
+      "target": "TimeskipGameController",
+      "declaration": "protected cb func OnInitialize() -> Bool {"
+    },
+    {
+      "source": "BodyNativeHooks.reds",
+      "sourceSha256": "8603EB8395744E7308291BC319968B2D8B83CBC71D0E0B0BC2A2A6189D91C85E",
+      "annotation": "@wrapMethod",
+      "target": "TimeskipGameController",
+      "declaration": "private func Apply() -> Void {"
+    },
+    {
+      "source": "CombatNativeBridge.reds",
+      "sourceSha256": "B7CE5DF1C26D2FBB1CE1308D97432364F125DD38064F899E0B38C79CB7DB087B",
+      "annotation": "@addField",
+      "target": "gameHitEvent",
+      "declaration": "public let crContactRead: Bool;"
+    },
+    {
+      "source": "CombatNativeBridge.reds",
+      "sourceSha256": "B7CE5DF1C26D2FBB1CE1308D97432364F125DD38064F899E0B38C79CB7DB087B",
+      "annotation": "@addField",
+      "target": "ScriptedPuppet",
+      "declaration": "public let crLastNativeHit: ref<CRNativeHitSample>;"
+    },
+    {
+      "source": "CombatNativeBridge.reds",
+      "sourceSha256": "B7CE5DF1C26D2FBB1CE1308D97432364F125DD38064F899E0B38C79CB7DB087B",
+      "annotation": "@wrapMethod",
+      "target": "DamageSystem",
+      "declaration": "private final func SendDamageEvents(hitEvent: ref<gameHitEvent>, const resourcesLost: script_ref<[SDamageDealt]>) -> Void {"
+    },
+    {
+      "source": "CombatWoundsNative.reds",
+      "sourceSha256": "04E0F69DF70A02DE633809F7DAC48AD3688DAEB935D1F24D54BBF1EFCE79AD07",
+      "annotation": "@addField",
+      "target": "gameHitEvent",
+      "declaration": "public let crWoundPrepared: Bool;"
+    },
+    {
+      "source": "CombatWoundsNative.reds",
+      "sourceSha256": "04E0F69DF70A02DE633809F7DAC48AD3688DAEB935D1F24D54BBF1EFCE79AD07",
+      "annotation": "@addField",
+      "target": "gameHitEvent",
+      "declaration": "public let crPreparedHit: ref<CRNativeHitSample>;"
+    },
+    {
+      "source": "CombatWoundsNative.reds",
+      "sourceSha256": "04E0F69DF70A02DE633809F7DAC48AD3688DAEB935D1F24D54BBF1EFCE79AD07",
+      "annotation": "@addField",
+      "target": "gameHitEvent",
+      "declaration": "public let crWoundPlan: ref<CRNativeWoundPlan>;"
+    },
+    {
+      "source": "CombatWoundsNative.reds",
+      "sourceSha256": "04E0F69DF70A02DE633809F7DAC48AD3688DAEB935D1F24D54BBF1EFCE79AD07",
+      "annotation": "@addField",
+      "target": "NPCPuppet",
+      "declaration": "public persistent let crLocalizedInjuries: ref<CRInjuryState>;"
+    },
+    {
+      "source": "CombatWoundsNative.reds",
+      "sourceSha256": "04E0F69DF70A02DE633809F7DAC48AD3688DAEB935D1F24D54BBF1EFCE79AD07",
+      "annotation": "@addField",
+      "target": "NPCPuppet",
+      "declaration": "public persistent let crInjurySchemaVersion: Int32;"
+    },
+    {
+      "source": "CombatWoundsNative.reds",
+      "sourceSha256": "04E0F69DF70A02DE633809F7DAC48AD3688DAEB935D1F24D54BBF1EFCE79AD07",
+      "annotation": "@addField",
+      "target": "NPCPuppet",
+      "declaration": "public persistent let crInjuryBody: ref<CRBodyState>;"
+    },
+    {
+      "source": "CombatWoundsNative.reds",
+      "sourceSha256": "04E0F69DF70A02DE633809F7DAC48AD3688DAEB935D1F24D54BBF1EFCE79AD07",
+      "annotation": "@wrapMethod",
+      "target": "DamageSystem",
+      "declaration": "private final func ProcessOneShotProtection(hitEvent: ref<gameHitEvent>) -> Void {"
+    },
+    {
+      "source": "E3ActivityHudNative.reds",
+      "sourceSha256": "7C2C49A9CE0EF8A97D2D56846F0FB5060C948C2EAFC5C1A8A0DA8EE448019994",
+      "annotation": "@addField",
+      "target": "activityLogEntryLogicController",
+      "declaration": "private let crBiologyE3NativeActivityTint: HDRColor;"
+    },
+    {
+      "source": "E3ActivityHudNative.reds",
+      "sourceSha256": "7C2C49A9CE0EF8A97D2D56846F0FB5060C948C2EAFC5C1A8A0DA8EE448019994",
+      "annotation": "@addField",
+      "target": "activityLogEntryLogicController",
+      "declaration": "private let crBiologyE3HasNativeActivityTint: Bool;"
+    },
+    {
+      "source": "E3ActivityHudNative.reds",
+      "sourceSha256": "7C2C49A9CE0EF8A97D2D56846F0FB5060C948C2EAFC5C1A8A0DA8EE448019994",
+      "annotation": "@addMethod",
+      "target": "activityLogEntryLogicController",
+      "declaration": "private final func CRRestoreBiologyE3Activity() -> Void {"
+    },
+    {
+      "source": "E3ActivityHudNative.reds",
+      "sourceSha256": "7C2C49A9CE0EF8A97D2D56846F0FB5060C948C2EAFC5C1A8A0DA8EE448019994",
+      "annotation": "@addMethod",
+      "target": "activityLogEntryLogicController",
+      "declaration": "private final func CRRefreshBiologyE3Activity() -> Void {"
+    },
+    {
+      "source": "E3ActivityHudNative.reds",
+      "sourceSha256": "7C2C49A9CE0EF8A97D2D56846F0FB5060C948C2EAFC5C1A8A0DA8EE448019994",
+      "annotation": "@wrapMethod",
+      "target": "activityLogEntryLogicController",
+      "declaration": "protected cb func OnInitialize() -> Bool {"
+    },
+    {
+      "source": "E3ActivityHudNative.reds",
+      "sourceSha256": "7C2C49A9CE0EF8A97D2D56846F0FB5060C948C2EAFC5C1A8A0DA8EE448019994",
+      "annotation": "@wrapMethod",
+      "target": "activityLogEntryLogicController",
+      "declaration": "public final func SetText(const displayText: script_ref<String>) -> Void {"
+    },
+    {
+      "source": "E3ActivityHudNative.reds",
+      "sourceSha256": "7C2C49A9CE0EF8A97D2D56846F0FB5060C948C2EAFC5C1A8A0DA8EE448019994",
+      "annotation": "@addMethod",
+      "target": "activityLogEntryLogicController",
+      "declaration": "protected cb func OnCRBiologyE3PreferenceChangedEvent(evt: ref<CRBiologyE3PreferenceChangedEvent>) -> Bool {"
+    },
+    {
+      "source": "E3CrosshairHudNative.reds",
+      "sourceSha256": "8D0EEBFF59374BF4454AAE50F7E1DF299EE81BF3C151C120235DEDA994B54FBF",
+      "annotation": "@addField",
+      "target": "gameuiCrosshairBaseGameController",
+      "declaration": "private let crBiologyE3NativeCrosshairTint: HDRColor;"
+    },
+    {
+      "source": "E3CrosshairHudNative.reds",
+      "sourceSha256": "8D0EEBFF59374BF4454AAE50F7E1DF299EE81BF3C151C120235DEDA994B54FBF",
+      "annotation": "@addField",
+      "target": "gameuiCrosshairBaseGameController",
+      "declaration": "private let crBiologyE3HasNativeCrosshairTint: Bool;"
+    },
+    {
+      "source": "E3CrosshairHudNative.reds",
+      "sourceSha256": "8D0EEBFF59374BF4454AAE50F7E1DF299EE81BF3C151C120235DEDA994B54FBF",
+      "annotation": "@addMethod",
+      "target": "gameuiCrosshairBaseGameController",
+      "declaration": "private final func CRCaptureBiologyE3CrosshairTint() -> Void {"
+    },
+    {
+      "source": "E3CrosshairHudNative.reds",
+      "sourceSha256": "8D0EEBFF59374BF4454AAE50F7E1DF299EE81BF3C151C120235DEDA994B54FBF",
+      "annotation": "@addMethod",
+      "target": "gameuiCrosshairBaseGameController",
+      "declaration": "private final func CRRestoreBiologyE3CrosshairTint() -> Void {"
+    },
+    {
+      "source": "E3CrosshairHudNative.reds",
+      "sourceSha256": "8D0EEBFF59374BF4454AAE50F7E1DF299EE81BF3C151C120235DEDA994B54FBF",
+      "annotation": "@addMethod",
+      "target": "gameuiCrosshairBaseGameController",
+      "declaration": "private final func CRRefreshBiologyE3CrosshairTint() -> Void {"
+    },
+    {
+      "source": "E3CrosshairHudNative.reds",
+      "sourceSha256": "8D0EEBFF59374BF4454AAE50F7E1DF299EE81BF3C151C120235DEDA994B54FBF",
+      "annotation": "@wrapMethod",
+      "target": "gameuiCrosshairBaseGameController",
+      "declaration": "protected cb func OnInitialize() -> Bool {"
+    },
+    {
+      "source": "E3CrosshairHudNative.reds",
+      "sourceSha256": "8D0EEBFF59374BF4454AAE50F7E1DF299EE81BF3C151C120235DEDA994B54FBF",
+      "annotation": "@wrapMethod",
+      "target": "gameuiCrosshairBaseGameController",
+      "declaration": "protected func OnCrosshairStateChange(oldState: gamePSMCrosshairStates, newState: gamePSMCrosshairStates) -> Void {"
+    },
+    {
+      "source": "E3CrosshairHudNative.reds",
+      "sourceSha256": "8D0EEBFF59374BF4454AAE50F7E1DF299EE81BF3C151C120235DEDA994B54FBF",
+      "annotation": "@addMethod",
+      "target": "gameuiCrosshairBaseGameController",
+      "declaration": "protected cb func OnCRBiologyE3PreferenceChangedEvent(evt: ref<CRBiologyE3PreferenceChangedEvent>) -> Bool {"
+    },
+    {
+      "source": "E3FirstPersonHud.reds",
+      "sourceSha256": "A6356B876A4BB872D696FF5D06A7219F3A9771B8896F30760EE38121A4423F9C",
+      "annotation": "@addField",
+      "target": "healthbarWidgetGameController",
+      "declaration": "private let crBiologyE3HudFrame: ref<inkCanvas>;"
+    },
+    {
+      "source": "E3FirstPersonHud.reds",
+      "sourceSha256": "A6356B876A4BB872D696FF5D06A7219F3A9771B8896F30760EE38121A4423F9C",
+      "annotation": "@addMethod",
+      "target": "healthbarWidgetGameController",
+      "declaration": "private final func CRCreateBiologyE3Hud() -> Void {"
+    },
+    {
+      "source": "E3FirstPersonHud.reds",
+      "sourceSha256": "A6356B876A4BB872D696FF5D06A7219F3A9771B8896F30760EE38121A4423F9C",
+      "annotation": "@addMethod",
+      "target": "healthbarWidgetGameController",
+      "declaration": "private final func CRRefreshBiologyE3Hud() -> Void {"
+    },
+    {
+      "source": "E3FirstPersonHud.reds",
+      "sourceSha256": "A6356B876A4BB872D696FF5D06A7219F3A9771B8896F30760EE38121A4423F9C",
+      "annotation": "@wrapMethod",
+      "target": "healthbarWidgetGameController",
+      "declaration": "protected cb func OnInitialize() -> Bool {"
+    },
+    {
+      "source": "E3FirstPersonHud.reds",
+      "sourceSha256": "A6356B876A4BB872D696FF5D06A7219F3A9771B8896F30760EE38121A4423F9C",
+      "annotation": "@wrapMethod",
+      "target": "healthbarWidgetGameController",
+      "declaration": "protected cb func OnUpdateHealthBarVisibility() -> Bool {"
+    },
+    {
+      "source": "E3FirstPersonHud.reds",
+      "sourceSha256": "A6356B876A4BB872D696FF5D06A7219F3A9771B8896F30760EE38121A4423F9C",
+      "annotation": "@wrapMethod",
+      "target": "healthbarWidgetGameController",
+      "declaration": "public final func EvaluateHealthBarVisibility(isInOverclockedState: Bool) -> Void {"
+    },
+    {
+      "source": "E3FirstPersonHud.reds",
+      "sourceSha256": "A6356B876A4BB872D696FF5D06A7219F3A9771B8896F30760EE38121A4423F9C",
+      "annotation": "@addMethod",
+      "target": "healthbarWidgetGameController",
+      "declaration": "protected cb func OnCRBiologyE3PreferenceChangedEvent(evt: ref<CRBiologyE3PreferenceChangedEvent>) -> Bool {"
+    },
+    {
+      "source": "E3HotkeyHudNative.reds",
+      "sourceSha256": "626390FD4F0124D19E19949D10408F1F15ACF9B8F9EB0145ECCFC158317D0EBC",
+      "annotation": "@addField",
+      "target": "HotkeysWidgetController",
+      "declaration": "private let crBiologyE3HotkeyFrame: ref<inkCanvas>;"
+    },
+    {
+      "source": "E3HotkeyHudNative.reds",
+      "sourceSha256": "626390FD4F0124D19E19949D10408F1F15ACF9B8F9EB0145ECCFC158317D0EBC",
+      "annotation": "@addField",
+      "target": "HotkeysWidgetController",
+      "declaration": "private let crBiologyE3HotkeyHost: ref<inkCompoundWidget>;"
+    },
+    {
+      "source": "E3HotkeyHudNative.reds",
+      "sourceSha256": "626390FD4F0124D19E19949D10408F1F15ACF9B8F9EB0145ECCFC158317D0EBC",
+      "annotation": "@addField",
+      "target": "HotkeysWidgetController",
+      "declaration": "private let crBiologyE3HotkeyHostName: String;"
+    },
+    {
+      "source": "E3HotkeyHudNative.reds",
+      "sourceSha256": "626390FD4F0124D19E19949D10408F1F15ACF9B8F9EB0145ECCFC158317D0EBC",
+      "annotation": "@addField",
+      "target": "HotkeysWidgetController",
+      "declaration": "private let crBiologyE3HotkeyStateKnown: Bool;"
+    },
+    {
+      "source": "E3HotkeyHudNative.reds",
+      "sourceSha256": "626390FD4F0124D19E19949D10408F1F15ACF9B8F9EB0145ECCFC158317D0EBC",
+      "annotation": "@addField",
+      "target": "HotkeysWidgetController",
+      "declaration": "private let crBiologyE3HotkeyLastEnabled: Bool;"
+    },
+    {
+      "source": "E3HotkeyHudNative.reds",
+      "sourceSha256": "626390FD4F0124D19E19949D10408F1F15ACF9B8F9EB0145ECCFC158317D0EBC",
+      "annotation": "@addMethod",
+      "target": "HotkeysWidgetController",
+      "declaration": "private final func CRResolveBiologyE3HotkeyHost() -> ref<inkCompoundWidget> {"
+    },
+    {
+      "source": "E3HotkeyHudNative.reds",
+      "sourceSha256": "626390FD4F0124D19E19949D10408F1F15ACF9B8F9EB0145ECCFC158317D0EBC",
+      "annotation": "@addMethod",
+      "target": "HotkeysWidgetController",
+      "declaration": "private final func CRCreateBiologyE3HotkeyFrame() -> Void {"
+    },
+    {
+      "source": "E3HotkeyHudNative.reds",
+      "sourceSha256": "626390FD4F0124D19E19949D10408F1F15ACF9B8F9EB0145ECCFC158317D0EBC",
+      "annotation": "@addMethod",
+      "target": "HotkeysWidgetController",
+      "declaration": "private final func CRRefreshBiologyE3HotkeyFrame() -> Void {"
+    },
+    {
+      "source": "E3HotkeyHudNative.reds",
+      "sourceSha256": "626390FD4F0124D19E19949D10408F1F15ACF9B8F9EB0145ECCFC158317D0EBC",
+      "annotation": "@wrapMethod",
+      "target": "HotkeysWidgetController",
+      "declaration": "protected cb func OnInitialize() -> Bool {"
+    },
+    {
+      "source": "E3HotkeyHudNative.reds",
+      "sourceSha256": "626390FD4F0124D19E19949D10408F1F15ACF9B8F9EB0145ECCFC158317D0EBC",
+      "annotation": "@addMethod",
+      "target": "HotkeysWidgetController",
+      "declaration": "protected cb func OnCRBiologyE3PreferenceChangedEvent(evt: ref<CRBiologyE3PreferenceChangedEvent>) -> Bool {"
+    },
+    {
+      "source": "E3InteractionHudNative.reds",
+      "sourceSha256": "4F9C6F0505433DE12E1DE6E0558C5DFCD9102B5F29A17C41A51B2CCB83B10F39",
+      "annotation": "@addField",
+      "target": "interactionWidgetGameController",
+      "declaration": "private let crBiologyE3InteractionFrame: ref<inkCanvas>;"
+    },
+    {
+      "source": "E3InteractionHudNative.reds",
+      "sourceSha256": "4F9C6F0505433DE12E1DE6E0558C5DFCD9102B5F29A17C41A51B2CCB83B10F39",
+      "annotation": "@addMethod",
+      "target": "interactionWidgetGameController",
+      "declaration": "private final func CRCreateBiologyE3InteractionFrame() -> Void {"
+    },
+    {
+      "source": "E3InteractionHudNative.reds",
+      "sourceSha256": "4F9C6F0505433DE12E1DE6E0558C5DFCD9102B5F29A17C41A51B2CCB83B10F39",
+      "annotation": "@addMethod",
+      "target": "interactionWidgetGameController",
+      "declaration": "private final func CRRefreshBiologyE3InteractionFrame() -> Void {"
+    },
+    {
+      "source": "E3InteractionHudNative.reds",
+      "sourceSha256": "4F9C6F0505433DE12E1DE6E0558C5DFCD9102B5F29A17C41A51B2CCB83B10F39",
+      "annotation": "@wrapMethod",
+      "target": "interactionWidgetGameController",
+      "declaration": "protected cb func OnInitialize() -> Bool {"
+    },
+    {
+      "source": "E3InteractionHudNative.reds",
+      "sourceSha256": "4F9C6F0505433DE12E1DE6E0558C5DFCD9102B5F29A17C41A51B2CCB83B10F39",
+      "annotation": "@wrapMethod",
+      "target": "interactionWidgetGameController",
+      "declaration": "protected cb func OnUpdateInteraction(argValue: Variant) -> Bool {"
+    },
+    {
+      "source": "E3InteractionHudNative.reds",
+      "sourceSha256": "4F9C6F0505433DE12E1DE6E0558C5DFCD9102B5F29A17C41A51B2CCB83B10F39",
+      "annotation": "@addMethod",
+      "target": "interactionWidgetGameController",
+      "declaration": "protected cb func OnCRBiologyE3PreferenceChangedEvent(evt: ref<CRBiologyE3PreferenceChangedEvent>) -> Bool {"
+    },
+    {
+      "source": "E3NameplatesNative.reds",
+      "sourceSha256": "044A294A432EA412DE814A0FA54C279E9682D7D1C0FEFF4ED58592AD8DA541DB",
+      "annotation": "@addField",
+      "target": "NameplateVisualsLogicController",
+      "declaration": "public let crBiologyE3ScannerActive: Bool;"
+    },
+    {
+      "source": "E3NameplatesNative.reds",
+      "sourceSha256": "044A294A432EA412DE814A0FA54C279E9682D7D1C0FEFF4ED58592AD8DA541DB",
+      "annotation": "@addField",
+      "target": "NameplateVisualsLogicController",
+      "declaration": "private let crBiologyE3PreferenceActive: Bool;"
+    },
+    {
+      "source": "E3NameplatesNative.reds",
+      "sourceSha256": "044A294A432EA412DE814A0FA54C279E9682D7D1C0FEFF4ED58592AD8DA541DB",
+      "annotation": "@addField",
+      "target": "NameplateVisualsLogicController",
+      "declaration": "private let crBiologyE3LastPuppet: wref<GameObject>;"
+    },
+    {
+      "source": "E3NameplatesNative.reds",
+      "sourceSha256": "044A294A432EA412DE814A0FA54C279E9682D7D1C0FEFF4ED58592AD8DA541DB",
+      "annotation": "@addField",
+      "target": "NameplateVisualsLogicController",
+      "declaration": "private let crBiologyE3LastData: NPCNextToTheCrosshair;"
+    },
+    {
+      "source": "E3NameplatesNative.reds",
+      "sourceSha256": "044A294A432EA412DE814A0FA54C279E9682D7D1C0FEFF4ED58592AD8DA541DB",
+      "annotation": "@addField",
+      "target": "NameplateVisualsLogicController",
+      "declaration": "private let crBiologyE3NativeNameTint: HDRColor;"
+    },
+    {
+      "source": "E3NameplatesNative.reds",
+      "sourceSha256": "044A294A432EA412DE814A0FA54C279E9682D7D1C0FEFF4ED58592AD8DA541DB",
+      "annotation": "@addField",
+      "target": "NameplateVisualsLogicController",
+      "declaration": "private let crBiologyE3NativeFrameTint: HDRColor;"
+    },
+    {
+      "source": "E3NameplatesNative.reds",
+      "sourceSha256": "044A294A432EA412DE814A0FA54C279E9682D7D1C0FEFF4ED58592AD8DA541DB",
+      "annotation": "@addField",
+      "target": "NameplateVisualsLogicController",
+      "declaration": "private let crBiologyE3NativeFrameOpacity: Float;"
+    },
+    {
+      "source": "E3NameplatesNative.reds",
+      "sourceSha256": "044A294A432EA412DE814A0FA54C279E9682D7D1C0FEFF4ED58592AD8DA541DB",
+      "annotation": "@addField",
+      "target": "NameplateVisualsLogicController",
+      "declaration": "private let crBiologyE3NativeFrameVisible: Bool;"
+    },
+    {
+      "source": "E3NameplatesNative.reds",
+      "sourceSha256": "044A294A432EA412DE814A0FA54C279E9682D7D1C0FEFF4ED58592AD8DA541DB",
+      "annotation": "@addField",
+      "target": "NameplateVisualsLogicController",
+      "declaration": "private let crBiologyE3HasNativeNameTint: Bool;"
+    },
+    {
+      "source": "E3NameplatesNative.reds",
+      "sourceSha256": "044A294A432EA412DE814A0FA54C279E9682D7D1C0FEFF4ED58592AD8DA541DB",
+      "annotation": "@addField",
+      "target": "NameplateVisualsLogicController",
+      "declaration": "private let crBiologyE3HasNativeFrameStyle: Bool;"
+    },
+    {
+      "source": "E3NameplatesNative.reds",
+      "sourceSha256": "044A294A432EA412DE814A0FA54C279E9682D7D1C0FEFF4ED58592AD8DA541DB",
+      "annotation": "@addField",
+      "target": "NameplateVisualsLogicController",
+      "declaration": "private let crBiologyE3LoggedVisualData: Bool;"
+    },
+    {
+      "source": "E3NameplatesNative.reds",
+      "sourceSha256": "044A294A432EA412DE814A0FA54C279E9682D7D1C0FEFF4ED58592AD8DA541DB",
+      "annotation": "@addField",
+      "target": "NpcNameplateGameController",
+      "declaration": "private let crBiologyE3LoggedProjection: Bool;"
+    },
+    {
+      "source": "E3NameplatesNative.reds",
+      "sourceSha256": "044A294A432EA412DE814A0FA54C279E9682D7D1C0FEFF4ED58592AD8DA541DB",
+      "annotation": "@addMethod",
+      "target": "NameplateVisualsLogicController",
+      "declaration": "private final func CRBiologyE3ShouldShowAmbientName(puppet: wref<GameObject>, data: NPCNextToTheCrosshair) -> Bool {"
+    },
+    {
+      "source": "E3NameplatesNative.reds",
+      "sourceSha256": "044A294A432EA412DE814A0FA54C279E9682D7D1C0FEFF4ED58592AD8DA541DB",
+      "annotation": "@addMethod",
+      "target": "NameplateVisualsLogicController",
+      "declaration": "public final func CRSyncBiologyE3IdentityOwner(scanning: Bool, enabled: Bool) -> Void {"
+    },
+    {
+      "source": "E3NameplatesNative.reds",
+      "sourceSha256": "044A294A432EA412DE814A0FA54C279E9682D7D1C0FEFF4ED58592AD8DA541DB",
+      "annotation": "@addMethod",
+      "target": "NameplateVisualsLogicController",
+      "declaration": "private final func CRRestoreBiologyE3NameplateStyle() -> Void {"
+    },
+    {
+      "source": "E3NameplatesNative.reds",
+      "sourceSha256": "044A294A432EA412DE814A0FA54C279E9682D7D1C0FEFF4ED58592AD8DA541DB",
+      "annotation": "@addMethod",
+      "target": "NameplateVisualsLogicController",
+      "declaration": "private final func CRCaptureBiologyE3NativeNameplateStyle() -> Void {"
+    },
+    {
+      "source": "E3NameplatesNative.reds",
+      "sourceSha256": "044A294A432EA412DE814A0FA54C279E9682D7D1C0FEFF4ED58592AD8DA541DB",
+      "annotation": "@addMethod",
+      "target": "NameplateVisualsLogicController",
+      "declaration": "private final func CRRefreshBiologyE3Nameplate(puppet: wref<GameObject>, data: NPCNextToTheCrosshair) -> Void {"
+    },
+    {
+      "source": "E3NameplatesNative.reds",
+      "sourceSha256": "044A294A432EA412DE814A0FA54C279E9682D7D1C0FEFF4ED58592AD8DA541DB",
+      "annotation": "@wrapMethod",
+      "target": "NameplateVisualsLogicController",
+      "declaration": "public final func SetVisualData(puppet: ref<GameObject>, const incomingData: script_ref<NPCNextToTheCrosshair>, opt isNewNpc: Bool) -> Void {"
+    },
+    {
+      "source": "E3NameplatesNative.reds",
+      "sourceSha256": "044A294A432EA412DE814A0FA54C279E9682D7D1C0FEFF4ED58592AD8DA541DB",
+      "annotation": "@wrapMethod",
+      "target": "NameplateVisualsLogicController",
+      "declaration": "private func SetElementVisibility(const incomingData: script_ref<NPCNextToTheCrosshair>) -> Void {"
+    },
+    {
+      "source": "E3NameplatesNative.reds",
+      "sourceSha256": "044A294A432EA412DE814A0FA54C279E9682D7D1C0FEFF4ED58592AD8DA541DB",
+      "annotation": "@wrapMethod",
+      "target": "NameplateVisualsLogicController",
+      "declaration": "public final func IsAnyElementVisible() -> Bool {"
+    },
+    {
+      "source": "E3NameplatesNative.reds",
+      "sourceSha256": "044A294A432EA412DE814A0FA54C279E9682D7D1C0FEFF4ED58592AD8DA541DB",
+      "annotation": "@addMethod",
+      "target": "NpcNameplateGameController",
+      "declaration": "private final func CRRefreshBiologyE3NameplateRange() -> Void {"
+    },
+    {
+      "source": "E3NameplatesNative.reds",
+      "sourceSha256": "044A294A432EA412DE814A0FA54C279E9682D7D1C0FEFF4ED58592AD8DA541DB",
+      "annotation": "@wrapMethod",
+      "target": "NpcNameplateGameController",
+      "declaration": "protected cb func OnInitialize() -> Bool {"
+    },
+    {
+      "source": "E3NameplatesNative.reds",
+      "sourceSha256": "044A294A432EA412DE814A0FA54C279E9682D7D1C0FEFF4ED58592AD8DA541DB",
+      "annotation": "@wrapMethod",
+      "target": "NpcNameplateGameController",
+      "declaration": "protected cb func OnScreenProjectionUpdate(projections: ref<gameuiScreenProjectionsData>) -> Void {"
+    },
+    {
+      "source": "E3NameplatesNative.reds",
+      "sourceSha256": "044A294A432EA412DE814A0FA54C279E9682D7D1C0FEFF4ED58592AD8DA541DB",
+      "annotation": "@wrapMethod",
+      "target": "NpcNameplateGameController",
+      "declaration": "protected cb func OnIsEnabledChange(val: Int32) -> Bool {"
+    },
+    {
+      "source": "E3NavigationHudNative.reds",
+      "sourceSha256": "1CCA13F600F844E4C496EA0012113AD03FA06F426E88FF6FD96EACDBB0DB6D05",
+      "annotation": "@addField",
+      "target": "MinimapContainerController",
+      "declaration": "private let crBiologyE3MinimapFrame: ref<inkCanvas>;"
+    },
+    {
+      "source": "E3NavigationHudNative.reds",
+      "sourceSha256": "1CCA13F600F844E4C496EA0012113AD03FA06F426E88FF6FD96EACDBB0DB6D05",
+      "annotation": "@addMethod",
+      "target": "MinimapContainerController",
+      "declaration": "private final func CRCreateBiologyE3MinimapFrame() -> Void {"
+    },
+    {
+      "source": "E3NavigationHudNative.reds",
+      "sourceSha256": "1CCA13F600F844E4C496EA0012113AD03FA06F426E88FF6FD96EACDBB0DB6D05",
+      "annotation": "@addMethod",
+      "target": "MinimapContainerController",
+      "declaration": "private final func CRRefreshBiologyE3MinimapFrame() -> Void {"
+    },
+    {
+      "source": "E3NavigationHudNative.reds",
+      "sourceSha256": "1CCA13F600F844E4C496EA0012113AD03FA06F426E88FF6FD96EACDBB0DB6D05",
+      "annotation": "@wrapMethod",
+      "target": "MinimapContainerController",
+      "declaration": "protected cb func OnInitialize() -> Bool {"
+    },
+    {
+      "source": "E3NavigationHudNative.reds",
+      "sourceSha256": "1CCA13F600F844E4C496EA0012113AD03FA06F426E88FF6FD96EACDBB0DB6D05",
+      "annotation": "@addMethod",
+      "target": "MinimapContainerController",
+      "declaration": "protected cb func OnCRBiologyE3PreferenceChangedEvent(evt: ref<CRBiologyE3PreferenceChangedEvent>) -> Bool {"
+    },
+    {
+      "source": "E3QuestHudNative.reds",
+      "sourceSha256": "427B85787DBF9F352170F900DF79F56022F6301246CEF20E7B9B77973034701E",
+      "annotation": "@addField",
+      "target": "QuestTrackerGameController",
+      "declaration": "private let crBiologyE3QuestFrame: ref<inkCanvas>;"
+    },
+    {
+      "source": "E3QuestHudNative.reds",
+      "sourceSha256": "427B85787DBF9F352170F900DF79F56022F6301246CEF20E7B9B77973034701E",
+      "annotation": "@addField",
+      "target": "QuestTrackerGameController",
+      "declaration": "private let crBiologyE3QuestHost: ref<inkCompoundWidget>;"
+    },
+    {
+      "source": "E3QuestHudNative.reds",
+      "sourceSha256": "427B85787DBF9F352170F900DF79F56022F6301246CEF20E7B9B77973034701E",
+      "annotation": "@addField",
+      "target": "QuestTrackerGameController",
+      "declaration": "private let crBiologyE3QuestHostName: String;"
+    },
+    {
+      "source": "E3QuestHudNative.reds",
+      "sourceSha256": "427B85787DBF9F352170F900DF79F56022F6301246CEF20E7B9B77973034701E",
+      "annotation": "@addField",
+      "target": "QuestTrackerGameController",
+      "declaration": "private let crBiologyE3NativeQuestTitleTint: HDRColor;"
+    },
+    {
+      "source": "E3QuestHudNative.reds",
+      "sourceSha256": "427B85787DBF9F352170F900DF79F56022F6301246CEF20E7B9B77973034701E",
+      "annotation": "@addField",
+      "target": "QuestTrackerGameController",
+      "declaration": "private let crBiologyE3HasNativeQuestTitleTint: Bool;"
+    },
+    {
+      "source": "E3QuestHudNative.reds",
+      "sourceSha256": "427B85787DBF9F352170F900DF79F56022F6301246CEF20E7B9B77973034701E",
+      "annotation": "@addField",
+      "target": "QuestTrackerGameController",
+      "declaration": "private let crBiologyE3QuestStateKnown: Bool;"
+    },
+    {
+      "source": "E3QuestHudNative.reds",
+      "sourceSha256": "427B85787DBF9F352170F900DF79F56022F6301246CEF20E7B9B77973034701E",
+      "annotation": "@addField",
+      "target": "QuestTrackerGameController",
+      "declaration": "private let crBiologyE3QuestLastEnabled: Bool;"
+    },
+    {
+      "source": "E3QuestHudNative.reds",
+      "sourceSha256": "427B85787DBF9F352170F900DF79F56022F6301246CEF20E7B9B77973034701E",
+      "annotation": "@addField",
+      "target": "QuestTrackerObjectiveLogicController",
+      "declaration": "private let crBiologyE3NativeObjectiveTitleTint: HDRColor;"
+    },
+    {
+      "source": "E3QuestHudNative.reds",
+      "sourceSha256": "427B85787DBF9F352170F900DF79F56022F6301246CEF20E7B9B77973034701E",
+      "annotation": "@addField",
+      "target": "QuestTrackerObjectiveLogicController",
+      "declaration": "private let crBiologyE3NativeTrackingIconTint: HDRColor;"
+    },
+    {
+      "source": "E3QuestHudNative.reds",
+      "sourceSha256": "427B85787DBF9F352170F900DF79F56022F6301246CEF20E7B9B77973034701E",
+      "annotation": "@addField",
+      "target": "QuestTrackerObjectiveLogicController",
+      "declaration": "private let crBiologyE3NativeTrackingFrameTint: HDRColor;"
+    },
+    {
+      "source": "E3QuestHudNative.reds",
+      "sourceSha256": "427B85787DBF9F352170F900DF79F56022F6301246CEF20E7B9B77973034701E",
+      "annotation": "@addField",
+      "target": "QuestTrackerObjectiveLogicController",
+      "declaration": "private let crBiologyE3HasObjectiveStyle: Bool;"
+    },
+    {
+      "source": "E3QuestHudNative.reds",
+      "sourceSha256": "427B85787DBF9F352170F900DF79F56022F6301246CEF20E7B9B77973034701E",
+      "annotation": "@addMethod",
+      "target": "QuestTrackerGameController",
+      "declaration": "private final func CRResolveBiologyE3QuestHost() -> ref<inkCompoundWidget> {"
+    },
+    {
+      "source": "E3QuestHudNative.reds",
+      "sourceSha256": "427B85787DBF9F352170F900DF79F56022F6301246CEF20E7B9B77973034701E",
+      "annotation": "@addMethod",
+      "target": "QuestTrackerObjectiveLogicController",
+      "declaration": "public final func CRRefreshBiologyE3ObjectiveStyle(enabled: Bool) -> Void {"
+    },
+    {
+      "source": "E3QuestHudNative.reds",
+      "sourceSha256": "427B85787DBF9F352170F900DF79F56022F6301246CEF20E7B9B77973034701E",
+      "annotation": "@addMethod",
+      "target": "QuestTrackerGameController",
+      "declaration": "private final func CRRefreshBiologyE3ObjectiveStyles(enabled: Bool) -> Void {"
+    },
+    {
+      "source": "E3QuestHudNative.reds",
+      "sourceSha256": "427B85787DBF9F352170F900DF79F56022F6301246CEF20E7B9B77973034701E",
+      "annotation": "@addMethod",
+      "target": "QuestTrackerGameController",
+      "declaration": "private final func CRCaptureBiologyE3QuestTitleTint() -> Void {"
+    },
+    {
+      "source": "E3QuestHudNative.reds",
+      "sourceSha256": "427B85787DBF9F352170F900DF79F56022F6301246CEF20E7B9B77973034701E",
+      "annotation": "@addMethod",
+      "target": "QuestTrackerGameController",
+      "declaration": "private final func CRCreateBiologyE3QuestFrame() -> Void {"
+    },
+    {
+      "source": "E3QuestHudNative.reds",
+      "sourceSha256": "427B85787DBF9F352170F900DF79F56022F6301246CEF20E7B9B77973034701E",
+      "annotation": "@addMethod",
+      "target": "QuestTrackerGameController",
+      "declaration": "private final func CRRestoreBiologyE3QuestStyle() -> Void {"
+    },
+    {
+      "source": "E3QuestHudNative.reds",
+      "sourceSha256": "427B85787DBF9F352170F900DF79F56022F6301246CEF20E7B9B77973034701E",
+      "annotation": "@addMethod",
+      "target": "QuestTrackerGameController",
+      "declaration": "private final func CRRefreshBiologyE3QuestFrame() -> Void {"
+    },
+    {
+      "source": "E3QuestHudNative.reds",
+      "sourceSha256": "427B85787DBF9F352170F900DF79F56022F6301246CEF20E7B9B77973034701E",
+      "annotation": "@wrapMethod",
+      "target": "QuestTrackerGameController",
+      "declaration": "protected cb func OnInitialize() -> Bool {"
+    },
+    {
+      "source": "E3QuestHudNative.reds",
+      "sourceSha256": "427B85787DBF9F352170F900DF79F56022F6301246CEF20E7B9B77973034701E",
+      "annotation": "@wrapMethod",
+      "target": "QuestTrackerGameController",
+      "declaration": "private func UpdateTrackerData() -> Void {"
+    },
+    {
+      "source": "E3QuestHudNative.reds",
+      "sourceSha256": "427B85787DBF9F352170F900DF79F56022F6301246CEF20E7B9B77973034701E",
+      "annotation": "@addMethod",
+      "target": "QuestTrackerGameController",
+      "declaration": "protected cb func OnCRBiologyE3PreferenceChangedEvent(evt: ref<CRBiologyE3PreferenceChangedEvent>) -> Bool {"
+    },
+    {
+      "source": "E3WeaponHudNative.reds",
+      "sourceSha256": "5E783278F3B1B6C4F6B411CF6E0EB767BD206EE3F2E64D00E81DB8742522D0AB",
+      "annotation": "@addField",
+      "target": "WeaponRosterGameController",
+      "declaration": "private let crBiologyE3WeaponFrame: ref<inkCanvas>;"
+    },
+    {
+      "source": "E3WeaponHudNative.reds",
+      "sourceSha256": "5E783278F3B1B6C4F6B411CF6E0EB767BD206EE3F2E64D00E81DB8742522D0AB",
+      "annotation": "@addField",
+      "target": "WeaponRosterGameController",
+      "declaration": "private let crBiologyE3WeaponHost: ref<inkCompoundWidget>;"
+    },
+    {
+      "source": "E3WeaponHudNative.reds",
+      "sourceSha256": "5E783278F3B1B6C4F6B411CF6E0EB767BD206EE3F2E64D00E81DB8742522D0AB",
+      "annotation": "@addField",
+      "target": "WeaponRosterGameController",
+      "declaration": "private let crBiologyE3WeaponHostName: String;"
+    },
+    {
+      "source": "E3WeaponHudNative.reds",
+      "sourceSha256": "5E783278F3B1B6C4F6B411CF6E0EB767BD206EE3F2E64D00E81DB8742522D0AB",
+      "annotation": "@addField",
+      "target": "WeaponRosterGameController",
+      "declaration": "private let crBiologyE3NativeWeaponNameTint: HDRColor;"
+    },
+    {
+      "source": "E3WeaponHudNative.reds",
+      "sourceSha256": "5E783278F3B1B6C4F6B411CF6E0EB767BD206EE3F2E64D00E81DB8742522D0AB",
+      "annotation": "@addField",
+      "target": "WeaponRosterGameController",
+      "declaration": "private let crBiologyE3NativeCurrentAmmoTint: HDRColor;"
+    },
+    {
+      "source": "E3WeaponHudNative.reds",
+      "sourceSha256": "5E783278F3B1B6C4F6B411CF6E0EB767BD206EE3F2E64D00E81DB8742522D0AB",
+      "annotation": "@addField",
+      "target": "WeaponRosterGameController",
+      "declaration": "private let crBiologyE3NativeTotalAmmoTint: HDRColor;"
+    },
+    {
+      "source": "E3WeaponHudNative.reds",
+      "sourceSha256": "5E783278F3B1B6C4F6B411CF6E0EB767BD206EE3F2E64D00E81DB8742522D0AB",
+      "annotation": "@addField",
+      "target": "WeaponRosterGameController",
+      "declaration": "private let crBiologyE3HasNativeWeaponTints: Bool;"
+    },
+    {
+      "source": "E3WeaponHudNative.reds",
+      "sourceSha256": "5E783278F3B1B6C4F6B411CF6E0EB767BD206EE3F2E64D00E81DB8742522D0AB",
+      "annotation": "@addField",
+      "target": "WeaponRosterGameController",
+      "declaration": "private let crBiologyE3WeaponStateKnown: Bool;"
+    },
+    {
+      "source": "E3WeaponHudNative.reds",
+      "sourceSha256": "5E783278F3B1B6C4F6B411CF6E0EB767BD206EE3F2E64D00E81DB8742522D0AB",
+      "annotation": "@addField",
+      "target": "WeaponRosterGameController",
+      "declaration": "private let crBiologyE3WeaponLastEnabled: Bool;"
+    },
+    {
+      "source": "E3WeaponHudNative.reds",
+      "sourceSha256": "5E783278F3B1B6C4F6B411CF6E0EB767BD206EE3F2E64D00E81DB8742522D0AB",
+      "annotation": "@addMethod",
+      "target": "WeaponRosterGameController",
+      "declaration": "private final func CRResolveBiologyE3WeaponHost() -> ref<inkCompoundWidget> {"
+    },
+    {
+      "source": "E3WeaponHudNative.reds",
+      "sourceSha256": "5E783278F3B1B6C4F6B411CF6E0EB767BD206EE3F2E64D00E81DB8742522D0AB",
+      "annotation": "@addMethod",
+      "target": "WeaponRosterGameController",
+      "declaration": "private final func CRCaptureBiologyE3WeaponTints() -> Void {"
+    },
+    {
+      "source": "E3WeaponHudNative.reds",
+      "sourceSha256": "5E783278F3B1B6C4F6B411CF6E0EB767BD206EE3F2E64D00E81DB8742522D0AB",
+      "annotation": "@addMethod",
+      "target": "WeaponRosterGameController",
+      "declaration": "private final func CRCreateBiologyE3WeaponFrame() -> Void {"
+    },
+    {
+      "source": "E3WeaponHudNative.reds",
+      "sourceSha256": "5E783278F3B1B6C4F6B411CF6E0EB767BD206EE3F2E64D00E81DB8742522D0AB",
+      "annotation": "@addMethod",
+      "target": "WeaponRosterGameController",
+      "declaration": "private final func CRRestoreBiologyE3WeaponTints() -> Void {"
+    },
+    {
+      "source": "E3WeaponHudNative.reds",
+      "sourceSha256": "5E783278F3B1B6C4F6B411CF6E0EB767BD206EE3F2E64D00E81DB8742522D0AB",
+      "annotation": "@addMethod",
+      "target": "WeaponRosterGameController",
+      "declaration": "private final func CRRefreshBiologyE3WeaponFrame() -> Void {"
+    },
+    {
+      "source": "E3WeaponHudNative.reds",
+      "sourceSha256": "5E783278F3B1B6C4F6B411CF6E0EB767BD206EE3F2E64D00E81DB8742522D0AB",
+      "annotation": "@wrapMethod",
+      "target": "WeaponRosterGameController",
+      "declaration": "protected cb func OnInitialize() -> Bool {"
+    },
+    {
+      "source": "E3WeaponHudNative.reds",
+      "sourceSha256": "5E783278F3B1B6C4F6B411CF6E0EB767BD206EE3F2E64D00E81DB8742522D0AB",
+      "annotation": "@wrapMethod",
+      "target": "WeaponRosterGameController",
+      "declaration": "private func SetRosterSlotData() -> Void {"
+    },
+    {
+      "source": "E3WeaponHudNative.reds",
+      "sourceSha256": "5E783278F3B1B6C4F6B411CF6E0EB767BD206EE3F2E64D00E81DB8742522D0AB",
+      "annotation": "@addMethod",
+      "target": "WeaponRosterGameController",
+      "declaration": "protected cb func OnCRBiologyE3PreferenceChangedEvent(evt: ref<CRBiologyE3PreferenceChangedEvent>) -> Bool {"
+    },
+    {
+      "source": "InjuryEffectsNative.reds",
+      "sourceSha256": "FD4CC9B25B466F6BB83E4E602C28EC0AD7D56F1CACAF4834B268B629DF3358BA",
+      "annotation": "@addField",
+      "target": "ScriptedPuppet",
+      "declaration": "public let crInjuryModifiers: ref<CRInjuryModifierSet>;"
+    },
+    {
+      "source": "InjuryEffectsNative.reds",
+      "sourceSha256": "FD4CC9B25B466F6BB83E4E602C28EC0AD7D56F1CACAF4834B268B629DF3358BA",
+      "annotation": "@addField",
+      "target": "NPCPuppet",
+      "declaration": "public let crProgressAllowed: Bool;"
+    },
+    {
+      "source": "InjuryEffectsNative.reds",
+      "sourceSha256": "FD4CC9B25B466F6BB83E4E602C28EC0AD7D56F1CACAF4834B268B629DF3358BA",
+      "annotation": "@wrapMethod",
+      "target": "ScriptedPuppet",
+      "declaration": "protected cb func OnGameAttached() -> Bool {"
+    },
+    {
+      "source": "NameplatesNative.reds",
+      "sourceSha256": "99090C165D44BE07FEFF1C5F25D6E93597297C4A2DC1220118B98BCCE558D82D",
+      "annotation": "@addMethod",
+      "target": "NameplateVisualsLogicController",
+      "declaration": "public final func CRPublicAmbientNameAllowed(puppet: wref<GameObject>) -> Bool {"
+    },
+    {
+      "source": "NameplatesNative.reds",
+      "sourceSha256": "99090C165D44BE07FEFF1C5F25D6E93597297C4A2DC1220118B98BCCE558D82D",
+      "annotation": "@addMethod",
+      "target": "NameplateVisualsLogicController",
+      "declaration": "public final func CRResolveBiologyAmbientName(puppet: wref<GameObject>, data: NPCNextToTheCrosshair) -> String {"
+    },
+    {
+      "source": "NoHealthbars.reds",
+      "sourceSha256": "7F572EF3FFD60D7D9C02F311921A8DAE460E0368180FD199C05D77BD5E005BB1",
+      "annotation": "@addMethod",
+      "target": "healthbarWidgetGameController",
+      "declaration": "private func CRApplyPlayerHealthPresentation() -> Void {"
+    },
+    {
+      "source": "NoHealthbars.reds",
+      "sourceSha256": "7F572EF3FFD60D7D9C02F311921A8DAE460E0368180FD199C05D77BD5E005BB1",
+      "annotation": "@wrapMethod",
+      "target": "healthbarWidgetGameController",
+      "declaration": "protected cb func OnInitialize() -> Bool {"
+    },
+    {
+      "source": "NoHealthbars.reds",
+      "sourceSha256": "7F572EF3FFD60D7D9C02F311921A8DAE460E0368180FD199C05D77BD5E005BB1",
+      "annotation": "@wrapMethod",
+      "target": "healthbarWidgetGameController",
+      "declaration": "protected cb func OnUpdateHealthBarVisibility() -> Bool {"
+    },
+    {
+      "source": "NoHealthbars.reds",
+      "sourceSha256": "7F572EF3FFD60D7D9C02F311921A8DAE460E0368180FD199C05D77BD5E005BB1",
+      "annotation": "@wrapMethod",
+      "target": "healthbarWidgetGameController",
+      "declaration": "public final func EvaluateHealthBarVisibility(isInOverclockedState: Bool) -> Void {"
+    },
+    {
+      "source": "NoHealthbars.reds",
+      "sourceSha256": "7F572EF3FFD60D7D9C02F311921A8DAE460E0368180FD199C05D77BD5E005BB1",
+      "annotation": "@wrapMethod",
+      "target": "healthbarWidgetGameController",
+      "declaration": "public final func EvaluateOvershieldBarVisibility() -> Void {"
+    },
+    {
+      "source": "NoHealthbars.reds",
+      "sourceSha256": "7F572EF3FFD60D7D9C02F311921A8DAE460E0368180FD199C05D77BD5E005BB1",
+      "annotation": "@addMethod",
+      "target": "NameplateVisualsLogicController",
+      "declaration": "private func CRApplyNPCHealthPresentation() -> Void {"
+    },
+    {
+      "source": "NoHealthbars.reds",
+      "sourceSha256": "7F572EF3FFD60D7D9C02F311921A8DAE460E0368180FD199C05D77BD5E005BB1",
+      "annotation": "@wrapMethod",
+      "target": "NameplateVisualsLogicController",
+      "declaration": "private final func UpdateHealthbarVisibility() -> Void {"
+    },
+    {
+      "source": "NoHealthbars.reds",
+      "sourceSha256": "7F572EF3FFD60D7D9C02F311921A8DAE460E0368180FD199C05D77BD5E005BB1",
+      "annotation": "@wrapMethod",
+      "target": "NameplateVisualsLogicController",
+      "declaration": "public final func SetVisualData(puppet: ref<GameObject>, const incomingData: script_ref<NPCNextToTheCrosshair>, opt isNewNpc: Bool) -> Void {"
+    },
+    {
+      "source": "NoHealthbars.reds",
+      "sourceSha256": "7F572EF3FFD60D7D9C02F311921A8DAE460E0368180FD199C05D77BD5E005BB1",
+      "annotation": "@wrapMethod",
+      "target": "BossHealthBarGameController",
+      "declaration": "private final func ShowBossHealthBar(puppet: ref<NPCPuppet>, useSilentUpdate: Bool) -> Void {"
+    },
+    {
+      "source": "NoHealthbars.reds",
+      "sourceSha256": "7F572EF3FFD60D7D9C02F311921A8DAE460E0368180FD199C05D77BD5E005BB1",
+      "annotation": "@wrapMethod",
+      "target": "CompanionHealthBarGameController",
+      "declaration": "protected cb func OnFlatheadStatusChanged(value: Bool) -> Bool {"
+    },
+    {
+      "source": "PainNativeEffects.reds",
+      "sourceSha256": "7DE4AB68E73CADE20495291557A2B5CBA9DCBF4E6CE3D04EB923419FC5B03EB8",
+      "annotation": "@addField",
+      "target": "PlayerPuppet",
+      "declaration": "private let crPainModifiers: ref<CRPainModifierSet>;"
+    },
+    {
+      "source": "PainNativeEffects.reds",
+      "sourceSha256": "7DE4AB68E73CADE20495291557A2B5CBA9DCBF4E6CE3D04EB923419FC5B03EB8",
+      "annotation": "@addField",
+      "target": "PlayerPuppet",
+      "declaration": "private let crPainIntoxicationLevel: Int32;"
+    },
+    {
+      "source": "PainNativeEffects.reds",
+      "sourceSha256": "7DE4AB68E73CADE20495291557A2B5CBA9DCBF4E6CE3D04EB923419FC5B03EB8",
+      "annotation": "@wrapMethod",
+      "target": "PlayerPuppet",
+      "declaration": "protected cb func OnDetach() -> Bool {"
+    },
+    {
+      "source": "PhysicalOutfits.reds",
+      "sourceSha256": "FCB25033E702A2863FBE9D41B60784C51B8729CF81E32CD03DACF18A890F2628",
+      "annotation": "@addMethod",
+      "target": "EquipmentSystemPlayerData",
+      "declaration": "private func CRResolveOwnedPhysicalOutfitItem(storedVisual: ItemID, area: gamedataEquipmentArea) -> ItemID {"
+    },
+    {
+      "source": "PhysicalOutfits.reds",
+      "sourceSha256": "FCB25033E702A2863FBE9D41B60784C51B8729CF81E32CD03DACF18A890F2628",
+      "annotation": "@addMethod",
+      "target": "EquipmentSystemPlayerData",
+      "declaration": "private func CRPhysicalOutfitItemBlocksChange(itemID: ItemID) -> Bool {"
+    },
+    {
+      "source": "PhysicalOutfits.reds",
+      "sourceSha256": "FCB25033E702A2863FBE9D41B60784C51B8729CF81E32CD03DACF18A890F2628",
+      "annotation": "@addMethod",
+      "target": "EquipmentSystemPlayerData",
+      "declaration": "private func CRCanApplyPhysicalOutfit(clothingSet: ref<ClothingSet>) -> Bool {"
+    },
+    {
+      "source": "PhysicalOutfits.reds",
+      "sourceSha256": "FCB25033E702A2863FBE9D41B60784C51B8729CF81E32CD03DACF18A890F2628",
+      "annotation": "@addMethod",
+      "target": "EquipmentSystemPlayerData",
+      "declaration": "private func CRApplyPhysicalOutfit(clothingSet: ref<ClothingSet>) -> Void {"
+    },
+    {
+      "source": "PhysicalOutfits.reds",
+      "sourceSha256": "FCB25033E702A2863FBE9D41B60784C51B8729CF81E32CD03DACF18A890F2628",
+      "annotation": "@wrapMethod",
+      "target": "EquipmentSystemPlayerData",
+      "declaration": "public final func EquipWardrobeSet(setID: gameWardrobeClothingSetIndex) -> Void {"
+    }
+  ],
+  "note": "Derived compatibility metadata only. No proprietary game content is embedded."
+}

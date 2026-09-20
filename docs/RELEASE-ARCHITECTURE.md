@@ -1,7 +1,7 @@
 # Biology release and installation architecture
 
-Status: **canonical release target; attended integration acceptance still in progress**  
-Last updated: **2026-09-15**
+Status: **1.0.0 local release; native observations are separate from source/build/install completion**
+Last updated: **2026-09-20**
 
 Canonical policy sources:
 
@@ -144,6 +144,7 @@ Cyberpunk 2077/
 The actual current release-shaped artifact also contains narrow supplemental Biology REDscript, redscript's pinned generic runtime files, package metadata/license/checksums, and:
 
 ```text
+Install Biology.exe
 Uninstall Biology.exe
 biology/build-manifest.json
 biology/provenance.json
@@ -186,7 +187,7 @@ It should:
 
 A mention of `red4ext` in the uninstaller shared-root safety denylist is not a Biology dependency claim; it prevents a malformed receipt from authorizing broad deletion on an installation where another mod owns that root.
 
-W09.1 / issue #59 owns the separate post-uninstall REDmod output/cache recovery defect. W10 does not redesign that recovery path.
+The current native uninstaller refreshes official REDmod after removal; the actual removal/reinstall path passed under #152. Historical W09/W10 ownership is superseded.
 
 ## Authoritative overlap and load order
 
@@ -236,7 +237,7 @@ The game installation has two test tiers:
 - **Iteration** — use current ownership/reset policy when the prior Biology install can be safely accounted for.
 - **Milestone clean-room** — Steam uninstall + residual-directory deletion + reinstall for structural/package/framework/game-patch milestones or unexplained residue.
 
-Removing Mod Settings/ArchiveXL/RED4ext is a structural dependency change, so the parent integration acceptance for the combined W10 candidate should use the appropriate milestone-clean-room discipline rather than treating old framework residue as representative of the new package.
+The earlier Mod Settings/ArchiveXL/RED4ext transition remains historical clean-room evidence. Current #152 validation uses the accounted-for prior Biology receipt, exact-file backup and preservation checks under the explicit owner authorization.
 
 A full Steam reinstall is **not** the normal uninstall path for Biology. It remains exceptional clean-room/recovery evidence until the dedicated player uninstaller is fully accepted.
 
@@ -255,9 +256,11 @@ Cloud CI can establish source/model/contract/package-policy consistency. It cann
 - gameplay feel/performance;
 - hard-uninstall cleanliness.
 
-Those require direct/attended evidence against an exact release-shaped artifact. P01.1 owns launcher-OFF and E3 persistence acceptance; W10 does not ask the user to install/play the worker branch.
+Those require direct/native evidence. The #152 completion report records actual local lifecycle/startup proof separately from unperformed UI/save/gameplay observations; no parent handoff or owner-run test blocks this local release.
 
 ## Release gate
+
+Owner #152 authorizes the local 1.0.0 artifact and merged source after automatable/local gates pass. `manifest/distribution.json` distinguishes `localReleaseReady` from public readiness/publication authorization. External player distribution remains unauthorized. See `evidence/AUTONOMOUS-COMPLETION-2026-09-20.md` for executed evidence. The broader public/native acceptance scope below is retained honestly.
 
 Do not publish a player release merely because source contracts pass or a ZIP assembles.
 

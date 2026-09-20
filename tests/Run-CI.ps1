@@ -6,6 +6,9 @@ if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'Run-CI.ps1 requires PowerShe
 # Cyberpunk's proprietary final.redscripts remains a local build gate inside
 # Build-BiologyPackage.ps1 rather than a cloud-CI claim.
 $tests = @(
+    'Test-PlayerLifecycleAndPreferences.ps1',
+    'Test-PlayerInstaller.ps1',
+    'Test-ActivationHookAudit.ps1',
     'Test-PowerShellSyntax.ps1',
     'Test-CiSuiteHygiene.ps1',
     'Test-ActiveGuidanceHygiene.ps1',

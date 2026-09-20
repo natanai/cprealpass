@@ -146,7 +146,8 @@ Write-JsonFile $manifest $output
 
 # Re-run the repository-level origin contract immediately before exact compilation.
 & (Join-Path $project 'tests\Test-RuntimeOriginPolicy.ps1')
-if ($LASTEXITCODE -ne 0) { throw 'Runtime-origin policy failed; owned candidate not compiled.' }
+# This is a PowerShell contract: failures throw under ErrorActionPreference=Stop.
+# LASTEXITCODE belongs to native executables and is unset in a fresh shell here.
 
 & "$PSScriptRoot\Compile-Profile.ps1" -ManifestPath $outputRelative -GameRoot $game
 if ($LASTEXITCODE -ne 0) { throw 'Owned candidate exact compilation failed.' }

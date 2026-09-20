@@ -80,11 +80,16 @@ public class CRBloodLossNative extends IScriptable {
   }
   public static func Current(hit: ref<gameHitEvent>) -> Bool {
     let actor: ref<ScriptedPuppet>;
+    let runtime: ref<CRBodyRuntime>;
     if !IsDefined(hit) || !IsDefined(hit.crBloodLossDelivery) || !IsDefined(hit.attackData) || hit.projectionPipeline {
       return false;
     }
     actor = hit.target as ScriptedPuppet;
-    if !CRBloodLossNative.Allowed(actor, CRBodyRuntime.Get().CanAcceptCombatInjury()) || !CRBloodLossModel.Current(actor.crBloodLossCursor, hit.crBloodLossDelivery, CRBloodLossNative.SimSeconds()) {
+    if !IsDefined(actor) {
+      return false;
+    }
+    runtime = CRBiologySessionAuthority.Body(actor.GetGame());
+    if !IsDefined(runtime) || !CRBloodLossNative.Allowed(actor, runtime.CanAcceptCombatInjury()) || !CRBloodLossModel.Current(actor.crBloodLossCursor, hit.crBloodLossDelivery, CRBloodLossNative.SimSeconds()) {
       return false;
     }
     return hit.attackData.GetInstigator() == actor && hit.attackData.GetSource() == actor && !IsDefined(hit.attackData.GetWeapon()) && hit.attackData.HasFlag(hitFlag.DamageOverTime) && !hit.attackData.HasFlag(hitFlag.IgnoreImmortalityModes) && !hit.attackData.HasFlag(hitFlag.IgnoreStatPoolCustomLimit) && !hit.attackData.HasFlag(hitFlag.Kill) && !hit.attackData.HasFlag(hitFlag.Nonlethal);

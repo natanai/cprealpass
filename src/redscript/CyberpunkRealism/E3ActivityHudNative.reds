@@ -14,32 +14,32 @@ private let crBiologyE3NativeActivityTint: HDRColor;
 private let crBiologyE3HasNativeActivityTint: Bool;
 
 @addMethod(activityLogEntryLogicController)
+private final func CRRestoreBiologyE3Activity() -> Void {
+  let root: ref<inkText> = this.GetRootWidget() as inkText;
+  if IsDefined(root) && this.crBiologyE3HasNativeActivityTint {
+    root.SetTintColor(this.crBiologyE3NativeActivityTint);
+  }
+  this.crBiologyE3HasNativeActivityTint = false;
+}
+
+@addMethod(activityLogEntryLogicController)
 private final func CRRefreshBiologyE3Activity() -> Void {
   let root: ref<inkText> = this.GetRootWidget() as inkText;
   if !IsDefined(root) {
     return;
   }
 
+  this.CRRestoreBiologyE3Activity();
   if CRRealpassSettings.UseE3FirstPersonHudVisuals(GetGameInstance()) {
-    root.SetLetterCase(textLetterCase.UpperCase);
+    this.crBiologyE3NativeActivityTint = root.GetTintColor();
+    this.crBiologyE3HasNativeActivityTint = true;
     root.SetTintColor(CRBiologyE3Primitives.Red());
-  } else {
-    if this.crBiologyE3HasNativeActivityTint {
-      root.SetTintColor(this.crBiologyE3NativeActivityTint);
-    }
   }
 }
 
 @wrapMethod(activityLogEntryLogicController)
 protected cb func OnInitialize() -> Bool {
   let result: Bool = wrappedMethod();
-  let root: ref<inkText> = this.GetRootWidget() as inkText;
-
-  if IsDefined(root) {
-    this.crBiologyE3NativeActivityTint = root.GetTintColor();
-    this.crBiologyE3HasNativeActivityTint = true;
-  }
-
   CRBiologyE3Primitives.Trace("activityLogEntryLogicController.OnInitialize");
   this.CRRefreshBiologyE3Activity();
   return result;
@@ -47,6 +47,13 @@ protected cb func OnInitialize() -> Bool {
 
 @wrapMethod(activityLogEntryLogicController)
 public final func SetText(const displayText: script_ref<String>) -> Void {
+  this.CRRestoreBiologyE3Activity();
   wrappedMethod(displayText);
   this.CRRefreshBiologyE3Activity();
+}
+
+@addMethod(activityLogEntryLogicController)
+protected cb func OnCRBiologyE3PreferenceChangedEvent(evt: ref<CRBiologyE3PreferenceChangedEvent>) -> Bool {
+  this.CRRefreshBiologyE3Activity();
+  return true;
 }

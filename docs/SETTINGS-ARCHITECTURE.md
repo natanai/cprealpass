@@ -1,6 +1,6 @@
 # Biology configuration architecture
 
-Status: **canonical self-contained settings contract; attended persistence/launcher-off acceptance remains parent-owned**  
+Status: **canonical self-contained settings contract; native persistence/launcher-off observations are tracked separately in #152**
 Last updated: 2026-09-15
 
 ## Goal
@@ -63,7 +63,7 @@ Historical pre-REDmod settings evidence remains in `PRE-REDMOD-LIVE-BASELINE-202
 
 The previous integrated artifact built from `8cf045664b5e4d8b4b014edfc98bf2f8eb270ba5` established that the E3 preference gated at least part of the presentation path, but it also exposed the now-retired framework/menu residue during launcher-OFF testing. That artifact pre-dates the self-contained settings migration and must not be treated as acceptance of this replacement persistence/UI path.
 
-Issue #40 remains responsible for the broader E3 presentation implementation. P01.1 remains responsible for attended launcher-OFF and save/reload persistence acceptance of the exact integrated W10 architecture.
+Issue #152 consolidates completed presentation/source repairs and final evidence; native save-reload/render observations remain explicitly distinct from static proof.
 
 ## Release behavior
 
@@ -154,3 +154,7 @@ Configuration is accepted only when:
 10. traditional actor HP presentation stays suppressed while Biology is active regardless of E3 preference;
 11. Project E3 runtime remains absent;
 12. Mod Settings, ArchiveXL, and RED4ext remain absent from production package/build/install contracts unless a future independently accepted consumer is documented first.
+
+## T007 write and refresh repair
+
+The native controller resolves settings from its player-owned GameInstance. A missing settings system fails visibly with UNAVAILABLE; reads no longer invent ON and writes no longer claim success without storage. Saving OFF returns write success. Decorative children are non-interactive so the row owns its click. The existing saved Boolean emits a UI refresh event after an actual value change. HUD controllers restore only their previously applied styles before native updates; launcher OFF always wins. No extra timer, external settings provider or persistent master switch is introduced.

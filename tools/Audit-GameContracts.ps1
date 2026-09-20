@@ -50,7 +50,6 @@ try {
     # Refresh the redistribution-safe machine/game snapshot first so later agents can
     # distinguish the actual installed environment from assumptions in old web examples.
     & (Join-Path $tools 'Refresh-LocalGameReference.ps1') -RepoRoot $RepoRoot -GamePath $GamePath
-    if ($LASTEXITCODE -ne 0) { throw 'Local game reference refresh failed.' }
 
     $referenceRoot = Join-Path $RepoRoot 'reference\cyberpunk'
     $policyPath = Join-Path $RepoRoot 'manifest\native-seams.json'
@@ -122,20 +121,16 @@ try {
         try { $previous = Get-Content -Raw -LiteralPath $previousPath | ConvertFrom-Json } catch { $previous = $null }
     }
 
+    & (Join-Path $RepoRoot 'tests\Test-NativeSeamPolicy.ps1')
     $compilePassed = $null
     $compileBuildId = $null
     if (-not $SkipCompile) {
         # Exact compilation is the highest-value early warning for native method/type
         # changes. Acquire only the pinned redscript toolchain; no game files are written.
         & (Join-Path $tools 'Acquire-Components.ps1') -ComponentIds @('redscript')
-        if ($LASTEXITCODE -ne 0) { throw 'Pinned redscript toolchain acquisition failed.' }
-
-        & (Join-Path $RepoRoot 'tests\Test-NativeSeamPolicy.ps1')
-        if ($LASTEXITCODE -ne 0) { throw 'Native seam policy check failed.' }
 
         $compileBuildId = 'contract-audit-' + [DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss') + '-' + $revision.Substring(0,12).ToLowerInvariant()
         & (Join-Path $tools 'Build-OwnedAcceptance.ps1') -BuildId $compileBuildId -GameRoot $GamePath
-        if ($LASTEXITCODE -ne 0) { throw 'Exact owned-source compilation failed.' }
         $compilePassed = $true
     }
 

@@ -1,6 +1,6 @@
 # Biology integrated REDmod-first assembly
 
-Status: **DEPLOYMENT FOUNDATION ACCEPTED; W13 REDscript startup boundary repaired in source; attended startup/runtime acceptance pending**  
+Status: **1.0.0 local release: exact build, startup output and install/removal lifecycle passed; native gameplay observations remain separate**
 Target game: Cyberpunk 2077 `2.31`  
 Canonical builder: `tools/Build-BiologyPackage.ps1`
 
@@ -9,6 +9,10 @@ Canonical builder: `tools/Build-BiologyPackage.ps1`
 This document describes the current integrated package architecture and direct evidence already obtained. Biology remains REDmod-first and self-contained, but W13 proved that the post-W11 dependency reduction removed a startup task runner that redscript still needs when RED4ext/CET are absent.
 
 ## What has been proven
+
+The **DEPLOYMENT FOUNDATION ACCEPTED** milestone remains established historical
+evidence. The current local release extends it with source/build/install/startup
+checks while preserving the native observation boundaries below.
 
 The earlier exact integrated candidate built from `8cf045664b5e4d8b4b014edfc98bf2f8eb270ba5` proved exact compilation, installation, official REDmod recognition of `Biology`, and real five-stage REDmod deployment on Cyberpunk 2077 2.31.
 
@@ -105,7 +109,13 @@ Already accepted:
 - real five-stage Biology deployment;
 - exact post-install evidence proving the pre-W13 runtime failure was stale configured REDscript output with no task runner, not missing Biology sources.
 
-Still requiring parent/direct acceptance for the repaired W13 architecture:
+The #152 local completion run directly passed exact 65-source compilation, current
+packaged cybercmd/redscript startup-output regeneration, actual shipped-binary
+upgrade/reinstall/removal/clean reinstall and REDmod refresh. The exact evidence
+and limits are in `evidence/AUTONOMOUS-COMPLETION-2026-09-20.md`.
+
+The original broader native acceptance scope remains below for traceability;
+completed local items must not be mistaken for an outstanding W13 worker task:
 
 - exact compile of the combined integrated candidate against supported 2.31;
 - packaged standalone cybercmd loads on supported launch and executes redscript's `InvokeScc` task;
@@ -120,7 +130,9 @@ Still requiring parent/direct acceptance for the repaired W13 architecture:
 
 ## Testing mode
 
-W13 is a structural runtime dependency correction. Parent integration should treat the first release-shaped candidate containing standalone cybercmd as a dependency milestone under `CLEAN-ROOM-TESTING.md`. W13 itself does not ask the user to install or play the worker branch.
+The W13 dependency milestone is historical. The #152 owner directive authorizes
+receipt-bounded local iteration with the accounted-for installed T007 package.
+No new Steam reinstall, worker handoff or owner-run test is required for this run.
 
 ## Source of current work
 

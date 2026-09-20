@@ -5,8 +5,13 @@ import CyberpunkRealism.Integration.*
 @wrapMethod(PlayerPuppet)
 protected cb func OnStatusEffectApplied(evt: ref<ApplyStatusEffectEvent>) -> Bool {
   let result: Bool = wrappedMethod(evt);
-  if CRBodyRuntimePolicy.Enabled() && !evt.isAppliedOnSpawn && Equals(evt.staticData.GetID(), t"HousingStatusEffect.Refreshed") {
-    CRBodyRuntime.Get().CompleteBodyInteraction(1);
+  let runtime: ref<CRBodyRuntime>;
+  if CRBodyRuntimeMasterPolicy.Enabled(this.GetGame()) && IsDefined(evt) && IsDefined(evt.staticData)
+    && !evt.isAppliedOnSpawn && Equals(evt.staticData.GetID(), t"HousingStatusEffect.Refreshed") {
+    runtime = CRBiologySessionAuthority.Body(this.GetGame());
+    if IsDefined(runtime) {
+      runtime.CompleteBodyInteraction(1);
+    }
   }
   return result;
 }
@@ -49,10 +54,18 @@ private let crBodyUseActive: Bool = false;
 @wrapMethod(ToiletControllerPS)
 public func GetActions(out actions: array<ref<DeviceAction>>, context: GetActionsContext) -> Bool {
   let result: Bool = wrappedMethod(actions, context);
-  if !CRBodyRuntimePolicy.Enabled() || !CRBodyRuntime.Get().CanUseBodyInteraction() || this.crBodyUseActive || this.m_isFlushing || NotEquals(context.requestType, gamedeviceRequestType.Direct) {
+  let runtime: ref<CRBodyRuntime>;
+  if this.crBodyUseActive || this.m_isFlushing || NotEquals(context.requestType, gamedeviceRequestType.Direct) {
     return result;
   }
   if !IsDefined(context.processInitiatorObject) || !context.processInitiatorObject.IsPlayer() {
+    return result;
+  }
+  if !CRBodyRuntimeMasterPolicy.Enabled(context.processInitiatorObject.GetGame()) {
+    return result;
+  }
+  runtime = CRBiologySessionAuthority.Body(context.processInitiatorObject.GetGame());
+  if !IsDefined(runtime) || !runtime.CanUseBodyInteraction() {
     return result;
   }
   let action: ref<CRUseToilet> = new CRUseToilet();
@@ -68,8 +81,19 @@ public func GetActions(out actions: array<ref<DeviceAction>>, context: GetAction
 
 @addMethod(ToiletControllerPS)
 public final func OnCRUseToilet(evt: ref<CRUseToilet>) -> EntityNotificationType {
+  let runtime: ref<CRBodyRuntime>;
+  if !IsDefined(evt) {
+    return EntityNotificationType.DoNotNotifyEntity;
+  }
   if evt.IsStarted() {
-    if this.crBodyUseActive || this.m_isFlushing || !CRBodyRuntimePolicy.Enabled() || !CRBodyRuntime.Get().CanUseBodyInteraction() || !IsDefined(evt.GetExecutor()) || !evt.GetExecutor().IsPlayer() {
+    if this.crBodyUseActive || this.m_isFlushing || !IsDefined(evt.GetExecutor()) || !evt.GetExecutor().IsPlayer() {
+      return EntityNotificationType.DoNotNotifyEntity;
+    }
+    if !CRBodyRuntimeMasterPolicy.Enabled(evt.GetExecutor().GetGame()) {
+      return EntityNotificationType.DoNotNotifyEntity;
+    }
+    runtime = CRBiologySessionAuthority.Body(evt.GetExecutor().GetGame());
+    if !IsDefined(runtime) || !runtime.CanUseBodyInteraction() {
       return EntityNotificationType.DoNotNotifyEntity;
     }
     this.crBodyUseActive = true;
@@ -88,11 +112,14 @@ public final func OnCRUseToilet(evt: ref<CRUseToilet>) -> EntityNotificationType
 
 @addMethod(Toilet)
 protected cb func OnCRUseToilet(evt: ref<CRUseToilet>) -> Bool {
-  if evt.completedByDevice && !evt.bodyApplied && IsDefined(evt.GetExecutor()) && evt.GetExecutor().IsPlayer() {
+  let runtime: ref<CRBodyRuntime>;
+  if IsDefined(evt) && evt.completedByDevice && !evt.bodyApplied && IsDefined(evt.GetExecutor()) && evt.GetExecutor().IsPlayer() {
     evt.bodyApplied = true;
     // Walking away, entering combat or a protected scene cancels bodily relief.
-    if Vector4.DistanceSquared(evt.GetExecutor().GetWorldPosition(), this.GetWorldPosition()) <= 9.0 && CRBodyRuntime.Get().CanUseBodyInteraction() {
-      if CRBodyRuntime.Get().CompleteBodyInteraction(4) {
+    runtime = CRBiologySessionAuthority.Body(evt.GetExecutor().GetGame());
+    if CRBodyRuntimeMasterPolicy.Enabled(evt.GetExecutor().GetGame()) && IsDefined(runtime)
+      && Vector4.DistanceSquared(evt.GetExecutor().GetWorldPosition(), this.GetWorldPosition()) <= 9.0 && runtime.CanUseBodyInteraction() {
+      if runtime.CompleteBodyInteraction(4) {
         GameObject.PlaySoundEvent(this, this.GetDevicePS().GetFlushSFX());
       }
     }

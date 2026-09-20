@@ -25,6 +25,7 @@ $classes=foreach($name in @('CRNPCInjuryBridge','CRInjuryModifierSlot','CRInjury
  # fixture authority that these model tests already exercise.
  $s=$s.Replace('this.GetGameInstance()','CREffectsFixture.game').Replace('GetGameInstance()','CREffectsFixture.game')
  $s=$s.Replace('CRBiologySessionAuthority.Body(CREffectsFixture.game)','CRBodyRuntime.Get()')
+ $s=$s.Replace('CRBiologySessionAuthority.Body(npc.GetGame())','CRBodyRuntime.Get()').Replace('CRBiologySessionAuthority.InjuryEffects(npc.GetGame())','CRInjuryEffectsRuntime.Get()')
  $s=$s.Replace('array<ref<CRInjuryModifierSlot>>','CRModifierSlots = new CRModifierSlots()').Replace('array<ref<NPCPuppet>>','CRNpcList = new CRNpcList()')
  $s
 }

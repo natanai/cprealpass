@@ -115,7 +115,7 @@ Check ($actions.Contains('if !this.crBiologyShellMode || !this.CRBiologyInDetail
 Check ($actions.Contains('Equals(this.crBiologySelectedArea, gamedataEquipmentArea.SystemReplacementCW)')) 'Food/drink actions are not scoped to the Metabolism body system.'
 Check ($actions.Contains('GetItemList(player, items)') -and $actions.Contains('GetItemQuantity(player, itemID)')) 'Biology actions do not enumerate actual carried stacks.'
 Check ($actions.Contains('ItemActionsHelper.EatItem') -and $actions.Contains('ItemActionsHelper.DrinkItem') -and $actions.Contains('ItemActionsHelper.ConsumeItem')) 'Biology intake bypasses native item-action families.'
-Check ($actions.Contains('CRBodyRuntime.Get().UseFieldCare')) 'Biology field care no longer delegates to authoritative treatment runtime.'
+Check ($actions.Contains('CRBiologySessionAuthority.Body(player.GetGame())') -and $actions.Contains('runtime.UseFieldCare')) 'Biology field care no longer delegates to the player-session authoritative treatment runtime.'
 Check ($actions.Contains('CRProfessionalCareRuntime.Complete')) 'Biology professional care no longer delegates to authoritative treatment runtime.'
 Check (-not $actions.Contains('RemoveItem(') -and -not $actions.Contains('CRBodyRuntime.Get().Consume(')) 'Biology UI became a duplicate inventory/consumption authority.'
 Check ($shell.Contains('this.crBioActionsPanel.Reparent(this.crBiologyNativeContent, -1);')) 'Biology contextual actions are not mounted into the native Cyberware content region.'

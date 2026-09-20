@@ -9,14 +9,16 @@
     "r6"
   ],
   "playerFlow": {
-    "firstInstall": "close-game_then_extract-release-outside-game-root_then-run-collision-safe Install Biology.ps1_then_use-supported-redmod-enable-flow",
+    "firstInstall": "Close game; extract outside game root; double-click Install Biology.exe; select game folder; enable mods in REDlauncher.",
     "normalLaunch": "Steam",
     "permanentLauncher": false,
     "vanillaPlay": "REDlauncher Enable mods OFF after launcher-off Biology-inactive behavior is accepted",
-    "update": "close-game_then_extract-new-release-outside-game-root_then_run-collision-safe Install Biology.ps1; preserve byte-identical shared global.ini/version.dll, fail closed before mutation on non-identical copies, allow replacement only of cybercmd.asi within standalone cybercmd",
+    "update": "Run Install Biology.exe from the new extracted release. Changed or untracked Biology files and conflicting shared dependencies fail before mutation. Only exact prior receipt-owned files may be replaced; failed writes roll back.",
     "uninstall": "run self-contained Uninstall Biology.exe; remove only manifest-proven owned files and report changed/ambiguous files"
   },
   "releaseRootFiles": [
+    "Install Biology.exe",
+    "Uninstall Biology.exe",
     "Install Biology.ps1",
     "BiologyReleaseInstall.Core.ps1",
     "INSTALL.txt",
@@ -30,10 +32,20 @@
   "ownerManifest": {
     "path": "biology/build-manifest.json",
     "schemaVersion": 2,
-    "requiredFileProperties": ["path", "sha256", "owner", "component", "route", "replacePolicy"],
+    "requiredFileProperties": [
+      "path",
+      "sha256",
+      "owner",
+      "component",
+      "route",
+      "replacePolicy"
+    ],
     "biologyOwnerValue": "Biology",
     "approvedDependencyOwnerPrefix": "upstream:",
-    "allowedReplacePolicies": ["biology-owned", "generic-dependency-shared"],
+    "allowedReplacePolicies": [
+      "biology-owned",
+      "generic-dependency-shared"
+    ],
     "rule": "Every ordinary runtime/package payload file installed by a Biology release must appear exactly once. No broad shared-root deletion is permitted during uninstall."
   },
   "installer": {
@@ -44,9 +56,11 @@
     "sharedStandaloneCybercmdPolicy": {
       "bin/x64/global.ini": "create-if-absent_preserve-if-byte-identical_fail-closed-before-mutation-if-non-identical",
       "bin/x64/version.dll": "create-if-absent_preserve-if-byte-identical_fail-closed-before-mutation-if-non-identical",
-      "bin/x64/plugins/cybercmd.asi": "create-preserve-or-replace"
+      "bin/x64/plugins/cybercmd.asi": "create-if-absent_preserve-if-byte-identical_fail-closed-before-mutation-if-non-identical"
     },
-    "directZipMergeSupported": false
+    "directZipMergeSupported": false,
+    "binary": "Install Biology.exe",
+    "core": "src/installer/BiologyInstallCore.cs"
   },
   "uninstaller": {
     "targetExecutable": "Uninstall Biology.exe",
@@ -59,7 +73,10 @@
     "preferencesLiveInSaves": true,
     "removeOnlyEmptyOwnedDirectories": true,
     "refreshRedmodStateAfterRemoval": true,
-    "preserveGenericDependencies": ["redscript", "cybercmd"]
+    "preserveGenericDependencies": [
+      "redscript",
+      "cybercmd"
+    ]
   },
   "stateAndSaves": {
     "saveDataIsNeverInArtifact": true,
@@ -75,7 +92,7 @@
     "artifact-sha256-and-file-manifest-must-verify",
     "redscript-startup-task-runner-must-be-present-in-release",
     "standalone-cybercmd-global-ini-and-version-dll-must-never-be-silently-overwritten",
-    "only-cybercmd-asi-may-be-replaced-within-standalone-cybercmd-payload",
+    "all-shared-dependency-conflicts-must-fail-before-mutation",
     "shared-loader-collision-must-fail-before-any-game-file-mutation",
     "unknown-collision-must-fail-closed-for-assisted-updates",
     "changed-owned-file-must-not-be-auto-deleted",
@@ -106,7 +123,7 @@
     "the player-facing package contains only roots actually required by that exact build",
     "redscript and standalone cybercmd are the only retained generic runtime dependencies and are tracked per file; cybercmd only executes redscript's scc.toml startup compilation task",
     "the supported player/parent install path stages the release outside the game root and runs the Biology collision-safe installer; blind ZIP merge is not supported while standalone cybercmd carries shared ASI-loader files",
-    "byte-identical existing global.ini/version.dll are accepted as compatible and preserved; a non-identical copy fails closed before mutation because compatibility cannot be proven; only cybercmd.asi is replaceable",
+    "all pre-existing shared files, including cybercmd.asi/global.ini/version.dll, must be byte-identical and are preserved; conflicting files fail closed before mutation",
     "the REDmod-owned Biology activation marker remains the sole whole-mod activation authority; redscript/cybercmd plumbing is non-authoritative",
     "the public artifact never includes developer deployment receipts, reports, staging, saves, game executables, stock game archives or local ReferenceMods payload",
     "full Steam reinstall is exceptional clean-room/recovery, not the normal Biology uninstall path"

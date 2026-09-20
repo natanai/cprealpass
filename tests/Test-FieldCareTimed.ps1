@@ -27,6 +27,7 @@ $s=$s.Replace('this.GetGameInstance()','CareTimedFixture.game').Replace('GetGame
 # session. The harness fixture has exactly one CRFieldCareActionRuntime instance, so
 # bind the helper lookup to it rather than reintroducing a project-class overload.
 $s=$s.Replace('CRBiologySessionAuthority.FieldCare(CareTimedFixture.game)','CareTimedFixture.runtime')
+$s=$s.Replace('CRBiologySessionAuthority.Body(CareTimedFixture.game)','CareTimedFixture.body')
 $s=$s.Replace('GetAllBlackboardDefs()','CareTimedFixture.defs').Replace('ToVariant(warning)','warning').Replace('GetInvalidDelayID()','0')
 $generated=Join-Path $project ('staging/field-care-timed-'+[guid]::NewGuid().ToString('N')+'.reds');[IO.File]::WriteAllText($generated,$s)
 $paths=@('InjuryModel','BodyModel','SleepModel','BodyInputs','FieldCareModel','FieldCareRuntime','FieldCareActionModel')|ForEach-Object{Join-Path $project "src/redscript/CyberpunkRealism/$_.reds"}
