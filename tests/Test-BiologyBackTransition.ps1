@@ -28,7 +28,8 @@ Check (-not $detailSetter.Contains('CRSetBiologyStockContentSuppressed(false)'))
 Check (-not $detailSetter.Contains('contentHost.SetVisible(this.crBiologyContentHostWasVisible);')) 'Biology detail deactivation still restores cyberwareContainer directly.'
 
 $backStart = $followup.IndexOf('if closingBiologyDetail {')
-$backEnd = $followup.IndexOf([Environment]::NewLine + '  }', $backStart)
+$backEnd = $followup.IndexOf('// Stock Cyberware opens its content/detail controller', $backStart)
+Check ($backStart -ge 0 -and $backEnd -gt $backStart) 'Unable to isolate Biology Back close block.'
 $backBlock = $followup.Substring($backStart, $backEnd - $backStart)
 $closeIndex = $backBlock.IndexOf('this.DisplayInventory(false);')
 $markerIndex = $backBlock.IndexOf('inventoryView.CRSetBiologyDetailSurface(false);')
