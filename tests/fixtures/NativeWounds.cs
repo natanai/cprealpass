@@ -15,9 +15,11 @@ public class StatsSystem {
 }
 public class GameObject {
     public string id = "fixture-target";
+    public bool player;
     public ScriptingGame game = new ScriptingGame();
     public string GetEntityID() { return id; }
     public ScriptingGame GetGame() { return game; }
+    public bool IsPlayer() { return player; }
 }
 public class NPCPuppet : GameObject {
     public bool replacer;
@@ -111,7 +113,7 @@ public class CRInjuryProvenanceRuntime {
 public static class NativeWoundFixture {
     public static bool NotEquals<T>(T a, T b) { return !object.Equals(a,b); }
     public static gameHitEvent Hit(bool player, int region = 2, int material = 1, float mass = 8, float speed = 360) {
-        var hit = new gameHitEvent { target = player ? new GameObject() : new NPCPuppet() };
+        var hit = new gameHitEvent { target = player ? new GameObject { player=true } : new NPCPuppet { player=false } };
         hit.sample = new CRNativeHitSample {
             targetID = hit.target.id, targetIsPlayer = player,
             contact = new CRHitContact { region=region, material=material, bodyFound=true, shapeCount=1 },
