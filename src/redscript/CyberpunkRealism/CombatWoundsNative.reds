@@ -109,6 +109,17 @@ public class CRNPCInjuryBridge extends IScriptable {
 }
 
 public class CRNativeWoundBridge extends IScriptable {
+  private static func Diagnose(runtime: ref<CRBodyRuntime>, stage: String, sample: ref<CRNativeHitSample>, value: Float) -> Void {
+    if !IsDefined(runtime) || !IsDefined(sample) || !sample.targetIsPlayer {
+      return;
+    }
+    if IsDefined(sample.contact) {
+      runtime.TestCombatStage(stage, sample.contact.region, sample.contact.material, sample.contact.shapeCount, value);
+    } else {
+      runtime.TestCombatStage(stage, 0, 0, 0, value);
+    }
+  }
+
   public static func Prepare(hit: ref<gameHitEvent>) -> Void {
     let sample: ref<CRNativeHitSample>;
     let emptyLosses: array<SDamageDealt>;
@@ -219,43 +230,33 @@ public class CRNativeWoundBridge extends IScriptable {
       return false;
     }
     if !runtime.CanAcceptCombatInjury() {
-      if sample.targetIsPlayer {
-        runtime.TestCombatStage("commit-body-gate", sample.contact.region, sample.contact.material, sample.contact.shapeCount, sample.eligibility.actualHealthDamage);
-      }
+      CRNativeWoundBridge.Diagnose(runtime, "commit-body-gate", sample, sample.nativePhysicalHealthDamage);
       return false;
     }
     plan = hit.crWoundPlan;
     if !IsDefined(plan) || plan.consumed {
-      if sample.targetIsPlayer {
-        runtime.TestCombatStage("commit-no-plan", sample.contact.region, sample.contact.material, sample.contact.shapeCount, sample.eligibility.actualHealthDamage);
-      }
+      CRNativeWoundBridge.Diagnose(runtime, "commit-no-plan", sample, sample.nativePhysicalHealthDamage);
       return false;
     }
     plan.consumed = true;
     if !CRHitModel.CanProcess(sample.contact, sample.eligibility) || NotEquals(plan.targetID, sample.targetID) || plan.region != sample.contact.region || plan.material != sample.contact.material {
-      if sample.targetIsPlayer {
-        runtime.TestCombatStage("commit-mismatch", sample.contact.region, sample.contact.material, sample.contact.shapeCount, sample.eligibility.actualHealthDamage);
-      }
+      CRNativeWoundBridge.Diagnose(runtime, "commit-mismatch", sample, sample.nativePhysicalHealthDamage);
       return false;
     }
     if CRArmorWearModel.Accepted(plan.proposedPhysical, hit.attackComputed.GetAttackValue(gamedataDamageType.Physical), sample.nativePhysicalHealthDamage, sample.physicalHealthEvaluated, sample.contact.hasProtectionLayer) {
       plan.armorCommitted = CRArmorWearBridge.Commit(plan.armorWear);
     }
     if !CRHitModel.CanRoute(sample.contact, sample.eligibility) {
-      if sample.targetIsPlayer {
-        runtime.TestCombatStage("commit-no-health-loss", sample.contact.region, sample.contact.material, sample.contact.shapeCount, sample.eligibility.actualHealthDamage);
-      }
+      CRNativeWoundBridge.Diagnose(runtime, "commit-no-health-loss", sample, sample.nativePhysicalHealthDamage);
       return false;
     }
     wound = CRWoundModel.Accepted(plan.wound, plan.proposedPhysical, hit.attackComputed.GetAttackValue(gamedataDamageType.Physical), sample.nativePhysicalHealthDamage);
     if !CRWoundModel.HasInjury(wound) {
-      if sample.targetIsPlayer {
-        runtime.TestCombatStage("commit-no-injury", sample.contact.region, sample.contact.material, sample.contact.shapeCount, sample.nativePhysicalHealthDamage);
-      }
+      CRNativeWoundBridge.Diagnose(runtime, "commit-no-injury", sample, sample.nativePhysicalHealthDamage);
       return false;
     }
     if sample.targetIsPlayer {
-      runtime.TestCombatStage("commit-ready", sample.contact.region, sample.contact.material, sample.contact.shapeCount, sample.nativePhysicalHealthDamage);
+      CRNativeWoundBridge.Diagnose(runtime, "commit-ready", sample, sample.nativePhysicalHealthDamage);
       plan.committed = runtime.RecordInjury(wound.region, wound.tissueDamage, wound.boneDamage, wound.cyberwareDamage, wound.externalBleedMlPerHour, wound.internalBleedMlPerHour);
       if plan.committed {
         // Provenance is explanatory metadata only. A metadata failure must never
