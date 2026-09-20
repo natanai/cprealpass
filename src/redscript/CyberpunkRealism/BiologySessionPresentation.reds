@@ -212,7 +212,7 @@ public class CRBiologySessionPresentation extends IScriptable {
   private static func PercentText(value: Float) -> String {
     // Whole-percent rounding made genuine early body progression look exactly
     // healthy. Preserve one decimal without changing the authoritative value.
-    return ToString(RoundF(ClampF(value, 0.0, 100.0) * 10.0) / 10.0) + "%";
+    return ToString(Cast<Float>(RoundF(ClampF(value, 0.0, 100.0) * 10.0)) / 10.0) + "%";
   }
 
   private static func IntegrityText(damage: Float) -> String {
