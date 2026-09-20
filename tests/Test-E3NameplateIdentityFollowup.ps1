@@ -28,7 +28,7 @@ Check ($source.Contains('crBiologyE3NativeNameTint') -and $source.Contains('crBi
 
 # T005-F03: Biology fallback never becomes native/scanner identity input.
 Check (-not $source.Contains('data.name = ambientName')) 'Biology ambient fallback is still written into native identity data.'
-Check ($source.Contains('wrappedMethod(puppet, incomingData, isNewNpc)')) 'Native SetVisualData input is not passed through unchanged.'
+Check ($source.Contains('wrappedMethod(puppet, data, isNewNpc)')) 'W20.1 lost the exact-compiled SetVisualData wrapper call shape.'
 Check ($identity.Contains('return data.name;')) 'Native NPCNextToTheCrosshair identity no longer wins in the ambient resolver.'
 Check ($identity.Contains('return puppet.GetDisplayName();')) 'Public ambient fallback was lost for legitimate empty-name civilians/combatants.'
 Check ($identity.Contains('presentation-only') -and $identity.Contains('must never be written back')) 'Identity helper does not document the one-way authority boundary.'
