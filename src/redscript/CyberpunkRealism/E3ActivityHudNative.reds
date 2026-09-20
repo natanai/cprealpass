@@ -54,7 +54,7 @@ public final func SetText(const displayText: script_ref<String>) -> Void {
 }
 
 @addMethod(activityLogEntryLogicController)
-protected cb func OnCRBiologyE3PreferenceChangedEvent(evt: ref<CRBiologyE3PreferenceChangedEvent>) -> Bool {
+protected cb func OnCRBiologyE3PreferenceChanged(evt: ref<CRBiologyE3PreferenceChangedEvent>) -> Bool {
   this.CRRefreshBiologyE3Activity();
   return true;
 }
