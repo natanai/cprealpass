@@ -4,8 +4,11 @@
 // the entity's already-public GetDisplayName() for ordinary attached NPCs, including
 // civilians, police and ordinary combatants. That fallback is presentation-only: it
 // must never be written back into NPCNextToTheCrosshair or scanner/native knowledge.
-// Hidden, alternative, disabled-nameplate and quest-target policy remains
-// native-authoritative. Scanner state is not required.
+//
+// W20.3 makes scanner state an explicit ambient-presentation exclusion. During scanner
+// ownership the current/native detailed identity surface wins and Biology does not render
+// a simultaneous generic projected fallback. Hidden, alternative, disabled-nameplate,
+// quest-target and native force-hide/name-enable policy remain authoritative.
 module CyberpunkRealism.Presentation
 
 import CyberpunkRealism.Settings.*
@@ -20,10 +23,19 @@ public final func CRPublicAmbientNameAllowed(puppet: wref<GameObject>) -> Bool {
   if !IsDefined(puppet) || !CRRealpassSettings.UseE3FirstPersonHudVisuals(puppet.GetGame()) {
     return false;
   }
-  if !IsDefined(npc) || !npc.IsAttached() || this.IsQuestTarget() {
+
+  if !IsDefined(npc)
+    || !npc.IsAttached()
+    || this.IsQuestTarget()
+    || this.m_forceHide
+    || !this.m_npcNamesEnabled
+    || this.crBiologyE3ScannerActive {
     return false;
   }
-  if npc.GetBoolFromCharacterTweak("hide_nametag") || !IsDefined(npc.GetBlackboard()) || npc.GetBlackboard().GetBool(GetAllBlackboardDefs().Puppet.HideNameplate) {
+
+  if npc.GetBoolFromCharacterTweak("hide_nametag")
+    || !IsDefined(npc.GetBlackboard())
+    || npc.GetBlackboard().GetBool(GetAllBlackboardDefs().Puppet.HideNameplate) {
     return false;
   }
 
@@ -47,11 +59,14 @@ public final func CRPublicAmbientNameAllowed(puppet: wref<GameObject>) -> Bool {
 
 @addMethod(NameplateVisualsLogicController)
 public final func CRResolveBiologyAmbientName(puppet: wref<GameObject>, data: NPCNextToTheCrosshair) -> String {
+  // Native/discovered identity is read-only authority and always wins if present.
   if IsStringValid(data.name) {
     return data.name;
   }
+
   if this.CRPublicAmbientNameAllowed(puppet) {
     return puppet.GetDisplayName();
   }
+
   return "";
 }

@@ -1,17 +1,27 @@
 // Biology-owned E3-inspired ambient NPC nameplate treatment.
 //
-// W03.3's ambient identity lifecycle is a live KEEP: ordinary-look names now appear.
-// W20.1 preserves that lifecycle while keeping structural composition on the authored
-// native name text/frame. T005 proved a fixed controller-root canvas can drift away from
-// the actual name, so Biology now styles native geometry rather than creating its own
-// parallel nameplate layout. No actor HP bar/health number is added.
+// W03.3's ambient identity lifecycle is a live KEEP: ordinary-look names appear outside
+// scanner context. W20.1 keeps structural composition on authored m_nameTextMain and
+// m_nameFrame and never writes Biology fallback identity into native knowledge.
 //
-// T002 also proves the reticle bracket was not nameplate-owned; it exactly matches the
-// deleted CRBiologyE3FocusFrame in E3CrosshairHudNative.reds. Nameplate chrome therefore
-// stays scoped to the native projected nameplate root.
+// T007 proved the remaining ownership defect: the modern scanner could show its detailed
+// native identity (for example BEAT COP) while Biology simultaneously kept a generic
+// ambient projected identity (for example NC RESIDENT) visible. W20.3 therefore treats
+// NpcNameplateGameController.m_isScanning as an ownership boundary. It does not hook,
+// replace, recolor or load any scanner/quickhack controller/resource.
+//
+// Biology's ambient text/frame styling is reversible on every lifecycle pass. Native
+// SetVisualData is re-run with the last unchanged native data whenever scanner/preference
+// ownership changes so OFF/scanner entry cannot leave Biology text or style behind.
 module CyberpunkRealism.Presentation
 
 import CyberpunkRealism.Settings.*
+
+@addField(NameplateVisualsLogicController)
+public let crBiologyE3ScannerActive: Bool;
+
+@addField(NameplateVisualsLogicController)
+private let crBiologyE3PreferenceActive: Bool;
 
 @addField(NameplateVisualsLogicController)
 private let crBiologyE3LastPuppet: wref<GameObject>;
@@ -46,8 +56,29 @@ private let crBiologyE3LoggedProjection: Bool;
 @addMethod(NameplateVisualsLogicController)
 private final func CRBiologyE3ShouldShowAmbientName(puppet: wref<GameObject>, data: NPCNextToTheCrosshair) -> Bool {
   return IsDefined(puppet)
+    && !this.crBiologyE3ScannerActive
     && CRRealpassSettings.UseE3FirstPersonHudVisuals(puppet.GetGame())
+    && this.CRPublicAmbientNameAllowed(puppet)
     && IsStringValid(this.CRResolveBiologyAmbientName(puppet, data));
+}
+
+@addMethod(NameplateVisualsLogicController)
+private final func CRRestoreBiologyE3NameplateStyle() -> Void {
+  let nativeNameText: ref<inkText> = inkWidgetRef.Get(this.m_nameTextMain) as inkText;
+  let nativeNameFrame: ref<inkWidget> = inkWidgetRef.Get(this.m_nameFrame);
+
+  if IsDefined(nativeNameText) && this.crBiologyE3HasNativeNameTint {
+    nativeNameText.SetTintColor(this.crBiologyE3NativeNameTint);
+  }
+
+  if IsDefined(nativeNameFrame) && this.crBiologyE3HasNativeFrameStyle {
+    nativeNameFrame.SetTintColor(this.crBiologyE3NativeFrameTint);
+    nativeNameFrame.SetOpacity(this.crBiologyE3NativeFrameOpacity);
+    nativeNameFrame.SetVisible(this.crBiologyE3NativeFrameVisible);
+  }
+
+  this.crBiologyE3HasNativeNameTint = false;
+  this.crBiologyE3HasNativeFrameStyle = false;
 }
 
 @addMethod(NameplateVisualsLogicController)
@@ -70,38 +101,49 @@ private final func CRCaptureBiologyE3NativeNameplateStyle() -> Void {
 
 @addMethod(NameplateVisualsLogicController)
 private final func CRRefreshBiologyE3Nameplate(puppet: wref<GameObject>, data: NPCNextToTheCrosshair) -> Void {
-  let e3Enabled: Bool = IsDefined(puppet) && CRRealpassSettings.UseE3FirstPersonHudVisuals(puppet.GetGame());
-  let name: String = this.CRResolveBiologyAmbientName(puppet, data);
-  let showName: Bool = e3Enabled && IsStringValid(name);
+  let showName: Bool = this.CRBiologyE3ShouldShowAmbientName(puppet, data);
   let nativeNameText: ref<inkText> = inkWidgetRef.Get(this.m_nameTextMain) as inkText;
   let nativeNameFrame: ref<inkWidget> = inkWidgetRef.Get(this.m_nameFrame);
+  let name: String;
 
-  this.CRCaptureBiologyE3NativeNameplateStyle();
-
-  if !e3Enabled {
-    if IsDefined(nativeNameText) && this.crBiologyE3HasNativeNameTint {
-      nativeNameText.SetTintColor(this.crBiologyE3NativeNameTint);
-    }
-    if IsDefined(nativeNameFrame) && this.crBiologyE3HasNativeFrameStyle {
-      nativeNameFrame.SetTintColor(this.crBiologyE3NativeFrameTint);
-      nativeNameFrame.SetOpacity(this.crBiologyE3NativeFrameOpacity);
-      nativeNameFrame.SetVisible(this.crBiologyE3NativeFrameVisible);
-    }
+  if !showName {
     return;
   }
 
-  if showName && IsDefined(nativeNameText) {
+  name = this.CRResolveBiologyAmbientName(puppet, data);
+  this.CRCaptureBiologyE3NativeNameplateStyle();
+
+  if IsDefined(nativeNameText) {
+    // Text content may use the public ambient fallback, but font family/case/style stay
+    // native so OFF/scanner restoration never depends on unavailable style getters.
     nativeNameText.SetText(name);
-    nativeNameText.SetLetterCase(textLetterCase.UpperCase);
-    nativeNameText.SetFontStyle(n"Medium");
     nativeNameText.SetTintColor(CRBiologyE3Primitives.Red());
     nativeNameText.SetVisible(true);
   }
 
-  if showName && IsDefined(nativeNameFrame) {
+  if IsDefined(nativeNameFrame) {
     nativeNameFrame.SetTintColor(CRBiologyE3Primitives.Red());
     nativeNameFrame.SetOpacity(0.72);
     nativeNameFrame.SetVisible(true);
+  }
+}
+
+@addMethod(NameplateVisualsLogicController)
+public final func CRSyncBiologyE3IdentityOwner(scanning: Bool, enabled: Bool) -> Void {
+  if Equals(scanning, this.crBiologyE3ScannerActive)
+    && Equals(enabled, this.crBiologyE3PreferenceActive) {
+    return;
+  }
+
+  this.crBiologyE3ScannerActive = scanning;
+  this.crBiologyE3PreferenceActive = enabled;
+
+  if IsDefined(this.crBiologyE3LastPuppet) {
+    // Restore captured style first, then let native rebuild text/visibility from the
+    // unchanged last NPCNextToTheCrosshair payload. No Biology fallback is written into
+    // that payload, so scanner/native knowledge remains one-way authoritative.
+    this.CRRestoreBiologyE3NameplateStyle();
+    this.SetVisualData(this.crBiologyE3LastPuppet, this.crBiologyE3LastData);
   }
 }
 
@@ -111,21 +153,22 @@ public final func SetVisualData(puppet: ref<GameObject>, const incomingData: scr
 
   this.crBiologyE3LastPuppet = puppet;
   this.crBiologyE3LastData = data;
+  this.CRRestoreBiologyE3NameplateStyle();
 
   if !this.crBiologyE3LoggedVisualData {
     CRBiologyE3Primitives.Trace("NameplateVisualsLogicController.SetVisualData");
     this.crBiologyE3LoggedVisualData = true;
   }
 
-  // Preserve the already-exact-compiled wrapper call shape, but pass the native values
-  // through without Biology enrichment. The public-display-name fallback is
-  // presentation-only and is resolved later, after native visibility handling.
+  // Preserve W20.1's already exact-compiled native wrapper call shape and pass native
+  // values through unchanged. Ambient fallback is resolved only after native handling.
   wrappedMethod(puppet, data, isNewNpc);
 }
 
 @wrapMethod(NameplateVisualsLogicController)
 private func SetElementVisibility(const incomingData: script_ref<NPCNextToTheCrosshair>) -> Void {
   this.crBiologyE3LastData = Deref(incomingData);
+  this.CRRestoreBiologyE3NameplateStyle();
   wrappedMethod(incomingData);
   this.CRRefreshBiologyE3Nameplate(this.crBiologyE3LastPuppet, this.crBiologyE3LastData);
 }
@@ -149,16 +192,37 @@ private final func CRRefreshBiologyE3NameplateRange() -> Void {
   }
 }
 
+@addMethod(NpcNameplateGameController)
+private final func CRSyncBiologyE3NameplateOwner() -> Void {
+  let enabled: Bool = CRRealpassSettings.UseE3FirstPersonHudVisuals(GetGameInstance());
+
+  this.CRRefreshBiologyE3NameplateRange();
+  if IsDefined(this.m_visualController) {
+    this.m_visualController.CRSyncBiologyE3IdentityOwner(this.m_isScanning, enabled);
+  }
+
+  // The current/native scanner owns detailed identity while scanning. Suppress only
+  // Biology's ordinary projected display-name surface; scanner/quickhack UI is untouched.
+  if this.m_isScanning && enabled {
+    inkWidgetRef.SetVisible(this.m_displayName, false);
+  }
+}
+
 @wrapMethod(NpcNameplateGameController)
 protected cb func OnInitialize() -> Bool {
   let result: Bool = wrappedMethod();
   CRBiologyE3Primitives.Trace("NpcNameplateGameController.OnInitialize");
-  this.CRRefreshBiologyE3NameplateRange();
+  this.CRSyncBiologyE3NameplateOwner();
   return result;
 }
 
 @wrapMethod(NpcNameplateGameController)
 protected cb func OnScreenProjectionUpdate(projections: ref<gameuiScreenProjectionsData>) -> Void {
+  let enabled: Bool = CRRealpassSettings.UseE3FirstPersonHudVisuals(GetGameInstance());
+
+  if IsDefined(this.m_visualController) {
+    this.m_visualController.CRSyncBiologyE3IdentityOwner(this.m_isScanning, enabled);
+  }
   this.CRRefreshBiologyE3NameplateRange();
   wrappedMethod(projections);
 
@@ -167,7 +231,16 @@ protected cb func OnScreenProjectionUpdate(projections: ref<gameuiScreenProjecti
     this.crBiologyE3LoggedProjection = true;
   }
 
-  if !CRRealpassSettings.UseE3FirstPersonHudVisuals(GetGameInstance()) {
+  if this.m_isScanning {
+    if enabled {
+      // T007: prevent simultaneous generic ambient identity beside native detailed
+      // scanner identity. This hides only the projected nameplate displayName.
+      inkWidgetRef.SetVisible(this.m_displayName, false);
+    }
+    return;
+  }
+
+  if !enabled {
     return;
   }
 
@@ -176,4 +249,25 @@ protected cb func OnScreenProjectionUpdate(projections: ref<gameuiScreenProjecti
       inkWidgetRef.SetVisible(this.m_displayName, true);
     }
   }
+}
+
+@wrapMethod(NpcNameplateGameController)
+protected cb func OnIsEnabledChange(val: Int32) -> Bool {
+  let result: Bool = wrappedMethod(val);
+  this.CRSyncBiologyE3NameplateOwner();
+  return result;
+}
+
+@addMethod(NpcNameplateGameController)
+protected cb func OnCRBiologyE3PreferenceChanged(evt: ref<CRBiologyE3PreferenceChangedEvent>) -> Bool {
+  this.CRSyncBiologyE3NameplateOwner();
+  // Notification events are broadcast invalidations; do not consume propagation.
+  return false;
+}
+
+@addMethod(NpcNameplateGameController)
+protected cb func OnCRBiologyE3PreferenceChangedEvent(evt: ref<CRBiologyE3PreferenceChangedEvent>) -> Bool {
+  this.CRSyncBiologyE3NameplateOwner();
+  // Notification events are broadcast invalidations; do not consume propagation.
+  return false;
 }

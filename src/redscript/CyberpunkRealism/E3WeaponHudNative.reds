@@ -93,14 +93,40 @@ private final func CRCreateBiologyE3WeaponFrame() -> Void {
 }
 
 @addMethod(WeaponRosterGameController)
+private final func CRRestoreBiologyE3WeaponTints() -> Void {
+  let nameText: ref<inkText> = inkTextRef.Get(this.m_weaponName) as inkText;
+  let currentAmmoText: ref<inkText> = inkTextRef.Get(this.m_weaponCurrentAmmo) as inkText;
+  let totalAmmoText: ref<inkText> = inkTextRef.Get(this.m_weaponTotalAmmo) as inkText;
+
+  if !this.crBiologyE3HasNativeWeaponTints {
+    return;
+  }
+
+  if IsDefined(nameText) {
+    nameText.SetTintColor(this.crBiologyE3NativeWeaponNameTint);
+  }
+  if IsDefined(currentAmmoText) {
+    currentAmmoText.SetTintColor(this.crBiologyE3NativeCurrentAmmoTint);
+  }
+  if IsDefined(totalAmmoText) {
+    totalAmmoText.SetTintColor(this.crBiologyE3NativeTotalAmmoTint);
+  }
+  this.crBiologyE3HasNativeWeaponTints = false;
+}
+
+@addMethod(WeaponRosterGameController)
 private final func CRRefreshBiologyE3WeaponFrame() -> Void {
   let enabled: Bool = CRRealpassSettings.UseE3FirstPersonHudVisuals(GetGameInstance());
   let nameText: ref<inkText>;
   let currentAmmoText: ref<inkText>;
   let totalAmmoText: ref<inkText>;
 
+  // Clear the prior Biology pass before capturing the current native roster style.
+  this.CRRestoreBiologyE3WeaponTints();
   this.CRCreateBiologyE3WeaponFrame();
-  this.CRCaptureBiologyE3WeaponTints();
+  if enabled {
+    this.CRCaptureBiologyE3WeaponTints();
+  }
 
   if IsDefined(this.crBiologyE3WeaponFrame) {
     this.crBiologyE3WeaponFrame.SetVisible(enabled);
@@ -159,6 +185,21 @@ protected cb func OnInitialize() -> Bool {
 
 @wrapMethod(WeaponRosterGameController)
 private func SetRosterSlotData() -> Void {
+  this.CRRestoreBiologyE3WeaponTints();
   wrappedMethod();
   this.CRRefreshBiologyE3WeaponFrame();
+}
+
+@addMethod(WeaponRosterGameController)
+protected cb func OnCRBiologyE3PreferenceChanged(evt: ref<CRBiologyE3PreferenceChangedEvent>) -> Bool {
+  this.CRRefreshBiologyE3WeaponFrame();
+  // Notification events are broadcast invalidations; do not consume propagation.
+  return false;
+}
+
+@addMethod(WeaponRosterGameController)
+protected cb func OnCRBiologyE3PreferenceChangedEvent(evt: ref<CRBiologyE3PreferenceChangedEvent>) -> Bool {
+  this.CRRefreshBiologyE3WeaponFrame();
+  // Notification events are broadcast invalidations; do not consume propagation.
+  return false;
 }

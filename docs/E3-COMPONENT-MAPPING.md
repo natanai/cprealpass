@@ -167,3 +167,134 @@ Biology therefore does **not** write `GetDisplayName()` fallback into the data p
 For structure, Biology removes `CRBiologyE3IdentityChrome` completely. The current authored `m_nameTextMain` and `m_nameFrame` are the only nameplate structure Biology styles. Their native tint/opacity/visibility continues to be captured and restored when E3 is OFF.
 
 T006 must verify: civilian ambient names still work; police scanner-discovered identity never regresses to Biology fallback; name and frame remain composed as one unit; modern scanner/quickhack remains native; E3 OFF restores native name/frame style and ordinary range.
+
+
+## W20.3 — rejected autonomous E3 regression recovery
+
+Issue #157 resumes the attended parent/worker presentation line after autonomous PR #153
+was rejected in owner live testing and reverted by PR #155. PR #153 is historical evidence
+only; its source is not a trusted baseline.
+
+### Independently proven activation regression
+
+The pre-autonomous, live-tested settings read was:
+
+```text
+launcher active
+AND
+(saved settings not attached yet OR saved E3 preference is ON)
+```
+
+The rejected autonomous release changed this to require the saved ScriptableSystem to
+already exist. At the same time several HUD adapters changed from always creating their
+native-hosted Biology frame on controller initialization to creating it only when that
+early preference read returned true.
+
+That creates a deterministic failure mode:
+
+```text
+HUD controller initializes
+-> CRRealpassSettings not attached yet
+-> E3 read = false
+-> Biology frame is never created
+-> later visible preference state does not reconstruct the missing presentation tree
+```
+
+The rejected release also attempted a UISystem refresh event. Independent public
+redscript archaeology shows that working UISystem consumers use **both** callback naming
+forms: some Event types dispatch to a shortened `OnFoo` callback, while others use the
+full Event-suffixed `OnFooEvent` form. Callback suffix choice is therefore **not**
+treated as the proven regression cause.
+
+W20.3 makes refresh delivery tolerant of that mixed ecosystem by exposing compatible
+`OnCRBiologyE3PreferenceChanged` and
+`OnCRBiologyE3PreferenceChangedEvent` aliases on each live presentation controller.
+Both perform the same idempotent refresh and return false so the stateless notification
+can continue propagating. Every controller still re-reads the one saved Boolean.
+
+W20.3 therefore preserves the default-ON startup read until save authority attaches,
+always creates each Biology-owned frame in its already-proven native host, and uses the
+saved preference only for visibility/styling. `CRRealpassSettings.OnAttach` and
+`OnRestored` broadcast a reconciliation event so an already-live HUD also honors a
+saved OFF value once save authority becomes available.
+
+### Meaningful ON paths retained
+
+The preference is accepted only if it drives real presentation through these existing
+native/current seams:
+
+| Region | Current/native authority | W20.3 Biology seam |
+|---|---|---|
+| lower-left | `healthbarWidgetGameController` root | compact `CRBiologyE3HudFrame` |
+| quickslot/D-pad | `HotkeysWidgetController.m_dpadHintsPanel` | segmented host-relative frame |
+| quest/objectives | `m_questTrackerContainer`, `m_QuestTitle`, native objective rows | segmented frame + reversible native tints |
+| weapon/ammo | `m_onFootContainer` / `m_weaponAmmoWrapper` + native texts | compact frame + reversible native tints |
+| ordinary interaction | current interaction controller | compact root-fitted accent chrome |
+| activity log | native activity entry text | reversible tint only |
+| ordinary crosshair | native crosshair root | reversible tint only; no replacement reticle |
+| ambient identity | native `m_nameTextMain` / `m_nameFrame` | reversible ambient styling outside scanner |
+
+No Project E3 resource/script is loaded. W18.1 remains engineering-reference evidence for
+why authored/native hierarchy owns structure.
+
+### OFF restoration
+
+W20.3 treats OFF as a full native-restoration transition, not merely a hidden toggle:
+
+- custom Biology E3 frames become invisible;
+- quest title/objective tracking tints restore and their captures are released;
+- weapon/ammo tints restore and recapture from current native state on a later ON cycle;
+- activity/crosshair/nameplate tint captures are restored and released per cycle;
+- the activity log no longer changes letter case because no native letter-case capture
+  contract existed;
+- nameplate font style/letter case are no longer mutated for the same reason;
+- ambient nameplate range returns to `SNameplateRangesData` defaults;
+- nameplate ownership changes re-run native `SetVisualData` with the last unchanged
+  native payload so Biology fallback text cannot survive OFF.
+
+### T007 scanner identity correction
+
+T007 proved simultaneous identity owners:
+
+```text
+native scanner detail: BEAT COP
+Biology ambient nameplate: NC RESIDENT
+```
+
+W20.3 does not hook a scanner controller. It uses only the existing
+`NpcNameplateGameController.m_isScanning` boundary:
+
+```text
+outside scanner
+  -> native nameplate policy permits ambient fallback
+  -> Biology may style m_nameTextMain / m_nameFrame
+
+scanner active
+  -> Biology ambient fallback disabled
+  -> projected m_displayName suppressed
+  -> native/current scanner detailed identity remains sole visible detailed authority
+
+scanner exit
+  -> native SetVisualData re-run from unchanged native data
+  -> ambient policy is re-evaluated
+```
+
+Biology still never writes `GetDisplayName()` fallback into
+`NPCNextToTheCrosshair.name` or any scanner/knowledge data.
+
+### Preference UI
+
+W20.2's live-good authored/local placement remains unchanged:
+
+```text
+CRBiologyNativeContent
+└─ PRESENTATION
+   └─ E3 HUD + NAMEPLATES      ON / OFF
+```
+
+T007's click failure is treated as pointer ownership, not layout failure. The 680x48 row
+remains the interactive widget; decorative label/value/background children are
+non-interactive, and the callback no longer rejects a row event based on a child/current
+target. The row writes only `CRRealpassSettings`, refreshes its visible value
+immediately, and the stateless HUD event fans that same saved authority out to live
+presentation controllers.
