@@ -60,7 +60,8 @@ Check ($quest.Contains('this.m_questTrackerContainer') -and $quest.Contains('thi
 Check ($weapon.Contains('this.m_onFootContainer') -and $weapon.Contains('this.m_weaponName') -and $weapon.Contains('this.m_weaponCurrentAmmo') -and $weapon.Contains('this.m_weaponTotalAmmo')) 'Weapon/ammo E3 presentation path is incomplete.'
 Check ($nameplate.Contains('this.m_nameTextMain') -and $nameplate.Contains('this.m_nameFrame') -and $nameplate.Contains('CRPublicAmbientNameAllowed')) 'Ambient authored nameplate E3 presentation path is incomplete.'
 Check ($crosshair.Contains('this.GetRootWidget()') -and $crosshair.Contains('CRBiologyE3Primitives.Red()')) 'Native ordinary crosshair E3 tint path is missing.'
-Check (-not $crosshair.Contains('new inkCanvas()') -and -not $crosshair.Contains('CRBiologyE3FocusFrame')) 'Old custom reticle geometry returned.'
+Check (-not $crosshair.Contains('new inkCanvas();')) 'Old custom reticle canvas allocation returned.'
+Check (-not ($crosshair -match '@addField\(gameuiCrosshairBaseGameController\)[\s\S]{0,180}crBiologyE3FocusFrame')) 'Old CRBiologyE3FocusFrame field returned.'
 
 # ---------------------------------------------------------------------------
 # OFF must restore native/current state, not merely hide the preference value.
